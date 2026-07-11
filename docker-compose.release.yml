@@ -1,0 +1,218 @@
+name: jshsus-v26
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+x-service-defaults: &service-defaults
+  init: true
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging: *default-logging
+
+services:
+  redis:
+    <<: *service-defaults
+    image: redis:7.4-alpine
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        umask 077
+        printf 'requirepass %s\nappendonly yes\nmaxmemory 96mb\nmaxmemory-policy allkeys-lru\n' "$$REDIS_PASSWORD" > /tmp/redis.conf
+        exec redis-server /tmp/redis.conf
+    read_only: true
+    tmpfs:
+      - /tmp:size=1m,mode=1777
+    volumes:
+      - redis-data:/data
+    networks:
+      - app
+    healthcheck:
+      test: ['CMD-SHELL', 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 100
+
+  api:
+    <<: *service-defaults
+    image: ghcr.io/${GHCR_NAMESPACE:-plma-jshs}/jshsus-api:${IMAGE_TAG:?IMAGE_TAG is required}
+    environment:
+      NODE_ENV: production
+      TZ: ${TZ:-Asia/Seoul}
+      API_PORT: 4000
+      CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      DATABASE_SSL_MODE: ${DATABASE_SSL_MODE:-required}
+      DATABASE_SSL_CA_PATH: ${DATABASE_SSL_CA_PATH:-}
+      ALLOW_DEV_AUTH: 'false'
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379/0
+      SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN:?SESSION_COOKIE_DOMAIN is required}
+      SESSION_COOKIE_SECURE: 'true'
+      CSRF_SECRET: ${CSRF_SECRET:?CSRF_SECRET is required}
+      CSRF_COOKIE_NAME: ${CSRF_COOKIE_NAME:-jshsus.csrf}
+      DEV_AUTH_PASSWORD: ${DEV_AUTH_PASSWORD:-disabled-in-production}
+      PASSWORD_REHASH_ON_LOGIN: ${PASSWORD_REHASH_ON_LOGIN:-true}
+      LEGACY_SYSTEM_ADMIN_STUIDS: ${LEGACY_SYSTEM_ADMIN_STUIDS:-}
+      LEGACY_STUDENT_AFFAIRS_HEAD_STUIDS: ${LEGACY_STUDENT_AFFAIRS_HEAD_STUIDS:-}
+      IAM_COOKIE_NAME: ${IAM_COOKIE_NAME:-iam_token}
+      IAM_TOKEN_TTL_SECONDS: ${IAM_TOKEN_TTL_SECONDS:-86400}
+      RATE_LIMIT_WINDOW_SECONDS: ${RATE_LIMIT_WINDOW_SECONDS:-60}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-60}
+      FILE_UPLOAD_MAX_MB: ${FILE_UPLOAD_MAX_MB:-10}
+      FILE_ALLOWED_MIME_TYPES: ${FILE_ALLOWED_MIME_TYPES:-image/jpeg,image/png,image/webp,application/pdf}
+      FILE_LOCAL_DIR: /var/lib/jshsus/uploads
+      AWS_REGION: ${AWS_REGION:-ap-northeast-2}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_PUBLIC_BASE_URL: ${S3_PUBLIC_BASE_URL:-}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-false}
+      NODE_OPTIONS: --max-old-space-size=256
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    volumes:
+      - upload-data:/var/lib/jshsus/uploads
+    networks:
+      - app
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 4s
+      retries: 24
+      start_period: 10s
+    stop_grace_period: 20s
+    mem_limit: 384m
+    cpus: 1.0
+    pids_limit: 200
+
+  migrate:
+    image: ghcr.io/${GHCR_NAMESPACE:-plma-jshs}/jshsus-migrate:${IMAGE_TAG:?IMAGE_TAG is required}
+    environment:
+      NODE_ENV: production
+      TZ: ${TZ:-Asia/Seoul}
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:?MIGRATION_DATABASE_URL is required}
+      DATABASE_SSL_MODE: ${DATABASE_SSL_MODE:-required}
+      DATABASE_SSL_CA_PATH: ${DATABASE_SSL_CA_PATH:-}
+      NODE_OPTIONS: --max-old-space-size=256
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - app
+    init: true
+    restart: 'no'
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+    mem_limit: 384m
+    cpus: 1.0
+    pids_limit: 200
+    profiles:
+      - tools
+
+  backup:
+    image: ghcr.io/${GHCR_NAMESPACE:-plma-jshs}/jshsus-migrate:${IMAGE_TAG:?IMAGE_TAG is required}
+    command: ['node', 'scripts/backup-database.cjs']
+    environment:
+      TZ: ${TZ:-Asia/Seoul}
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:?MIGRATION_DATABASE_URL is required}
+      DATABASE_SSL_MODE: ${DATABASE_SSL_MODE:-required}
+      DATABASE_SSL_CA_PATH: ${DATABASE_SSL_CA_PATH:-}
+      BACKUP_DIR: /backups
+      BACKUP_RETENTION_COUNT: ${BACKUP_RETENTION_COUNT:-14}
+      NODE_OPTIONS: --max-old-space-size=128
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - app
+    volumes:
+      - ./backups:/backups
+    init: true
+    restart: 'no'
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 100
+    profiles:
+      - tools
+
+  web:
+    <<: *service-defaults
+    image: ghcr.io/${GHCR_NAMESPACE:-plma-jshs}/jshsus-web:${IMAGE_TAG:?IMAGE_TAG is required}
+    networks:
+      app:
+      proxy:
+        ipv4_address: 172.18.0.200
+        aliases:
+          - jshsus-v26-web
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1/api/health | grep -q jshsus-api']
+      interval: 5s
+      timeout: 4s
+      retries: 20
+      start_period: 5s
+    mem_limit: 64m
+    cpus: 0.25
+    pids_limit: 100
+
+  admin:
+    <<: *service-defaults
+    image: ghcr.io/${GHCR_NAMESPACE:-plma-jshs}/jshsus-admin:${IMAGE_TAG:?IMAGE_TAG is required}
+    networks:
+      app:
+      proxy:
+        ipv4_address: 172.18.0.201
+        aliases:
+          - jshsus-v26-admin
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1/api/health | grep -q jshsus-api']
+      interval: 5s
+      timeout: 4s
+      retries: 20
+      start_period: 5s
+    mem_limit: 64m
+    cpus: 0.25
+    pids_limit: 100
+
+networks:
+  app:
+    name: jshsus-v26-internal
+  proxy:
+    external: true
+    name: nginx-proxy-manager_default
+
+volumes:
+  redis-data:
+    name: jshsus-v26-redis-data
+  upload-data:
+    name: jshsus-v26-upload-data

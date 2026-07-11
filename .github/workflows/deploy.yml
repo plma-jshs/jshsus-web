@@ -1,24 +1,31 @@
 name: Deploy
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
   workflow_dispatch:
 
 concurrency:
-  group: jshsus-deploy
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('jshsus-v26-pr-{0}', github.event.pull_request.number) || 'jshsus-v26-production' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
 
 jobs:
   verify:
+    name: Verify
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 24
 
@@ -45,51 +52,301 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Production dependency audit
+        run: pnpm audit --prod --audit-level high
+
       - name: Drizzle schema check
         run: |
           pnpm db:generate
           git diff --exit-code -- packages/db/migrations
 
-  deploy:
+      - name: Backward-compatible migration policy
+        run: pnpm db:migrations:check
+
+  build-images:
+    name: Build ${{ matrix.image }} image
     needs: verify
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: production
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: api
+            dockerfile: apps/api/Dockerfile
+          - image: web
+            dockerfile: apps/web/Dockerfile
+          - image: admin
+            dockerfile: apps/admin/Dockerfile
+          - image: migrate
+            dockerfile: packages/db/Dockerfile
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
-      - name: Install SSH tools
-        run: sudo apt-get update && sudo apt-get install -y rsync openssh-client
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
-      - name: Configure SSH
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for an existing immutable SHA image
+        id: image
+        shell: bash
         run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p "${{ secrets.DEPLOY_PORT || '22' }}" "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+          image="ghcr.io/${{ github.repository_owner }}/jshsus-${{ matrix.image }}:${{ github.sha }}"
+          if docker buildx imagetools inspect "$image" >/dev/null 2>&1; then
+            echo 'exists=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'exists=false' >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Sync repository to Ubuntu server
-        run: |
-          rsync -az --delete \
-            --exclude '.git' \
-            --exclude 'node_modules' \
-            --exclude 'apps/*/dist' \
-            --exclude 'packages/*/dist' \
-            --exclude '.env' \
-            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_PORT || '22' }}" \
-            ./ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+      - name: Build and push
+        if: steps.image.outputs.exists != 'true'
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/jshsus-${{ matrix.image }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.title=jshsus-${{ matrix.image }}
+          cache-from: type=gha,scope=jshsus-${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=jshsus-${{ matrix.image }}
+          provenance: mode=max
+          sbom: true
 
-      - name: Run deployment on Ubuntu server
+  prepare-images:
+    name: Prepare release image tags
+    needs: build-images
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate the complete release and preserve stable as previous
+        shell: bash
         run: |
-          ssh -i ~/.ssh/deploy_key -p "${{ secrets.DEPLOY_PORT || '22' }}" \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-            "set -euo pipefail
-             cd '${{ secrets.DEPLOY_PATH }}'
-             test -s .env
-             docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
-             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d redis
-             export COMPOSE_PARALLEL_LIMIT=1
-             docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile tools build migrate
-             docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile tools run --rm migrate
-             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build api web admin
-             docker image prune -f"
+          set -euo pipefail
+          images=(api web admin migrate)
+          for name in "${images[@]}"; do
+            docker buildx imagetools inspect \
+              "ghcr.io/${{ github.repository_owner }}/jshsus-$name:${{ github.sha }}" >/dev/null
+          done
+          for name in "${images[@]}"; do
+            image="ghcr.io/${{ github.repository_owner }}/jshsus-$name"
+            if docker buildx imagetools inspect "$image:stable" >/dev/null 2>&1; then
+              docker buildx imagetools create --tag "$image:previous" "$image:stable"
+            fi
+          done
+
+  deploy:
+    name: Deploy staging
+    needs:
+      - verify
+      - prepare-images
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Refuse an obsolete main workflow rerun
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin \
+            '+refs/heads/main:refs/remotes/origin/main'
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+
+      - name: Validate deployment settings
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$DEPLOY_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
+          [[ "$DEPLOY_PORT" =~ ^[0-9]{1,5}$ ]]
+          (( DEPLOY_PORT >= 1 && DEPLOY_PORT <= 65535 ))
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ "$DEPLOY_PATH" =~ ^/[A-Za-z0-9._/-]+$ ]]
+
+      - name: Configure pinned SSH identity
+        shell: bash
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 "$HOME/.ssh"
+          umask 077
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/deploy_key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          ssh-keygen -y -f "$HOME/.ssh/deploy_key" >/dev/null
+          test -s "$HOME/.ssh/known_hosts"
+
+      - name: Prepare protected production environment file
+        shell: bash
+        env:
+          PRODUCTION_ENV_FILE: ${{ secrets.PRODUCTION_ENV_FILE }}
+        run: |
+          set -euo pipefail
+          umask 077
+          test -n "$PRODUCTION_ENV_FILE"
+          printf '%s\n' "$PRODUCTION_ENV_FILE" > .env.production
+
+      - name: Authenticate the server to GHCR
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$GHCR_TOKEN" | \
+            ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
+              "$DEPLOY_USER@$DEPLOY_HOST" \
+              "install -d -m 700 '$DEPLOY_PATH/.docker-auth' && docker --config '$DEPLOY_PATH/.docker-auth' login ghcr.io --username '${{ github.actor }}' --password-stdin"
+
+      - name: Upload release manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          SSH=(ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT")
+          SCP=(scp -i "$HOME/.ssh/deploy_key" -P "$DEPLOY_PORT")
+
+          "${SSH[@]}" "$DEPLOY_USER@$DEPLOY_HOST" \
+            "install -d -m 700 '$DEPLOY_PATH'"
+          "${SCP[@]}" docker-compose.release.yml deploy/deploy.sh \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
+          "${SCP[@]}" .env.production \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/.env.next"
+          "${SSH[@]}" "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && chmod 600 .env.next docker-compose.release.yml && chmod 700 deploy.sh"
+
+      - name: Run release
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "'$DEPLOY_PATH/deploy.sh' '${{ github.sha }}' '${{ github.repository_owner }}'"
+
+      - name: Verify public staging endpoints
+        id: public_smoke
+        if: vars.STAGING_WEB_URL != ''
+        shell: bash
+        env:
+          STAGING_WEB_URL: ${{ vars.STAGING_WEB_URL }}
+          STAGING_ADMIN_URL: ${{ vars.STAGING_ADMIN_URL }}
+        run: |
+          set -euo pipefail
+          retry_status() {
+            local url="$1"
+            for _ in {1..18}; do
+              if curl --fail --silent --show-error --max-time 10 "$url" | grep -q '"status":"ok"'; then
+                return 0
+              fi
+              sleep 5
+            done
+            return 1
+          }
+          retry_page() {
+            local url="$1"
+            for _ in {1..18}; do
+              if curl --fail --silent --show-error --output /dev/null --max-time 10 "$url"; then
+                return 0
+              fi
+              sleep 5
+            done
+            return 1
+          }
+
+          retry_status "${STAGING_WEB_URL%/}/api/health"
+          retry_page "${STAGING_WEB_URL%/}/"
+          if [[ -n "$STAGING_ADMIN_URL" ]]; then
+            retry_page "${STAGING_ADMIN_URL%/}/"
+          fi
+
+      - name: Roll back a release that failed public verification
+        if: failure() && steps.release.outcome == 'success' && steps.public_smoke.outcome == 'failure'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "'$DEPLOY_PATH/deploy.sh' --rollback '${{ github.repository_owner }}'"
+
+      - name: Remove the server GHCR credential
+        if: always()
+        shell: bash
+        run: |
+          if [[ -s "$HOME/.ssh/deploy_key" ]]; then
+            ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
+              "$DEPLOY_USER@$DEPLOY_HOST" \
+              "docker --config '$DEPLOY_PATH/.docker-auth' logout ghcr.io >/dev/null 2>&1 || true" || true
+          fi
+
+      - name: Remove local secret files
+        if: always()
+        shell: bash
+        run: rm -f "$HOME/.ssh/deploy_key" .env.production
+
+  promote-images:
+    name: Promote release images
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Promote successful SHA to stable
+        shell: bash
+        run: |
+          set -euo pipefail
+          images=(api web admin migrate)
+          for name in "${images[@]}"; do
+            docker buildx imagetools inspect \
+              "ghcr.io/${{ github.repository_owner }}/jshsus-$name:${{ github.sha }}" >/dev/null
+          done
+          for name in "${images[@]}"; do
+            image="ghcr.io/${{ github.repository_owner }}/jshsus-$name"
+            docker buildx imagetools create --tag "$image:stable" "$image:${{ github.sha }}"
+          done

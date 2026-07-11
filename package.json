@@ -26,7 +26,7 @@
     "test": "vitest run",
     "db:generate": "pnpm --filter @jshsus/db db:generate",
     "db:migrate": "pnpm --filter @jshsus/db db:migrate",
-    "db:legacy:import": "pnpm --filter @jshsus/db legacy:import",
+    "db:migrations:check": "node scripts/check-migrations.cjs",
     "smoke:core": "pnpm --filter @jshsus/api smoke:core"
   },
   "devDependencies": {
