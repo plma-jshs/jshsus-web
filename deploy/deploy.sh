@@ -39,6 +39,7 @@ fi
 
 compose() {
   docker compose \
+    --project-directory "$DEPLOY_DIR" \
     --env-file "$DEPLOY_ENV_FILE" \
     --project-name jshsus-v26 \
     --file "$DEPLOY_COMPOSE_FILE" \
