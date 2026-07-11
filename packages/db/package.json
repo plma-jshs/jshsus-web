@@ -1,0 +1,25 @@
+{
+  "name": "@jshsus/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "prebuild": "pnpm clean",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "legacy:import": "node scripts/import-legacy-dump.cjs"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.2",
+    "mysql2": "3.22.6"
+  },
+  "devDependencies": {
+    "drizzle-kit": "0.31.10",
+    "typescript": "5.9.3"
+  }
+}

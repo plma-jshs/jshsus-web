@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1782058777872,
+      "tag": "0000_bouncy_sleeper",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1783744910743,
+      "tag": "0001_add_device_case_schedule_target",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1783745786110,
+      "tag": "0002_seed_core_roles",
+      "breakpoints": true
+    }
+  ]
+}

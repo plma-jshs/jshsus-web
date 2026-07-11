@@ -1,0 +1,7 @@
+node_modules
+dist
+.turbo
+coverage
+packages/db/migrations
+pnpm-lock.yaml
+apps/*/public/assets

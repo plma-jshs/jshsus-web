@@ -1,0 +1,88 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: jshsus
+      MYSQL_USER: ${MYSQL_USER:-jshs_web}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-local_mysql_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-local_mysql_root_password}
+      TZ: Asia/Seoul
+    ports:
+      - '127.0.0.1:${MYSQL_PORT:-3306}:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h localhost -u$${MYSQL_USER} -p$${MYSQL_PASSWORD}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-local_redis_password}
+    command: ['sh', '-c', 'redis-server --requirepass "$$REDIS_PASSWORD"']
+    ports:
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-mysql://jshs_web:local_mysql_password@mysql:3306/jshsus}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-local_redis_password}@redis:6379/0
+      FILE_LOCAL_DIR: /var/lib/jshsus/uploads
+    volumes:
+      - upload-data:/var/lib/jshsus/uploads
+    ports:
+      - '${API_PORT:-4000}:4000'
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:4000/api/health']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      dockerfile: packages/db/Dockerfile
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:-mysql://jshs_web:local_mysql_password@mysql:3306/jshsus}
+    profiles: ['tools']
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - '${WEB_PORT:-5173}:80'
+    depends_on:
+      api:
+        condition: service_healthy
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    ports:
+      - '${ADMIN_PORT:-5174}:80'
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  mysql-data:
+  upload-data:

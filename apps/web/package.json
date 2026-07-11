@@ -1,0 +1,30 @@
+{
+  "name": "@jshsus/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "prebuild": "pnpm clean",
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 5173",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@jshsus/types": "workspace:*",
+    "@tanstack/react-query": "5.51.15",
+    "@tanstack/react-router": "1.51.7",
+    "@vitejs/plugin-react": "5.2.0",
+    "lucide-react": "0.468.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "vite": "6.4.3"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "typescript": "5.9.3"
+  }
+}

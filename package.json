@@ -1,0 +1,45 @@
+{
+  "name": "jshsus-renewal",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.30.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "argon2",
+      "esbuild"
+    ]
+  },
+  "scripts": {
+    "predev": "pnpm --filter @jshsus/types build && pnpm --filter @jshsus/db build",
+    "dev": "turbo dev",
+    "predev:api": "pnpm --filter @jshsus/types build && pnpm --filter @jshsus/db build",
+    "dev:api": "pnpm --filter @jshsus/api dev",
+    "dev:web": "pnpm --filter @jshsus/web dev",
+    "dev:admin": "pnpm --filter @jshsus/admin dev",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "lint": "eslint . --max-warnings=0",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "db:generate": "pnpm --filter @jshsus/db db:generate",
+    "db:migrate": "pnpm --filter @jshsus/db db:migrate",
+    "db:legacy:import": "pnpm --filter @jshsus/db legacy:import",
+    "smoke:core": "pnpm --filter @jshsus/api smoke:core"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "24.13.3",
+    "eslint": "10.6.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "globals": "^17.5.0",
+    "prettier": "3.9.5",
+    "turbo": "2.10.4",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.63.0",
+    "vitest": "4.1.10"
+  }
+}

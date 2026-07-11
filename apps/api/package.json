@@ -1,0 +1,42 @@
+{
+  "name": "@jshsus/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "dev": "node -r ts-node/register/transpile-only src/main.ts",
+    "prebuild": "pnpm clean",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "smoke:core": "node scripts/core-smoke.cjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1084.0",
+    "@jshsus/db": "workspace:*",
+    "@jshsus/types": "workspace:*",
+    "@nestjs/common": "11.1.28",
+    "@nestjs/core": "11.1.28",
+    "@nestjs/platform-express": "11.1.28",
+    "argon2": "0.44.0",
+    "cookie-parser": "1.4.7",
+    "dotenv": "16.4.5",
+    "drizzle-orm": "0.45.2",
+    "helmet": "^8.1.0",
+    "mysql2": "3.22.6",
+    "redis": "4.7.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "1.4.10",
+    "@types/express": "5.0.6",
+    "@types/multer": "^2.0.0",
+    "@types/node": "24.13.3",
+    "ts-node": "10.9.2",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "target": "ES2022",
+    "outDir": "dist",
+    "rootDir": "src",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
+    "paths": {
+      "@jshsus/db": ["../../packages/db/dist/index.d.ts"],
+      "@jshsus/types": ["../../packages/types/dist/index.d.ts"]
+    },
+    "noEmit": true
+  },
+  "include": ["src/**/*.ts"]
+}
