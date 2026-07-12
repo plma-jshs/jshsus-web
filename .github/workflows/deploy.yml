@@ -272,32 +272,65 @@ jobs:
           STAGING_ADMIN_URL: ${{ vars.STAGING_ADMIN_URL }}
         run: |
           set -euo pipefail
-          retry_status() {
-            local url="$1"
-            for _ in {1..18}; do
-              if curl --fail --silent --show-error --max-time 10 "$url" | grep -q '"status":"ok"'; then
-                return 0
+          [[ "$STAGING_WEB_URL" =~ ^https://[A-Za-z0-9.-]+/?$ ]]
+          if [[ -n "$STAGING_ADMIN_URL" ]]; then
+            [[ "$STAGING_ADMIN_URL" =~ ^https://[A-Za-z0-9.-]+/?$ ]]
+          fi
+
+          ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "bash -s -- '$STAGING_WEB_URL' '$STAGING_ADMIN_URL'" <<'REMOTE_SMOKE'
+          set -euo pipefail
+
+          web_url="${1%/}"
+          admin_url="${2%/}"
+
+          probe() {
+            local label="$1"
+            local url="$2"
+            local expected="$3"
+            local response_file headers_file status server cf_ray
+            response_file="$(mktemp)"
+            headers_file="$(mktemp)"
+
+            for attempt in {1..18}; do
+              : > "$response_file"
+              : > "$headers_file"
+              status="$(
+                curl --silent --show-error --location --max-time 10 \
+                  --user-agent 'jshsus-deploy-smoke/1.0' \
+                  --dump-header "$headers_file" \
+                  --output "$response_file" \
+                  --write-out '%{http_code}' \
+                  "$url" || true
+              )"
+
+              if [[ "$status" =~ ^2[0-9]{2}$ ]]; then
+                if [[ "$expected" != 'health' ]] || grep -q '"status":"ok"' "$response_file"; then
+                  printf 'Smoke check passed: label=%s url=%s status=%s\n' "$label" "$url" "$status"
+                  rm -f "$response_file" "$headers_file"
+                  return 0
+                fi
               fi
+
+              server="$(awk -F ': *' 'tolower($1) == "server" { gsub("\\r", "", $2); print $2 }' "$headers_file" | tail -n 1)"
+              cf_ray="$(awk -F ': *' 'tolower($1) == "cf-ray" { gsub("\\r", "", $2); print $2 }' "$headers_file" | tail -n 1)"
+              printf 'Smoke check failed: label=%s url=%s attempt=%s status=%s server=%s cf-ray=%s\n' \
+                "$label" "$url" "$attempt" "${status:-curl-error}" "${server:-unknown}" "${cf_ray:-none}"
               sleep 5
             done
-            return 1
-          }
-          retry_page() {
-            local url="$1"
-            for _ in {1..18}; do
-              if curl --fail --silent --show-error --output /dev/null --max-time 10 "$url"; then
-                return 0
-              fi
-              sleep 5
-            done
+
+            rm -f "$response_file" "$headers_file"
             return 1
           }
 
-          retry_status "${STAGING_WEB_URL%/}/api/health"
-          retry_page "${STAGING_WEB_URL%/}/"
-          if [[ -n "$STAGING_ADMIN_URL" ]]; then
-            retry_page "${STAGING_ADMIN_URL%/}/"
+          command -v curl >/dev/null
+          probe 'web health' "$web_url/api/health" health
+          probe 'web page' "$web_url/" page
+          if [[ -n "$admin_url" ]]; then
+            probe 'admin page' "$admin_url/" page
           fi
+          REMOTE_SMOKE
 
       - name: Roll back a release that failed public verification
         if: failure() && steps.release.outcome == 'success' && steps.public_smoke.outcome == 'failure'
