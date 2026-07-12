@@ -15,7 +15,8 @@
     "baseUrl": ".",
     "paths": {
       "@jshsus/db": ["packages/db/src/index.ts"],
-      "@jshsus/types": ["packages/types/src/index.ts"]
+      "@jshsus/types": ["packages/types/src/index.ts"],
+      "@jshsus/ui": ["packages/ui/src/index.ts"]
     }
   }
 }

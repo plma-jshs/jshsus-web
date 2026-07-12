@@ -23,6 +23,7 @@ import type {
   StudentOption,
   UserRole,
   LostItemSummary,
+  ManagedSchoolEvent,
   NoticeSummary,
   UploadedFileSummary,
 } from '@jshsus/types';
@@ -33,6 +34,8 @@ type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
 };
+
+export type SchoolEventInput = Omit<ManagedSchoolEvent, 'id'>;
 
 async function getCsrfToken() {
   if (csrfTokenCache) {
@@ -185,6 +188,24 @@ export const api = {
     request<{ ok: true; id: number }>(`/api/admin/notices/${id}`, { method: 'PUT', body: input }),
   deleteNotice: (id: number) =>
     request<{ ok: true; id: number }>(`/api/admin/notices/${id}`, { method: 'DELETE' }),
+  schoolEvents: (range: { from: string; to: string }) => {
+    const search = new URLSearchParams(range);
+    return request<ManagedSchoolEvent[]>(`/api/admin/school-events?${search.toString()}`);
+  },
+  createSchoolEvent: (input: SchoolEventInput) =>
+    request<ManagedSchoolEvent>('/api/admin/school-events', {
+      method: 'POST',
+      body: input,
+    }),
+  updateSchoolEvent: (id: number, input: Partial<SchoolEventInput>) =>
+    request<ManagedSchoolEvent>(`/api/admin/school-events/${id}`, {
+      method: 'PUT',
+      body: input,
+    }),
+  deleteSchoolEvent: (id: number) =>
+    request<{ ok: true; id: number }>(`/api/admin/school-events/${id}`, {
+      method: 'DELETE',
+    }),
   boardPosts: () => request<BoardPostSummary[]>('/api/admin/boards/free/posts'),
   boardComments: (postId: number) =>
     request<BoardCommentSummary[]>(`/api/admin/boards/free/posts/${postId}/comments`),

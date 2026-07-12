@@ -4,11 +4,19 @@ import { DeviceCasesModule } from '../device-cases/device-cases.module';
 import { DormModule } from '../dorm/dorm.module';
 import { PetitionsModule } from '../petitions/petitions.module';
 import { PointsModule } from '../points/points.module';
+import { SchoolDataModule } from '../school-data/school-data.module';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 
 @Module({
-  imports: [PointsModule, DeviceCasesModule, DormModule, ActivityRequestsModule, PetitionsModule],
+  imports: [
+    PointsModule,
+    DeviceCasesModule,
+    DormModule,
+    ActivityRequestsModule,
+    PetitionsModule,
+    SchoolDataModule,
+  ],
   controllers: [AdminController],
   providers: [AdminService],
 })

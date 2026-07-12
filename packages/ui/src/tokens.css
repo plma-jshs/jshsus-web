@@ -1,0 +1,155 @@
+@layer jshsus.tokens {
+  :root {
+    color-scheme: light;
+
+    --j-ref-teal-50: #edfafa;
+    --j-ref-teal-100: #d7f1f1;
+    --j-ref-teal-600: #087c82;
+    --j-ref-teal-700: #086d73;
+    --j-ref-teal-800: #075f65;
+    --j-ref-blue-50: #edf6ff;
+    --j-ref-blue-700: #1769aa;
+    --j-ref-slate-25: #f8fafb;
+    --j-ref-slate-50: #f5f8fa;
+    --j-ref-slate-100: #f3f7f8;
+    --j-ref-slate-200: #e3e9ee;
+    --j-ref-slate-300: #cbd5df;
+    --j-ref-slate-500: #667085;
+    --j-ref-slate-700: #344054;
+    --j-ref-slate-900: #172033;
+    --j-ref-green-50: #e9f8f1;
+    --j-ref-green-700: #16805b;
+    --j-ref-amber-50: #fff5e5;
+    --j-ref-amber-800: #ad5f00;
+    --j-ref-red-50: #fff0ef;
+    --j-ref-red-600: #d13c34;
+    --j-ref-red-700: #b82f29;
+
+    --j-color-brand: var(--j-ref-teal-600);
+    --j-color-brand-hover: var(--j-ref-teal-700);
+    --j-color-brand-strong: var(--j-ref-teal-800);
+    --j-color-brand-subtle: var(--j-ref-teal-50);
+    --j-color-brand-subtle-strong: var(--j-ref-teal-100);
+    --j-color-canvas: var(--j-ref-slate-50);
+    --j-color-surface: #ffffff;
+    --j-color-surface-subtle: var(--j-ref-slate-100);
+    --j-color-surface-raised: #ffffff;
+    --j-color-text: var(--j-ref-slate-900);
+    --j-color-text-secondary: var(--j-ref-slate-700);
+    --j-color-text-muted: var(--j-ref-slate-500);
+    --j-color-text-inverse: #ffffff;
+    --j-color-border: var(--j-ref-slate-200);
+    --j-color-border-strong: var(--j-ref-slate-300);
+    --j-color-info: var(--j-ref-blue-700);
+    --j-color-info-subtle: var(--j-ref-blue-50);
+    --j-color-positive: var(--j-ref-green-700);
+    --j-color-positive-subtle: var(--j-ref-green-50);
+    --j-color-warning: var(--j-ref-amber-800);
+    --j-color-warning-subtle: var(--j-ref-amber-50);
+    --j-color-danger: var(--j-ref-red-600);
+    --j-color-danger-hover: var(--j-ref-red-700);
+    --j-color-danger-subtle: var(--j-ref-red-50);
+    --j-color-disabled: var(--j-ref-slate-300);
+    --j-color-scrim: rgb(23 32 51 / 44%);
+
+    --j-font-sans:
+      'Pretendard Variable', Pretendard, 'Noto Sans KR', 'Apple SD Gothic Neo', Inter, system-ui,
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --j-font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+    --j-text-xs: 0.75rem;
+    --j-text-sm: 0.875rem;
+    --j-text-md: 1rem;
+    --j-text-lg: 1.125rem;
+    --j-text-xl: 1.375rem;
+    --j-text-2xl: clamp(1.625rem, 2vw, 2rem);
+    --j-text-3xl: clamp(2rem, 3vw, 2.5rem);
+    --j-leading-tight: 1.3;
+    --j-leading-snug: 1.45;
+    --j-leading-normal: 1.65;
+    --j-weight-regular: 400;
+    --j-weight-medium: 500;
+    --j-weight-semibold: 600;
+    --j-weight-bold: 700;
+
+    --j-space-0: 0;
+    --j-space-1: 0.25rem;
+    --j-space-2: 0.5rem;
+    --j-space-3: 0.75rem;
+    --j-space-4: 1rem;
+    --j-space-5: 1.25rem;
+    --j-space-6: 1.5rem;
+    --j-space-8: 2rem;
+    --j-space-10: 2.5rem;
+    --j-space-12: 3rem;
+    --j-space-16: 4rem;
+
+    --j-radius-sm: 6px;
+    --j-radius-md: 10px;
+    --j-radius-lg: 14px;
+    --j-radius-xl: 20px;
+    --j-radius-pill: 999px;
+
+    --j-shadow-card: 0 1px 2px rgb(16 24 40 / 3%), 0 8px 24px rgb(16 24 40 / 6%);
+    --j-shadow-overlay: 0 18px 48px rgb(16 24 40 / 16%);
+    --j-shadow-focus: 0 0 0 3px rgb(8 124 130 / 22%);
+    --j-focus-ring: 3px solid rgb(8 124 130 / 48%);
+    --j-focus-offset: 2px;
+
+    --j-motion-fast: 120ms ease;
+    --j-motion-base: 180ms ease;
+    --j-layout-public-max: 1440px;
+    --j-layout-admin-max: 1600px;
+    --j-control-public: 44px;
+    --j-control-admin: 40px;
+    --j-layer-header: 30;
+    --j-layer-popover: 50;
+    --j-layer-modal: 70;
+    --j-layer-toast: 90;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  :where(html) {
+    font-family: var(--j-font-sans);
+    color: var(--j-color-text);
+    background: var(--j-color-canvas);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :where(body) {
+    margin: 0;
+  }
+
+  :where(button, input, select, textarea) {
+    font: inherit;
+  }
+
+  :where(a, button, summary, input, select, textarea, [tabindex]):focus-visible {
+    outline: var(--j-focus-ring);
+    outline-offset: var(--j-focus-offset);
+  }
+
+  :where(button, a) {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :where(img, svg, video) {
+    max-width: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

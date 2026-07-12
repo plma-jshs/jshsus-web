@@ -1,16 +1,32 @@
-import { Body, Controller, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { CsrfGuard } from '../../shared/auth/csrf.guard';
 import { RequirePermissions, RequireRoles } from '../../shared/auth/auth.decorators';
 import { PermissionsGuard } from '../../shared/auth/permissions.guard';
 import type { AuthenticatedRequest } from '../../shared/auth/request-auth';
 import { RolesGuard } from '../../shared/auth/roles.guard';
 import { SessionGuard } from '../../shared/auth/session.guard';
+import { SchoolDataService } from '../school-data/school-data.service';
 import { AdminService } from './admin.service';
 
 @Controller('admin')
 @UseGuards(SessionGuard, RolesGuard, PermissionsGuard, CsrfGuard)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly schoolDataService: SchoolDataService,
+  ) {}
 
   @Get('dashboard')
   @RequireRoles('system_admin', 'student_affairs_head', 'teacher')
@@ -22,6 +38,34 @@ export class AdminController {
   @RequirePermissions('audit.read')
   auditLogs() {
     return this.adminService.auditLogs();
+  }
+
+  @Get('school-events')
+  @RequirePermissions('content.manage')
+  schoolEvents(@Query('from') from?: string, @Query('to') to?: string) {
+    return this.schoolDataService.listManagedEvents(from, to, true);
+  }
+
+  @Post('school-events')
+  @RequirePermissions('content.manage')
+  createSchoolEvent(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
+    return this.schoolDataService.createManagedEvent(body, request.authSession?.userId);
+  }
+
+  @Put('school-events/:id')
+  @RequirePermissions('content.manage')
+  updateSchoolEvent(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.schoolDataService.updateManagedEvent(id, body, request.authSession?.userId);
+  }
+
+  @Delete('school-events/:id')
+  @RequirePermissions('content.manage')
+  deleteSchoolEvent(@Param('id', ParseIntPipe) id: number, @Req() request: AuthenticatedRequest) {
+    return this.schoolDataService.deleteManagedEvent(id, request.authSession?.userId);
   }
 
   @Get('students')

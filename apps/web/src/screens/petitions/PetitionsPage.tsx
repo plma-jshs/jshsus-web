@@ -2,20 +2,42 @@ import type { FormEvent } from 'react';
 import { useState } from 'react';
 import type { PetitionSummary } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { FileText, MessageSquareText } from 'lucide-react';
+import { CalendarClock, FileText, MessageSquareText, UsersRound } from 'lucide-react';
+import { PageHeader, Panel, StateMessage, StatusBadge } from '../../components/PortalUi';
 import { createPetition, getPetitions, participatePetition } from '../../lib/api';
 
 const statusLabels: Record<PetitionSummary['status'], string> = {
   open: '진행 중',
   awaiting_answer: '답변 대기',
   answered: '답변 완료',
-  expired: '만료',
-  hidden: '숨김',
+  expired: '마감',
+  hidden: '비공개',
 };
+
+const statusTones: Record<PetitionSummary['status'], 'brand' | 'neutral' | 'positive' | 'warning'> =
+  {
+    open: 'brand',
+    awaiting_answer: 'warning',
+    answered: 'positive',
+    expired: 'neutral',
+    hidden: 'neutral',
+  };
+
+const petitionDateFormatter = new Intl.DateTimeFormat('ko-KR', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
 
 function defaultEndDate() {
   const next = new Date(Date.now() + 20 * 24 * 60 * 60 * 1000);
   return next.toISOString().slice(0, 10);
+}
+
+function todayDate() {
+  const today = new Date();
+  today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+  return today.toISOString().slice(0, 10);
 }
 
 export function PetitionsPage() {
@@ -49,112 +71,199 @@ export function PetitionsPage() {
     });
   };
 
+  const petitions = petitionsQuery.data ?? [];
+
   return (
-    <div className="dashboard">
-      <section className="status-band">
-        <div>
-          <span className="eyebrow">청원·제안</span>
-          <h2>학생 청원</h2>
-          <p>학교생활 개선 제안을 등록하고 기준 인원 도달 후 관리자 답변을 확인합니다.</p>
-        </div>
-        <div className="today-card">
-          <MessageSquareText size={20} />
-          <span>답변 기준</span>
-          <strong>50명 참여</strong>
-        </div>
-      </section>
+    <div className="portal-page">
+      <PageHeader
+        eyebrow="커뮤니티"
+        title="청원·제안"
+        description="학교생활을 더 나은 방향으로 바꿀 의견을 제안하고 함께 참여하세요."
+        stat={{ icon: UsersRound, label: '답변 기준', value: '50명 참여' }}
+      />
 
-      <section className="panel">
-        <div className="panel-heading">
-          <FileText size={19} />
-          <h2>청원 작성</h2>
-        </div>
-        <form className="petition-form" onSubmit={handleSubmit}>
-          <label>
-            <span>제목</span>
-            <input
-              value={form.title}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, title: event.target.value }))
-              }
-              maxLength={255}
-              required
-            />
-          </label>
-          <label>
-            <span>마감일</span>
-            <input
-              type="date"
-              value={form.endsAt}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, endsAt: event.target.value }))
-              }
-              required
-            />
-          </label>
-          <label className="full-field">
-            <span>내용</span>
-            <textarea
-              value={form.content}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, content: event.target.value }))
-              }
-              rows={5}
-              required
-            />
-          </label>
-          <button className="primary-button" type="submit" disabled={createMutation.isPending}>
-            등록
-          </button>
+      <Panel
+        title="새 청원 작성"
+        description="문제 상황과 원하는 개선 방향을 구체적으로 작성해 주세요."
+        icon={FileText}
+      >
+        <form className="portal-form" onSubmit={handleSubmit}>
+          <div className="portal-form__grid">
+            <label className="portal-field" htmlFor="petition-title">
+              <span className="portal-field__label">제목</span>
+              <input
+                id="petition-title"
+                value={form.title}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, title: event.target.value }))
+                }
+                maxLength={255}
+                placeholder="제안의 핵심을 간결하게 적어 주세요."
+                required
+              />
+            </label>
+            <label className="portal-field" htmlFor="petition-end-date">
+              <span className="portal-field__label">참여 마감일</span>
+              <input
+                id="petition-end-date"
+                type="date"
+                min={todayDate()}
+                value={form.endsAt}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, endsAt: event.target.value }))
+                }
+                required
+              />
+            </label>
+            <label className="portal-field portal-field--wide" htmlFor="petition-content">
+              <span className="portal-field__label">제안 내용</span>
+              <textarea
+                id="petition-content"
+                value={form.content}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, content: event.target.value }))
+                }
+                rows={6}
+                placeholder="현재 상황, 개선이 필요한 이유, 제안 내용을 차례로 작성해 주세요."
+                required
+              />
+            </label>
+          </div>
+          <div className="portal-actions">
+            <button
+              className="portal-button portal-button--primary"
+              type="submit"
+              disabled={createMutation.isPending}
+            >
+              <FileText size={16} aria-hidden="true" />
+              {createMutation.isPending ? '등록 중…' : '청원 등록'}
+            </button>
+          </div>
         </form>
-        {createMutation.isError ? <p className="form-error">청원 등록에 실패했습니다.</p> : null}
-      </section>
-
-      <section className="panel">
-        <div className="panel-heading">
-          <MessageSquareText size={19} />
-          <h2>청원 목록</h2>
-        </div>
-        {petitionsQuery.isLoading ? <p className="empty-text">청원을 불러오는 중입니다.</p> : null}
-        {petitionsQuery.isError ? (
-          <p className="empty-text">청원 API 연결을 확인해주세요.</p>
+        {createMutation.isSuccess ? (
+          <p className="action-feedback" role="status">
+            청원이 등록되었습니다.
+          </p>
         ) : null}
-        <div className="list-stack">
-          {(petitionsQuery.data ?? []).map((petition) => (
-            <article className="list-row petition-row expanded" key={petition.id}>
-              <div>
-                <span className="row-meta">
-                  참여 {petition.participantCount}/{petition.threshold}명 ·{' '}
-                  {new Date(petition.endsAt).toLocaleDateString('ko-KR')}
-                </span>
-                <h3>{petition.title}</h3>
-                <p>{petition.content}</p>
-                <progress value={petition.participantCount} max={petition.threshold} />
-                {petition.answer ? (
-                  <div className="answer-box">
-                    <strong>답변</strong>
-                    <p>{petition.answer.content}</p>
+        {createMutation.isError ? (
+          <StateMessage
+            kind="error"
+            title="청원을 등록하지 못했습니다."
+            description="로그인 상태와 입력 내용을 확인해 주세요."
+            compact
+          />
+        ) : null}
+      </Panel>
+
+      <Panel
+        title="청원 목록"
+        description="진행 중인 제안에 참여하거나 답변이 완료된 내용을 확인할 수 있습니다."
+        icon={MessageSquareText}
+        action={<span className="portal-panel__count">총 {petitions.length}건</span>}
+      >
+        {petitionsQuery.isLoading ? (
+          <StateMessage kind="loading" title="청원을 불러오고 있습니다." />
+        ) : null}
+        {petitionsQuery.isError ? (
+          <StateMessage
+            kind="error"
+            title="청원을 불러오지 못했습니다."
+            description="잠시 후 다시 시도해 주세요."
+          />
+        ) : null}
+        {petitionsQuery.isSuccess && petitions.length === 0 ? (
+          <StateMessage
+            kind="empty"
+            title="등록된 청원이 없습니다."
+            description="학교생활을 위한 첫 제안을 남겨 보세요."
+          />
+        ) : null}
+        {petitions.length > 0 ? (
+          <div className="item-list">
+            {petitions.map((petition) => {
+              const isParticipating =
+                participateMutation.isPending && participateMutation.variables === petition.id;
+
+              return (
+                <article className="item-card petition-card" key={petition.id}>
+                  <div className="item-card__main">
+                    <div className="item-card__meta">
+                      <StatusBadge tone={statusTones[petition.status]}>
+                        {statusLabels[petition.status]}
+                      </StatusBadge>
+                      <span>
+                        참여 {petition.participantCount.toLocaleString('ko-KR')}명 /{' '}
+                        {petition.threshold.toLocaleString('ko-KR')}명
+                      </span>
+                      <span aria-hidden="true">·</span>
+                      <span className="date-label">
+                        <CalendarClock size={14} aria-hidden="true" />
+                        <time dateTime={petition.endsAt}>
+                          {petitionDateFormatter.format(new Date(petition.endsAt))} 마감
+                        </time>
+                      </span>
+                    </div>
+                    <h3 className="item-card__title">{petition.title}</h3>
+                    <p className="item-card__content">{petition.content}</p>
+
+                    <div className="progress-block">
+                      <div className="progress-block__label">
+                        <span>참여 현황</span>
+                        <strong>
+                          {Math.min(
+                            100,
+                            Math.round((petition.participantCount / petition.threshold) * 100),
+                          )}
+                          %
+                        </strong>
+                      </div>
+                      <progress
+                        className="progress-bar"
+                        value={petition.participantCount}
+                        max={petition.threshold}
+                        aria-label={`${petition.title} 참여 현황`}
+                      />
+                    </div>
+
+                    {petition.answer ? (
+                      <div className="answer-box">
+                        <div className="answer-box__header">
+                          <strong>공식 답변</strong>
+                          <time dateTime={petition.answer.answeredAt}>
+                            {petitionDateFormatter.format(new Date(petition.answer.answeredAt))}
+                          </time>
+                        </div>
+                        <p>{petition.answer.content}</p>
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
-              </div>
-              <div className="row-actions">
-                <span className="badge subtle">{statusLabels[petition.status]}</span>
-                <button
-                  className="quiet-button"
-                  type="button"
-                  onClick={() => participateMutation.mutate(petition.id)}
-                  disabled={participateMutation.isPending || petition.status !== 'open'}
-                >
-                  참여
-                </button>
-              </div>
-            </article>
-          ))}
-          {petitionsQuery.data?.length === 0 ? (
-            <p className="empty-text">등록된 청원이 없습니다.</p>
-          ) : null}
-        </div>
-      </section>
+                  <div className="item-card__aside">
+                    <button
+                      className="portal-button portal-button--secondary"
+                      type="button"
+                      onClick={() => participateMutation.mutate(petition.id)}
+                      disabled={participateMutation.isPending || petition.status !== 'open'}
+                    >
+                      <UsersRound size={15} aria-hidden="true" />
+                      {isParticipating
+                        ? '처리 중…'
+                        : petition.status === 'open'
+                          ? '청원 참여'
+                          : '참여 마감'}
+                    </button>
+                    {participateMutation.isError &&
+                    participateMutation.variables === petition.id ? (
+                      <span className="action-feedback action-feedback--error" role="alert">
+                        참여를 처리하지 못했습니다.
+                      </span>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : null}
+      </Panel>
     </div>
   );
 }

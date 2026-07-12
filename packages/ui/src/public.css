@@ -1,0 +1,102 @@
+@layer jshsus.patterns {
+  .j-public-shell {
+    min-width: 0;
+    min-height: 100dvh;
+    color: var(--j-color-text);
+    background:
+      radial-gradient(circle at 12% -10%, rgb(8 124 130 / 7%), transparent 28rem),
+      var(--j-color-canvas);
+  }
+
+  .j-public-container {
+    width: min(calc(100% - 2rem), var(--j-layout-public-max));
+    margin-inline: auto;
+  }
+
+  .j-public-panel {
+    min-width: 0;
+    border: 1px solid var(--j-color-border);
+    border-radius: var(--j-radius-lg);
+    background: var(--j-color-surface);
+    box-shadow: var(--j-shadow-card);
+  }
+
+  .j-public-panel-body {
+    padding: clamp(var(--j-space-5), 2vw, var(--j-space-8));
+  }
+
+  .j-public-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--j-space-5);
+  }
+
+  .j-public-dashboard-third {
+    grid-column: span 4;
+  }
+
+  .j-public-dashboard-half {
+    grid-column: span 6;
+  }
+
+  .j-public-section-heading {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--j-space-4);
+    margin: 0 0 var(--j-space-5);
+  }
+
+  .j-public-section-heading > :first-child {
+    margin: 0;
+    font-size: var(--j-text-xl);
+    line-height: var(--j-leading-tight);
+    font-weight: var(--j-weight-bold);
+  }
+
+  .j-public-control {
+    min-height: var(--j-control-public);
+    border-radius: var(--j-radius-md);
+  }
+
+  .j-public-empty {
+    display: grid;
+    min-height: 10rem;
+    place-items: center;
+    padding: var(--j-space-8);
+    color: var(--j-color-text-muted);
+    text-align: center;
+  }
+
+  @media (max-width: 1199px) {
+    .j-public-container {
+      width: min(calc(100% - 3rem), var(--j-layout-public-max));
+    }
+
+    .j-public-dashboard-third,
+    .j-public-dashboard-half {
+      grid-column: span 6;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .j-public-container {
+      width: min(calc(100% - 2rem), var(--j-layout-public-max));
+    }
+
+    .j-public-dashboard-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--j-space-4);
+    }
+
+    .j-public-dashboard-third,
+    .j-public-dashboard-half {
+      grid-column: 1;
+    }
+
+    .j-public-panel-body {
+      padding: var(--j-space-5);
+    }
+  }
+}

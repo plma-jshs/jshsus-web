@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BadgeCheck,
   BedDouble,
+  CalendarDays,
   ClipboardCheck,
   Gauge,
   KeyRound,
@@ -25,6 +26,7 @@ import { DormPage } from './screens/DormPage';
 import { IamPage } from './screens/IamPage';
 import { PointsPage } from './screens/PointsPage';
 import { PetitionsPage } from './screens/PetitionsPage';
+import { SchoolEventsPage } from './screens/SchoolEventsPage';
 import { UsersPage } from './screens/UsersPage';
 import { api } from './lib/api';
 import type { UserRole } from '@jshsus/types';
@@ -192,6 +194,15 @@ function AdminShell() {
             <Newspaper size={18} />
             <span>콘텐츠 운영</span>
           </Link>
+          <Link
+            to="/school-events"
+            className="admin-nav-item"
+            activeProps={{ className: 'admin-nav-item active' }}
+            data-domain="school-events"
+          >
+            <CalendarDays size={18} />
+            <span>학사일정</span>
+          </Link>
           <span className="admin-nav-heading">운영</span>
           <Link
             to="/users"
@@ -290,6 +301,11 @@ const contentRoute = createRoute({
   path: '/content',
   component: ContentPage,
 });
+const schoolEventsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/school-events',
+  component: SchoolEventsPage,
+});
 const usersRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/users',
@@ -310,6 +326,7 @@ const routeTree = rootRoute.addChildren([
   activityRoute,
   petitionsRoute,
   contentRoute,
+  schoolEventsRoute,
   usersRoute,
   iamRoute,
   auditLogsRoute,

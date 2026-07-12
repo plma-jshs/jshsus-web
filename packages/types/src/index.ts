@@ -103,10 +103,52 @@ export type QuickLink = {
   href: string;
 };
 
+export type SchoolMealType = 'breakfast' | 'lunch' | 'dinner' | 'other';
+
+export type SchoolMeal = {
+  id: string;
+  date: string;
+  type: SchoolMealType;
+  typeLabel: string;
+  dishes: string[];
+  calories?: string;
+  source: 'neis';
+};
+
+export type AcademicEvent = {
+  id: string;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  allDay: boolean;
+  description?: string;
+  category: string;
+  isHoliday: boolean;
+  source: 'neis' | 'school';
+};
+
+export type SchoolDataAvailability = 'available' | 'partial' | 'unavailable';
+
+export type SchoolDataMeta = {
+  mealDate: string;
+  scheduleFrom: string;
+  scheduleTo: string;
+  availability: SchoolDataAvailability;
+};
+
+export type ManagedSchoolEvent = Omit<AcademicEvent, 'id' | 'source'> & {
+  id: number;
+  isPublic: boolean;
+};
+
 export type HomeDashboard = {
   notices: DashboardNotice[];
   petitions: DashboardPetition[];
   lostItems: DashboardLostItem[];
+  meals: SchoolMeal[];
+  academicEvents: AcademicEvent[];
+  boardPosts: BoardPostSummary[];
+  schoolData: SchoolDataMeta;
   quickLinks: QuickLink[];
   studentStatus?: StudentStatusSummary;
 };

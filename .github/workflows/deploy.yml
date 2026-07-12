@@ -218,11 +218,14 @@ jobs:
         shell: bash
         env:
           PRODUCTION_ENV_FILE: ${{ secrets.PRODUCTION_ENV_FILE }}
+          NEIS_API_KEY: ${{ secrets.NEIS_API_KEY }}
         run: |
           set -euo pipefail
           umask 077
           test -n "$PRODUCTION_ENV_FILE"
+          test -n "$NEIS_API_KEY"
           printf '%s\n' "$PRODUCTION_ENV_FILE" > .env.production
+          printf 'NEIS_API_KEY=%s\n' "$NEIS_API_KEY" >> .env.production
 
       - name: Authenticate the server to GHCR
         shell: bash

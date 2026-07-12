@@ -70,6 +70,17 @@ const envSchema = z
     S3_PUBLIC_BASE_URL: z.string().default(''),
     S3_ENDPOINT: z.string().default(''),
     S3_FORCE_PATH_STYLE: booleanFromString.default(false),
+    NEIS_API_KEY: z.string().max(256).default(''),
+    NEIS_ATPT_OFCDC_SC_CODE: z
+      .string()
+      .regex(/^[A-Z][0-9]{2}$/)
+      .default('Q10'),
+    NEIS_SD_SCHUL_CODE: z
+      .string()
+      .regex(/^[0-9]{7}$/)
+      .default('7140163'),
+    NEIS_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(500).max(10_000).default(3_500),
+    NEIS_CACHE_TTL_SECONDS: z.coerce.number().int().min(60).max(86_400).default(3_600),
   })
   .superRefine((value, context) => {
     if (value.NODE_ENV === 'production') {
