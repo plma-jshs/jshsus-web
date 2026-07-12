@@ -7,9 +7,12 @@ import type {
   LostItemSummary,
   NoticeSummary,
   PetitionSummary,
+  SchoolDataAvailability,
+  SchoolMeal,
   SessionUser,
   StudentSelfStatus,
   UploadedFileSummary,
+  AcademicEvent,
 } from '@jshsus/types';
 
 let csrfTokenCache: string | null = null;
@@ -86,6 +89,26 @@ async function uploadRequest<T>(path: string, formData: FormData): Promise<T> {
 
 export function getHomeDashboard() {
   return request<HomeDashboard>('/api/home');
+}
+
+export function getSchoolMeals(date: string) {
+  const search = new URLSearchParams({ date });
+  return request<{ date: string; meals: SchoolMeal[]; available: boolean }>(
+    `/api/school-data/meals?${search.toString()}`,
+  );
+}
+
+export function getSchoolCalendar(from: string, to: string) {
+  const search = new URLSearchParams({ from, to });
+  return request<{
+    from: string;
+    to: string;
+    events: AcademicEvent[];
+    available: boolean;
+    availability: SchoolDataAvailability;
+    neisAvailable: boolean;
+    schoolEventsAvailable: boolean;
+  }>(`/api/school-data/calendar?${search.toString()}`);
 }
 
 export function getSession() {

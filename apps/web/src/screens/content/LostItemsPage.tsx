@@ -5,6 +5,7 @@ import type { LostItemSummary } from '@jshsus/types';
 import { Flag, PackagePlus, PackageSearch, Paperclip } from 'lucide-react';
 import { PageHeader, Panel, StateMessage, StatusBadge } from '../../components/PortalUi';
 import { createContentReport, createLostItem, getLostItems, uploadFile } from '../../lib/api';
+import { createKoreanDateFormatter } from '../../lib/date';
 
 const lostItemStatusLabels: Record<LostItemSummary['status'], string> = {
   open: '접수 중',
@@ -23,7 +24,7 @@ const lostItemStatusTones: Record<
   hidden: 'neutral',
 };
 
-const lostItemDateFormatter = new Intl.DateTimeFormat('ko-KR', {
+const lostItemDateFormatter = createKoreanDateFormatter({
   year: 'numeric',
   month: 'long',
   day: 'numeric',

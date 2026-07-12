@@ -12,8 +12,9 @@ import {
   getBoardPosts,
   uploadFile,
 } from '../../lib/api';
+import { createKoreanDateFormatter } from '../../lib/date';
 
-const postDateFormatter = new Intl.DateTimeFormat('ko-KR', {
+const postDateFormatter = createKoreanDateFormatter({
   month: 'long',
   day: 'numeric',
   hour: '2-digit',

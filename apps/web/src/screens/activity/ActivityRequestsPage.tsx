@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ClipboardCheck, FilePlus2, MapPin } from 'lucide-react';
 import { PageHeader, Panel, StateMessage, StatusBadge } from '../../components/PortalUi';
 import { cancelActivityRequest, createActivityRequest, getMyActivityRequests } from '../../lib/api';
+import { createKoreanDateFormatter } from '../../lib/date';
 
 const statusLabels: Record<ActivityRequestStatus, string> = {
   draft: '임시저장',
@@ -27,7 +28,7 @@ const statusTones: Record<
   completed: 'positive',
 };
 
-const activityDateFormatter = new Intl.DateTimeFormat('ko-KR', {
+const activityDateFormatter = createKoreanDateFormatter({
   month: 'long',
   day: 'numeric',
   hour: '2-digit',

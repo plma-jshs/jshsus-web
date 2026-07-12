@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { BadgeCheck, BedDouble, ClipboardCheck, Smartphone, UserRound } from 'lucide-react';
 import { PageHeader, Panel, StateMessage, StatusBadge } from '../../components/PortalUi';
 import { getMyStatus } from '../../lib/api';
+import { createKoreanDateFormatter } from '../../lib/date';
 
 const activityStatusLabels: Record<ActivityRequestStatus, string> = {
   draft: '임시저장',
@@ -25,7 +26,7 @@ const activityStatusTones: Record<
   completed: 'positive',
 };
 
-const statusDateFormatter = new Intl.DateTimeFormat('ko-KR', {
+const statusDateFormatter = createKoreanDateFormatter({
   month: 'long',
   day: 'numeric',
   hour: '2-digit',

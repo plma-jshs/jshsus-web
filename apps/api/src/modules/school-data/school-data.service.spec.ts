@@ -1,4 +1,4 @@
-import { BadRequestException, Logger } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DatabaseService } from '../database/database.service';
 import type { RedisService } from '../redis/redis.service';
@@ -20,11 +20,6 @@ function jsonResponse(payload: unknown): Response {
 }
 
 const fixedNow = new Date('2026-07-12T03:00:00.000Z');
-
-function shiftDate(value: string, days: number): string {
-  const [year, month, day] = value.split('-').map(Number);
-  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
-}
 
 function scheduleRow(index: number) {
   return {
@@ -65,6 +60,7 @@ describe('SchoolDataService', () => {
 
     const first = await service.getMeals('2026-07-12');
     const second = await service.getMeals('2026-07-12');
+    const adjacentDate = await service.getMeals('2026-07-13');
 
     expect(first).toEqual({
       date: '2026-07-12',
@@ -82,10 +78,13 @@ describe('SchoolDataService', () => {
       ],
     });
     expect(second).toEqual(first);
+    expect(adjacentDate).toEqual({ date: '2026-07-13', meals: [], available: true });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const requestedUrl = String(fetchMock.mock.calls[0]?.[0]);
     expect(requestedUrl).toContain('ATPT_OFCDC_SC_CODE=Q10');
     expect(requestedUrl).toContain('SD_SCHUL_CODE=7140163');
+    expect(requestedUrl).toContain('MLSV_FROM_YMD=20260601');
+    expect(requestedUrl).toContain('MLSV_TO_YMD=20260831');
   });
 
   it('isolates a NEIS outage from the public response', async () => {
@@ -126,26 +125,24 @@ describe('SchoolDataService', () => {
   });
 
   it('combines validated NEIS and managed school events', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        jsonResponse({
-          SchoolSchedule: [
-            { head: [{ list_total_count: 1 }, { RESULT: { CODE: 'INFO-000' } }] },
-            {
-              row: [
-                {
-                  AA_YMD: '20260720',
-                  EVENT_NM: '방학식',
-                  EVENT_CNTNT: '',
-                  SBTR_DD_SC_NM: '해당없음',
-                },
-              ],
-            },
-          ],
-        }),
-      ),
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        SchoolSchedule: [
+          { head: [{ list_total_count: 1 }, { RESULT: { CODE: 'INFO-000' } }] },
+          {
+            row: [
+              {
+                AA_YMD: '20260720',
+                EVENT_NM: '방학식',
+                EVENT_CNTNT: '',
+                SBTR_DD_SC_NM: '해당없음',
+              },
+            ],
+          },
+        ],
+      }),
     );
+    vi.stubGlobal('fetch', fetchMock);
     const service = createService();
     vi.spyOn(service, 'listManagedEvents').mockResolvedValue([
       {
@@ -166,6 +163,9 @@ describe('SchoolDataService', () => {
     expect(result.schoolEventsAvailable).toBe(true);
     expect(result.events).toHaveLength(2);
     expect(result.events.map((event) => event.source)).toEqual(['neis', 'school']);
+    const requestedUrl = String(fetchMock.mock.calls[0]?.[0]);
+    expect(requestedUrl).toContain('AA_FROM_YMD=20260601');
+    expect(requestedUrl).toContain('AA_TO_YMD=20260831');
   });
 
   it('paginates NEIS schedules and verifies the complete row count', async () => {
@@ -220,32 +220,30 @@ describe('SchoolDataService', () => {
   });
 
   it('keeps the in-process LRU cache bounded across distinct valid dates', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi
-        .fn()
-        .mockImplementation(() => Promise.resolve(jsonResponse({ RESULT: { CODE: 'INFO-200' } }))),
-    );
     const service = createService();
+    const internal = service as unknown as {
+      memoryCache: Map<string, unknown>;
+      remember: (key: string, value: unknown) => void;
+    };
 
-    for (let offset = -70; offset < 70; offset += 1) {
-      await service.getMeals(shiftDate('2026-07-12', offset), fixedNow);
+    for (let index = 0; index < 140; index += 1) {
+      internal.remember(`test:${index}`, []);
     }
 
-    const internal = service as unknown as { memoryCache: Map<string, unknown> };
     expect(internal.memoryCache.size).toBe(128);
   });
 
   it('keeps the failure backoff map bounded across distinct failed requests', async () => {
-    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network unavailable')));
     const service = createService();
+    const internal = service as unknown as {
+      failureUntil: Map<string, unknown>;
+      recordFailure: (key: string, until: number) => void;
+    };
 
-    for (let offset = -70; offset < 70; offset += 1) {
-      await service.getMeals(shiftDate('2026-07-12', offset), fixedNow);
+    for (let index = 0; index < 140; index += 1) {
+      internal.recordFailure(`test:${index}`, Date.now() + 60_000);
     }
 
-    const internal = service as unknown as { failureUntil: Map<string, unknown> };
     expect(internal.failureUntil.size).toBe(128);
   });
 });

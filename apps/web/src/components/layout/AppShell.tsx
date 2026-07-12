@@ -16,65 +16,57 @@ import { getSession, logout } from '../../lib/api';
 
 function DesktopNavigation() {
   return (
-    <nav
-      className="portal-nav"
-      aria-label="주요 메뉴"
-      onClick={(event) => {
-        if ((event.target as Element).closest('a')) {
-          (event.target as Element).closest('details')?.removeAttribute('open');
-        }
-      }}
-    >
-      <details className="nav-menu">
-        <summary>
+    <nav className="portal-nav" aria-label="주요 메뉴">
+      <div className="portal-nav__triggers">
+        <button type="button">
           소식·일정 <ChevronDown aria-hidden="true" size={15} />
-        </summary>
-        <div className="nav-menu__panel">
-          <Link to="/notices">공지사항</Link>
-          <a href="/#academic-schedule">학사일정</a>
-        </div>
-      </details>
-
-      <details className="nav-menu">
-        <summary>
+        </button>
+        <button type="button">
           학교생활 <ChevronDown aria-hidden="true" size={15} />
-        </summary>
-        <div className="nav-menu__panel">
-          <Link to="/activity-requests">탐구활동서</Link>
-          <Link to="/my-status">상벌점·생활정보</Link>
-          <Link to="/lost-items">분실물</Link>
-        </div>
-      </details>
-
-      <details className="nav-menu">
-        <summary>
+        </button>
+        <button type="button">
           커뮤니티 <ChevronDown aria-hidden="true" size={15} />
-        </summary>
-        <div className="nav-menu__panel">
-          <Link to="/boards/free">자유게시판</Link>
-          <Link to="/petitions">청원·제안</Link>
-        </div>
-      </details>
-
-      <details className="nav-menu">
-        <summary>
+        </button>
+        <button type="button">
           방송·도구 <ChevronDown aria-hidden="true" size={15} />
-        </summary>
-        <div className="nav-menu__panel nav-menu__panel--wide">
-          <a href="https://jshsus.kr/jbs" target="_blank" rel="noreferrer">
-            JBS
-          </a>
-          <a href="https://plma.jshsus.kr" target="_blank" rel="noreferrer">
-            기상곡 신청
-          </a>
-          <a href="https://jshsus.kr/bytes" target="_blank" rel="noreferrer">
-            세특 바이트 계산기
-          </a>
-          <a href="https://admin.jshsus.kr" target="_blank" rel="noreferrer">
-            관리자
-          </a>
+        </button>
+      </div>
+
+      <div className="mega-menu" aria-label="전체 서비스 메뉴">
+        <div className="mega-menu__inner">
+          <section>
+            <h2>소식·일정</h2>
+            <Link to="/notices">공지사항</Link>
+            <a href="/#academic-schedule">학사일정</a>
+          </section>
+          <section>
+            <h2>학교생활</h2>
+            <Link to="/activity-requests">탐구활동서</Link>
+            <Link to="/my-status">상벌점·생활정보</Link>
+            <Link to="/lost-items">분실물</Link>
+          </section>
+          <section>
+            <h2>커뮤니티</h2>
+            <Link to="/boards/free">자유게시판</Link>
+            <Link to="/petitions">청원·제안</Link>
+          </section>
+          <section>
+            <h2>방송·도구</h2>
+            <a href="https://jshsus.kr/jbs" target="_blank" rel="noreferrer">
+              JBS
+            </a>
+            <a href="https://plma.jshsus.kr" target="_blank" rel="noreferrer">
+              기상곡 신청
+            </a>
+            <a href="https://jshsus.kr/bytes" target="_blank" rel="noreferrer">
+              세특 바이트 계산기
+            </a>
+            <a href="https://admin.jshsus.kr" target="_blank" rel="noreferrer">
+              관리자
+            </a>
+          </section>
         </div>
-      </details>
+      </div>
     </nav>
   );
 }
@@ -152,8 +144,8 @@ export function AppShell() {
       <header className="portal-header">
         <div className="portal-header__inner">
           <Link to="/" className="portal-brand" aria-label="과구리 홈">
+            <img src="/assets/lIcon.png" alt="" width="32" height="32" />
             <strong>과구리</strong>
-            <span>전남과학고등학교 학생맞춤 정보포털</span>
           </Link>
 
           <DesktopNavigation />
@@ -234,17 +226,13 @@ export function AppShell() {
       </nav>
 
       <footer className="portal-footer">
-        <div>
-          <strong>과구리</strong>
-          <span>전남과학고등학교 학생맞춤 정보포털</span>
-        </div>
-        <p>© 전남과학고등학교. 학생 생활에 필요한 정보를 한곳에서 제공합니다.</p>
-        <div className="portal-footer__links" aria-label="관련 메뉴">
-          <Link to="/notices">공지사항</Link>
-          <Link to="/lost-items">분실물</Link>
-          <a href="https://admin.jshsus.kr" target="_blank" rel="noreferrer">
-            관리자
+        <div className="portal-footer__inner">
+          <span className="portal-footer__brand">과구리</span>
+          <a href="https://jshsus.kr/contents/login/login_policy.html">
+            호스팅서비스사업자: 아이디비아이 | 사업자 등록번호: 332-44-01176 | 사업자 대표: 강재환
           </a>
+          <a href="https://jshsus.kr/contents/login/policy.html">개인정보처리방침</a>
+          <span>Copyright © 2026 IT부 All Rights Reserved.</span>
         </div>
       </footer>
     </div>

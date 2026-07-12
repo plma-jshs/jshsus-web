@@ -2,8 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Megaphone, Pin } from 'lucide-react';
 import { PageHeader, Panel, StateMessage, StatusBadge } from '../../components/PortalUi';
 import { getNotices } from '../../lib/api';
+import { createKoreanDateFormatter } from '../../lib/date';
 
-const noticeDateFormatter = new Intl.DateTimeFormat('ko-KR', {
+const noticeDateFormatter = createKoreanDateFormatter({
   year: 'numeric',
   month: 'long',
   day: 'numeric',

@@ -21,7 +21,7 @@ const PUBLIC_PAST_DAYS = 366;
 const PUBLIC_FUTURE_DAYS = 366;
 const NEIS_PAGE_SIZE = 100;
 const MAX_NEIS_CALENDAR_ROWS = 500;
-const MAX_NEIS_MEAL_ROWS = 10;
+const MAX_NEIS_MEAL_ROWS = 300;
 const MAX_MEMORY_CACHE_ENTRIES = 128;
 const MAX_FAILURE_ENTRIES = 128;
 const MAX_IN_FLIGHT_LOADS = 16;
@@ -239,6 +239,18 @@ function monthRange(date: string): { from: string; to: string } {
   };
 }
 
+function adjacentMonthRange(from: string, to = from): { from: string; to: string } {
+  const [fromYear, fromMonth] = from.split('-').map(Number);
+  const [toYear, toMonth] = to.split('-').map(Number);
+  const previousMonth = new Date(Date.UTC(fromYear, fromMonth - 2, 1));
+  const nextMonthLastDay = new Date(Date.UTC(toYear, toMonth + 1, 0));
+
+  return {
+    from: `${previousMonth.getUTCFullYear()}-${String(previousMonth.getUTCMonth() + 1).padStart(2, '0')}-01`,
+    to: nextMonthLastDay.toISOString().slice(0, 10),
+  };
+}
+
 function toCompactDate(date: string): string {
   return date.replaceAll('-', '');
 }
@@ -326,13 +338,18 @@ export class SchoolDataService {
 
     const date = parsed.data;
     assertPublicDateWindow(date, now);
+    const cacheRange = adjacentMonthRange(date);
     const result = await this.cachedLoad<SchoolMeal[]>(
-      `neis:meals:${env.NEIS_ATPT_OFCDC_SC_CODE}:${env.NEIS_SD_SCHUL_CODE}:${date}`,
-      () => this.loadNeisMeals(date),
+      `neis:meals:${env.NEIS_ATPT_OFCDC_SC_CODE}:${env.NEIS_SD_SCHUL_CODE}:${cacheRange.from}:${cacheRange.to}`,
+      () => this.loadNeisMeals(cacheRange.from, cacheRange.to),
       (value): value is SchoolMeal[] => schoolMealCacheSchema.safeParse(value).success,
       [],
     );
-    return { date, meals: result.value, available: result.available };
+    return {
+      date,
+      meals: result.value.filter((meal) => meal.date === date),
+      available: result.available,
+    };
   }
 
   async getCalendar(
@@ -360,17 +377,23 @@ export class SchoolDataService {
 
     const { from, to } = parsed.data;
     assertPublicCalendarWindow(from, to, now);
+    const cacheRange = adjacentMonthRange(from, to);
     const [neis, custom] = await Promise.all([
       this.cachedLoad<AcademicEvent[]>(
-        `neis:calendar:${env.NEIS_ATPT_OFCDC_SC_CODE}:${env.NEIS_SD_SCHUL_CODE}:${from}:${to}`,
-        () => this.loadNeisCalendar(from, to),
+        `neis:calendar:${env.NEIS_ATPT_OFCDC_SC_CODE}:${env.NEIS_SD_SCHUL_CODE}:${cacheRange.from}:${cacheRange.to}`,
+        () => this.loadNeisCalendar(cacheRange.from, cacheRange.to),
         (value): value is AcademicEvent[] => academicEventCacheSchema.safeParse(value).success,
         [],
       ),
       this.safeListManagedEvents(from, to, false),
     ]);
 
-    const events = [...neis.value, ...custom.value].sort((left, right) =>
+    const visibleNeisEvents = neis.value.filter(
+      (event) =>
+        formatKoreanDate(new Date(event.startsAt)) <= to &&
+        formatKoreanDate(new Date(event.endsAt)) >= from,
+    );
+    const events = [...visibleNeisEvents, ...custom.value].sort((left, right) =>
       left.startsAt.localeCompare(right.startsAt),
     );
     return {
@@ -517,12 +540,12 @@ export class SchoolDataService {
     }
   }
 
-  private async loadNeisMeals(date: string): Promise<SchoolMeal[]> {
+  private async loadNeisMeals(from: string, to: string): Promise<SchoolMeal[]> {
     const rows = await this.requestAllNeisRows(
       'mealServiceDietInfo',
       {
-        MLSV_FROM_YMD: toCompactDate(date),
-        MLSV_TO_YMD: toCompactDate(date),
+        MLSV_FROM_YMD: toCompactDate(from),
+        MLSV_TO_YMD: toCompactDate(to),
       },
       neisMealRowSchema,
       MAX_NEIS_MEAL_ROWS,

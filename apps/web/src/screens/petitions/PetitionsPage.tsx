@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarClock, FileText, MessageSquareText, UsersRound } from 'lucide-react';
 import { PageHeader, Panel, StateMessage, StatusBadge } from '../../components/PortalUi';
 import { createPetition, getPetitions, participatePetition } from '../../lib/api';
+import { createKoreanDateFormatter } from '../../lib/date';
 
 const statusLabels: Record<PetitionSummary['status'], string> = {
   open: '진행 중',
@@ -23,7 +24,7 @@ const statusTones: Record<PetitionSummary['status'], 'brand' | 'neutral' | 'posi
     hidden: 'neutral',
   };
 
-const petitionDateFormatter = new Intl.DateTimeFormat('ko-KR', {
+const petitionDateFormatter = createKoreanDateFormatter({
   year: 'numeric',
   month: 'long',
   day: 'numeric',
