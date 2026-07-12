@@ -294,7 +294,10 @@ function MealCard({
     enabled: !usesInitialData,
     staleTime: 10 * 60 * 1000,
   });
-  const meals = usesInitialData ? initialMeals : (mealsQuery.data?.meals ?? []);
+  const meals = useMemo(
+    () => (usesInitialData ? initialMeals : (mealsQuery.data?.meals ?? [])),
+    [initialMeals, mealsQuery.data?.meals, usesInitialData],
+  );
   const mealsByType = useMemo(() => new Map(meals.map((meal) => [meal.type, meal])), [meals]);
   const sharedStatus = mealsQuery.isFetching
     ? '식단을 불러오는 중입니다.'
@@ -409,7 +412,10 @@ function CalendarCard({
     enabled: !usesInitialData,
     staleTime: 10 * 60 * 1000,
   });
-  const events = usesInitialData ? initialEvents : (calendarQuery.data?.events ?? []);
+  const events = useMemo(
+    () => (usesInitialData ? initialEvents : (calendarQuery.data?.events ?? [])),
+    [calendarQuery.data?.events, initialEvents, usesInitialData],
+  );
   const today = getKoreaDateParts();
   const days = buildCalendarDays(visibleMonth.year, visibleMonth.month);
   const eventsByDay = useMemo(() => {
