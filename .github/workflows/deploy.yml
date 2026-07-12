@@ -263,7 +263,7 @@ jobs:
             "$DEPLOY_USER@$DEPLOY_HOST" \
             "'$DEPLOY_PATH/deploy.sh' '${{ github.sha }}' '${{ github.repository_owner }}'"
 
-      - name: Verify public staging endpoints
+      - name: Verify staging content or Cloudflare edge reachability
         id: public_smoke
         if: vars.STAGING_WEB_URL != ''
         shell: bash
@@ -315,6 +315,12 @@ jobs:
 
               server="$(awk -F ': *' 'tolower($1) == "server" { gsub("\\r", "", $2); print $2 }' "$headers_file" | tail -n 1)"
               cf_ray="$(awk -F ': *' 'tolower($1) == "cf-ray" { gsub("\\r", "", $2); print $2 }' "$headers_file" | tail -n 1)"
+              if [[ "$status" == '403' && "${server,,}" == 'cloudflare' && -n "$cf_ray" ]]; then
+                printf 'Smoke check advisory: label=%s url=%s status=403 server=cloudflare cf-ray=%s result=edge-reachable-automation-blocked\n' \
+                  "$label" "$url" "$cf_ray"
+                rm -f "$response_file" "$headers_file"
+                return 0
+              fi
               printf 'Smoke check failed: label=%s url=%s attempt=%s status=%s server=%s cf-ray=%s\n' \
                 "$label" "$url" "$attempt" "${status:-curl-error}" "${server:-unknown}" "${cf_ray:-none}"
               sleep 5
