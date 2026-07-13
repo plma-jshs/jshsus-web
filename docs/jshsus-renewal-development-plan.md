@@ -154,16 +154,16 @@
 
 첨부 코드 안에서는 AWS 또는 S3 직접 사용 흔적이 확인되지 않았다. 다만 리뉴얼 서비스에는 분실물 사진, 게시판 첨부파일, 공지 첨부, 탐활서 출력/첨부 등 파일 업로드가 필요하므로 S3 호환 스토리지를 기준으로 환경변수를 미리 설계한다.
 
-| 환경변수                       | 용도                      | 비고                 |
-| ------------------------------ | ------------------------- | -------------------- |
-| `AWS_REGION`                   | S3 region                 | 예: `ap-northeast-2` |
-| `AWS_ACCESS_KEY_ID`            | S3 access key             | secret               |
-| `AWS_SECRET_ACCESS_KEY`        | S3 secret key             | secret               |
-| `S3_BUCKET`                    | 업로드 버킷명             | 운영/개발 분리       |
-| `S3_PUBLIC_BASE_URL`           | 공개 파일 base URL        | CDN 사용 가능        |
-| `S3_ENDPOINT`                  | S3 호환 스토리지 endpoint | AWS S3면 선택        |
-| `S3_FORCE_PATH_STYLE`          | path-style 필요 여부      | MinIO 등             |
-| `S3_PRESIGNED_URL_TTL_SECONDS` | presigned URL TTL         | 예: `300`            |
+| 환경변수                       | 용도                             | 비고                        |
+| ------------------------------ | -------------------------------- | --------------------------- |
+| `AWS_REGION`                   | S3 region                        | 예: `ap-northeast-2`        |
+| `AWS_ACCESS_KEY_ID`            | S3 access key                    | secret                      |
+| `AWS_SECRET_ACCESS_KEY`        | S3 secret key                    | secret                      |
+| `S3_BUCKET`                    | 업로드 버킷명                    | 운영/개발 분리              |
+| `S3_PUBLIC_BASE_URL`           | 기존 인라인 이미지 URL 허용 기준 | 신규 파일은 API 프록시 사용 |
+| `S3_ENDPOINT`                  | S3 호환 스토리지 endpoint        | AWS S3면 선택               |
+| `S3_FORCE_PATH_STYLE`          | path-style 필요 여부             | MinIO 등                    |
+| `S3_PRESIGNED_URL_TTL_SECONDS` | presigned URL TTL                | 예: `300`                   |
 
 ### 3.3 `.env.example` 초안
 
@@ -223,6 +223,7 @@ AWS_REGION=ap-northeast-2
 AWS_ACCESS_KEY_ID=USE_EXISTING_SECRET
 AWS_SECRET_ACCESS_KEY=USE_EXISTING_SECRET
 S3_BUCKET=jshsus-dev
+# 기존 문서에 직접 CDN URL이 저장된 경우에만 설정합니다.
 S3_PUBLIC_BASE_URL=https://cdn.jshsus.kr
 S3_ENDPOINT=
 S3_FORCE_PATH_STYLE=false

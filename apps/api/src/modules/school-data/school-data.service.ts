@@ -4,6 +4,7 @@ import type {
   AcademicEvent,
   ManagedSchoolEvent,
   SchoolDataAvailability,
+  SchoolDataSourceAvailability,
   SchoolMeal,
   SchoolMealType,
 } from '@jshsus/types';
@@ -150,6 +151,10 @@ export type HomeSchoolData = {
   meals: SchoolMeal[];
   academicEvents: AcademicEvent[];
   availability: SchoolDataAvailability;
+  mealAvailability: SchoolDataSourceAvailability;
+  calendarAvailability: SchoolDataAvailability;
+  neisCalendarAvailability: SchoolDataSourceAvailability;
+  schoolEventsAvailability: SchoolDataSourceAvailability;
 };
 
 function startOfKoreanDay(value: string): Date | null {
@@ -321,6 +326,10 @@ export class SchoolDataService {
         calendar.neisAvailable,
         calendar.schoolEventsAvailable,
       ]),
+      mealAvailability: meals.available ? 'available' : 'unavailable',
+      calendarAvailability: calendar.availability,
+      neisCalendarAvailability: calendar.neisAvailable ? 'available' : 'unavailable',
+      schoolEventsAvailability: calendar.schoolEventsAvailable ? 'available' : 'unavailable',
     };
   }
 
@@ -606,7 +615,10 @@ export class SchoolDataService {
     if (env.NEIS_API_KEY) parameters.set('KEY', env.NEIS_API_KEY);
 
     const response = await fetch(`${NEIS_BASE_URL}/${endpoint}?${parameters.toString()}`, {
-      headers: { Accept: 'application/json' },
+      // The NEIS gateway returns HTTP 500 for `Accept: application/json` even
+      // though Type=json is valid. Its default media negotiation (`*/*`)
+      // returns the requested JSON payload reliably.
+      headers: { Accept: '*/*' },
       signal: AbortSignal.timeout(env.NEIS_REQUEST_TIMEOUT_MS),
     });
     if (!response.ok) throw new Error(`NEIS returned HTTP ${response.status}.`);

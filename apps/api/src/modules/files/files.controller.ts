@@ -70,16 +70,29 @@ export class FilesController {
   async download(@Param('id') id: string, @Req() request: Request, @Res() response: Response) {
     const numericId = Number(id);
     const session = await this.authService.getSessionFromRequest(request);
-    const file = await this.filesService.getAccessibleById(numericId, session);
-
-    if (file.visibility === 'public' && env.S3_PUBLIC_BASE_URL) {
-      response.redirect(file.url);
-      return;
-    }
+    await this.filesService.getAccessibleById(numericId, session);
 
     const stored = await this.filesService.getStoredObject(numericId);
     response.type(stored.mimeType);
     response.attachment(stored.originalName);
+
+    if (stored.path) {
+      response.sendFile(stored.path);
+      return;
+    }
+
+    response.send(stored.bytes);
+  }
+
+  @Get(':id/content')
+  async content(@Param('id') id: string, @Req() request: Request, @Res() response: Response) {
+    const numericId = Number(id);
+    const session = await this.authService.getSessionFromRequest(request);
+    await this.filesService.getAccessibleById(numericId, session);
+
+    const stored = await this.filesService.getStoredObject(numericId);
+    response.type(stored.mimeType);
+    response.setHeader('Content-Disposition', 'inline');
 
     if (stored.path) {
       response.sendFile(stored.path);

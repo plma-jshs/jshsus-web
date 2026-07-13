@@ -93,6 +93,7 @@ export class AuthService {
     username: string;
     password: string;
     role?: UserRole;
+    ttlSeconds?: number;
   }): Promise<{ token: string; session: AuthSession; csrfToken: string }> {
     if (!env.ALLOW_DEV_AUTH || env.NODE_ENV === 'production') {
       throw new UnauthorizedException('Development login is disabled.');
@@ -104,6 +105,7 @@ export class AuthService {
 
     const token = randomUUID();
     const role = input.role ?? 'system_admin';
+    const ttlSeconds = input.ttlSeconds ?? env.IAM_TOKEN_TTL_SECONDS;
     const now = Date.now();
     const session: AuthSession = {
       iamId: 0,
@@ -111,12 +113,12 @@ export class AuthService {
       plmaId: 0,
       roles: [role],
       permissions: [role],
-      expiresAt: now + env.IAM_TOKEN_TTL_SECONDS * 1000,
+      expiresAt: now + ttlSeconds * 1000,
       name: input.username || 'local-admin',
       isLogined: true,
     };
 
-    await this.redis.setJson(`iam_token:${token}`, session, env.IAM_TOKEN_TTL_SECONDS);
+    await this.redis.setJson(`iam_token:${token}`, session, ttlSeconds);
 
     return {
       token,
@@ -129,9 +131,14 @@ export class AuthService {
     username: string;
     password: string;
     devRole?: UserRole;
+    remember?: boolean;
   }): Promise<{ token: string; session: AuthSession; csrfToken: string }> {
+    const ttlSeconds = input.remember
+      ? env.IAM_REMEMBER_TOKEN_TTL_SECONDS
+      : env.IAM_TOKEN_TTL_SECONDS;
+
     try {
-      return await this.createPasswordSession(input.username, input.password);
+      return await this.createPasswordSession(input.username, input.password, ttlSeconds);
     } catch (error) {
       if (
         env.ALLOW_DEV_AUTH &&
@@ -142,6 +149,7 @@ export class AuthService {
           username: input.username,
           password: input.password,
           role: input.devRole,
+          ttlSeconds,
         });
       }
 
@@ -156,6 +164,7 @@ export class AuthService {
   async createPasswordSession(
     username: string,
     password: string,
+    ttlSeconds = env.IAM_TOKEN_TTL_SECONDS,
   ): Promise<{ token: string; session: AuthSession; csrfToken: string }> {
     const account = await this.findPasswordAccount(username);
 
@@ -184,19 +193,15 @@ export class AuthService {
       plmaId: account.legacyPlmaId ?? 0,
       roles: grants.roles,
       permissions: grants.permissions,
-      expiresAt: now + env.IAM_TOKEN_TTL_SECONDS * 1000,
+      expiresAt: now + ttlSeconds * 1000,
       stuid: account.studentNo,
       name: account.name,
       jshsus: account.legacyJshsusId ?? String(account.studentNo),
       isLogined: true,
     };
 
-    await this.redis.setJson(`iam_token:${token}`, session, env.IAM_TOKEN_TTL_SECONDS);
-    await this.redis.addToSet(
-      `iam_user_sessions:${account.userId}`,
-      token,
-      env.IAM_TOKEN_TTL_SECONDS,
-    );
+    await this.redis.setJson(`iam_token:${token}`, session, ttlSeconds);
+    await this.redis.addToSet(`iam_user_sessions:${account.userId}`, token, ttlSeconds);
     await Promise.all([
       this.database.db
         .update(schema.users)

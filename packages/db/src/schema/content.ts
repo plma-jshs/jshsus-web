@@ -50,6 +50,8 @@ export const notices = mysqlTable(
   }),
 );
 
+export const postStatusEnum = mysqlEnum('post_status', ['draft', 'published']);
+
 export const posts = mysqlTable(
   'posts',
   {
@@ -60,6 +62,8 @@ export const posts = mysqlTable(
     authorId: int('author_id').references(() => users.id),
     title: varchar('title', { length: 255 }).notNull(),
     content: longtext('content').notNull(),
+    contentJson: json('content_json'),
+    status: postStatusEnum.default('published'),
     isAnonymous: boolean('is_anonymous').notNull().default(false),
     isHidden: boolean('is_hidden').notNull().default(false),
     viewCount: int('view_count').notNull().default(0),
@@ -67,6 +71,11 @@ export const posts = mysqlTable(
   },
   (table) => ({
     boardCreatedIdx: index('posts_board_created_idx').on(table.boardId, table.createdAt),
+    boardStatusCreatedIdx: index('posts_board_status_created_idx').on(
+      table.boardId,
+      table.status,
+      table.createdAt,
+    ),
   }),
 );
 
@@ -141,6 +150,7 @@ export const petitions = mysqlTable(
     authorId: int('author_id').references(() => users.id),
     title: varchar('title', { length: 255 }).notNull(),
     content: longtext('content').notNull(),
+    contentJson: json('content_json'),
     status: petitionStatusEnum.notNull().default('open'),
     startsAt: datetime('starts_at', { mode: 'date', fsp: 3 }).notNull(),
     endsAt: datetime('ends_at', { mode: 'date', fsp: 3 }).notNull(),

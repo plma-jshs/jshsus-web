@@ -1,0 +1,353 @@
+@media (max-width: 1199px) {
+  .portal-header__inner,
+  .main-panel {
+    width: min(calc(100% - 3rem), 1280px);
+  }
+  .home-primary-grid {
+    grid-template-areas: 'notices meals' 'schedule schedule';
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .schedule-card {
+    min-height: auto !important;
+  }
+  .schedule-card .mini-calendar {
+    max-width: 620px;
+    margin-inline: auto;
+  }
+  .portal-footer__inner {
+    width: min(calc(100% - 3rem), 1280px);
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1279px) {
+  .portal-header__inner {
+    --portal-brand-width: 130px;
+    --portal-header-gap: 20px;
+    --portal-nav-column: 165px;
+  }
+
+  .home-primary-grid {
+    grid-template-columns: 0.9fr 1.3fr 1fr;
+  }
+}
+
+@media (max-width: 899px) {
+  .home-primary-grid {
+    grid-template-areas: 'notices' 'meals' 'schedule';
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1199px) {
+  .portal-nav,
+  .header-user-link span,
+  .header-logout-button span {
+    display: none;
+  }
+  .portal-header__inner {
+    min-height: 66px;
+  }
+  .mobile-menu {
+    display: block;
+  }
+  .mobile-menu__trigger {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border: 1px solid var(--j-color-border);
+    border-radius: var(--j-radius-md);
+    background: var(--j-color-surface);
+  }
+  .mobile-menu__scrim {
+    position: fixed;
+    z-index: var(--j-layer-popover);
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: var(--j-color-scrim);
+  }
+  .mobile-menu__panel {
+    position: fixed;
+    z-index: calc(var(--j-layer-popover) + 1);
+    top: 0;
+    right: 0;
+    display: grid;
+    width: min(340px, 88vw);
+    height: 100dvh;
+    padding: var(--j-space-3) var(--j-space-4) calc(var(--j-space-6) + env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-left: 1px solid var(--j-color-border);
+    background: var(--j-color-surface);
+    box-shadow: var(--j-shadow-overlay);
+    align-content: start;
+  }
+  .mobile-menu__links {
+    display: grid;
+    align-content: start;
+  }
+  .mobile-menu__group {
+    display: grid;
+  }
+  .mobile-menu__header {
+    display: flex;
+    min-height: 52px;
+    margin-bottom: var(--j-space-2);
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--j-color-border);
+  }
+  .mobile-menu__header > strong {
+    padding: 0;
+    color: var(--j-color-text);
+    font-size: var(--j-text-md);
+  }
+  .mobile-menu__header button {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    place-items: center;
+    border: 0;
+    border-radius: var(--j-radius-md);
+    background: transparent;
+  }
+  .mobile-menu__panel strong {
+    padding: var(--j-space-4) var(--j-space-3) var(--j-space-1);
+    color: var(--j-color-brand);
+    font-size: var(--j-text-xs);
+  }
+  .mobile-menu__panel a {
+    display: flex;
+    min-height: 44px;
+    padding-inline: var(--j-space-3);
+    align-items: center;
+    border-radius: var(--j-radius-md);
+    color: var(--j-color-text-secondary);
+    font-size: var(--j-text-sm);
+  }
+  .mobile-menu__panel a:hover {
+    color: var(--j-color-brand-strong);
+    background: var(--j-color-brand-subtle);
+  }
+  .home-community-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .portal-header__inner,
+  .main-panel {
+    width: min(calc(100% - 2rem), 1280px);
+  }
+  .portal-brand strong {
+    font-size: 1.5rem;
+  }
+  .header-login-button {
+    min-height: 44px;
+    padding-inline: var(--j-space-4);
+  }
+  .header-user-link,
+  .header-logout-button {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+  .main-panel {
+    padding-block: var(--j-space-5) calc(76px + env(safe-area-inset-bottom));
+  }
+  .mobile-tabbar {
+    position: fixed;
+    z-index: var(--j-layer-header);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    border-top: 1px solid var(--j-color-border);
+    background: rgb(255 255 255 / 98%);
+    backdrop-filter: blur(10px);
+  }
+  .mobile-tab {
+    display: grid;
+    min-width: 0;
+    min-height: 54px;
+    place-items: center;
+    gap: 2px;
+    border-radius: var(--j-radius-sm);
+    color: var(--j-color-text-muted);
+    font-size: 0.75rem;
+    font-weight: var(--j-weight-semibold);
+  }
+  .mobile-tab.is-active {
+    color: var(--j-color-brand-strong);
+    background: var(--j-color-surface-selected);
+  }
+  .portal-footer {
+    padding: 0;
+    text-align: left;
+  }
+  .portal-footer__inner {
+    width: min(calc(100% - 2rem), 1280px);
+    padding-block: var(--j-space-4) calc(72px + env(safe-area-inset-bottom));
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--j-space-2);
+  }
+  .home-dashboard {
+    gap: var(--j-space-4);
+  }
+  .announcement-bar {
+    min-height: 62px;
+    padding: var(--j-space-3) var(--j-space-4);
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--j-space-3);
+  }
+  .announcement-bar > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .announcement-bar__link {
+    display: none;
+  }
+  .home-primary-grid {
+    grid-template-areas: 'notices' 'meals' 'schedule';
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--j-space-4);
+  }
+  .home-community-grid {
+    gap: var(--j-space-4);
+  }
+  .home-card {
+    padding: var(--j-space-5);
+  }
+  .home-primary-grid > .home-card,
+  .home-community-grid > .home-card {
+    min-height: auto;
+  }
+  .meal-grid {
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .meal-column {
+    display: grid;
+    min-height: 92px;
+    padding: var(--j-space-4) 0;
+    grid-template-columns: 34px 48px minmax(0, 1fr);
+    align-items: start;
+    justify-items: start;
+    gap: var(--j-space-3);
+    border-right: 0;
+    border-bottom: 1px solid var(--j-color-border);
+    text-align: left;
+  }
+  .meal-column:last-child {
+    border-bottom: 0;
+  }
+  .meal-column ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px var(--j-space-2);
+    text-align: left;
+  }
+  .meal-column li:not(:last-child)::after {
+    color: var(--j-color-border-strong);
+    content: ' ·';
+  }
+  .meal-column small,
+  .meal-column__empty {
+    grid-column: 3;
+    margin-top: 0;
+  }
+  .calendar-day-popover {
+    width: 160px;
+  }
+  .community-preview-list li {
+    min-height: 54px;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .community-preview-list li > span,
+  .community-preview-list li > time {
+    display: none;
+  }
+  .petition-preview-list li {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .petition-preview-list time {
+    display: none;
+  }
+  .home-skeleton-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-skeleton {
+    min-height: 280px;
+  }
+}
+
+@media (max-width: 360px) {
+  .portal-header__inner {
+    --portal-brand-width: auto;
+    --portal-header-gap: 12px;
+  }
+
+  .portal-brand {
+    width: auto;
+    min-width: 0;
+  }
+
+  .portal-brand img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .portal-brand strong {
+    font-size: 1.35rem;
+  }
+
+  .header-user-link,
+  .header-logout-button,
+  .mobile-menu__trigger {
+    width: 44px;
+    min-width: 44px;
+    padding: 0;
+  }
+
+  .header-login-button {
+    padding-inline: var(--j-space-3);
+    white-space: nowrap;
+  }
+
+  .meal-card__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .meal-date-control {
+    justify-content: space-between;
+  }
+
+  .meal-date-control .home-card__meta {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .portal-header__actions {
+    gap: 4px;
+  }
+  .announcement-bar__label strong {
+    display: none;
+  }
+  .notice-preview-list a {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .notice-preview-list time {
+    display: none;
+  }
+}

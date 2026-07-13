@@ -5,23 +5,59 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as schema from '@jshsus/db';
-import type { PetitionSummary } from '@jshsus/types';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import type { PetitionDetail, PetitionSummary, RichTextDocument } from '@jshsus/types';
+import { and, desc, eq, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { DatabaseService } from '../database/database.service';
+import { parsePetitionCreate } from './petition-content';
 
 const PETITION_THRESHOLD = 50;
-
-const petitionSchema = z.object({
-  title: z.string().min(1).max(255),
-  content: z.string().min(1),
-  startsAt: z.coerce.date().default(() => new Date()),
-  endsAt: z.coerce.date().default(() => new Date(Date.now() + 20 * 24 * 60 * 60 * 1000)),
-});
 
 const answerSchema = z.object({
   content: z.string().min(1),
 });
+
+type PetitionRow = {
+  id: number;
+  title: string;
+  content: string;
+  contentJson: unknown;
+  authorName: string | null;
+  participantCount: number;
+  startsAt: Date;
+  endsAt: Date;
+  status: PetitionSummary['status'];
+  createdAt: Date;
+};
+
+type PetitionAnswerRow = {
+  petitionId: number;
+  content: string;
+  authorName: string | null;
+  answeredAt: Date;
+};
+
+function toPetitionSummary(row: PetitionRow, answer?: PetitionAnswerRow): PetitionSummary {
+  return {
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    contentDoc: (row.contentJson as RichTextDocument | null) ?? undefined,
+    authorName: row.authorName ?? undefined,
+    participantCount: row.participantCount,
+    threshold: PETITION_THRESHOLD,
+    startsAt: row.startsAt.toISOString(),
+    endsAt: row.endsAt.toISOString(),
+    status: row.status === 'open' && row.endsAt < new Date() ? 'expired' : row.status,
+    answer: answer
+      ? {
+          content: answer.content,
+          authorName: answer.authorName ?? undefined,
+          answeredAt: answer.answeredAt.toISOString(),
+        }
+      : undefined,
+  };
+}
 
 @Injectable()
 export class PetitionsService {
@@ -35,6 +71,7 @@ export class PetitionsService {
             id: schema.petitions.id,
             title: schema.petitions.title,
             content: schema.petitions.content,
+            contentJson: schema.petitions.contentJson,
             authorName: schema.users.name,
             participantCount: schema.petitions.participantCount,
             startsAt: schema.petitions.startsAt,
@@ -44,6 +81,7 @@ export class PetitionsService {
           })
           .from(schema.petitions)
           .leftJoin(schema.users, eq(schema.petitions.authorId, schema.users.id))
+          .where(ne(schema.petitions.status, 'hidden'))
           .orderBy(desc(schema.petitions.createdAt))
           .limit(50),
         db
@@ -66,35 +104,59 @@ export class PetitionsService {
         }
       }
 
-      return petitions.map((row) => ({
-        id: row.id,
-        title: row.title,
-        content: row.content,
-        authorName: row.authorName ?? undefined,
-        participantCount: row.participantCount,
-        threshold: PETITION_THRESHOLD,
-        startsAt: row.startsAt.toISOString(),
-        endsAt: row.endsAt.toISOString(),
-        status: row.status === 'open' && row.endsAt < new Date() ? 'expired' : row.status,
-        answer: answerByPetition.get(row.id)
-          ? {
-              content: answerByPetition.get(row.id)!.content,
-              authorName: answerByPetition.get(row.id)!.authorName ?? undefined,
-              answeredAt: answerByPetition.get(row.id)!.answeredAt.toISOString(),
-            }
-          : undefined,
-      }));
+      return petitions.map((row) => toPetitionSummary(row, answerByPetition.get(row.id)));
+    });
+  }
+
+  async getById(id: number): Promise<PetitionDetail> {
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new BadRequestException('Petition id must be a positive integer.');
+    }
+
+    return this.database.query<PetitionDetail>('petitions.detail', async (db) => {
+      const [petition] = await db
+        .select({
+          id: schema.petitions.id,
+          title: schema.petitions.title,
+          content: schema.petitions.content,
+          contentJson: schema.petitions.contentJson,
+          authorName: schema.users.name,
+          participantCount: schema.petitions.participantCount,
+          startsAt: schema.petitions.startsAt,
+          endsAt: schema.petitions.endsAt,
+          status: schema.petitions.status,
+          createdAt: schema.petitions.createdAt,
+        })
+        .from(schema.petitions)
+        .leftJoin(schema.users, eq(schema.petitions.authorId, schema.users.id))
+        .where(and(eq(schema.petitions.id, id), ne(schema.petitions.status, 'hidden')))
+        .limit(1);
+
+      if (!petition) {
+        throw new NotFoundException('Petition does not exist.');
+      }
+
+      const [answer] = await db
+        .select({
+          petitionId: schema.petitionAnswers.petitionId,
+          content: schema.petitionAnswers.content,
+          authorName: schema.users.name,
+          answeredAt: schema.petitionAnswers.answeredAt,
+        })
+        .from(schema.petitionAnswers)
+        .leftJoin(schema.users, eq(schema.petitionAnswers.authorId, schema.users.id))
+        .where(eq(schema.petitionAnswers.petitionId, id))
+        .orderBy(desc(schema.petitionAnswers.answeredAt))
+        .limit(1);
+
+      return toPetitionSummary(petition, answer);
     });
   }
 
   async create(body: unknown, actorId?: number | null) {
-    const parsed = petitionSchema.safeParse(body);
+    const parsed = parsePetitionCreate(body);
 
-    if (!parsed.success) {
-      throw new BadRequestException(parsed.error.flatten().fieldErrors);
-    }
-
-    if (parsed.data.startsAt >= parsed.data.endsAt) {
+    if (parsed.startsAt >= parsed.endsAt) {
       throw new BadRequestException('Petition end time must be later than start time.');
     }
 
@@ -103,10 +165,11 @@ export class PetitionsService {
         .insert(schema.petitions)
         .values({
           authorId: actorId && actorId > 0 ? actorId : null,
-          title: parsed.data.title,
-          content: parsed.data.content,
-          startsAt: parsed.data.startsAt,
-          endsAt: parsed.data.endsAt,
+          title: parsed.title,
+          content: parsed.content,
+          contentJson: parsed.contentDoc,
+          startsAt: parsed.startsAt,
+          endsAt: parsed.endsAt,
           status: 'open',
           updatedAt: new Date(),
         })
@@ -119,7 +182,7 @@ export class PetitionsService {
         targetId: result.id,
       });
 
-      return { ok: true, petition: { id: result.id, ...parsed.data, status: 'open' } };
+      return { ok: true, petition: { id: result.id, ...parsed, status: 'open' } };
     });
   }
 

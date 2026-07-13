@@ -5,14 +5,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as schema from '@jshsus/db';
-import type { ActivityRequestSummary } from '@jshsus/types';
+import type { ActivityRequestDetail, ActivityRequestSummary } from '@jshsus/types';
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import type { AuthSession } from '../auth/auth.service';
-import { DatabaseService } from '../database/database.service';
+import { DatabaseService, type AppDatabase } from '../database/database.service';
 
 const createActivityRequestSchema = z.object({
-  studentId: z.coerce.number().int().positive().optional(),
   teacherId: z.coerce.number().int().positive().optional(),
   location: z.string().min(1).max(160),
   startsAt: z.coerce.date(),
@@ -30,6 +29,7 @@ function issueNumber(id: number) {
 
 function toSummary(row: {
   id: number;
+  createdAt: Date;
   studentNo: number;
   studentName: string;
   teacherName: string | null;
@@ -43,6 +43,7 @@ function toSummary(row: {
 }): ActivityRequestSummary {
   return {
     id: row.id,
+    createdAt: row.createdAt.toISOString(),
     studentNo: row.studentNo,
     studentName: row.studentName,
     teacherName: row.teacherName ?? undefined,
@@ -66,6 +67,7 @@ export class ActivityRequestsService {
       const rows = await db
         .select({
           id: schema.activityRequests.id,
+          createdAt: schema.activityRequests.createdAt,
           studentNo: schema.students.studentNo,
           studentName: schema.students.name,
           teacherName: schema.users.name,
@@ -87,11 +89,50 @@ export class ActivityRequestsService {
     });
   }
 
+  async getMyRequest(id: number, session?: AuthSession): Promise<ActivityRequestDetail> {
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new BadRequestException('Activity request id must be a positive integer.');
+    }
+
+    return this.database.query<ActivityRequestDetail>('activity-requests.detail', async (db) => {
+      const studentId = await this.resolveStudentId(session);
+      const [row] = await db
+        .select({
+          id: schema.activityRequests.id,
+          createdAt: schema.activityRequests.createdAt,
+          studentNo: schema.students.studentNo,
+          studentName: schema.students.name,
+          teacherName: schema.users.name,
+          location: schema.activityRequests.location,
+          startsAt: schema.activityRequests.startsAt,
+          endsAt: schema.activityRequests.endsAt,
+          purpose: schema.activityRequests.purpose,
+          status: schema.activityRequests.status,
+          issuedNumber: schema.activityRequests.issuedNumber,
+          rejectionReason: schema.activityRequests.rejectionReason,
+        })
+        .from(schema.activityRequests)
+        .innerJoin(schema.students, eq(schema.activityRequests.studentId, schema.students.id))
+        .leftJoin(schema.users, eq(schema.activityRequests.teacherId, schema.users.id))
+        .where(
+          and(eq(schema.activityRequests.id, id), eq(schema.activityRequests.studentId, studentId)),
+        )
+        .limit(1);
+
+      if (!row) {
+        throw new NotFoundException('Activity request does not exist.');
+      }
+
+      return toSummary(row);
+    });
+  }
+
   async adminList(): Promise<ActivityRequestSummary[]> {
     return this.database.query('activity-requests.admin-list', async (db) => {
       const rows = await db
         .select({
           id: schema.activityRequests.id,
+          createdAt: schema.activityRequests.createdAt,
           studentNo: schema.students.studentNo,
           studentName: schema.students.name,
           teacherName: schema.users.name,
@@ -125,7 +166,10 @@ export class ActivityRequestsService {
     }
 
     return this.database.query('activity-requests.create', async (db) => {
-      const studentId = parsed.data.studentId ?? (await this.resolveStudentId(session));
+      // The public student endpoint is self-service. Never accept an arbitrary
+      // student id from the request body: the persisted relationship attached
+      // to the authenticated session is the sole source of identity.
+      const studentId = await this.resolveStudentId(session);
       const [result] = await db
         .insert(schema.activityRequests)
         .values({
@@ -161,39 +205,50 @@ export class ActivityRequestsService {
 
   async cancel(id: number, session?: AuthSession) {
     return this.database.query('activity-requests.cancel', async (db) => {
-      const studentId = await this.resolveStudentId(session);
-      const [request] = await db
-        .select({ id: schema.activityRequests.id, status: schema.activityRequests.status })
-        .from(schema.activityRequests)
-        .where(
-          and(eq(schema.activityRequests.id, id), eq(schema.activityRequests.studentId, studentId)),
-        )
-        .limit(1);
+      return db.transaction(async (transaction) => {
+        const studentId = await this.resolveStudentId(session, transaction);
+        const [request] = await transaction
+          .select({ id: schema.activityRequests.id, status: schema.activityRequests.status })
+          .from(schema.activityRequests)
+          .where(
+            and(
+              eq(schema.activityRequests.id, id),
+              eq(schema.activityRequests.studentId, studentId),
+            ),
+          )
+          .limit(1)
+          .for('update');
 
-      if (!request) {
-        throw new BadRequestException('Activity request does not exist.');
-      }
+        if (!request) {
+          throw new NotFoundException('Activity request does not exist.');
+        }
 
-      if (request.status !== 'submitted') {
-        throw new BadRequestException('Only submitted activity requests can be canceled.');
-      }
+        if (request.status !== 'submitted') {
+          throw new BadRequestException('Only submitted activity requests can be canceled.');
+        }
 
-      await db
-        .update(schema.activityRequests)
-        .set({
-          status: 'canceled',
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.activityRequests.id, id));
+        await transaction
+          .update(schema.activityRequests)
+          .set({
+            status: 'canceled',
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(schema.activityRequests.id, id),
+              eq(schema.activityRequests.studentId, studentId),
+            ),
+          );
 
-      await db.insert(schema.activityRequestEvents).values({
-        activityRequestId: id,
-        actorId: session?.userId && session.userId > 0 ? session.userId : null,
-        type: 'canceled',
-        note: '학생 취소',
+        await transaction.insert(schema.activityRequestEvents).values({
+          activityRequestId: id,
+          actorId: session?.userId && session.userId > 0 ? session.userId : null,
+          type: 'canceled',
+          note: '학생 취소',
+        });
+
+        return { ok: true, id, status: 'canceled' };
       });
-
-      return { ok: true, id, status: 'canceled' };
     });
   }
 
@@ -338,12 +393,15 @@ export class ActivityRequestsService {
     });
   }
 
-  private async resolveStudentId(session?: AuthSession): Promise<number> {
+  private async resolveStudentId(
+    session?: AuthSession,
+    db: Pick<AppDatabase, 'select'> = this.database.db,
+  ): Promise<number> {
     if (!session) {
       throw new BadRequestException('Student session is required.');
     }
 
-    const [student] = await this.database.db
+    const [student] = await db
       .select({ id: schema.students.id })
       .from(schema.students)
       .where(

@@ -7,8 +7,8 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-local_mysql_password}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-local_mysql_root_password}
       TZ: Asia/Seoul
-    ports:
-      - '127.0.0.1:${MYSQL_PORT:-3306}:3306'
+    expose:
+      - '3306'
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
@@ -22,8 +22,8 @@ services:
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-local_redis_password}
     command: ['sh', '-c', 'redis-server --requirepass "$$REDIS_PASSWORD"']
-    ports:
-      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
+    expose:
+      - '6379'
     healthcheck:
       test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" ping']
       interval: 10s
@@ -37,9 +37,17 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: ${DATABASE_URL:-mysql://jshs_web:local_mysql_password@mysql:3306/jshsus}
+      DATABASE_URL: ${COMPOSE_DATABASE_URL:-mysql://${MYSQL_USER:-jshs_web}:${MYSQL_PASSWORD:-local_mysql_password}@mysql:3306/jshsus}
+      DATABASE_SSL_MODE: disabled
       REDIS_URL: redis://:${REDIS_PASSWORD:-local_redis_password}@redis:6379/0
       FILE_LOCAL_DIR: /var/lib/jshsus/uploads
+      # Local Compose stores uploads in upload-data. Production injects S3
+      # credentials through docker-compose.release.yml instead.
+      S3_BUCKET: ''
+      S3_PUBLIC_BASE_URL: ''
+      S3_ENDPOINT: ''
+      AWS_ACCESS_KEY_ID: ''
+      AWS_SECRET_ACCESS_KEY: ''
     volumes:
       - upload-data:/var/lib/jshsus/uploads
     ports:
@@ -60,7 +68,13 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: ${MIGRATION_DATABASE_URL:-mysql://jshs_web:local_mysql_password@mysql:3306/jshsus}
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: ${COMPOSE_DATABASE_URL:-mysql://${MYSQL_USER:-jshs_web}:${MYSQL_PASSWORD:-local_mysql_password}@mysql:3306/jshsus}
+      DATABASE_SSL_MODE: disabled
+      ALLOW_LOCAL_SEED: ${ALLOW_LOCAL_SEED:-false}
+      TEST_USER_USERNAME: ${TEST_USER_USERNAME:-test.student}
+      TEST_USER_PASSWORD: ${TEST_USER_PASSWORD:-Test1234!}
+      TEST_USER_STUDENT_NO: ${TEST_USER_STUDENT_NO:-29999}
     profiles: ['tools']
 
   web:
@@ -85,4 +99,5 @@ services:
 
 volumes:
   mysql-data:
+    name: ${MYSQL_VOLUME_NAME:-jshs_web_mysql-data}
   upload-data:

@@ -1,0 +1,211 @@
+.reading-surface {
+  min-width: 0;
+  border-bottom: 1px solid var(--j-color-border);
+}
+
+.reading-body {
+  padding: var(--j-space-5) 0 var(--j-space-10);
+  color: var(--j-color-text);
+  font-size: var(--j-text-md);
+  line-height: 1.85;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.rich-text-renderer__content {
+  white-space: normal;
+}
+
+.detail-attachments {
+  display: grid;
+  padding-block: var(--j-space-4);
+  gap: var(--j-space-2);
+  border-top: 1px solid var(--j-color-border);
+}
+
+.detail-attachments h2 {
+  display: flex;
+  margin: 0 0 var(--j-space-1);
+  align-items: center;
+  gap: var(--j-space-2);
+  font-size: var(--j-text-sm);
+}
+
+.detail-attachments a {
+  display: flex;
+  min-height: 44px;
+  padding-inline: var(--j-space-3);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--j-space-3);
+  color: var(--j-color-text-secondary);
+  background: var(--j-color-surface-subtle);
+  font-size: var(--j-text-sm);
+}
+
+.detail-attachments a:hover {
+  color: var(--j-color-brand-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.post-detail-actions {
+  display: flex;
+  min-height: 52px;
+  padding-block: var(--j-space-2);
+  align-items: center;
+  gap: var(--j-space-3);
+  border-top: 1px solid var(--j-color-border);
+}
+
+.post-detail-actions button,
+.post-detail-actions .auth-required-action,
+.detail-comment-list article > button,
+.detail-comment-list article > .comment-report-login-link {
+  display: inline-flex;
+  min-height: 40px;
+  padding-inline: var(--j-space-2);
+  align-items: center;
+  gap: var(--j-space-1);
+  border: 0;
+  color: var(--j-color-text-muted);
+  background: transparent;
+  font-size: var(--j-text-xs);
+}
+
+.mutation-feedback {
+  min-height: 18px;
+  color: var(--j-color-text-muted);
+  font-size: var(--j-text-xs);
+}
+
+.comment-report-feedback {
+  display: block;
+  min-height: 18px;
+  margin-top: var(--j-space-2);
+  color: var(--j-color-text-muted);
+  font-size: var(--j-text-xs);
+}
+
+.comment-surface {
+  display: grid;
+  padding-top: var(--j-space-6);
+  gap: var(--j-space-4);
+  border-top: 1px solid var(--j-color-border-strong);
+}
+
+.comment-surface > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.comment-surface h2 {
+  margin: 0;
+  font-size: var(--j-text-lg);
+}
+
+.comment-surface h2 span {
+  color: var(--j-color-brand);
+  font-size: var(--j-text-sm);
+}
+
+.detail-comment-list article {
+  position: relative;
+  padding: var(--j-space-4) 0;
+  border-bottom: 1px solid var(--j-color-border);
+}
+
+.detail-comment-list article > div {
+  display: flex;
+  align-items: center;
+  gap: var(--j-space-2);
+}
+
+.detail-comment-list strong {
+  font-size: var(--j-text-sm);
+}
+.detail-comment-list time {
+  color: var(--j-color-text-muted);
+  font-size: var(--j-text-xs);
+}
+.detail-comment-list p {
+  margin: var(--j-space-2) 44px 0 0;
+  font-size: var(--j-text-sm);
+  white-space: pre-wrap;
+}
+.detail-comment-list article > button,
+.detail-comment-list article > .comment-report-login-link {
+  position: absolute;
+  top: var(--j-space-2);
+  right: 0;
+}
+
+.post-detail-actions .auth-required-action:hover,
+.detail-comment-list article > .comment-report-login-link:hover {
+  color: var(--j-color-brand-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.comment-empty {
+  margin: 0;
+  padding: var(--j-space-6) 0;
+  color: var(--j-color-text-muted);
+  font-size: var(--j-text-sm);
+  text-align: center;
+}
+
+.detail-comment-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--j-space-2);
+}
+
+.detail-comment-form textarea {
+  min-height: 92px;
+}
+
+.detail-comment-form button {
+  min-width: 84px;
+}
+
+.comment-login-prompt {
+  display: flex;
+  min-height: 72px;
+  padding-block: var(--j-space-3);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--j-space-4);
+  border-block: 1px solid var(--j-color-border);
+}
+
+.comment-login-prompt p {
+  margin: 0;
+  color: var(--j-color-text-secondary);
+  font-size: var(--j-text-sm);
+}
+
+.detail-bottom-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+@media (max-width: 767px) {
+  .reading-body {
+    padding-top: var(--j-space-3);
+  }
+
+  .detail-comment-form {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-comment-form button {
+    width: 100%;
+  }
+
+  .comment-login-prompt {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

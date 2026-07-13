@@ -25,6 +25,13 @@ export class ActivityRequestsController {
     return this.activityRequestsService.myRequests(request.authSession);
   }
 
+  @Get('activity-requests/:id')
+  @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
+  @RequireRoles('student')
+  detail(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
+    return this.activityRequestsService.getMyRequest(Number(id), request.authSession);
+  }
+
   @Post('activity-requests/:id/cancel')
   @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
   @RequireRoles('student')

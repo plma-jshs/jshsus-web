@@ -23,9 +23,12 @@
     "typecheck": "turbo typecheck",
     "lint": "eslint . --max-warnings=0",
     "format:check": "prettier --check .",
+    "pretest": "pnpm --filter @jshsus/types build && pnpm --filter @jshsus/db build",
     "test": "vitest run",
     "db:generate": "pnpm --filter @jshsus/db db:generate",
     "db:migrate": "pnpm --filter @jshsus/db db:migrate",
+    "db:create-local-test-user": "docker compose --profile tools run --rm migrate pnpm db:create-local-test-user",
+    "db:seed-local-demo": "docker compose --profile tools run --rm migrate pnpm db:seed-local-demo",
     "db:migrations:check": "node scripts/check-migrations.cjs",
     "smoke:core": "pnpm --filter @jshsus/api smoke:core"
   },

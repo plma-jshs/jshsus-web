@@ -12,7 +12,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:backup": "node scripts/backup-database.cjs"
+    "db:backup": "node scripts/backup-database.cjs",
+    "db:create-local-test-user": "node scripts/create-local-test-user.cjs",
+    "db:seed-local-demo": "node scripts/seed-local-demo-data.cjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

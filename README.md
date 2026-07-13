@@ -18,6 +18,22 @@ pnpm dev
 - Admin: `http://localhost:5174`
 - API: `http://localhost:4000/api/health`
 
+공지사항·자유게시판·청원 상세 화면까지 로컬에서 확인하려면 테스트 계정과 데모 데이터를
+생성합니다. 명령은 `NODE_ENV=production`에서 항상 거부되고, 로컬 호스트의
+`jshsus`, `jshsus_dev`, `jshsus_test` DB에 대해 실행 시점에 명시적으로 허용해야만 작동합니다.
+재실행하면 동일 제목의 로컬 데모 행을 현재 시점 기준으로 갱신합니다.
+
+```bash
+NODE_ENV=development ALLOW_LOCAL_SEED=true pnpm db:create-local-test-user
+NODE_ENV=development ALLOW_LOCAL_SEED=true pnpm db:seed-local-demo
+```
+
+- 아이디: `test.student`
+- 비밀번호: `Test1234!`
+
+`TEST_USER_USERNAME`, `TEST_USER_PASSWORD`, `TEST_USER_STUDENT_NO`로 계정값을 바꾸면
+데모 데이터 시드도 같은 `TEST_USER_USERNAME`의 작성자 계정을 사용합니다.
+
 ## 구조
 
 ```txt
@@ -26,6 +42,7 @@ apps/web      React + Vite + TanStack student portal
 apps/admin    React + Vite + TanStack admin portal
 packages/db   Drizzle MySQL schema
 packages/types shared API types
+packages/ui   shared design tokens
 docs          planning docs
 ```
 

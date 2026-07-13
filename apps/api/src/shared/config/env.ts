@@ -50,9 +50,25 @@ const envSchema = z
       ),
     IAM_COOKIE_NAME: z.string().default('iam_token'),
     IAM_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(86400),
+    IAM_REMEMBER_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(2_592_000),
     RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().positive().default(60),
     RATE_LIMIT_MAX: z.coerce.number().int().positive().default(60),
     FILE_UPLOAD_MAX_MB: z.coerce.number().int().positive().default(10),
+    FILE_CLEANUP_BATCH_SIZE: z.coerce.number().int().min(1).max(100).default(20),
+    FILE_CLEANUP_INTERVAL_MS: z.coerce.number().int().min(1_000).max(3_600_000).default(60_000),
+    FILE_CLEANUP_LOCK_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(10_000)
+      .max(3_600_000)
+      .default(300_000),
+    FILE_CLEANUP_RETRY_BASE_MS: z.coerce.number().int().min(1_000).max(3_600_000).default(30_000),
+    FILE_CLEANUP_RETRY_MAX_MS: z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(86_400_000)
+      .default(3_600_000),
     FILE_ALLOWED_MIME_TYPES: z
       .string()
       .default('image/jpeg,image/png,image/webp,application/pdf')
@@ -150,6 +166,14 @@ const envSchema = z
         code: z.ZodIssueCode.custom,
         path: ['DATABASE_SSL_CA_PATH'],
         message: 'verify_identity requires a CA certificate path.',
+      });
+    }
+
+    if (value.FILE_CLEANUP_RETRY_MAX_MS < value.FILE_CLEANUP_RETRY_BASE_MS) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['FILE_CLEANUP_RETRY_MAX_MS'],
+        message: 'FILE_CLEANUP_RETRY_MAX_MS must be at least FILE_CLEANUP_RETRY_BASE_MS.',
       });
     }
 

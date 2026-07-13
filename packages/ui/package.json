@@ -13,9 +13,7 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./tokens.css": "./src/tokens.css",
-    "./public.css": "./src/public.css",
-    "./admin.css": "./src/admin.css"
+    "./tokens.css": "./src/tokens.css"
   },
   "scripts": {
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",

@@ -9,11 +9,10 @@
     --j-ref-teal-800: #075f65;
     --j-ref-blue-50: #edf6ff;
     --j-ref-blue-700: #1769aa;
-    --j-ref-slate-25: #f8fafb;
-    --j-ref-slate-50: #f5f8fa;
-    --j-ref-slate-100: #f3f7f8;
-    --j-ref-slate-200: #e3e9ee;
-    --j-ref-slate-300: #cbd5df;
+    --j-ref-slate-50: #ffffff;
+    --j-ref-slate-100: #f8fafb;
+    --j-ref-slate-200: #e5e9ec;
+    --j-ref-slate-300: #cfd6dc;
     --j-ref-slate-500: #667085;
     --j-ref-slate-700: #344054;
     --j-ref-slate-900: #172033;
@@ -34,6 +33,8 @@
     --j-color-surface: #ffffff;
     --j-color-surface-subtle: var(--j-ref-slate-100);
     --j-color-surface-raised: #ffffff;
+    --j-color-surface-hover: #f3f5f7;
+    --j-color-surface-selected: #eef8f7;
     --j-color-text: var(--j-ref-slate-900);
     --j-color-text-secondary: var(--j-ref-slate-700);
     --j-color-text-muted: var(--j-ref-slate-500);
@@ -53,8 +54,8 @@
     --j-color-scrim: rgb(23 32 51 / 44%);
 
     --j-font-sans:
-      'Pretendard Variable', Pretendard, 'Noto Sans KR', 'Apple SD Gothic Neo', Inter, system-ui,
-      -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', system-ui, -apple-system,
+      BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --j-font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
     --j-text-xs: 0.75rem;
     --j-text-sm: 0.875rem;
@@ -89,22 +90,18 @@
     --j-radius-xl: 20px;
     --j-radius-pill: 999px;
 
-    --j-shadow-card: 0 1px 2px rgb(16 24 40 / 3%), 0 8px 24px rgb(16 24 40 / 6%);
-    --j-shadow-overlay: 0 18px 48px rgb(16 24 40 / 16%);
+    --j-shadow-card: 0 1px 2px rgb(16 24 40 / 4%);
+    --j-shadow-overlay: 0 12px 32px rgb(16 24 40 / 12%);
     --j-shadow-focus: 0 0 0 3px rgb(8 124 130 / 22%);
     --j-focus-ring: 3px solid rgb(8 124 130 / 48%);
     --j-focus-offset: 2px;
 
     --j-motion-fast: 120ms ease;
     --j-motion-base: 180ms ease;
-    --j-layout-public-max: 1440px;
-    --j-layout-admin-max: 1600px;
     --j-control-public: 44px;
-    --j-control-admin: 40px;
     --j-layer-header: 30;
     --j-layer-popover: 50;
     --j-layer-modal: 70;
-    --j-layer-toast: 90;
   }
 
   *,

@@ -29,6 +29,27 @@
       "when": 1783832444525,
       "tag": "0003_fearless_baron_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1783872852959,
+      "tag": "0004_flimsy_justice",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1783877477792,
+      "tag": "0005_unique_night_thrasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1783917639395,
+      "tag": "0006_motionless_scarecrow",
+      "breakpoints": true
     }
   ]
 }

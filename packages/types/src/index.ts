@@ -6,6 +6,30 @@ export type DashboardNotice = {
   publishedAt: string;
 };
 
+export type PaginatedResponse<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+export type ContentSearchField = 'title_content' | 'title' | 'author';
+
+export type NoticeListItem = {
+  id: number;
+  title: string;
+  department: string;
+  authorName?: string;
+  viewCount: number;
+  publishedAt: string;
+};
+
+export type NoticeDetail = NoticeListItem & {
+  content: string;
+  attachments: UploadedFileSummary[];
+};
+
 export type NoticeSummary = DashboardNotice & {
   content: string;
   authorName?: string;
@@ -30,24 +54,28 @@ export type PetitionAnswerSummary = {
 
 export type PetitionSummary = DashboardPetition & {
   content: string;
+  contentDoc?: RichTextDocument;
   authorName?: string;
   startsAt: string;
   answer?: PetitionAnswerSummary;
 };
 
-export type DashboardLostItem = {
+export type PetitionDetail = PetitionSummary;
+
+export type LostItemSummary = {
   id: number;
   type: 'lost' | 'found';
   itemName: string;
   location: string;
   status: 'open' | 'matched' | 'closed' | 'hidden';
-};
-
-export type LostItemSummary = DashboardLostItem & {
   description?: string;
   occurredAt?: string;
   authorName?: string;
   attachments?: UploadedFileSummary[];
+};
+
+export type LostItemDetail = Omit<LostItemSummary, 'attachments'> & {
+  attachments: UploadedFileSummary[];
 };
 
 export type BoardPostSummary = {
@@ -55,13 +83,75 @@ export type BoardPostSummary = {
   boardSlug: string;
   title: string;
   content: string;
+  contentDoc?: RichTextDocument;
   authorName?: string;
   isAnonymous: boolean;
   isHidden: boolean;
+  status: PostStatus;
   viewCount: number;
   commentCount: number;
   createdAt: string;
   attachments?: UploadedFileSummary[];
+};
+
+export type PostStatus = 'draft' | 'published';
+
+export type BoardPostListItem = {
+  id: number;
+  boardSlug: string;
+  title: string;
+  authorName?: string;
+  isAnonymous: boolean;
+  viewCount: number;
+  commentCount: number;
+  createdAt: string;
+};
+
+export type BoardPostDetail = BoardPostListItem & {
+  content: string;
+  contentDoc?: RichTextDocument;
+  attachments: UploadedFileSummary[];
+};
+
+export type RichTextMark =
+  | { type: 'bold' | 'italic' | 'underline' | 'strike' }
+  | {
+      type: 'link';
+      attrs: {
+        href: string;
+        target?: '_blank' | null;
+        rel?: string | null;
+        class?: null;
+      };
+    };
+
+export type RichTextNode = {
+  type:
+    | 'paragraph'
+    | 'heading'
+    | 'text'
+    | 'bulletList'
+    | 'orderedList'
+    | 'listItem'
+    | 'blockquote'
+    | 'hardBreak'
+    | 'image';
+  attrs?: {
+    level?: 2 | 3;
+    start?: number;
+    type?: string | null;
+    src?: string;
+    alt?: string | null;
+    title?: string | null;
+  };
+  content?: RichTextNode[];
+  text?: string;
+  marks?: RichTextMark[];
+};
+
+export type RichTextDocument = {
+  type: 'doc';
+  content: RichTextNode[];
 };
 
 export type BoardCommentSummary = {
@@ -94,13 +184,8 @@ export type UploadedFileSummary = {
   targetType?: string;
   targetId?: number;
   url: string;
+  inlineUrl: string;
   uploadedAt: string;
-};
-
-export type QuickLink = {
-  id: string;
-  label: string;
-  href: string;
 };
 
 export type SchoolMealType = 'breakfast' | 'lunch' | 'dinner' | 'other';
@@ -128,12 +213,17 @@ export type AcademicEvent = {
 };
 
 export type SchoolDataAvailability = 'available' | 'partial' | 'unavailable';
+export type SchoolDataSourceAvailability = Exclude<SchoolDataAvailability, 'partial'>;
 
 export type SchoolDataMeta = {
   mealDate: string;
   scheduleFrom: string;
   scheduleTo: string;
   availability: SchoolDataAvailability;
+  mealAvailability: SchoolDataSourceAvailability;
+  calendarAvailability: SchoolDataAvailability;
+  neisCalendarAvailability: SchoolDataSourceAvailability;
+  schoolEventsAvailability: SchoolDataSourceAvailability;
 };
 
 export type ManagedSchoolEvent = Omit<AcademicEvent, 'id' | 'source'> & {
@@ -144,12 +234,10 @@ export type ManagedSchoolEvent = Omit<AcademicEvent, 'id' | 'source'> & {
 export type HomeDashboard = {
   notices: DashboardNotice[];
   petitions: DashboardPetition[];
-  lostItems: DashboardLostItem[];
   meals: SchoolMeal[];
   academicEvents: AcademicEvent[];
   boardPosts: BoardPostSummary[];
   schoolData: SchoolDataMeta;
-  quickLinks: QuickLink[];
   studentStatus?: StudentStatusSummary;
 };
 
@@ -353,6 +441,7 @@ export type ActivityRequestStatus =
 
 export type ActivityRequestSummary = {
   id: number;
+  createdAt?: string;
   studentNo: number;
   studentName: string;
   teacherName?: string;
@@ -364,6 +453,8 @@ export type ActivityRequestSummary = {
   issuedNumber?: string;
   rejectionReason?: string;
 };
+
+export type ActivityRequestDetail = ActivityRequestSummary;
 
 export type AdminDashboard = {
   pointSummary: Pick<

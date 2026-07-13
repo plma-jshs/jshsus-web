@@ -1,0 +1,291 @@
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: calc(var(--j-layer-modal) + 1);
+  top: var(--j-space-3);
+  left: var(--j-space-3);
+  padding: var(--j-space-3) var(--j-space-4);
+  border-radius: var(--j-radius-md);
+  color: var(--j-color-text-inverse);
+  background: var(--j-color-brand-strong);
+  font-weight: var(--j-weight-semibold);
+  transform: translateY(calc(-100% - var(--j-space-4)));
+  transition: transform var(--j-motion-fast);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.portal-header {
+  position: sticky;
+  z-index: var(--j-layer-header);
+  top: 0;
+  border-bottom: 1px solid var(--j-color-border);
+  background: rgb(255 255 255 / 96%);
+  backdrop-filter: blur(12px);
+}
+
+.portal-header__inner {
+  --portal-brand-width: 150px;
+  --portal-header-gap: 36px;
+  --portal-nav-column: 180px;
+  display: flex;
+  width: min(calc(100% - 5rem), 1280px);
+  min-height: 68px;
+  margin-inline: auto;
+  align-items: center;
+  gap: var(--portal-header-gap);
+}
+
+.portal-brand {
+  display: inline-flex;
+  width: var(--portal-brand-width);
+  min-width: max-content;
+  align-items: center;
+  gap: var(--j-space-2);
+}
+
+.portal-brand img {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--j-radius-sm);
+}
+
+.portal-brand strong {
+  color: var(--j-color-brand-strong);
+  font-size: 1.7rem;
+  font-weight: var(--j-weight-bold);
+  letter-spacing: -0.045em;
+}
+
+.portal-nav {
+  position: relative;
+  display: flex;
+  min-height: 68px;
+  align-items: stretch;
+}
+
+.portal-nav__triggers {
+  display: grid;
+  align-items: stretch;
+  grid-template-columns: repeat(4, var(--portal-nav-column));
+}
+
+.portal-nav__triggers button {
+  display: flex;
+  min-height: 68px;
+  padding-inline: var(--j-space-4);
+  align-items: center;
+  justify-content: center;
+  gap: var(--j-space-1);
+  border: 0;
+  color: var(--j-color-text);
+  background: transparent;
+  font-size: 0.96rem;
+  font-weight: var(--j-weight-semibold);
+  white-space: nowrap;
+  transition: color var(--j-motion-fast);
+}
+
+.portal-nav__triggers button svg {
+  color: var(--j-color-text-muted);
+  transition:
+    color var(--j-motion-fast),
+    transform var(--j-motion-base);
+}
+
+.portal-nav__triggers button:hover,
+.portal-nav__triggers button:focus-visible,
+.portal-nav__triggers button.is-active {
+  color: var(--j-color-brand-strong);
+}
+
+.portal-nav__triggers button.is-active svg {
+  color: var(--j-color-brand);
+  transform: rotate(180deg);
+}
+
+.mega-menu {
+  position: fixed;
+  z-index: var(--j-layer-popover);
+  top: 68px;
+  right: 0;
+  left: 0;
+  visibility: hidden;
+  width: auto;
+  border-top: 1px solid var(--j-color-border);
+  border-bottom: 1px solid var(--j-color-border);
+  background: rgb(255 255 255 / 99%);
+  box-shadow: var(--j-shadow-overlay);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--j-motion-base),
+    visibility var(--j-motion-base);
+}
+
+.portal-nav.is-open .mega-menu {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mega-menu__inner {
+  display: grid;
+  width: min(calc(100% - 5rem), 1280px);
+  min-height: 240px;
+  padding-left: calc(var(--portal-brand-width) + var(--portal-header-gap));
+  margin-inline: auto;
+  grid-template-columns: repeat(4, var(--portal-nav-column));
+}
+
+.mega-menu section {
+  display: grid;
+  min-width: 0;
+  padding: 13px 20px 24px;
+  align-content: start;
+  border-top: 3px solid transparent;
+  border-left: 1px solid var(--j-color-border);
+}
+
+.mega-menu section:last-child {
+  border-right: 1px solid var(--j-color-border);
+}
+
+.mega-menu section.is-active {
+  border-top-color: var(--j-color-brand);
+}
+
+.mega-menu a {
+  display: flex;
+  min-height: 46px;
+  padding-inline: var(--j-space-2);
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--j-color-border);
+  color: var(--j-color-text-secondary);
+  font-size: var(--j-text-sm);
+  font-weight: var(--j-weight-medium);
+  white-space: nowrap;
+  transition: color var(--j-motion-fast);
+}
+
+.mega-menu a:last-child {
+  border-bottom: 0;
+}
+
+.mega-menu a:hover,
+.mega-menu a:focus-visible {
+  color: var(--j-color-brand-strong);
+}
+
+.portal-header__actions {
+  display: flex;
+  margin-left: auto;
+  align-items: center;
+  gap: var(--j-space-2);
+}
+
+.header-login-button,
+.header-user-link,
+.header-logout-button {
+  display: inline-flex;
+  min-height: 44px;
+  padding-inline: var(--j-space-4);
+  align-items: center;
+  justify-content: center;
+  gap: var(--j-space-2);
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-md);
+  color: var(--j-color-text);
+  background: var(--j-color-surface);
+  font-size: var(--j-text-sm);
+  font-weight: var(--j-weight-semibold);
+  transition:
+    color var(--j-motion-fast),
+    border-color var(--j-motion-fast),
+    background var(--j-motion-fast);
+}
+
+.header-user-link span {
+  max-width: 104px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-logout-button {
+  padding-inline: var(--j-space-3);
+  border-color: transparent;
+  color: var(--j-color-text-muted);
+  background: transparent;
+}
+
+.header-login-button:hover,
+.header-user-link:hover,
+.header-logout-button:hover {
+  border-color: var(--j-color-brand-subtle-strong);
+  color: var(--j-color-brand-strong);
+  background: var(--j-color-surface-selected);
+}
+
+.mobile-menu,
+.mobile-tabbar {
+  display: none;
+}
+
+.main-panel {
+  width: min(calc(100% - 5rem), 1280px);
+  min-width: 0;
+  margin-inline: auto;
+  padding-block: var(--j-space-8) var(--j-space-12);
+  flex: 1;
+}
+
+.main-panel:focus-visible {
+  outline: 2px solid rgb(8 124 130 / 32%);
+  outline-offset: 4px;
+}
+
+.auth-shell {
+  min-height: 100vh;
+}
+
+.portal-footer {
+  width: 100%;
+  border-top: 1px solid var(--j-color-border);
+  color: var(--j-color-text-muted);
+  background: var(--j-color-surface);
+  font-size: var(--j-text-xs);
+}
+
+.portal-footer__inner {
+  display: flex;
+  width: min(calc(100% - 5rem), 1280px);
+  min-height: 54px;
+  margin-inline: auto;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--j-space-2) var(--j-space-4);
+}
+
+.portal-footer__brand {
+  color: var(--j-color-text-secondary);
+  font-weight: var(--j-weight-medium);
+}
+
+.portal-footer a {
+  color: inherit;
+  font-weight: var(--j-weight-regular);
+  transition: color var(--j-motion-fast);
+}
+
+.portal-footer a:hover {
+  color: var(--j-color-brand-strong);
+}

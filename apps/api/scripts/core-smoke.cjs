@@ -272,7 +272,7 @@ async function main() {
     assert(answer.ok === true, 'Petition answer failed.');
     results.push('petitions=ok');
 
-    const smokeBoardSlug = `smoke-${Date.now()}`;
+    const smokeBoardSlug = 'free';
     const post = await studentPost(`/boards/${smokeBoardSlug}/posts`, {
       title: 'smoke board post',
       content: 'smoke board content',
@@ -281,12 +281,18 @@ async function main() {
     const postId = post.post.id;
     cleanupTasks.push(async (db) => {
       await db.execute('delete from posts where id = ?', [postId]);
-      await db.execute('delete from boards where slug = ?', [smokeBoardSlug]);
     });
     const posts = await request(`/boards/${smokeBoardSlug}/posts`, { token: studentAuth.token });
     assert(
-      posts.some((item) => item.id === postId),
+      posts.items.some((item) => item.id === postId),
       'Created board post was not listed.',
+    );
+    const postDetail = await request(`/boards/${smokeBoardSlug}/posts/${postId}`, {
+      token: studentAuth.token,
+    });
+    assert(
+      postDetail.id === postId && postDetail.viewCount >= 1,
+      'Created board post detail was not returned.',
     );
     const comment = await studentPost(`/boards/${smokeBoardSlug}/posts/${postId}/comments`, {
       content: 'smoke board comment',

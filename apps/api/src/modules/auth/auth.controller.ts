@@ -7,12 +7,19 @@ import { SessionGuard } from '../../shared/auth/session.guard';
 import type { AuthenticatedRequest } from '../../shared/auth/request-auth';
 import { CsrfGuard } from '../../shared/auth/csrf.guard';
 
-const cookieBaseOptions = () => ({
-  domain: env.SESSION_COOKIE_DOMAIN === 'localhost' ? undefined : env.SESSION_COOKIE_DOMAIN,
-  path: '/',
-  secure: env.SESSION_COOKIE_SECURE,
-  sameSite: (env.SESSION_COOKIE_SECURE ? 'none' : 'lax') as 'none' | 'lax',
-});
+const cookieBaseOptions = (request: Request) => {
+  const isLocalhost = ['localhost', '127.0.0.1'].includes(request.hostname);
+
+  return {
+    domain:
+      isLocalhost || env.SESSION_COOKIE_DOMAIN === 'localhost'
+        ? undefined
+        : env.SESSION_COOKIE_DOMAIN,
+    path: '/',
+    secure: isLocalhost ? false : env.SESSION_COOKIE_SECURE,
+    sameSite: (isLocalhost || !env.SESSION_COOKIE_SECURE ? 'lax' : 'none') as 'none' | 'lax',
+  };
+};
 
 @Controller('auth')
 export class AuthController {
@@ -31,7 +38,7 @@ export class AuthController {
     const csrfToken = this.authService.createCsrfToken(token);
 
     response.cookie(env.CSRF_COOKIE_NAME, csrfToken, {
-      ...cookieBaseOptions(),
+      ...cookieBaseOptions(request),
       httpOnly: false,
     });
 
@@ -40,22 +47,25 @@ export class AuthController {
 
   @Post('login')
   async login(
-    @Body() body: { username?: string; password?: string; role?: UserRole },
+    @Body() body: { username?: string; password?: string; role?: UserRole; remember?: boolean },
+    @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
     const result = await this.authService.login({
       username: body.username ?? 'local-admin',
       password: body.password ?? '',
       devRole: body.role,
+      remember: body.remember === true,
     });
 
     response.cookie(env.IAM_COOKIE_NAME, result.token, {
-      ...cookieBaseOptions(),
+      ...cookieBaseOptions(request),
       httpOnly: true,
+      ...(body.remember === true ? { maxAge: env.IAM_REMEMBER_TOKEN_TTL_SECONDS * 1000 } : {}),
     });
 
     response.cookie(env.CSRF_COOKIE_NAME, result.csrfToken, {
-      ...cookieBaseOptions(),
+      ...cookieBaseOptions(request),
       httpOnly: false,
     });
 
@@ -72,12 +82,12 @@ export class AuthController {
     }
 
     response.clearCookie(env.IAM_COOKIE_NAME, {
-      ...cookieBaseOptions(),
+      ...cookieBaseOptions(request),
       httpOnly: true,
     });
 
     response.clearCookie(env.CSRF_COOKIE_NAME, {
-      ...cookieBaseOptions(),
+      ...cookieBaseOptions(request),
       httpOnly: false,
     });
 

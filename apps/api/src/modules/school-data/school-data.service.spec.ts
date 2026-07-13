@@ -85,6 +85,10 @@ describe('SchoolDataService', () => {
     expect(requestedUrl).toContain('SD_SCHUL_CODE=7140163');
     expect(requestedUrl).toContain('MLSV_FROM_YMD=20260601');
     expect(requestedUrl).toContain('MLSV_TO_YMD=20260831');
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ headers: { Accept: '*/*' } }),
+    );
   });
 
   it('isolates a NEIS outage from the public response', async () => {
@@ -99,6 +103,34 @@ describe('SchoolDataService', () => {
     });
     await expect(service.getMeals('2026-07-12')).resolves.toMatchObject({ available: false });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves each source status in the home response', async () => {
+    const service = createService();
+    vi.spyOn(service, 'getMeals').mockResolvedValue({
+      date: '2026-07-12',
+      meals: [],
+      available: false,
+    });
+    vi.spyOn(service, 'getCalendar').mockResolvedValue({
+      from: '2026-07-01',
+      to: '2026-07-31',
+      events: [],
+      available: true,
+      availability: 'partial',
+      neisAvailable: false,
+      schoolEventsAvailable: true,
+    });
+
+    const result = await service.getHomeData(fixedNow);
+
+    expect(result).toMatchObject({
+      availability: 'partial',
+      mealAvailability: 'unavailable',
+      calendarAvailability: 'partial',
+      neisCalendarAvailability: 'unavailable',
+      schoolEventsAvailability: 'available',
+    });
   });
 
   it('rejects malformed date input before making an external request', async () => {

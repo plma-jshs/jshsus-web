@@ -1,6 +1,6 @@
 FROM node:24-alpine AS base
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@10.30.0 --activate
+RUN corepack enable && corepack install --global pnpm@10.30.0
 
 FROM base AS deps
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml turbo.json tsconfig.base.json ./

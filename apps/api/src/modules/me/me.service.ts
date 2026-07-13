@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as schema from '@jshsus/db';
 import type { ActivityRequestSummary, PointRecord, StudentSelfStatus } from '@jshsus/types';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
@@ -15,6 +15,7 @@ function toDateOnly(value: Date | string): string {
 
 function toActivitySummary(row: {
   id: number;
+  createdAt: Date;
   studentNo: number;
   studentName: string;
   teacherName: string | null;
@@ -28,6 +29,7 @@ function toActivitySummary(row: {
 }): ActivityRequestSummary {
   return {
     id: row.id,
+    createdAt: row.createdAt.toISOString(),
     studentNo: row.studentNo,
     studentName: row.studentName,
     teacherName: row.teacherName ?? undefined,
@@ -47,7 +49,7 @@ export class MeService {
 
   async status(session?: AuthSession): Promise<StudentSelfStatus> {
     if (!session) {
-      throw new BadRequestException('Student session is required.');
+      throw new UnauthorizedException('Student session is required.');
     }
 
     return this.database.query('me.status', async (db) => {
@@ -145,6 +147,7 @@ export class MeService {
         db
           .select({
             id: schema.activityRequests.id,
+            createdAt: schema.activityRequests.createdAt,
             studentNo: schema.students.studentNo,
             studentName: schema.students.name,
             teacherName: schema.users.name,

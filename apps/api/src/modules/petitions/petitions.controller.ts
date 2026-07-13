@@ -16,6 +16,11 @@ export class PetitionsController {
     return this.petitionsService.list();
   }
 
+  @Get('petitions/:id')
+  detail(@Param('id') id: string) {
+    return this.petitionsService.getById(Number(id));
+  }
+
   @Post('petitions')
   @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
   @RequireRoles('student')
