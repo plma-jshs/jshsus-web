@@ -11,6 +11,7 @@ import type {
   AdminIdentityListQuery,
   AdminPermissionSummary,
   AdminRoleSummary,
+  AdminSchoolYearSummary,
   AdminStaffSummary,
   AdminStudentSummary,
   BoardCommentSummary,
@@ -28,6 +29,9 @@ import type {
   PaginatedResponse,
   PointReason,
   PointSummary,
+  RosterImportApplyResult,
+  RosterImportPreview,
+  RosterImportRowInput,
   SessionUser,
   StudentOption,
   LostItemSummary,
@@ -173,6 +177,7 @@ export const api = {
     request<PaginatedResponse<AdminAuditLog>>(withQuery('/api/admin/audit-logs', { ...query })),
   adminStudents: (query: AdminIdentityListQuery = {}) =>
     request<PaginatedResponse<AdminStudentSummary>>(withQuery('/api/admin/students', { ...query })),
+  schoolYears: () => request<AdminSchoolYearSummary[]>('/api/admin/school-years'),
   createStudent: (input: {
     studentNo: number;
     name: string;
@@ -196,6 +201,26 @@ export const api = {
     }>,
   ) =>
     request<{ ok: true; id: number }>(`/api/admin/students/${id}`, { method: 'PUT', body: input }),
+  previewStudentRoster: (input: {
+    schoolYear: number;
+    fileName?: string;
+    rows: RosterImportRowInput[];
+    activateYear?: boolean;
+  }) =>
+    request<RosterImportPreview>('/api/admin/students/roster/preview', {
+      method: 'POST',
+      body: input,
+    }),
+  applyStudentRoster: (input: {
+    schoolYear: number;
+    fileName?: string;
+    rows: RosterImportRowInput[];
+    activateYear?: boolean;
+  }) =>
+    request<RosterImportApplyResult>('/api/admin/students/roster/apply', {
+      method: 'POST',
+      body: input,
+    }),
   adminStaff: (query: AdminIdentityListQuery = {}) =>
     request<PaginatedResponse<AdminStaffSummary>>(withQuery('/api/admin/staff', { ...query })),
   createStaff: (input: { name: string; initialPassword: string; email?: string; phone?: string }) =>

@@ -80,10 +80,28 @@ export class AdminController {
     return this.adminService.students(query);
   }
 
+  @Get('school-years')
+  @RequirePermissions('users.manage')
+  schoolYears() {
+    return this.adminService.schoolYears();
+  }
+
   @Post('students')
   @RequirePermissions('users.manage')
   createStudent(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
     return this.adminService.createStudent(body, request.authSession?.userId);
+  }
+
+  @Post('students/roster/preview')
+  @RequirePermissions('users.manage')
+  previewStudentRoster(@Body() body: unknown) {
+    return this.adminService.previewStudentRoster(body);
+  }
+
+  @Post('students/roster/apply')
+  @RequirePermissions('users.manage')
+  applyStudentRoster(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
+    return this.adminService.applyStudentRoster(body, request.authSession?.userId);
   }
 
   @Put('students/:id')

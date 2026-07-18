@@ -400,6 +400,9 @@ export type StudentGender = 'male' | 'female';
 
 export type AdminStudentSummary = StudentOption & {
   userId?: number;
+  schoolYear?: number;
+  enrollmentId?: number;
+  enrollmentStatus?: StudentEnrollmentStatus;
   gender?: StudentGender;
   email?: string;
   phone?: string;
@@ -425,10 +428,58 @@ export type AdminIdentityListQuery = {
   page?: number;
   pageSize?: number;
   q?: string;
+  schoolYear?: number;
   grade?: number;
   classNo?: number;
   sortBy?: 'identifier' | 'name' | 'lastLoginAt';
   sortOrder?: 'asc' | 'desc';
+};
+
+export type StudentEnrollmentStatus = 'active' | 'graduated' | 'transferred' | 'withdrawn';
+
+export type AdminSchoolYearSummary = {
+  id: number;
+  year: number;
+  isActive: boolean;
+};
+
+export type RosterImportRowInput = {
+  rowNumber: number;
+  studentNo: number;
+  name: string;
+  gender?: StudentGender | '0' | '1' | '남' | '여' | string;
+  phone?: string;
+  email?: string;
+  previousStudentNo?: number;
+  userId?: number;
+  initialPassword?: string;
+};
+
+export type RosterImportAction =
+  'create' | 'update' | 'unchanged' | 'graduate' | 'conflict' | 'invalid';
+
+export type RosterImportPreviewRow = {
+  rowNumber: number;
+  action: RosterImportAction;
+  studentNo?: number;
+  previousStudentNo?: number;
+  name?: string;
+  matchedUserId?: number;
+  matchedStudentId?: number;
+  messages: string[];
+};
+
+export type RosterImportPreview = {
+  schoolYear: number;
+  activeSchoolYear: number;
+  rows: RosterImportPreviewRow[];
+  summary: Record<RosterImportAction, number>;
+  canApply: boolean;
+};
+
+export type RosterImportApplyResult = RosterImportPreview & {
+  ok: true;
+  batchId: number;
 };
 
 export type AdminRoleSummary = {

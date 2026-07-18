@@ -9,6 +9,11 @@
   justify-content: space-between;
   gap: 12px;
 }
+.identity-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 .identity-primary-button,
 .identity-secondary-button {
   display: inline-flex;
@@ -78,7 +83,7 @@
 }
 
 .identity-filter-bar.is-students {
-  grid-template-columns: minmax(220px, 320px) 100px 100px 88px auto;
+  grid-template-columns: minmax(220px, 320px) 110px 100px 100px 88px auto;
 }
 
 .identity-filter-bar.is-staff {
@@ -207,6 +212,92 @@
 .identity-role-grid small {
   color: #85908d;
 }
+.identity-roster-toolbox {
+  display: inline-flex;
+  align-items: end;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.identity-roster-preview {
+  display: grid;
+  gap: 12px;
+}
+.identity-roster-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.identity-roster-chip,
+.identity-roster-status {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+}
+.identity-roster-chip {
+  padding: 0 9px;
+  background: #eef3f2;
+  color: #50615d;
+}
+.identity-roster-chip.is-create,
+.identity-roster-status.is-create {
+  background: #e6f6ef;
+  color: #08704f;
+}
+.identity-roster-chip.is-update,
+.identity-roster-status.is-update {
+  background: #eaf2ff;
+  color: #245da8;
+}
+.identity-roster-chip.is-graduate,
+.identity-roster-status.is-graduate {
+  background: #f3efff;
+  color: #6841a6;
+}
+.identity-roster-chip.is-conflict,
+.identity-roster-chip.is-invalid,
+.identity-roster-status.is-conflict,
+.identity-roster-status.is-invalid {
+  background: #ffeceb;
+  color: #b42318;
+}
+.identity-roster-status {
+  padding: 0 8px;
+}
+.identity-roster-table-wrap {
+  max-height: 360px;
+  overflow: auto;
+  border: 1px solid #dfe7e5;
+  border-radius: 8px;
+}
+.identity-roster-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.identity-roster-table th,
+.identity-roster-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #edf2f1;
+  text-align: left;
+  vertical-align: top;
+}
+.identity-roster-table th {
+  position: sticky;
+  top: 0;
+  background: #f7faf9;
+  color: #41514d;
+  font-size: 12px;
+  font-weight: 750;
+}
+.identity-roster-table td:first-child,
+.identity-roster-table td:nth-child(3) {
+  width: 76px;
+  text-align: center;
+  white-space: nowrap;
+}
 @media (max-width: 1000px) {
   .identity-filter-bar.is-students,
   .identity-filter-bar.is-staff {
@@ -221,14 +312,28 @@
     align-items: stretch;
     flex-direction: column;
   }
+  .identity-toolbar-actions,
   .identity-page-toolbar > button {
+    width: 100%;
+  }
+  .identity-toolbar-actions {
+    flex-direction: column;
+  }
+  .identity-toolbar-actions > button {
     width: 100%;
   }
   .identity-filter-bar.is-students,
   .identity-filter-bar.is-staff,
   .identity-form-grid.two,
   .identity-form-grid.three,
-  .identity-role-grid {
+  .identity-role-grid,
+  .identity-roster-toolbox {
     grid-template-columns: 1fr;
+  }
+  .identity-roster-toolbox {
+    justify-content: stretch;
+  }
+  .identity-roster-toolbox > button {
+    width: 100%;
   }
 }

@@ -1,16 +1,21 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type {
   AdminIdentityListQuery,
+  AdminSchoolYearSummary,
   AdminStaffSummary,
   AdminStudentSummary,
+  RosterImportAction,
+  RosterImportPreview,
+  RosterImportRowInput,
   StudentGender,
 } from '@jshsus/types';
-import { KeyRound, Pencil, Plus, ShieldCheck } from 'lucide-react';
+import { Download, FileSpreadsheet, KeyRound, Pencil, Plus, ShieldCheck } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   Dialog,
+  type DialogSize,
   IconButton,
   PageSizeSelect,
   SegmentedTabs,
@@ -26,6 +31,7 @@ type Identity =
 type DialogState =
   | { type: 'create-student' }
   | { type: 'create-staff' }
+  | { type: 'roster' }
   | { type: 'edit'; identity: Identity }
   | { type: 'roles'; identity: Identity }
   | { type: 'password'; identity: Identity }
@@ -53,18 +59,28 @@ const GENDER_LABELS: Record<StudentGender, string> = {
   male: '남',
   female: '여',
 };
+const ROSTER_ACTION_LABELS: Record<RosterImportAction, string> = {
+  create: '생성',
+  update: '수정',
+  unchanged: '변경 없음',
+  graduate: '졸업',
+  conflict: '충돌',
+  invalid: '오류',
+};
 
 function IdentityDialog({
   title,
   children,
   onClose,
+  size = 'md',
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
+  size?: DialogSize;
 }) {
   return (
-    <Dialog open onClose={onClose} title={title} size="md" className="identity-dialog-shell">
+    <Dialog open onClose={onClose} title={title} size={size} className="identity-dialog-shell">
       {children}
     </Dialog>
   );
@@ -123,6 +139,145 @@ function contactText(email?: string, phone?: string) {
   return [email, phone].filter(Boolean).join(' · ') || '-';
 }
 
+function activeSchoolYear(years?: AdminSchoolYearSummary[]) {
+  return years?.find((year) => year.isActive)?.year ?? new Date().getFullYear();
+}
+
+function normalizeRosterHeader(value: string) {
+  return value
+    .trim()
+    .toLocaleLowerCase('ko-KR')
+    .replace(/[\s_-]/g, '');
+}
+
+function headerColumn(headers: ReadonlyMap<string, number>, aliases: string[]) {
+  for (const alias of aliases) {
+    const column = headers.get(normalizeRosterHeader(alias));
+    if (column) return column;
+  }
+  return undefined;
+}
+
+async function parseRosterWorkbook(file: File): Promise<RosterImportRowInput[]> {
+  const { Workbook } = await import('exceljs');
+  const workbook = new Workbook();
+  const bytes = (await file.arrayBuffer()) as Parameters<typeof workbook.xlsx.load>[0];
+  await workbook.xlsx.load(bytes);
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) throw new Error('엑셀 시트를 찾을 수 없습니다.');
+
+  const headers = new Map<string, number>();
+  worksheet.getRow(1).eachCell((cell, columnNumber) => {
+    const key = normalizeRosterHeader(cell.text);
+    if (key) headers.set(key, columnNumber);
+  });
+
+  const studentNoColumn = headerColumn(headers, ['학번', 'student_no', 'studentNo']);
+  const nameColumn = headerColumn(headers, ['이름', '성명', 'name']);
+  if (!studentNoColumn || !nameColumn) {
+    throw new Error('첫 행에 학번과 이름 헤더가 필요합니다.');
+  }
+
+  const genderColumn = headerColumn(headers, ['성별', 'gender']);
+  const phoneColumn = headerColumn(headers, ['전화번호', '휴대폰', '연락처', 'phone', 'mobile']);
+  const emailColumn = headerColumn(headers, ['이메일', 'email']);
+  const previousStudentNoColumn = headerColumn(headers, [
+    '이전학번',
+    '기존학번',
+    'previous_student_no',
+    'previousStudentNo',
+    'oldStudentNo',
+  ]);
+  const userIdColumn = headerColumn(headers, ['user_id', 'userId', '사용자id', '사용자번호']);
+  const initialPasswordColumn = headerColumn(headers, [
+    '초기비밀번호',
+    '비밀번호',
+    'initial_password',
+    'initialPassword',
+    'password',
+  ]);
+
+  const rows: RosterImportRowInput[] = [];
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return;
+    const studentNoText = row.getCell(studentNoColumn).text.trim();
+    const name = row.getCell(nameColumn).text.trim();
+    const optionalCells = [
+      genderColumn,
+      phoneColumn,
+      emailColumn,
+      previousStudentNoColumn,
+      userIdColumn,
+      initialPasswordColumn,
+    ]
+      .filter((column): column is number => column !== undefined)
+      .map((column) => row.getCell(column).text.trim());
+    if (!studentNoText && !name && optionalCells.every((value) => !value)) return;
+
+    const studentNo = Number(studentNoText);
+    const input: RosterImportRowInput = {
+      rowNumber,
+      studentNo: Number.isFinite(studentNo) ? studentNo : 0,
+      name,
+    };
+    if (genderColumn) input.gender = row.getCell(genderColumn).text.trim();
+    if (phoneColumn) input.phone = row.getCell(phoneColumn).text.trim();
+    if (emailColumn) input.email = row.getCell(emailColumn).text.trim();
+    if (previousStudentNoColumn) {
+      const value = Number(row.getCell(previousStudentNoColumn).text.trim());
+      if (Number.isFinite(value) && value > 0) input.previousStudentNo = value;
+    }
+    if (userIdColumn) {
+      const value = Number(row.getCell(userIdColumn).text.trim());
+      if (Number.isFinite(value) && value > 0) input.userId = value;
+    }
+    if (initialPasswordColumn) {
+      input.initialPassword = row.getCell(initialPasswordColumn).text.trim();
+    }
+    rows.push(input);
+  });
+
+  if (rows.length === 0) throw new Error('읽을 학생 행이 없습니다.');
+  return rows;
+}
+
+async function downloadRosterTemplate() {
+  const { Workbook } = await import('exceljs');
+  const workbook = new Workbook();
+  const worksheet = workbook.addWorksheet('학생명단');
+  worksheet.columns = [
+    { header: '학번', key: 'studentNo', width: 12 },
+    { header: '이름', key: 'name', width: 14 },
+    { header: '성별', key: 'gender', width: 10 },
+    { header: '전화번호', key: 'phone', width: 16 },
+    { header: '이메일', key: 'email', width: 24 },
+    { header: '이전학번', key: 'previousStudentNo', width: 12 },
+    { header: 'user_id', key: 'userId', width: 12 },
+    { header: '초기비밀번호', key: 'initialPassword', width: 18 },
+  ];
+  worksheet.addRow({
+    studentNo: 1101,
+    name: '홍길동',
+    gender: '남',
+    phone: '01012345678',
+    email: '',
+    previousStudentNo: '',
+    userId: '',
+    initialPassword: 'ChangeMe123!',
+  });
+  const buffer = await workbook.xlsx.writeBuffer();
+  const url = URL.createObjectURL(
+    new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }),
+  );
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = 'student-roster-template.xlsx';
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 export function UsersPage() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -132,6 +287,10 @@ export function UsersPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [dialog, setDialog] = useState<DialogState>(null);
   const [issuedStaffNo, setIssuedStaffNo] = useState<number | null>(null);
+  const [rosterRows, setRosterRows] = useState<RosterImportRowInput[]>([]);
+  const [rosterFileName, setRosterFileName] = useState('');
+  const [rosterPreview, setRosterPreview] = useState<RosterImportPreview | null>(null);
+  const [rosterYear, setRosterYear] = useState<number | ''>('');
   const sessionQuery = useQuery({
     queryKey: ['admin-session'],
     queryFn: api.session,
@@ -167,6 +326,12 @@ export function UsersPage() {
     retry: false,
     enabled: canManageRoles,
   });
+  const schoolYearsQuery = useQuery({
+    queryKey: ['admin-school-years'],
+    queryFn: api.schoolYears,
+    enabled: tab === 'students' || dialog?.type === 'roster',
+  });
+  const defaultSchoolYear = activeSchoolYear(schoolYearsQuery.data);
 
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['admin-identities'] });
@@ -232,6 +397,26 @@ export function UsersPage() {
       showToast({ title: '사용자 역할을 저장했습니다.', tone: 'success' });
     },
     onError: () => showToast({ title: '사용자 역할을 저장하지 못했습니다.', tone: 'danger' }),
+  });
+  const previewRoster = useMutation({
+    mutationFn: api.previewStudentRoster,
+    onSuccess: (preview) => {
+      setRosterPreview(preview);
+      showToast({ title: '명단 미리보기를 생성했습니다.', tone: 'success' });
+    },
+    onError: () => showToast({ title: '명단을 검증하지 못했습니다.', tone: 'danger' }),
+  });
+  const applyRoster = useMutation({
+    mutationFn: api.applyStudentRoster,
+    onSuccess: async (result) => {
+      setRosterPreview(result);
+      await Promise.all([
+        refresh(),
+        queryClient.invalidateQueries({ queryKey: ['admin-school-years'] }),
+      ]);
+      showToast({ title: '학생 명단을 반영했습니다.', tone: 'success' });
+    },
+    onError: () => showToast({ title: '학생 명단을 반영하지 못했습니다.', tone: 'danger' }),
   });
 
   const activeQuery = tab === 'students' ? studentsQuery : staffQuery;
@@ -373,6 +558,7 @@ export function UsersPage() {
       q: String(form.get('q') || ''),
       ...(tab === 'students'
         ? {
+            schoolYear: form.get('schoolYear') ? Number(form.get('schoolYear')) : undefined,
             grade: form.get('grade') ? Number(form.get('grade')) : undefined,
             classNo: form.get('classNo') ? Number(form.get('classNo')) : undefined,
           }
@@ -448,6 +634,47 @@ export function UsersPage() {
     }
   };
 
+  const rosterPayload = () => ({
+    schoolYear: Number(rosterYear || filters.schoolYear || defaultSchoolYear),
+    fileName: rosterFileName || undefined,
+    rows: rosterRows,
+    activateYear: true,
+  });
+
+  const openRosterDialog = () => {
+    setRosterRows([]);
+    setRosterFileName('');
+    setRosterPreview(null);
+    setRosterYear(filters.schoolYear ?? defaultSchoolYear);
+    setDialog({ type: 'roster' });
+  };
+
+  const handleRosterFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    setRosterPreview(null);
+    setRosterRows([]);
+    setRosterFileName(file?.name ?? '');
+    if (!file) return;
+    try {
+      const rows = await parseRosterWorkbook(file);
+      setRosterRows(rows);
+      showToast({ title: `${rows.length}개 학생 행을 읽었습니다.`, tone: 'success' });
+    } catch {
+      event.currentTarget.value = '';
+      setRosterFileName('');
+      showToast({ title: '엑셀 파일을 읽지 못했습니다.', tone: 'danger' });
+    }
+  };
+
+  const submitRosterPreview = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (rosterRows.length === 0) {
+      showToast({ title: '먼저 엑셀 파일을 선택해 주세요.', tone: 'warning' });
+      return;
+    }
+    previewRoster.mutate(rosterPayload());
+  };
+
   return (
     <div className="identity-page">
       <div className="identity-page-toolbar">
@@ -460,15 +687,22 @@ export function UsersPage() {
           ]}
           onChange={changeTab}
         />
-        <button
-          className="identity-primary-button"
-          type="button"
-          onClick={() =>
-            setDialog({ type: tab === 'students' ? 'create-student' : 'create-staff' })
-          }
-        >
-          <Plus size={17} /> {tab === 'students' ? '학생 추가' : '교직원 추가'}
-        </button>
+        <div className="identity-toolbar-actions">
+          {tab === 'students' ? (
+            <button className="identity-secondary-button" type="button" onClick={openRosterDialog}>
+              <FileSpreadsheet size={17} /> 명단 업로드
+            </button>
+          ) : null}
+          <button
+            className="identity-primary-button"
+            type="button"
+            onClick={() =>
+              setDialog({ type: tab === 'students' ? 'create-student' : 'create-staff' })
+            }
+          >
+            <Plus size={17} /> {tab === 'students' ? '학생 추가' : '교직원 추가'}
+          </button>
+        </div>
       </div>
 
       {issuedStaffNo ? (
@@ -488,6 +722,16 @@ export function UsersPage() {
             </Field>
             {tab === 'students' ? (
               <>
+                <Field label="학년도">
+                  <select name="schoolYear" defaultValue={filters.schoolYear ?? ''}>
+                    <option value="">활성</option>
+                    {(schoolYearsQuery.data ?? []).map((year) => (
+                      <option key={year.id} value={year.year}>
+                        {year.year}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
                 <Field label="학년">
                   <select name="grade" defaultValue={filters.grade ?? ''}>
                     <option value="">전체</option>
@@ -575,6 +819,131 @@ export function UsersPage() {
           />
         )}
       </section>
+
+      {dialog?.type === 'roster' ? (
+        <IdentityDialog title="학생 명단 업로드" size="lg" onClose={() => setDialog(null)}>
+          <form className="identity-dialog-form" onSubmit={submitRosterPreview}>
+            <div className="identity-form-grid three">
+              <Field label="적용 학년도">
+                <input
+                  name="schoolYear"
+                  type="number"
+                  min={2000}
+                  max={2100}
+                  value={rosterYear}
+                  onChange={(event) =>
+                    setRosterYear(
+                      event.currentTarget.value ? Number(event.currentTarget.value) : '',
+                    )
+                  }
+                  required
+                />
+              </Field>
+              <Field label="엑셀 파일">
+                <input type="file" accept=".xlsx,.xls" onChange={handleRosterFileChange} required />
+              </Field>
+              <div className="identity-roster-toolbox">
+                <button
+                  className="identity-secondary-button"
+                  type="button"
+                  onClick={() => {
+                    void downloadRosterTemplate();
+                  }}
+                >
+                  <Download size={16} /> 양식
+                </button>
+                <button
+                  className="identity-primary-button"
+                  type="submit"
+                  disabled={previewRoster.isPending || rosterRows.length === 0}
+                >
+                  미리보기
+                </button>
+              </div>
+            </div>
+
+            {rosterFileName ? (
+              <p className="identity-field-note">
+                {rosterFileName} · {rosterRows.length}개 행
+              </p>
+            ) : (
+              <p className="identity-field-note">
+                첫 행 헤더는 학번, 이름을 포함해야 합니다. 신규 학생은 초기비밀번호가 필요합니다.
+              </p>
+            )}
+
+            {rosterPreview ? (
+              <div className="identity-roster-preview">
+                <div className="identity-roster-summary">
+                  {Object.entries(rosterPreview.summary).map(([action, count]) => (
+                    <span key={action} className={`identity-roster-chip is-${action}`}>
+                      {ROSTER_ACTION_LABELS[action as RosterImportAction]} {count}
+                    </span>
+                  ))}
+                </div>
+                <div className="identity-roster-table-wrap">
+                  <table className="identity-roster-table">
+                    <thead>
+                      <tr>
+                        <th>행</th>
+                        <th>상태</th>
+                        <th>학번</th>
+                        <th>이름</th>
+                        <th>메시지</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rosterPreview.rows.slice(0, 120).map((row, index) => (
+                        <tr key={`${row.rowNumber}-${row.studentNo ?? index}`}>
+                          <td>{row.rowNumber || '-'}</td>
+                          <td>
+                            <span className={`identity-roster-status is-${row.action}`}>
+                              {ROSTER_ACTION_LABELS[row.action]}
+                            </span>
+                          </td>
+                          <td>{row.studentNo ?? '-'}</td>
+                          <td>{row.name ?? '-'}</td>
+                          <td>{row.messages.join(' ')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {rosterPreview.rows.length > 120 ? (
+                  <p className="identity-field-note">
+                    화면에는 처음 120행만 표시합니다. 전체 {rosterPreview.rows.length}개 작업이
+                    검증되었습니다.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {previewRoster.isError || applyRoster.isError ? (
+              <p className="identity-form-error">
+                명단을 처리하지 못했습니다. 오류 행을 확인해 주세요.
+              </p>
+            ) : null}
+
+            <footer className="identity-dialog-actions">
+              <button
+                className="identity-secondary-button"
+                type="button"
+                onClick={() => setDialog(null)}
+              >
+                취소
+              </button>
+              <button
+                className="identity-primary-button"
+                type="button"
+                disabled={!rosterPreview?.canApply || applyRoster.isPending}
+                onClick={() => applyRoster.mutate(rosterPayload())}
+              >
+                {applyRoster.isPending ? '반영 중' : '명단 반영'}
+              </button>
+            </footer>
+          </form>
+        </IdentityDialog>
+      ) : null}
 
       {dialog?.type === 'create-student' ? (
         <IdentityDialog title="학생 추가" onClose={() => setDialog(null)}>

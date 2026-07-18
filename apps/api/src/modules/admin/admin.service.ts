@@ -5,10 +5,17 @@ import type {
   AdminDashboard,
   AdminPermissionSummary,
   AdminRoleSummary,
+  AdminSchoolYearSummary,
   AdminStaffSummary,
   AdminStudentSummary,
   AdminUserStatus,
   PaginatedResponse,
+  RosterImportAction,
+  RosterImportApplyResult,
+  RosterImportPreview,
+  RosterImportPreviewRow,
+  StudentEnrollmentStatus,
+  StudentGender,
   UserRole,
 } from '@jshsus/types';
 import { argon2id, hash as hashArgon2 } from 'argon2';
@@ -58,6 +65,28 @@ const createStudentSchema = studentSchema.extend({
   initialPassword: z.string().min(10).max(128),
 });
 const updateStudentSchema = studentSchema.partial();
+
+const schoolYearValueSchema = z.coerce.number().int().min(2000).max(2100);
+
+const rosterRowInputSchema = z.object({
+  rowNumber: z.coerce.number().int().positive(),
+  studentNo: z.coerce.number().int().positive(),
+  name: z.string().trim().min(1).max(64),
+  gender: z.unknown().optional(),
+  phone: z.string().optional(),
+  email: z.string().trim().optional(),
+  previousStudentNo: z.coerce.number().int().positive().optional(),
+  userId: z.coerce.number().int().positive().optional(),
+  initialPassword: z.string().optional(),
+});
+
+const rosterImportSchema = z.object({
+  schoolYear: schoolYearValueSchema,
+  fileName: z.string().trim().max(255).optional(),
+  rows: z.array(rosterRowInputSchema).min(1).max(2000),
+  activateYear: z.boolean().optional().default(true),
+});
+const emailValueSchema = z.string().email();
 
 const staffSchema = z.object({
   name: z.string().min(1).max(64),
@@ -113,6 +142,80 @@ const BUILT_IN_ROLE_NAMES = new Set([
   'broadcast_club',
   'student',
 ]);
+
+const ROSTER_ACTIONS: RosterImportAction[] = [
+  'create',
+  'update',
+  'unchanged',
+  'graduate',
+  'conflict',
+  'invalid',
+];
+
+type RosterImportPayload = z.infer<typeof rosterImportSchema>;
+
+type ExistingStudentSnapshot = {
+  studentId: number;
+  userId: number | null;
+  currentStudentNo: number;
+  name: string;
+  grade: number;
+  classNo: number;
+  number: number;
+  currentPoint: number;
+  gender: '0' | '1' | null;
+  email: string | null;
+  phone: string | null;
+  status: AdminUserStatus | null;
+};
+
+type EnrollmentSnapshot = {
+  id: number;
+  studentId: number;
+  schoolYear: number;
+  studentNo: number;
+  grade: number;
+  classNo: number;
+  number: number;
+  status: StudentEnrollmentStatus;
+};
+
+type NormalizedRosterRow = {
+  rowNumber: number;
+  studentNo: number;
+  name: string;
+  grade: number;
+  classNo: number;
+  number: number;
+  gender?: StudentGender;
+  storedGender?: '0' | '1';
+  phone?: string | null;
+  email?: string | null;
+  previousStudentNo?: number;
+  userId?: number;
+  initialPassword?: string;
+};
+
+type PlannedRosterRow = RosterImportPreviewRow & {
+  normalized?: NormalizedRosterRow;
+  existing?: ExistingStudentSnapshot;
+  targetEnrollment?: EnrollmentSnapshot;
+};
+
+type RosterPlan = RosterImportPreview & {
+  plannedRows: PlannedRosterRow[];
+};
+
+function emptyRosterSummary(): Record<RosterImportAction, number> {
+  return Object.fromEntries(ROSTER_ACTIONS.map((action) => [action, 0])) as Record<
+    RosterImportAction,
+    number
+  >;
+}
+
+function hasOwnField(row: object, key: PropertyKey) {
+  return Object.prototype.hasOwnProperty.call(row, key);
+}
 
 @Injectable()
 export class AdminService {
@@ -211,6 +314,43 @@ export class AdminService {
     });
   }
 
+  private fallbackSchoolYear() {
+    return new Date().getFullYear();
+  }
+
+  private async getActiveSchoolYear(): Promise<number> {
+    const [active] = await this.database.db
+      .select({ year: schema.schoolYears.year })
+      .from(schema.schoolYears)
+      .where(eq(schema.schoolYears.isActive, true))
+      .orderBy(desc(schema.schoolYears.year))
+      .limit(1);
+    if (active) return active.year;
+
+    const year = this.fallbackSchoolYear();
+    await this.database.db
+      .insert(schema.schoolYears)
+      .values({ year, isActive: true })
+      .onDuplicateKeyUpdate({
+        set: { isActive: true, updatedAt: new Date() },
+      });
+    return year;
+  }
+
+  async schoolYears(): Promise<AdminSchoolYearSummary[]> {
+    await this.getActiveSchoolYear();
+    return this.database.query('admin.school-years', async (db) =>
+      db
+        .select({
+          id: schema.schoolYears.id,
+          year: schema.schoolYears.year,
+          isActive: schema.schoolYears.isActive,
+        })
+        .from(schema.schoolYears)
+        .orderBy(desc(schema.schoolYears.year)),
+    );
+  }
+
   private async rolesByUserIds(userIds: number[]): Promise<Map<number, UserRole[]>> {
     const result = new Map<number, UserRole[]>();
     if (userIds.length === 0) return result;
@@ -229,54 +369,64 @@ export class AdminService {
   }
 
   async students(query: unknown): Promise<PaginatedResponse<AdminStudentSummary>> {
-    const { page, pageSize, q, grade, classNo, sortBy, sortOrder } = parseIdentityListQuery(query);
-    const filters: SQL[] = [];
+    const { page, pageSize, q, schoolYear, grade, classNo, sortBy, sortOrder } =
+      parseIdentityListQuery(query);
+    const targetSchoolYear = schoolYear ?? (await this.getActiveSchoolYear());
+    const filters: SQL[] = [
+      eq(schema.studentEnrollments.schoolYear, targetSchoolYear),
+      eq(schema.studentEnrollments.status, 'active'),
+    ];
     if (q) {
       const pattern = `%${q}%`;
       filters.push(
         or(
           like(schema.students.name, pattern),
-          like(sql`cast(${schema.students.studentNo} as char)`, pattern),
+          like(sql`cast(${schema.studentEnrollments.studentNo} as char)`, pattern),
         )!,
       );
     }
-    if (grade) filters.push(eq(schema.students.grade, grade));
-    if (classNo) filters.push(eq(schema.students.classNo, classNo));
-    const where = filters.length > 0 ? and(...filters) : undefined;
+    if (grade) filters.push(eq(schema.studentEnrollments.grade, grade));
+    if (classNo) filters.push(eq(schema.studentEnrollments.classNo, classNo));
+    const where = and(...filters);
     const direction = sortOrder === 'desc' ? desc : asc;
     const sortColumn =
       sortBy === 'name'
         ? schema.students.name
         : sortBy === 'lastLoginAt'
           ? schema.users.lastLoginAt
-          : schema.students.studentNo;
+          : schema.studentEnrollments.studentNo;
 
     return this.database.query('admin.students', async (db) => {
       const [countRow] = await db
         .select({ total: sql<number>`cast(count(*) as unsigned)`.mapWith(Number) })
-        .from(schema.students)
+        .from(schema.studentEnrollments)
+        .innerJoin(schema.students, eq(schema.studentEnrollments.studentId, schema.students.id))
         .leftJoin(schema.users, eq(schema.students.userId, schema.users.id))
         .where(where);
       const total = countRow?.total ?? 0;
       const rows = await db
         .select({
-          id: schema.students.id,
+          id: schema.studentEnrollments.studentId,
           userId: schema.students.userId,
-          studentNo: schema.students.studentNo,
+          enrollmentId: schema.studentEnrollments.id,
+          schoolYear: schema.studentEnrollments.schoolYear,
+          enrollmentStatus: schema.studentEnrollments.status,
+          studentNo: schema.studentEnrollments.studentNo,
           name: schema.students.name,
-          grade: schema.students.grade,
-          classNo: schema.students.classNo,
-          number: schema.students.number,
+          grade: schema.studentEnrollments.grade,
+          classNo: schema.studentEnrollments.classNo,
+          number: schema.studentEnrollments.number,
           currentPoint: schema.students.currentPoint,
           gender: schema.users.gender,
           email: schema.users.email,
           phone: schema.users.phone,
           lastLoginAt: schema.users.lastLoginAt,
         })
-        .from(schema.students)
+        .from(schema.studentEnrollments)
+        .innerJoin(schema.students, eq(schema.studentEnrollments.studentId, schema.students.id))
         .leftJoin(schema.users, eq(schema.students.userId, schema.users.id))
         .where(where)
-        .orderBy(direction(sortColumn), asc(schema.students.id))
+        .orderBy(direction(sortColumn), asc(schema.studentEnrollments.studentId))
         .limit(pageSize)
         .offset((page - 1) * pageSize);
       const roles = await this.rolesByUserIds(
@@ -287,6 +437,9 @@ export class AdminService {
         items: rows.map((row) => ({
           id: row.id,
           userId: row.userId ?? undefined,
+          schoolYear: row.schoolYear,
+          enrollmentId: row.enrollmentId,
+          enrollmentStatus: row.enrollmentStatus,
           studentNo: row.studentNo,
           name: row.name,
           grade: row.grade,
@@ -317,6 +470,7 @@ export class AdminService {
     const studentIdentity = deriveStudentNumberParts(parsed.data.studentNo);
     assertStudentNumberPartsMatch(studentIdentity, parsed.data);
 
+    const activeSchoolYear = await this.getActiveSchoolYear();
     const passwordHash = await hashArgon2(parsed.data.initialPassword, { type: argon2id });
     const result = await this.database.db.transaction(async (tx) => {
       const [user] = await tx
@@ -344,6 +498,28 @@ export class AdminService {
           number: studentIdentity.number,
         })
         .$returningId();
+
+      await tx
+        .insert(schema.studentEnrollments)
+        .values({
+          studentId: student.id,
+          schoolYear: activeSchoolYear,
+          studentNo: studentIdentity.studentNo,
+          grade: studentIdentity.grade,
+          classNo: studentIdentity.classNo,
+          number: studentIdentity.number,
+          status: 'active',
+        })
+        .onDuplicateKeyUpdate({
+          set: {
+            studentNo: studentIdentity.studentNo,
+            grade: studentIdentity.grade,
+            classNo: studentIdentity.classNo,
+            number: studentIdentity.number,
+            status: 'active',
+            updatedAt: new Date(),
+          },
+        });
 
       await tx.insert(schema.authAccounts).values({
         userId: user.id,
@@ -403,6 +579,7 @@ export class AdminService {
       nextGrade: studentIdentity.grade,
     });
 
+    const activeSchoolYear = await this.getActiveSchoolYear();
     await this.database.db.transaction(async (tx) => {
       await tx
         .update(schema.students)
@@ -449,6 +626,28 @@ export class AdminService {
             );
         }
       }
+
+      await tx
+        .insert(schema.studentEnrollments)
+        .values({
+          studentId: id,
+          schoolYear: activeSchoolYear,
+          studentNo: studentIdentity.studentNo,
+          grade: studentIdentity.grade,
+          classNo: studentIdentity.classNo,
+          number: studentIdentity.number,
+          status: 'active',
+        })
+        .onDuplicateKeyUpdate({
+          set: {
+            studentNo: studentIdentity.studentNo,
+            grade: studentIdentity.grade,
+            classNo: studentIdentity.classNo,
+            number: studentIdentity.number,
+            status: 'active',
+            updatedAt: new Date(),
+          },
+        });
     });
 
     await this.database.writeAudit({
@@ -459,6 +658,623 @@ export class AdminService {
     });
 
     return { ok: true, id };
+  }
+
+  private rosterRowHasChanges(
+    row: NormalizedRosterRow,
+    existing: ExistingStudentSnapshot,
+    targetEnrollment?: EnrollmentSnapshot,
+  ) {
+    if (!targetEnrollment || targetEnrollment.status !== 'active') return true;
+    if (
+      targetEnrollment.studentNo !== row.studentNo ||
+      targetEnrollment.grade !== row.grade ||
+      targetEnrollment.classNo !== row.classNo ||
+      targetEnrollment.number !== row.number
+    ) {
+      return true;
+    }
+    if (
+      existing.currentStudentNo !== row.studentNo ||
+      existing.grade !== row.grade ||
+      existing.classNo !== row.classNo ||
+      existing.number !== row.number ||
+      existing.name !== row.name ||
+      existing.status !== 'active'
+    ) {
+      return true;
+    }
+    if (row.storedGender !== undefined && existing.gender !== row.storedGender) return true;
+    if (row.email !== undefined && existing.email !== row.email) return true;
+    if (row.phone !== undefined && existing.phone !== row.phone) return true;
+    return false;
+  }
+
+  private publicRosterRows(rows: PlannedRosterRow[]): RosterImportPreviewRow[] {
+    return rows.map((row) => ({
+      rowNumber: row.rowNumber,
+      action: row.action,
+      studentNo: row.studentNo,
+      previousStudentNo: row.previousStudentNo,
+      name: row.name,
+      matchedUserId: row.matchedUserId,
+      matchedStudentId: row.matchedStudentId,
+      messages: row.messages,
+    }));
+  }
+
+  private async buildRosterPlan(input: RosterImportPayload): Promise<RosterPlan> {
+    const activeSchoolYear = await this.getActiveSchoolYear();
+    const enrollmentYears = [...new Set([input.schoolYear, activeSchoolYear])];
+    const [students, enrollments, authAccounts] = await Promise.all([
+      this.database.db
+        .select({
+          studentId: schema.students.id,
+          userId: schema.students.userId,
+          currentStudentNo: schema.students.studentNo,
+          name: schema.students.name,
+          grade: schema.students.grade,
+          classNo: schema.students.classNo,
+          number: schema.students.number,
+          currentPoint: schema.students.currentPoint,
+          gender: schema.users.gender,
+          email: schema.users.email,
+          phone: schema.users.phone,
+          status: schema.users.status,
+        })
+        .from(schema.students)
+        .leftJoin(schema.users, eq(schema.students.userId, schema.users.id)),
+      this.database.db
+        .select({
+          id: schema.studentEnrollments.id,
+          studentId: schema.studentEnrollments.studentId,
+          schoolYear: schema.studentEnrollments.schoolYear,
+          studentNo: schema.studentEnrollments.studentNo,
+          grade: schema.studentEnrollments.grade,
+          classNo: schema.studentEnrollments.classNo,
+          number: schema.studentEnrollments.number,
+          status: schema.studentEnrollments.status,
+        })
+        .from(schema.studentEnrollments)
+        .where(inArray(schema.studentEnrollments.schoolYear, enrollmentYears)),
+      this.database.db
+        .select({
+          userId: schema.authAccounts.userId,
+          providerAccountId: schema.authAccounts.providerAccountId,
+        })
+        .from(schema.authAccounts)
+        .where(eq(schema.authAccounts.provider, 'local')),
+    ]);
+
+    const studentById = new Map<number, ExistingStudentSnapshot>();
+    const studentByUserId = new Map<number, ExistingStudentSnapshot>();
+    const studentsByNamePhone = new Map<string, ExistingStudentSnapshot[]>();
+    for (const student of students) {
+      const snapshot: ExistingStudentSnapshot = {
+        ...student,
+        status: student.status as AdminUserStatus | null,
+      };
+      studentById.set(snapshot.studentId, snapshot);
+      if (snapshot.userId) studentByUserId.set(snapshot.userId, snapshot);
+      const normalizedPhone = normalizePhoneNumber(snapshot.phone ?? '');
+      if (normalizedPhone) {
+        const key = `${snapshot.name}::${normalizedPhone}`;
+        studentsByNamePhone.set(key, [...(studentsByNamePhone.get(key) ?? []), snapshot]);
+      }
+    }
+
+    const targetEnrollmentByStudentNo = new Map<number, EnrollmentSnapshot>();
+    const targetEnrollmentByStudentId = new Map<number, EnrollmentSnapshot>();
+    const activeEnrollmentByStudentNo = new Map<number, EnrollmentSnapshot>();
+    const activeEnrollments = new Map<number, EnrollmentSnapshot>();
+    for (const enrollment of enrollments) {
+      const snapshot = enrollment as EnrollmentSnapshot;
+      if (snapshot.schoolYear === input.schoolYear) {
+        targetEnrollmentByStudentNo.set(snapshot.studentNo, snapshot);
+        targetEnrollmentByStudentId.set(snapshot.studentId, snapshot);
+      }
+      if (snapshot.schoolYear === activeSchoolYear && snapshot.status === 'active') {
+        activeEnrollmentByStudentNo.set(snapshot.studentNo, snapshot);
+        activeEnrollments.set(snapshot.studentId, snapshot);
+      }
+    }
+
+    const authUserByProviderId = new Map<string, number>();
+    for (const account of authAccounts) {
+      if (account.providerAccountId) {
+        authUserByProviderId.set(account.providerAccountId, account.userId);
+      }
+    }
+
+    const uploadedStudentNos = new Set<number>();
+    const matchedStudentIds = new Set<number>();
+    const plannedRows: PlannedRosterRow[] = [];
+
+    for (const row of input.rows) {
+      const messages: string[] = [];
+      let invalid = false;
+      let conflict = false;
+      let identity:
+        | {
+            studentNo: number;
+            grade: number;
+            classNo: number;
+            number: number;
+          }
+        | undefined;
+
+      try {
+        identity = deriveStudentNumberParts(row.studentNo);
+      } catch {
+        invalid = true;
+        messages.push('학번은 1101~3420 범위의 학년·반·번호 조합이어야 합니다.');
+      }
+
+      if (row.studentNo === 9999) {
+        invalid = true;
+        messages.push('9999 테스트 계정은 명단 업로드 대상이 아닙니다.');
+      }
+
+      if (uploadedStudentNos.has(row.studentNo)) {
+        invalid = true;
+        messages.push('업로드 파일 안에서 학번이 중복되었습니다.');
+      }
+      uploadedStudentNos.add(row.studentNo);
+
+      let storedGender: '0' | '1' | undefined;
+      let gender: StudentGender | undefined;
+      if (hasOwnField(row, 'gender') && row.gender !== undefined && String(row.gender).trim()) {
+        gender = normalizeStudentGender(row.gender);
+        if (!gender) {
+          invalid = true;
+          messages.push('성별은 0/1, 남/여, male/female 중 하나여야 합니다.');
+        } else {
+          storedGender = toStoredStudentGender(gender);
+        }
+      }
+
+      let phone: string | null | undefined;
+      if (hasOwnField(row, 'phone')) {
+        const normalizedPhone = normalizePhoneNumber(row.phone ?? '');
+        if (normalizedPhone === undefined) {
+          invalid = true;
+          messages.push('전화번호는 010으로 시작하는 11자리 번호여야 합니다.');
+        } else {
+          phone = normalizedPhone || null;
+        }
+      }
+
+      let email: string | null | undefined;
+      if (hasOwnField(row, 'email')) {
+        const rawEmail = (row.email ?? '').trim();
+        if (rawEmail && !emailValueSchema.safeParse(rawEmail).success) {
+          invalid = true;
+          messages.push('이메일 형식이 올바르지 않습니다.');
+        } else {
+          email = rawEmail || null;
+        }
+      }
+
+      if (row.previousStudentNo !== undefined) {
+        try {
+          deriveStudentNumberParts(row.previousStudentNo);
+        } catch {
+          invalid = true;
+          messages.push('이전 학번 형식이 올바르지 않습니다.');
+        }
+      }
+
+      let existing: ExistingStudentSnapshot | undefined;
+      const addCandidate = (candidate: ExistingStudentSnapshot | undefined, reason: string) => {
+        if (!candidate) return;
+        if (existing && existing.studentId !== candidate.studentId) {
+          conflict = true;
+          messages.push(`${reason} 기준으로 서로 다른 학생 계정이 함께 매칭되었습니다.`);
+          return;
+        }
+        existing = candidate;
+      };
+
+      if (row.userId) {
+        const candidate = studentByUserId.get(row.userId);
+        if (!candidate) {
+          conflict = true;
+          messages.push('user_id와 연결된 학생 계정을 찾을 수 없습니다.');
+        }
+        addCandidate(candidate, 'user_id');
+      }
+
+      const targetEnrollment = targetEnrollmentByStudentNo.get(row.studentNo);
+      addCandidate(
+        targetEnrollment ? studentById.get(targetEnrollment.studentId) : undefined,
+        '올해 학번',
+      );
+
+      if (row.previousStudentNo !== undefined) {
+        const previousEnrollment = activeEnrollmentByStudentNo.get(row.previousStudentNo);
+        if (!previousEnrollment) {
+          conflict = true;
+          messages.push('이전 학번과 연결된 현재 재학생을 찾을 수 없습니다.');
+        }
+        addCandidate(
+          previousEnrollment ? studentById.get(previousEnrollment.studentId) : undefined,
+          '이전 학번',
+        );
+      }
+
+      if (!existing && phone) {
+        const candidates = studentsByNamePhone.get(`${row.name}::${phone}`) ?? [];
+        if (candidates.length === 1) {
+          addCandidate(candidates[0], '이름+전화번호');
+        } else if (candidates.length > 1) {
+          conflict = true;
+          messages.push('이름과 전화번호가 같은 학생 계정이 여러 개 있습니다.');
+        }
+      }
+
+      if (existing && !existing.userId) {
+        conflict = true;
+        messages.push('기존 학생 레코드에 연결된 사용자 계정이 없습니다.');
+      }
+
+      const authUserId = authUserByProviderId.get(String(row.studentNo));
+      if (authUserId !== undefined && (!existing?.userId || authUserId !== existing.userId)) {
+        conflict = true;
+        messages.push('해당 학번으로 로그인하는 다른 계정이 이미 있습니다.');
+      }
+
+      const normalized: NormalizedRosterRow | undefined =
+        identity && !invalid
+          ? {
+              rowNumber: row.rowNumber,
+              studentNo: identity.studentNo,
+              name: row.name,
+              grade: identity.grade,
+              classNo: identity.classNo,
+              number: identity.number,
+              gender,
+              storedGender,
+              phone,
+              email,
+              previousStudentNo: row.previousStudentNo,
+              userId: row.userId,
+              initialPassword: row.initialPassword?.trim(),
+            }
+          : undefined;
+
+      const matchedTargetEnrollment = existing
+        ? targetEnrollmentByStudentId.get(existing.studentId)
+        : targetEnrollment;
+
+      let action: RosterImportAction;
+      if (invalid) {
+        action = 'invalid';
+      } else if (conflict) {
+        action = 'conflict';
+      } else if (existing && normalized) {
+        matchedStudentIds.add(existing.studentId);
+        action = this.rosterRowHasChanges(normalized, existing, matchedTargetEnrollment)
+          ? 'update'
+          : 'unchanged';
+      } else {
+        action = 'create';
+        if (!normalized?.initialPassword || normalized.initialPassword.length < 10) {
+          action = 'invalid';
+          messages.push('신규 학생은 초기 비밀번호를 10자 이상으로 입력해야 합니다.');
+        }
+      }
+
+      if (messages.length === 0) {
+        messages.push(
+          action === 'create'
+            ? '신규 학생 계정을 생성합니다.'
+            : action === 'update'
+              ? '기존 학생 계정과 학년도 이력을 갱신합니다.'
+              : action === 'unchanged'
+                ? '변경할 내용이 없습니다.'
+                : '확인이 필요합니다.',
+        );
+      }
+
+      plannedRows.push({
+        rowNumber: row.rowNumber,
+        action,
+        studentNo: row.studentNo,
+        previousStudentNo: row.previousStudentNo,
+        name: row.name,
+        matchedUserId: existing?.userId ?? undefined,
+        matchedStudentId: existing?.studentId,
+        messages,
+        normalized,
+        existing,
+        targetEnrollment: matchedTargetEnrollment,
+      });
+    }
+
+    if (input.activateYear) {
+      for (const enrollment of activeEnrollments.values()) {
+        if (matchedStudentIds.has(enrollment.studentId) || enrollment.studentNo === 9999) continue;
+        const existing = studentById.get(enrollment.studentId);
+        if (!existing?.userId) continue;
+        plannedRows.push({
+          rowNumber: 0,
+          action: 'graduate',
+          studentNo: enrollment.studentNo,
+          name: existing.name,
+          matchedUserId: existing.userId,
+          matchedStudentId: existing.studentId,
+          messages: [
+            `${activeSchoolYear}학년도 활성 명단에는 있지만 업로드 명단에는 없어 졸업 처리합니다.`,
+          ],
+          existing,
+          targetEnrollment: enrollment,
+        });
+      }
+    }
+
+    const summary = emptyRosterSummary();
+    for (const row of plannedRows) summary[row.action] += 1;
+    const canApply = summary.invalid === 0 && summary.conflict === 0;
+
+    return {
+      schoolYear: input.schoolYear,
+      activeSchoolYear,
+      rows: this.publicRosterRows(plannedRows),
+      plannedRows,
+      summary,
+      canApply,
+    };
+  }
+
+  async previewStudentRoster(body: unknown): Promise<RosterImportPreview> {
+    const parsed = rosterImportSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    const plan = await this.buildRosterPlan(parsed.data);
+    return {
+      schoolYear: plan.schoolYear,
+      activeSchoolYear: plan.activeSchoolYear,
+      rows: plan.rows,
+      summary: plan.summary,
+      canApply: plan.canApply,
+    };
+  }
+
+  async applyStudentRoster(
+    body: unknown,
+    actorId?: number | null,
+  ): Promise<RosterImportApplyResult> {
+    const parsed = rosterImportSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+
+    const plan = await this.buildRosterPlan(parsed.data);
+    if (!plan.canApply) {
+      throw new BadRequestException('Roster contains invalid or conflicting rows.');
+    }
+
+    const createPasswordHashes = new Map<number, string>();
+    for (const row of plan.plannedRows) {
+      if (row.action !== 'create' || !row.normalized?.initialPassword) continue;
+      createPasswordHashes.set(
+        row.rowNumber,
+        await hashArgon2(row.normalized.initialPassword, { type: argon2id }),
+      );
+    }
+
+    const affectedUserIds = new Set<number>();
+    const result = await this.database.db.transaction(async (tx) => {
+      const now = new Date();
+      if (parsed.data.activateYear) {
+        await tx
+          .update(schema.schoolYears)
+          .set({ isActive: false, updatedAt: now })
+          .where(eq(schema.schoolYears.isActive, true));
+        await tx
+          .insert(schema.schoolYears)
+          .values({ year: parsed.data.schoolYear, isActive: true })
+          .onDuplicateKeyUpdate({
+            set: { isActive: true, updatedAt: now },
+          });
+      } else {
+        await tx
+          .insert(schema.schoolYears)
+          .values({ year: parsed.data.schoolYear, isActive: false })
+          .onDuplicateKeyUpdate({
+            set: { updatedAt: now },
+          });
+      }
+
+      const [studentRole] = await tx
+        .select({ id: schema.roles.id })
+        .from(schema.roles)
+        .where(eq(schema.roles.name, 'student'))
+        .limit(1);
+      if (!studentRole) throw new BadRequestException('Student role is missing.');
+
+      for (const row of plan.plannedRows) {
+        if (row.action === 'create') {
+          const normalized = row.normalized;
+          const passwordHash = createPasswordHashes.get(row.rowNumber);
+          if (!normalized || !passwordHash) throw new BadRequestException('Invalid create row.');
+
+          const [user] = await tx
+            .insert(schema.users)
+            .values({
+              studentNo: normalized.studentNo,
+              name: normalized.name,
+              grade: normalized.grade,
+              classNo: normalized.classNo,
+              number: normalized.number,
+              gender: normalized.storedGender ?? null,
+              email: normalized.email ?? null,
+              phone: normalized.phone ?? null,
+              status: 'active',
+            })
+            .$returningId();
+          const [student] = await tx
+            .insert(schema.students)
+            .values({
+              userId: user.id,
+              studentNo: normalized.studentNo,
+              name: normalized.name,
+              grade: normalized.grade,
+              classNo: normalized.classNo,
+              number: normalized.number,
+            })
+            .$returningId();
+          await tx.insert(schema.authAccounts).values({
+            userId: user.id,
+            provider: 'local',
+            providerAccountId: String(normalized.studentNo),
+            passwordHash,
+            passwordAlgorithm: 'argon2id',
+          });
+          await tx.insert(schema.userRoles).values({ userId: user.id, roleId: studentRole.id });
+          await tx.insert(schema.studentEnrollments).values({
+            studentId: student.id,
+            schoolYear: parsed.data.schoolYear,
+            studentNo: normalized.studentNo,
+            grade: normalized.grade,
+            classNo: normalized.classNo,
+            number: normalized.number,
+            status: 'active',
+          });
+          continue;
+        }
+
+        if (row.action === 'update') {
+          const normalized = row.normalized;
+          const existing = row.existing;
+          if (!normalized || !existing?.userId)
+            throw new BadRequestException('Invalid update row.');
+
+          await tx
+            .update(schema.students)
+            .set({
+              studentNo: normalized.studentNo,
+              name: normalized.name,
+              grade: normalized.grade,
+              classNo: normalized.classNo,
+              number: normalized.number,
+              updatedAt: now,
+            })
+            .where(eq(schema.students.id, existing.studentId));
+
+          await tx
+            .update(schema.users)
+            .set({
+              studentNo: normalized.studentNo,
+              name: normalized.name,
+              grade: normalized.grade,
+              classNo: normalized.classNo,
+              number: normalized.number,
+              gender: normalized.storedGender,
+              email: normalized.email,
+              phone: normalized.phone,
+              status: 'active',
+              updatedAt: now,
+            })
+            .where(eq(schema.users.id, existing.userId));
+
+          const providerIds = [
+            ...new Set(
+              [existing.currentStudentNo, normalized.previousStudentNo]
+                .filter((value): value is number => value !== undefined)
+                .map(String),
+            ),
+          ];
+          if (providerIds.length > 0) {
+            await tx
+              .update(schema.authAccounts)
+              .set({ providerAccountId: String(normalized.studentNo), updatedAt: now })
+              .where(
+                and(
+                  eq(schema.authAccounts.userId, existing.userId),
+                  eq(schema.authAccounts.provider, 'local'),
+                  inArray(schema.authAccounts.providerAccountId, providerIds),
+                ),
+              );
+          }
+
+          await tx
+            .insert(schema.studentEnrollments)
+            .values({
+              studentId: existing.studentId,
+              schoolYear: parsed.data.schoolYear,
+              studentNo: normalized.studentNo,
+              grade: normalized.grade,
+              classNo: normalized.classNo,
+              number: normalized.number,
+              status: 'active',
+            })
+            .onDuplicateKeyUpdate({
+              set: {
+                studentNo: normalized.studentNo,
+                grade: normalized.grade,
+                classNo: normalized.classNo,
+                number: normalized.number,
+                status: 'active',
+                updatedAt: now,
+              },
+            });
+          affectedUserIds.add(existing.userId);
+          continue;
+        }
+
+        if (row.action === 'graduate' && row.existing?.userId && row.matchedStudentId) {
+          await tx
+            .update(schema.studentEnrollments)
+            .set({ status: 'graduated', updatedAt: now })
+            .where(
+              and(
+                eq(schema.studentEnrollments.studentId, row.matchedStudentId),
+                eq(schema.studentEnrollments.schoolYear, plan.activeSchoolYear),
+                eq(schema.studentEnrollments.status, 'active'),
+              ),
+            );
+          await tx
+            .update(schema.users)
+            .set({ status: 'graduated', updatedAt: now })
+            .where(eq(schema.users.id, row.existing.userId));
+          affectedUserIds.add(row.existing.userId);
+        }
+      }
+
+      const [batch] = await tx
+        .insert(schema.rosterImportBatches)
+        .values({
+          schoolYear: parsed.data.schoolYear,
+          appliedById: actorId && actorId > 0 ? actorId : null,
+          fileName: parsed.data.fileName,
+          rowCount: parsed.data.rows.length,
+          createdCount: plan.summary.create,
+          updatedCount: plan.summary.update,
+          unchangedCount: plan.summary.unchanged,
+          graduatedCount: plan.summary.graduate,
+        })
+        .$returningId();
+
+      return { batchId: batch.id };
+    });
+
+    await Promise.all(
+      [...affectedUserIds].map((userId) => this.authService.invalidateUserSessions(userId)),
+    );
+    await this.database.writeAudit({
+      actorId,
+      action: 'admin.student-roster.apply',
+      targetType: 'roster_import_batches',
+      targetId: result.batchId,
+    });
+
+    return {
+      ok: true,
+      batchId: result.batchId,
+      schoolYear: plan.schoolYear,
+      activeSchoolYear: plan.activeSchoolYear,
+      rows: plan.rows,
+      summary: plan.summary,
+      canApply: plan.canApply,
+    };
   }
 
   async staff(query: unknown): Promise<PaginatedResponse<AdminStaffSummary>> {

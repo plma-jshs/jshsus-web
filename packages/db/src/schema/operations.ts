@@ -37,6 +37,81 @@ export const students = mysqlTable(
   }),
 );
 
+export const schoolYears = mysqlTable(
+  'school_years',
+  {
+    id,
+    year: int('year').notNull(),
+    isActive: boolean('is_active').notNull().default(false),
+    ...timestamps,
+  },
+  (table) => ({
+    yearIdx: uniqueIndex('school_years_year_idx').on(table.year),
+    activeIdx: index('school_years_active_idx').on(table.isActive, table.year),
+  }),
+);
+
+export const studentEnrollmentStatusEnum = mysqlEnum('student_enrollment_status', [
+  'active',
+  'graduated',
+  'transferred',
+  'withdrawn',
+]);
+
+export const studentEnrollments = mysqlTable(
+  'student_enrollments',
+  {
+    id,
+    studentId: int('student_id')
+      .notNull()
+      .references(() => students.id),
+    schoolYear: int('school_year')
+      .notNull()
+      .references(() => schoolYears.year),
+    studentNo: int('student_no').notNull(),
+    grade: int('grade').notNull(),
+    classNo: int('class_no').notNull(),
+    number: int('number').notNull(),
+    status: studentEnrollmentStatusEnum.notNull().default('active'),
+    ...timestamps,
+  },
+  (table) => ({
+    yearStudentIdx: uniqueIndex('student_enrollments_year_student_idx').on(
+      table.schoolYear,
+      table.studentId,
+    ),
+    yearStudentNoIdx: uniqueIndex('student_enrollments_year_student_no_idx').on(
+      table.schoolYear,
+      table.studentNo,
+    ),
+    studentIdx: index('student_enrollments_student_idx').on(table.studentId, table.schoolYear),
+    statusIdx: index('student_enrollments_status_idx').on(table.schoolYear, table.status),
+  }),
+);
+
+export const rosterImportBatches = mysqlTable(
+  'roster_import_batches',
+  {
+    id,
+    schoolYear: int('school_year')
+      .notNull()
+      .references(() => schoolYears.year),
+    appliedById: int('applied_by_id').references(() => users.id),
+    fileName: varchar('file_name', { length: 255 }),
+    rowCount: int('row_count').notNull().default(0),
+    createdCount: int('created_count').notNull().default(0),
+    updatedCount: int('updated_count').notNull().default(0),
+    unchangedCount: int('unchanged_count').notNull().default(0),
+    graduatedCount: int('graduated_count').notNull().default(0),
+    appliedAt: datetime('applied_at', { mode: 'date', fsp: 3 }).notNull().default(now),
+    ...timestamps,
+  },
+  (table) => ({
+    yearIdx: index('roster_import_batches_year_idx').on(table.schoolYear, table.appliedAt),
+    actorIdx: index('roster_import_batches_actor_idx').on(table.appliedById, table.appliedAt),
+  }),
+);
+
 export const staffProfiles = mysqlTable(
   'staff_profiles',
   {
