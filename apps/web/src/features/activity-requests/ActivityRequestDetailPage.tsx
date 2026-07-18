@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
-import { ArrowLeft, Ban, Check, Copy } from 'lucide-react';
+import { ArrowLeft, Ban, Pencil } from 'lucide-react';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
+import { detailBreadcrumbs } from '../../components/page/pageHierarchy';
 import { ApiError } from '../../shared/api/http';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { parsePositiveRouteId } from '../../shared/lib/route';
+import { getSession } from '../auth/api';
 import { cancelActivityRequest, getActivityRequest } from './api';
 import { activityStatusLabels, getActivityDurationLabel } from './presentation';
 import '../../styles/activity-requests.css';
@@ -78,7 +80,7 @@ export function ActivityRequestDetailPage() {
   const id = parsedId ?? 0;
   const queryClient = useQueryClient();
   const [confirmCancel, setConfirmCancel] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
   const requestQuery = useQuery({
     queryKey: ['activity-requests', 'detail', id],
     queryFn: () => getActivityRequest(id),
@@ -98,7 +100,7 @@ export function ActivityRequestDetailPage() {
   if (parsedId === null) {
     return (
       <PageScaffold
-        breadcrumbs={[{ label: '탐구활동서', to: '/activity-requests' }]}
+        breadcrumbs={detailBreadcrumbs('activityRequests')}
         title="탐구활동서"
         width="reading"
         variant="document"
@@ -111,7 +113,7 @@ export function ActivityRequestDetailPage() {
   if (requestQuery.isLoading) {
     return (
       <PageScaffold
-        breadcrumbs={[{ label: '탐구활동서', to: '/activity-requests' }]}
+        breadcrumbs={detailBreadcrumbs('activityRequests')}
         title="탐구활동서"
         width="reading"
         variant="document"
@@ -125,7 +127,7 @@ export function ActivityRequestDetailPage() {
     const status = requestQuery.error instanceof ApiError ? requestQuery.error.status : undefined;
     return (
       <PageScaffold
-        breadcrumbs={[{ label: '탐구활동서', to: '/activity-requests' }]}
+        breadcrumbs={detailBreadcrumbs('activityRequests')}
         title="탐구활동서"
         width="reading"
         variant="document"
@@ -140,29 +142,33 @@ export function ActivityRequestDetailPage() {
   }
 
   const request = requestQuery.data;
+  const canEdit =
+    sessionQuery.data?.isLogined === true &&
+    Number(sessionQuery.data.stuid ?? sessionQuery.data.identifier) === request.studentNo;
   const duration = getActivityDurationLabel(request.startsAt, request.endsAt);
-  const copyIssuedNumber = async () => {
-    if (!request.issuedNumber) return;
-    try {
-      await navigator.clipboard.writeText(request.issuedNumber);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  };
-
   return (
     <PageScaffold
-      breadcrumbs={[{ label: '학교생활' }, { label: '탐구활동서', to: '/activity-requests' }]}
+      breadcrumbs={detailBreadcrumbs('activityRequests')}
       title={request.purpose}
       width="reading"
       variant="document"
+      action={
+        request.status === 'submitted' && canEdit ? (
+          <Link
+            className="detail-primary-button"
+            to="/activity-requests/$requestId/edit"
+            params={{ requestId: String(request.id) }}
+          >
+            <Pencil size={16} aria-hidden="true" /> 신청 수정
+          </Link>
+        ) : undefined
+      }
       meta={
         <>
           <span className={`activity-status is-${request.status}`}>
             {activityStatusLabels[request.status]}
           </span>
-          <span>신청번호 #{request.id}</span>
+          <span>발급번호 #{request.id}</span>
         </>
       }
     >
@@ -170,12 +176,26 @@ export function ActivityRequestDetailPage() {
         <section aria-labelledby="activity-information-title">
           <div className="activity-document__heading">
             <h2 id="activity-information-title">신청 정보</h2>
-            <span>{request.studentName}</span>
+            <span>
+              {request.studentNo} {request.studentName} · 대표
+            </span>
           </div>
           <dl className="activity-definition-list">
             <div>
               <dt>활동 장소</dt>
               <dd>{request.location}</dd>
+            </div>
+            <div>
+              <dt>참여 학생</dt>
+              <dd>
+                {request.participants.map((student, index) => (
+                  <span key={student.studentId}>
+                    {student.studentNo} {student.studentName}
+                    {student.isRepresentative ? ' · 대표' : ''}
+                    {index < request.participants.length - 1 ? ' · ' : ''}
+                  </span>
+                ))}
+              </dd>
             </div>
             <div>
               <dt>시작 일시</dt>
@@ -196,22 +216,12 @@ export function ActivityRequestDetailPage() {
             </div>
             <div>
               <dt>담당 교사</dt>
-              <dd>{request.teacherName ?? '배정 전'}</dd>
+              <dd>{request.advisorTeacherName ?? '배정 전'}</dd>
             </div>
-            {request.issuedNumber ? (
+            {request.reviewerName ? (
               <div>
-                <dt>발급번호</dt>
-                <dd className="activity-issued-number">
-                  <code>{request.issuedNumber}</code>
-                  <button type="button" onClick={copyIssuedNumber} aria-label="발급번호 복사">
-                    {copied ? (
-                      <Check size={15} aria-hidden="true" />
-                    ) : (
-                      <Copy size={15} aria-hidden="true" />
-                    )}
-                    {copied ? '복사됨' : '복사'}
-                  </button>
-                </dd>
+                <dt>승인자</dt>
+                <dd>{request.reviewerName}</dd>
               </div>
             ) : null}
           </dl>
@@ -224,7 +234,7 @@ export function ActivityRequestDetailPage() {
           </section>
         ) : null}
 
-        {request.status === 'submitted' ? (
+        {request.status === 'submitted' && canEdit ? (
           <section className="activity-cancel-section" aria-label="신청 취소">
             {confirmCancel ? (
               <div className="activity-cancel-confirm" role="group" aria-label="신청 취소 확인">

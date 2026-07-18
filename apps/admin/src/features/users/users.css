@@ -1,0 +1,234 @@
+.identity-page {
+  display: grid;
+  gap: 16px;
+}
+.identity-page-toolbar,
+.identity-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.identity-primary-button,
+.identity-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.identity-primary-button {
+  border: 1px solid #087f79;
+  background: #087f79;
+  color: #fff;
+}
+.identity-secondary-button {
+  border: 1px solid #d5dfdd;
+  background: #fff;
+  color: #273632;
+}
+.identity-primary-button:disabled,
+.identity-secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.identity-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 1px solid #b8ddd7;
+  border-radius: 10px;
+  background: #effaf7;
+  color: #245a52;
+}
+.identity-success button {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: #006d68;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.identity-panel {
+  overflow: hidden;
+  border: 1px solid #dfe7e6;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.identity-panel > .admin-table-toolbar {
+  margin: 0;
+  padding: 16px 18px 12px;
+}
+
+.identity-panel > .admin-data-table {
+  padding: 0 18px 18px;
+}
+.identity-filter-bar {
+  display: grid;
+  align-items: end;
+  gap: 10px;
+}
+
+.identity-filter-bar.is-students {
+  grid-template-columns: minmax(220px, 320px) 100px 100px 88px auto;
+}
+
+.identity-filter-bar.is-staff {
+  grid-template-columns: minmax(260px, 360px) 88px auto;
+}
+.identity-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: #34433f;
+  font-size: 13px;
+  font-weight: 650;
+}
+.identity-field input,
+.identity-field select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #cedad7;
+  border-radius: 8px;
+  background: #fff;
+  color: #17221f;
+  font: inherit;
+  font-weight: 450;
+  outline: none;
+}
+.identity-field input:focus,
+.identity-field select:focus {
+  border-color: #168e87;
+  box-shadow: 0 0 0 3px rgb(22 142 135 / 12%);
+}
+.identity-field input[readonly] {
+  background: #f5f8f7;
+  color: #63706d;
+}
+.identity-form-error {
+  color: #bd342b !important;
+}
+.identity-status {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: #eef2f1;
+  color: #60706c;
+  font-size: 12px;
+  font-weight: 650;
+}
+.identity-status.active {
+  background: #e8f6f2;
+  color: #087667;
+}
+.identity-status.restricted {
+  background: #fff2df;
+  color: #9c5b00;
+}
+.identity-status.graduated,
+.identity-status.deleted {
+  background: #f0f2f3;
+  color: #667078;
+}
+.identity-gender.is-missing {
+  color: #a35b12;
+  font-weight: 650;
+}
+.identity-row-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+.identity-row-actions .ui-icon-button {
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
+}
+.identity-dialog-form {
+  display: grid;
+  gap: 18px;
+}
+.identity-form-grid {
+  display: grid;
+  gap: 14px;
+}
+.identity-form-grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.identity-form-grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.identity-field-note {
+  margin: -4px 0 0;
+  color: #687672;
+  font-size: 13px;
+}
+.identity-form-error {
+  margin: 0;
+  font-size: 13px;
+}
+.identity-dialog-actions {
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid #e6eceb;
+}
+.identity-role-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.identity-role-grid label {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #dfe7e5;
+  border-radius: 8px;
+  color: #273631;
+  font-size: 13px;
+}
+.identity-role-grid input {
+  width: 16px;
+  height: 16px;
+  accent-color: #087f79;
+}
+.identity-role-grid small {
+  color: #85908d;
+}
+@media (max-width: 1000px) {
+  .identity-filter-bar.is-students,
+  .identity-filter-bar.is-staff {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .identity-filter-bar button {
+    width: 100%;
+  }
+}
+@media (max-width: 640px) {
+  .identity-page-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .identity-page-toolbar > button {
+    width: 100%;
+  }
+  .identity-filter-bar.is-students,
+  .identity-filter-bar.is-staff,
+  .identity-form-grid.two,
+  .identity-form-grid.three,
+  .identity-role-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,238 @@
+.ui-dialog,
+.ui-drawer {
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--j-color-text);
+  box-shadow: var(--j-shadow-overlay);
+}
+
+.ui-dialog::backdrop,
+.ui-drawer::backdrop {
+  background: var(--j-color-scrim);
+  backdrop-filter: blur(2px);
+}
+
+.ui-dialog--sm {
+  width: min(100%, 420px);
+}
+
+.ui-dialog--md {
+  width: min(100%, 600px);
+}
+
+.ui-dialog--lg {
+  width: min(100%, 840px);
+}
+
+.ui-dialog__layout,
+.ui-drawer__layout {
+  display: grid;
+  max-height: inherit;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.ui-dialog__header,
+.ui-drawer__header {
+  display: flex;
+  min-height: 68px;
+  padding: 16px 20px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ui-dialog__header h2,
+.ui-drawer__header h2,
+.ui-dialog__header p,
+.ui-drawer__header p {
+  margin: 0;
+}
+
+.ui-dialog__header h2,
+.ui-drawer__header h2 {
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.ui-dialog__header p,
+.ui-drawer__header p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ui-dialog__close,
+.ui-drawer__close {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.ui-dialog__close:hover,
+.ui-drawer__close:hover {
+  background: var(--j-color-surface-hover);
+  color: var(--j-color-text);
+}
+
+.ui-dialog__body,
+.ui-drawer__body {
+  padding: 20px;
+  overflow: auto;
+}
+
+.ui-dialog__footer,
+.ui-drawer__footer {
+  display: flex;
+  min-height: 64px;
+  padding: 12px 20px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  background: var(--j-color-surface-subtle);
+}
+
+.ui-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: min(100%, 520px);
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  border-radius: 0;
+}
+
+.ui-drawer--right {
+  right: 0;
+  left: auto;
+  border-width: 0 0 0 1px;
+}
+
+.ui-drawer--left {
+  right: auto;
+  left: 0;
+  border-width: 0 1px 0 0;
+}
+
+.ui-empty-state {
+  display: grid;
+  min-height: 132px;
+  padding: 24px;
+  place-items: center;
+  gap: 8px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.ui-empty-state__icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--j-color-surface-subtle);
+  color: var(--primary);
+}
+
+.ui-empty-state strong,
+.ui-empty-state p {
+  margin: 0;
+}
+
+.ui-empty-state strong {
+  color: var(--j-color-text-secondary);
+  font-size: 14px;
+}
+
+.ui-empty-state p {
+  max-width: 480px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.ui-toast-viewport {
+  position: fixed;
+  z-index: 100;
+  right: 20px;
+  bottom: 20px;
+  display: grid;
+  width: min(380px, calc(100vw - 32px));
+  gap: 8px;
+  pointer-events: none;
+}
+
+.ui-toast {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 13px 14px;
+  align-items: start;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--j-shadow-overlay);
+  pointer-events: auto;
+}
+
+.ui-toast--success {
+  border-left: 3px solid var(--positive);
+}
+
+.ui-toast--warning {
+  border-left: 3px solid var(--warning);
+}
+
+.ui-toast--danger {
+  border-left: 3px solid var(--danger);
+}
+
+.ui-toast__content strong,
+.ui-toast__content p {
+  display: block;
+  margin: 0;
+}
+
+.ui-toast__content strong {
+  font-size: 13px;
+}
+
+.ui-toast__content p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.ui-toast__close {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.ui-toast__close:hover {
+  background: var(--j-color-surface-hover);
+}

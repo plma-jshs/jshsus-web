@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { CsrfGuard } from '../../shared/auth/csrf.guard';
 import { RequirePermissions, RequireRoles } from '../../shared/auth/auth.decorators';
 import type { AuthenticatedRequest } from '../../shared/auth/request-auth';
@@ -25,11 +25,32 @@ export class ActivityRequestsController {
     return this.activityRequestsService.myRequests(request.authSession);
   }
 
+  @Get('activity-requests/students')
+  @UseGuards(SessionGuard, RolesGuard)
+  @RequireRoles('student')
+  participantStudents(@Req() request: AuthenticatedRequest) {
+    return this.activityRequestsService.participantStudentOptions(request.authSession);
+  }
+
+  @Get('activity-requests/teachers')
+  @UseGuards(SessionGuard, RolesGuard)
+  @RequireRoles('student', 'teacher')
+  teachers() {
+    return this.activityRequestsService.teacherOptions();
+  }
+
   @Get('activity-requests/:id')
   @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
   @RequireRoles('student')
   detail(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
     return this.activityRequestsService.getMyRequest(Number(id), request.authSession);
+  }
+
+  @Put('activity-requests/:id')
+  @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
+  @RequireRoles('student')
+  update(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthenticatedRequest) {
+    return this.activityRequestsService.update(Number(id), body, request.authSession);
   }
 
   @Post('activity-requests/:id/cancel')
@@ -42,8 +63,36 @@ export class ActivityRequestsController {
   @Get('admin/activity-requests')
   @UseGuards(SessionGuard, PermissionsGuard)
   @RequirePermissions('activity.review')
-  adminList() {
-    return this.activityRequestsService.adminList();
+  adminList(@Query() query: Record<string, unknown>, @Req() request: AuthenticatedRequest) {
+    return this.activityRequestsService.adminList(query, request.authSession?.userId);
+  }
+
+  @Get('admin/activity-requests/students')
+  @UseGuards(SessionGuard, PermissionsGuard)
+  @RequirePermissions('activity.review')
+  adminStudents() {
+    return this.activityRequestsService.adminStudentOptions();
+  }
+
+  @Get('admin/activity-requests/teachers')
+  @UseGuards(SessionGuard, PermissionsGuard)
+  @RequirePermissions('activity.review')
+  adminTeachers() {
+    return this.activityRequestsService.teacherOptions();
+  }
+
+  @Post('admin/activity-requests')
+  @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
+  @RequirePermissions('activity.review')
+  adminCreate(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
+    return this.activityRequestsService.adminCreate(body, request.authSession?.userId);
+  }
+
+  @Post('admin/activity-requests/print/today')
+  @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
+  @RequirePermissions('activity.review')
+  printToday(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
+    return this.activityRequestsService.printToday(body, request.authSession?.userId);
   }
 
   @Post('admin/activity-requests/:id/approve')
@@ -58,12 +107,5 @@ export class ActivityRequestsController {
   @RequirePermissions('activity.review')
   reject(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthenticatedRequest) {
     return this.activityRequestsService.reject(Number(id), body, request.authSession?.userId);
-  }
-
-  @Post('admin/activity-requests/:id/print')
-  @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
-  @RequirePermissions('activity.review')
-  print(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
-    return this.activityRequestsService.markPrinted(Number(id), request.authSession?.userId);
   }
 }

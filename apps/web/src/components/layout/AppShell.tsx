@@ -10,19 +10,27 @@ import {
   Menu,
   MessageSquareText,
   Megaphone,
+  ShieldCheck,
   User,
   X,
 } from 'lucide-react';
 import { getSession, logout } from '../../features/auth/api';
+import { getAdminSiteHref } from '../../shared/lib/adminSiteHref';
+import { NotificationMenu } from './NotificationMenu';
 
 type InternalNavigationPath =
   | '/notices'
   | '/calendar'
   | '/activity-requests'
   | '/my-status'
+  | '/points'
   | '/lost-items'
   | '/boards/free'
-  | '/petitions';
+  | '/petitions'
+  | '/jbs'
+  | '/wake-songs'
+  | '/tools/bytes'
+  | '/tools/cannon';
 
 type NavigationItem =
   { label: string; to: InternalNavigationPath } | { label: string; href: string };
@@ -41,7 +49,7 @@ const navigationCategories = [
     label: '학교생활',
     links: [
       { label: '탐구활동서', to: '/activity-requests' },
-      { label: '상벌점', to: '/my-status' },
+      { label: '상벌점', to: '/points' },
       { label: '분실물', to: '/lost-items' },
     ],
   },
@@ -55,10 +63,10 @@ const navigationCategories = [
   {
     label: '방송·도구',
     links: [
-      { label: 'JBS', href: 'https://jshsus.kr/jbs' },
-      { label: '기상곡 신청', href: 'https://plma.jshsus.kr' },
-      { label: '세특 바이트 계산기', href: 'https://jshsus.kr/bytes' },
-      { label: '관리자', href: 'https://admin.jshsus.kr' },
+      { label: 'JBS', to: '/jbs' },
+      { label: '기상곡 신청', to: '/wake-songs' },
+      { label: '세특 바이트 계산기', to: '/tools/bytes' },
+      { label: '대포', to: '/tools/cannon' },
     ],
   },
 ] as const satisfies readonly NavigationCategory[];
@@ -251,6 +259,80 @@ function MobileMenu() {
   );
 }
 
+function UserMenu({
+  displayName,
+  loggingOut,
+  onLogout,
+}: {
+  displayName: string;
+  loggingOut: boolean;
+  onLogout: () => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setIsOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOpen(false);
+    };
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="header-user-menu" ref={menuRef}>
+      <button
+        className="header-user-link"
+        type="button"
+        aria-label={`${displayName} 계정 메뉴`}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((current) => !current)}
+      >
+        <User aria-hidden="true" size={16} />
+        <span>{displayName}</span>
+        <ChevronDown className="header-user-link__chevron" aria-hidden="true" size={14} />
+      </button>
+      {isOpen ? (
+        <div className="header-user-dropdown" role="menu" aria-label="계정 메뉴">
+          <Link to="/my-status" role="menuitem" onClick={() => setIsOpen(false)}>
+            <User aria-hidden="true" size={16} />
+            마이페이지
+          </Link>
+          <a
+            href={getAdminSiteHref()}
+            target="_blank"
+            rel="noreferrer"
+            role="menuitem"
+            onClick={() => setIsOpen(false)}
+          >
+            <ShieldCheck aria-hidden="true" size={16} />
+            학생부 전산시스템
+          </a>
+          <button
+            className="header-user-dropdown__logout"
+            type="button"
+            role="menuitem"
+            onClick={onLogout}
+            disabled={loggingOut}
+          >
+            <LogOut aria-hidden="true" size={16} />
+            {loggingOut ? '로그아웃 중' : '로그아웃'}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function PortalShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [routeLabel, setRouteLabel] = useState('페이지를 이동했습니다.');
@@ -268,6 +350,9 @@ function PortalShell() {
   });
 
   const session = sessionQuery.data;
+  const sessionDisplayName = session?.isLogined
+    ? [session.stuid, session.name ?? '사용자'].filter(Boolean).join(' ')
+    : '';
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
@@ -299,9 +384,6 @@ function PortalShell() {
 
   return (
     <div className="app-shell">
-      <a className="skip-link" href="#main-content">
-        본문 바로가기
-      </a>
       <p className="sr-only" aria-live="polite">
         {routeLabel}
       </p>
@@ -317,24 +399,12 @@ function PortalShell() {
           <div className="portal-header__actions">
             {session?.isLogined ? (
               <>
-                <Link
-                  to="/my-status"
-                  className="header-user-link"
-                  aria-label={`${session.name ?? '사용자'} 마이페이지 보기`}
-                >
-                  <User aria-hidden="true" size={16} />
-                  <span>{session.name ?? '사용자'}</span>
-                </Link>
-                <button
-                  className="header-logout-button"
-                  type="button"
-                  onClick={() => logoutMutation.mutate()}
-                  disabled={logoutMutation.isPending}
-                  aria-label={logoutMutation.isPending ? '로그아웃 처리 중' : '로그아웃'}
-                >
-                  <LogOut aria-hidden="true" size={16} />
-                  <span>로그아웃</span>
-                </button>
+                <NotificationMenu />
+                <UserMenu
+                  displayName={sessionDisplayName}
+                  loggingOut={logoutMutation.isPending}
+                  onLogout={() => logoutMutation.mutate()}
+                />
               </>
             ) : (
               <Link className="header-login-button" to="/login" search={{ returnTo: undefined }}>
@@ -396,11 +466,13 @@ function PortalShell() {
 
       <footer className="portal-footer">
         <div className="portal-footer__inner">
-          <span className="portal-footer__brand">과구리</span>
+          <Link className="portal-footer__brand" to="/about">
+            과구리
+          </Link>
           <a href="https://jshsus.kr/contents/login/login_policy.html">
             호스팅서비스사업자: 아이디비아이 | 사업자 등록번호: 332-44-01176 | 사업자 대표: 강재환
           </a>
-          <a href="https://jshsus.kr/contents/login/policy.html">개인정보처리방침</a>
+          <Link to="/privacy">개인정보처리방침</Link>
           <span>Copyright © 2026 IT부 All Rights Reserved.</span>
         </div>
       </footer>
@@ -410,11 +482,26 @@ function PortalShell() {
 
 export function AppShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const isNotFound = useRouterState({
+    select: (state) =>
+      state.statusCode === 404 || state.matches.some((match) => match.status === 'notFound'),
+  });
 
   useEffect(() => {
-    if (pathname !== '/login') return;
-    document.title = '전남과학고 통합로그인 | 과구리';
-  }, [pathname]);
+    if (isNotFound) {
+      document.title = '페이지를 찾을 수 없습니다 | 과구리';
+    } else if (pathname === '/login') {
+      document.title = '전남과학고 통합로그인 | 과구리';
+    }
+  }, [isNotFound, pathname]);
+
+  if (isNotFound) {
+    return (
+      <main id="main-content" className="route-not-found-shell">
+        <Outlet />
+      </main>
+    );
+  }
 
   if (pathname === '/login') {
     return (

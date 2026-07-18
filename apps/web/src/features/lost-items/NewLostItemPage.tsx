@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, ImagePlus, Send, Trash2 } from 'lucide-react';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
+import { taskBreadcrumbs } from '../../components/page/pageHierarchy';
 import { uploadFile } from '../../shared/api/files';
 import { createLostItem, discardLostItem } from './api';
 import '../../styles/lost-items.css';
@@ -94,9 +95,9 @@ export function NewLostItemPage() {
 
   return (
     <PageScaffold
-      breadcrumbs={[{ label: '분실물', to: '/lost-items' }, { label: '등록' }]}
+      breadcrumbs={taskBreadcrumbs('lostItems', '등록')}
       title="분실물 등록"
-      description="찾는 사람이 알아볼 수 있도록 물건과 장소를 구체적으로 작성해 주세요."
+      description="분실·습득 물품 정보를 입력하세요."
       width="reading"
       variant="form"
     >

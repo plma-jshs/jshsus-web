@@ -1,13 +1,23 @@
 .lost-items-view {
   min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-lg);
+  background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-card);
 }
 
 .lost-items-view .page-toolbar {
   min-height: 58px;
-  padding: 10px 0;
+  padding: 0 0 16px;
   margin-bottom: 24px;
-  border-top: 1px solid var(--j-color-border);
+  border-top: 0;
   border-bottom: 1px solid var(--j-color-border);
+}
+
+.lost-items-view .filter-chips button {
+  min-height: 40px;
+  font-size: 13px;
 }
 
 .lost-grid {
@@ -116,7 +126,7 @@
   content: '';
 }
 
-.lost-status.is-open::before {
+.lost-status.is-PROCESSING::before {
   background: var(--j-color-positive);
 }
 
@@ -155,8 +165,11 @@
 }
 
 .lost-item-detail {
-  border-top: 1px solid var(--j-color-border-strong);
-  border-bottom: 1px solid var(--j-color-border);
+  overflow: hidden;
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-lg);
+  background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-card);
 }
 
 .lost-item-detail__overview {
@@ -237,7 +250,7 @@
 }
 
 .lost-item-detail__section {
-  padding: 30px 0;
+  padding: 30px 34px;
   border-top: 1px solid var(--j-color-border);
 }
 
@@ -285,6 +298,7 @@
   border-top: 1px solid var(--j-color-border);
   color: var(--j-color-text-muted);
   font-size: 12px;
+  padding-inline: 34px;
 }
 
 .lost-item-detail__footer button,
@@ -310,18 +324,24 @@
 }
 
 .lost-item-form {
-  border-top: 1px solid var(--j-color-border-strong);
+  padding: clamp(22px, 3vw, 30px) clamp(20px, 4vw, 32px) clamp(20px, 4vw, 32px);
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-lg);
+  background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-card);
 }
 
 .lost-item-form__type {
-  padding: 26px 0 30px;
+  padding: 0 0 30px;
   margin: 0;
   border: 0;
   border-bottom: 1px solid var(--j-color-border);
 }
 
 .lost-item-form__type legend {
-  margin-bottom: 12px;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 16px;
   color: var(--j-color-text);
   font-size: 14px;
   font-weight: 600;
@@ -424,9 +444,19 @@
   background: var(--j-color-surface);
 }
 
+.lost-item-form__field input {
+  width: 100%;
+  height: var(--j-control-public);
+  min-height: var(--j-control-public);
+  box-sizing: border-box;
+  padding-block: 0;
+  line-height: normal;
+}
+
 .lost-item-form__field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: 16px;
 }
 
@@ -528,6 +558,118 @@
   text-align: right;
 }
 
+.lost-item-owner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 34px;
+  border-top: 1px solid var(--j-color-border);
+  background: var(--j-color-surface-subtle);
+}
+
+.lost-item-owner label,
+.lost-item-owner-edit label {
+  display: grid;
+  gap: 7px;
+  color: var(--j-color-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.lost-item-owner select,
+.lost-item-owner-edit input,
+.lost-item-owner-edit select,
+.lost-item-owner-edit textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--j-color-border-strong);
+  border-radius: var(--j-radius-sm);
+  color: var(--j-color-text);
+  background: var(--j-color-surface);
+  font: inherit;
+  font-weight: 400;
+}
+
+.lost-item-owner select,
+.lost-item-owner-edit input,
+.lost-item-owner-edit select {
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.lost-item-owner select {
+  width: 152px;
+}
+
+.lost-item-owner__actions,
+.lost-item-owner-edit__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.lost-item-owner__actions button,
+.lost-item-owner-edit__actions button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid var(--j-color-border-strong);
+  border-radius: var(--j-radius-sm);
+  color: var(--j-color-text);
+  background: var(--j-color-surface);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.lost-item-owner__actions .is-danger {
+  border-color: color-mix(in srgb, var(--j-color-danger) 32%, transparent);
+  color: var(--j-color-danger);
+}
+
+.lost-item-owner-edit {
+  display: grid;
+  gap: 18px;
+  padding: 24px 34px;
+  border-top: 1px solid var(--j-color-border);
+  background: var(--j-color-surface);
+}
+
+.lost-item-owner-edit__grid {
+  display: grid;
+  grid-template-columns: 140px minmax(180px, 1fr) minmax(180px, 1fr) 220px;
+  gap: 14px;
+}
+
+.lost-item-owner-edit textarea {
+  min-height: 124px;
+  padding: 12px;
+  resize: vertical;
+}
+
+.lost-item-owner-edit__error,
+.lost-item-owner__error {
+  margin: 0;
+  color: var(--j-color-danger);
+  font-size: 13px;
+}
+
+.lost-item-owner__error {
+  padding: 0 34px 18px;
+  background: var(--j-color-surface-subtle);
+}
+
+@media (max-width: 999px) {
+  .lost-item-owner-edit__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 1199px) {
   .lost-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -552,6 +694,10 @@
 }
 
 @media (max-width: 767px) {
+  .lost-items-view {
+    padding: var(--j-space-4);
+  }
+
   .lost-items-view .page-toolbar {
     align-items: stretch;
     margin-bottom: 18px;
@@ -562,7 +708,37 @@
   }
 
   .lost-item-detail__section {
-    padding: 24px 0;
+    padding: 24px;
+  }
+
+  .lost-item-detail__footer {
+    padding-inline: 24px;
+  }
+
+  .lost-item-owner {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 20px 24px;
+  }
+
+  .lost-item-owner select {
+    width: 100%;
+  }
+
+  .lost-item-owner-edit {
+    padding: 24px;
+  }
+
+  .lost-item-owner-edit__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lost-item-owner__error {
+    padding-inline: 24px;
+  }
+
+  .lost-item-form {
+    padding-inline: var(--j-space-4);
   }
 
   .lost-item-detail dl > div {

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -58,6 +59,33 @@ export class FilesController {
       },
       request.authSession,
     );
+  }
+
+  @Post('profile')
+  @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: env.FILE_UPLOAD_MAX_MB * 1024 * 1024 } }),
+  )
+  @RequireRoles(...memberRoles)
+  uploadProfile(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.filesService.uploadProfile(
+      {
+        originalName: file?.originalname ?? '',
+        mimeType: file?.mimetype ?? '',
+        bytes: file?.buffer ?? Buffer.alloc(0),
+      },
+      request.authSession,
+    );
+  }
+
+  @Delete('profile')
+  @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
+  @RequireRoles(...memberRoles)
+  deleteProfile(@Req() request: AuthenticatedRequest) {
+    return this.filesService.deleteProfile(request.authSession);
   }
 
   @Get(':id')

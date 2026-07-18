@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { RequirePermissions, RequireRoles } from '../../shared/auth/auth.decorators';
 import { CsrfGuard } from '../../shared/auth/csrf.guard';
+import { OptionalSessionGuard } from '../../shared/auth/optional-session.guard';
 import { PermissionsGuard } from '../../shared/auth/permissions.guard';
 import type { AuthenticatedRequest } from '../../shared/auth/request-auth';
 import { RolesGuard } from '../../shared/auth/roles.guard';
@@ -38,13 +39,18 @@ export class BoardsController {
   }
 
   @Get('boards/:slug/posts/:id')
-  boardPost(@Param('slug') slug: string, @Param('id') id: string) {
-    return this.boardsService.getPost(slug, Number(id));
+  @UseGuards(OptionalSessionGuard)
+  boardPost(
+    @Param('slug') slug: string,
+    @Param('id') id: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.boardsService.getPost(slug, Number(id), request.authSession?.userId);
   }
 
   @Get('admin/boards/:slug/posts')
   @UseGuards(SessionGuard, PermissionsGuard)
-  @RequirePermissions('content.manage')
+  @RequirePermissions('community.manage')
   adminBoardPosts(@Param('slug') slug: string) {
     return this.boardsService.listPosts(slug, 100, true);
   }
@@ -106,13 +112,18 @@ export class BoardsController {
   }
 
   @Get('boards/:slug/posts/:id/comments')
-  boardComments(@Param('slug') slug: string, @Param('id') id: string) {
-    return this.boardsService.listComments(slug, Number(id));
+  @UseGuards(OptionalSessionGuard)
+  boardComments(
+    @Param('slug') slug: string,
+    @Param('id') id: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.boardsService.listComments(slug, Number(id), false, request.authSession?.userId);
   }
 
   @Get('admin/boards/:slug/posts/:id/comments')
   @UseGuards(SessionGuard, PermissionsGuard)
-  @RequirePermissions('content.manage')
+  @RequirePermissions('community.manage')
   adminBoardComments(@Param('slug') slug: string, @Param('id') id: string) {
     return this.boardsService.listComments(slug, Number(id), true);
   }
@@ -129,9 +140,37 @@ export class BoardsController {
     return this.boardsService.createComment(slug, Number(id), body, request.authSession?.userId);
   }
 
+  @Post('boards/:slug/posts/:id/like')
+  @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
+  @RequireRoles(...memberRoles)
+  togglePostLike(
+    @Param('slug') slug: string,
+    @Param('id') id: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.boardsService.toggleFreePostLike(slug, Number(id), request.authSession?.userId);
+  }
+
+  @Post('boards/:slug/posts/:postId/comments/:commentId/like')
+  @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
+  @RequireRoles(...memberRoles)
+  toggleCommentLike(
+    @Param('slug') slug: string,
+    @Param('postId') postId: string,
+    @Param('commentId') commentId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.boardsService.toggleFreeCommentLike(
+      slug,
+      Number(postId),
+      Number(commentId),
+      request.authSession?.userId,
+    );
+  }
+
   @Put('admin/boards/posts/:id/hidden')
   @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
-  @RequirePermissions('content.manage')
+  @RequirePermissions('community.manage')
   updatePostHidden(
     @Param('id') id: string,
     @Body() body: unknown,
@@ -142,7 +181,7 @@ export class BoardsController {
 
   @Put('admin/boards/comments/:id/hidden')
   @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
-  @RequirePermissions('content.manage')
+  @RequirePermissions('community.manage')
   updateCommentHidden(
     @Param('id') id: string,
     @Body() body: unknown,

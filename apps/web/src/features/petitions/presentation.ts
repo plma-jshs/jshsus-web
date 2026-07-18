@@ -1,6 +1,6 @@
 import type { PetitionSummary } from '@jshsus/types';
 
-export type PetitionFilter = 'all' | 'open' | 'awaiting_answer' | 'answered' | 'closed';
+export type PetitionFilter = 'all' | 'open' | 'awaiting_answer' | 'answered';
 
 export const petitionStatusLabels: Record<PetitionSummary['status'], string> = {
   open: '진행 중',
@@ -19,7 +19,6 @@ export function getPetitionProgress(
 
 export function matchesPetitionFilter(petition: PetitionSummary, filter: PetitionFilter) {
   if (filter === 'all') return true;
-  if (filter === 'closed') return petition.status === 'expired' || petition.status === 'hidden';
   return petition.status === filter;
 }
 

@@ -11,8 +11,15 @@ import {
   stripPendingImages,
   type RichTextEditorValue,
 } from '../../components/editor/RichTextEditor';
-import { PageScaffold, PageState } from '../../components/page/PageScaffold';
+import { useToast } from '../../components/feedback/Toast';
+import { PageScaffold } from '../../components/page/PageScaffold';
+import { taskBreadcrumbs } from '../../components/page/pageHierarchy';
 import { uploadFile } from '../../shared/api/files';
+import {
+  ALLOWED_ATTACHMENT_TYPES,
+  ATTACHMENT_FORMAT_DESCRIPTION,
+  ATTACHMENT_INPUT_ACCEPT,
+} from '../../shared/lib/attachments';
 import {
   createBoardPost,
   createBoardPostDraft,
@@ -22,13 +29,6 @@ import {
 } from './api';
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
-const ALLOWED_ATTACHMENT_TYPES = new Set([
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-]);
-
 const emptyEditorValue: RichTextEditorValue = {
   contentDoc: plainTextToRichTextDocument(''),
   pendingImages: [],
@@ -46,10 +46,10 @@ function mutationErrorMessage(error: Error | null) {
 export function NewBoardPostPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const attachmentInputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState('');
   const [editorValue, setEditorValue] = useState<RichTextEditorValue>(emptyEditorValue);
-  const [isAnonymous, setIsAnonymous] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
 
@@ -60,7 +60,7 @@ export function NewBoardPostPage() {
         title: title.trim(),
         content: editorValue.plainText,
         contentDoc: stripPendingImages(editorValue.contentDoc),
-        isAnonymous,
+        isAnonymous: false,
       };
       const needsDraft = editorValue.pendingImages.length > 0 || attachments.length > 0;
 
@@ -113,7 +113,14 @@ export function NewBoardPostPage() {
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: ['board-posts', 'free'] });
       await navigate({ to: '/boards/free/$postId', params: { postId: String(result.post.id) } });
+      showToast({ title: '게시글을 등록했습니다.', tone: 'success' });
     },
+    onError: (error) =>
+      showToast({
+        title: '게시글을 등록하지 못했습니다.',
+        description: mutationErrorMessage(error),
+        tone: 'danger',
+      }),
   });
 
   const submit = (event: FormEvent) => {
@@ -128,7 +135,7 @@ export function NewBoardPostPage() {
     const accepted: File[] = [];
     for (const file of [...files]) {
       if (!ALLOWED_ATTACHMENT_TYPES.has(file.type)) {
-        setAttachmentError('PDF, JPG, PNG, WebP 파일만 첨부할 수 있습니다.');
+        setAttachmentError(`${ATTACHMENT_FORMAT_DESCRIPTION} 파일만 첨부할 수 있습니다.`);
         continue;
       }
       if (file.size > MAX_FILE_BYTES) {
@@ -153,9 +160,9 @@ export function NewBoardPostPage() {
 
   return (
     <PageScaffold
-      breadcrumbs={[{ label: '자유게시판', to: '/boards/free' }, { label: '글쓰기' }]}
-      title="새 글 작성"
-      description="제목과 내용을 입력한 뒤 공개 범위를 확인해 주세요."
+      breadcrumbs={taskBreadcrumbs('board', '글쓰기')}
+      title="게시글 작성"
+      description="제목과 내용을 입력하세요."
       width="reading"
       variant="form"
     >
@@ -182,7 +189,7 @@ export function NewBoardPostPage() {
           <div className="editor-attachments__heading">
             <div>
               <h2 id="attachment-title">첨부 파일</h2>
-              <p>PDF 또는 이미지, 파일당 최대 10MB</p>
+              <p>{ATTACHMENT_FORMAT_DESCRIPTION} · 파일당 최대 10MB</p>
             </div>
             <button
               className="editor-file-button"
@@ -193,7 +200,7 @@ export function NewBoardPostPage() {
             </button>
             <input
               ref={attachmentInputRef}
-              accept="application/pdf,image/jpeg,image/png,image/webp"
+              accept={ATTACHMENT_INPUT_ACCEPT}
               className="sr-only"
               multiple
               onChange={(event) => {
@@ -229,29 +236,6 @@ export function NewBoardPostPage() {
           {attachmentError ? <p className="editor-option-error">{attachmentError}</p> : null}
         </section>
 
-        <section className="editor-privacy" aria-labelledby="privacy-title">
-          <div>
-            <h2 id="privacy-title">작성자 표시</h2>
-            <p>선택하면 게시글 목록과 본문에서 이름을 표시하지 않습니다.</p>
-          </div>
-          <label className="editor-check">
-            <input
-              checked={isAnonymous}
-              onChange={(event) => setIsAnonymous(event.target.checked)}
-              type="checkbox"
-            />
-            <span>익명으로 작성</span>
-          </label>
-        </section>
-
-        {mutation.isError ? (
-          <PageState
-            kind="error"
-            title="게시글을 등록하지 못했습니다."
-            description={mutationErrorMessage(mutation.error)}
-          />
-        ) : null}
-
         <div className="editor-actions">
           <Link className="detail-secondary-button" to="/boards/free">
             <ArrowLeft size={16} /> 취소
@@ -261,7 +245,7 @@ export function NewBoardPostPage() {
             disabled={mutation.isPending || !title.trim() || !hasContent}
             type="submit"
           >
-            <Send size={16} /> {mutation.isPending ? '업로드 및 등록 중…' : '등록하기'}
+            <Send size={16} /> {mutation.isPending ? '게시 중…' : '게시'}
           </button>
         </div>
       </form>

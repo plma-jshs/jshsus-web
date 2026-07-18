@@ -10,6 +10,7 @@ import type {
   BoardPostDetail,
   BoardPostListItem,
   BoardPostSummary,
+  ContentLikeState,
   PaginatedResponse,
   RichTextDocument,
 } from '@jshsus/types';
@@ -27,6 +28,7 @@ const commentSchema = z.object({
 });
 const hiddenSchema = z.object({ isHidden: z.boolean() });
 const memberWritableBoardSlugs = new Set(['free']);
+const likeableBoardSlugs = new Set(['free', 'jbs']);
 
 @Injectable()
 export class BoardsService {
@@ -56,7 +58,10 @@ export class BoardsService {
         ? query.field === 'title'
           ? like(schema.posts.title, pattern)
           : query.field === 'author'
-            ? and(eq(schema.posts.isAnonymous, false), like(schema.users.name, pattern))
+            ? and(
+                eq(schema.posts.isAnonymous, false),
+                or(like(schema.users.nickname, pattern), like(schema.users.name, pattern)),
+              )
             : or(like(schema.posts.title, pattern), like(schema.posts.content, pattern))
         : undefined;
       const where = and(
@@ -76,6 +81,7 @@ export class BoardsService {
           id: schema.posts.id,
           title: schema.posts.title,
           authorName: schema.users.name,
+          authorNickname: schema.users.nickname,
           isAnonymous: schema.posts.isAnonymous,
           viewCount: schema.posts.viewCount,
           createdAt: schema.posts.createdAt,
@@ -96,7 +102,9 @@ export class BoardsService {
           id: row.id,
           boardSlug: slug,
           title: row.title,
-          authorName: row.isAnonymous ? undefined : (row.authorName ?? undefined),
+          authorName: row.isAnonymous
+            ? undefined
+            : (row.authorNickname ?? row.authorName ?? undefined),
           isAnonymous: row.isAnonymous,
           viewCount: row.viewCount,
           commentCount: row.commentCount,
@@ -122,6 +130,7 @@ export class BoardsService {
           content: schema.posts.content,
           contentJson: schema.posts.contentJson,
           authorName: schema.users.name,
+          authorNickname: schema.users.nickname,
           isAnonymous: schema.posts.isAnonymous,
           isHidden: schema.posts.isHidden,
           status: schema.posts.status,
@@ -157,7 +166,9 @@ export class BoardsService {
         title: row.title,
         content: row.content,
         contentDoc: (row.contentJson as RichTextDocument | null) ?? undefined,
-        authorName: row.isAnonymous ? undefined : (row.authorName ?? undefined),
+        authorName: row.isAnonymous
+          ? undefined
+          : ((includeHidden ? row.authorName : row.authorNickname) ?? row.authorName ?? undefined),
         isAnonymous: row.isAnonymous,
         isHidden: row.isHidden,
         status: row.status ?? 'published',
@@ -202,7 +213,7 @@ export class BoardsService {
           content: parsed.content,
           contentJson: parsed.contentDoc,
           status: parsed.status,
-          isAnonymous: parsed.isAnonymous,
+          isAnonymous: slug === 'free' ? false : parsed.isAnonymous,
         })
         .$returningId();
       await this.database.writeAudit({
@@ -211,11 +222,19 @@ export class BoardsService {
         targetType: 'posts',
         targetId: result.id,
       });
-      return { ok: true, post: { id: result.id, boardSlug: slug, ...parsed } };
+      return {
+        ok: true,
+        post: {
+          id: result.id,
+          boardSlug: slug,
+          ...parsed,
+          isAnonymous: slug === 'free' ? false : parsed.isAnonymous,
+        },
+      };
     });
   }
 
-  async getPost(slug: string, id: number): Promise<BoardPostDetail> {
+  async getPost(slug: string, id: number, actorId?: number | null): Promise<BoardPostDetail> {
     if (!Number.isInteger(id) || id <= 0) throw new BadRequestException('Invalid post id.');
 
     return this.database.query('boards.posts.detail', async (db) => {
@@ -230,6 +249,7 @@ export class BoardsService {
           content: schema.posts.content,
           contentJson: schema.posts.contentJson,
           authorName: schema.users.name,
+          authorNickname: schema.users.nickname,
           isAnonymous: schema.posts.isAnonymous,
           viewCount: schema.posts.viewCount,
           createdAt: schema.posts.createdAt,
@@ -237,6 +257,16 @@ export class BoardsService {
             sql<number>`cast((select count(*) from ${schema.comments} where ${schema.comments.postId} = ${schema.posts.id} and ${schema.comments.isHidden} = false) as unsigned)`.mapWith(
               Number,
             ),
+          likeCount:
+            sql<number>`cast((select count(*) from ${schema.postLikes} where ${schema.postLikes.postId} = ${schema.posts.id}) as unsigned)`.mapWith(
+              Number,
+            ),
+          likedByMe:
+            actorId && actorId > 0
+              ? sql<number>`exists(select 1 from ${schema.postLikes} where ${schema.postLikes.postId} = ${schema.posts.id} and ${schema.postLikes.userId} = ${actorId})`.mapWith(
+                  Number,
+                )
+              : sql<number>`0`.mapWith(Number),
         })
         .from(schema.posts)
         .leftJoin(schema.users, eq(schema.posts.authorId, schema.users.id))
@@ -263,10 +293,14 @@ export class BoardsService {
         title: row.title,
         content: row.content,
         contentDoc: (row.contentJson as RichTextDocument | null) ?? undefined,
-        authorName: row.isAnonymous ? undefined : (row.authorName ?? undefined),
+        authorName: row.isAnonymous
+          ? undefined
+          : (row.authorNickname ?? row.authorName ?? undefined),
         isAnonymous: row.isAnonymous,
         viewCount: row.viewCount + 1,
         commentCount: row.commentCount,
+        likeCount: Number(row.likeCount ?? 0),
+        likedByMe: Boolean(row.likedByMe),
         createdAt: row.createdAt.toISOString(),
         attachments,
       };
@@ -298,7 +332,7 @@ export class BoardsService {
           title: parsed.title,
           content: parsed.content,
           contentJson: parsed.contentDoc,
-          isAnonymous: parsed.isAnonymous,
+          isAnonymous: slug === 'free' ? false : parsed.isAnonymous,
           updatedAt: new Date(),
         })
         .where(eq(schema.posts.id, id));
@@ -319,7 +353,7 @@ export class BoardsService {
             parsed.contentDoc === undefined
               ? ((target.contentJson as RichTextDocument | null) ?? undefined)
               : (parsed.contentDoc ?? undefined),
-          isAnonymous: parsed.isAnonymous ?? target.isAnonymous,
+          isAnonymous: slug === 'free' ? false : (parsed.isAnonymous ?? target.isAnonymous),
           status: targetStatus,
         },
       };
@@ -414,6 +448,7 @@ export class BoardsService {
     slug: string,
     postId: number,
     includeHidden = false,
+    actorId?: number | null,
   ): Promise<BoardCommentSummary[]> {
     return this.database.query('boards.comments.list', async (db) => {
       await this.assertCommentPost(db, slug, postId, includeHidden);
@@ -423,9 +458,20 @@ export class BoardsService {
           postId: schema.comments.postId,
           parentId: schema.comments.parentId,
           authorName: schema.users.name,
+          authorNickname: schema.users.nickname,
           content: schema.comments.content,
           isHidden: schema.comments.isHidden,
           createdAt: schema.comments.createdAt,
+          likeCount:
+            sql<number>`cast((select count(*) from ${schema.commentLikes} where ${schema.commentLikes.commentId} = ${schema.comments.id}) as unsigned)`.mapWith(
+              Number,
+            ),
+          likedByMe:
+            actorId && actorId > 0
+              ? sql<number>`exists(select 1 from ${schema.commentLikes} where ${schema.commentLikes.commentId} = ${schema.comments.id} and ${schema.commentLikes.userId} = ${actorId})`.mapWith(
+                  Number,
+                )
+              : sql<number>`0`.mapWith(Number),
         })
         .from(schema.comments)
         .leftJoin(schema.users, eq(schema.comments.authorId, schema.users.id))
@@ -439,12 +485,104 @@ export class BoardsService {
         id: row.id,
         postId: row.postId,
         parentId: row.parentId ?? undefined,
-        authorName: row.authorName ?? undefined,
+        authorName:
+          (includeHidden ? row.authorName : row.authorNickname) ?? row.authorName ?? undefined,
         content: row.content,
         isHidden: row.isHidden,
         createdAt: row.createdAt.toISOString(),
+        likeCount: Number(row.likeCount ?? 0),
+        likedByMe: Boolean(row.likedByMe),
       }));
     });
+  }
+
+  async togglePostLike(
+    slug: string,
+    postId: number,
+    actorId?: number | null,
+  ): Promise<ContentLikeState> {
+    this.assertLikeActor(actorId);
+    return this.database.query('boards.posts.likes.toggle', async (db) =>
+      db.transaction(async (transaction) => {
+        const tx = transaction as unknown as AppDatabase;
+        await this.assertLikeablePost(tx, slug, postId, true);
+        const [existing] = await tx
+          .select({ userId: schema.postLikes.userId })
+          .from(schema.postLikes)
+          .where(and(eq(schema.postLikes.postId, postId), eq(schema.postLikes.userId, actorId)))
+          .limit(1);
+
+        const liked = !existing;
+        if (existing) {
+          await tx
+            .delete(schema.postLikes)
+            .where(and(eq(schema.postLikes.postId, postId), eq(schema.postLikes.userId, actorId)));
+        } else {
+          await tx.insert(schema.postLikes).values({ postId, userId: actorId });
+        }
+
+        const [totalRow] = await tx
+          .select({ total: count() })
+          .from(schema.postLikes)
+          .where(eq(schema.postLikes.postId, postId));
+        return { liked, likeCount: Number(totalRow?.total ?? 0) };
+      }),
+    );
+  }
+
+  toggleFreePostLike(slug: string, postId: number, actorId?: number | null) {
+    if (slug !== 'free') throw new NotFoundException('Post was not found.');
+    return this.togglePostLike(slug, postId, actorId);
+  }
+
+  async toggleCommentLike(
+    slug: string,
+    postId: number,
+    commentId: number,
+    actorId?: number | null,
+  ): Promise<ContentLikeState> {
+    this.assertLikeActor(actorId);
+    return this.database.query('boards.comments.likes.toggle', async (db) =>
+      db.transaction(async (transaction) => {
+        const tx = transaction as unknown as AppDatabase;
+        await this.assertLikeableComment(tx, slug, postId, commentId, true);
+        const [existing] = await tx
+          .select({ userId: schema.commentLikes.userId })
+          .from(schema.commentLikes)
+          .where(
+            and(
+              eq(schema.commentLikes.commentId, commentId),
+              eq(schema.commentLikes.userId, actorId),
+            ),
+          )
+          .limit(1);
+
+        const liked = !existing;
+        if (existing) {
+          await tx
+            .delete(schema.commentLikes)
+            .where(
+              and(
+                eq(schema.commentLikes.commentId, commentId),
+                eq(schema.commentLikes.userId, actorId),
+              ),
+            );
+        } else {
+          await tx.insert(schema.commentLikes).values({ commentId, userId: actorId });
+        }
+
+        const [totalRow] = await tx
+          .select({ total: count() })
+          .from(schema.commentLikes)
+          .where(eq(schema.commentLikes.commentId, commentId));
+        return { liked, likeCount: Number(totalRow?.total ?? 0) };
+      }),
+    );
+  }
+
+  toggleFreeCommentLike(slug: string, postId: number, commentId: number, actorId?: number | null) {
+    if (slug !== 'free') throw new NotFoundException('Comment was not found.');
+    return this.toggleCommentLike(slug, postId, commentId, actorId);
   }
 
   async createComment(slug: string, postId: number, body: unknown, actorId?: number | null) {
@@ -538,7 +676,7 @@ export class BoardsService {
     if (!target) throw new NotFoundException('Post was not found.');
 
     const canManage =
-      session.roles?.includes('system_admin') || session.permissions?.includes('content.manage');
+      session.roles?.includes('system_admin') || session.permissions?.includes('community.manage');
     if (!canManage && target.authorId !== session.userId) {
       throw new ForbiddenException('You cannot modify this post.');
     }
@@ -576,6 +714,87 @@ export class BoardsService {
     if (!post) {
       throw new NotFoundException('Post was not found.');
     }
+  }
+
+  private assertLikeActor(actorId?: number | null): asserts actorId is number {
+    if (!actorId || actorId <= 0) {
+      throw new ForbiddenException('A persisted account is required.');
+    }
+  }
+
+  private assertLikeableSlug(slug: string) {
+    if (!likeableBoardSlugs.has(slug)) {
+      throw new NotFoundException('Post was not found.');
+    }
+  }
+
+  private async assertLikeablePost(
+    db: AppDatabase,
+    slug: string,
+    postId: number,
+    forUpdate = false,
+  ) {
+    this.assertLikeableSlug(slug);
+    if (!Number.isInteger(postId) || postId <= 0) {
+      throw new BadRequestException('Invalid post id.');
+    }
+
+    const query = db
+      .select({ id: schema.posts.id })
+      .from(schema.posts)
+      .innerJoin(schema.boards, eq(schema.posts.boardId, schema.boards.id))
+      .where(
+        and(
+          eq(schema.posts.id, postId),
+          eq(schema.boards.slug, slug),
+          eq(schema.boards.visibility, 'public'),
+          or(eq(schema.posts.status, 'published'), isNull(schema.posts.status)),
+          eq(schema.posts.isHidden, false),
+        ),
+      )
+      .limit(1);
+    const [post] = forUpdate ? await query.for('update') : await query;
+    if (!post) throw new NotFoundException('Post was not found.');
+    return post;
+  }
+
+  private async assertLikeableComment(
+    db: AppDatabase,
+    slug: string,
+    postId: number,
+    commentId: number,
+    forUpdate = false,
+  ) {
+    this.assertLikeableSlug(slug);
+    if (
+      !Number.isInteger(postId) ||
+      postId <= 0 ||
+      !Number.isInteger(commentId) ||
+      commentId <= 0
+    ) {
+      throw new BadRequestException('Invalid comment target.');
+    }
+
+    const query = db
+      .select({ id: schema.comments.id })
+      .from(schema.comments)
+      .innerJoin(schema.posts, eq(schema.comments.postId, schema.posts.id))
+      .innerJoin(schema.boards, eq(schema.posts.boardId, schema.boards.id))
+      .where(
+        and(
+          eq(schema.comments.id, commentId),
+          eq(schema.comments.postId, postId),
+          eq(schema.comments.isHidden, false),
+          eq(schema.boards.slug, slug),
+          eq(schema.boards.visibility, 'public'),
+          or(eq(schema.posts.status, 'published'), isNull(schema.posts.status)),
+          eq(schema.posts.isHidden, false),
+        ),
+      )
+      .limit(1);
+    const [comment] = forUpdate ? await query.for('update') : await query;
+    if (!comment) throw new NotFoundException('Comment was not found.');
+    return comment;
   }
 
   private async findBoard(db: AppDatabase, slug: string) {

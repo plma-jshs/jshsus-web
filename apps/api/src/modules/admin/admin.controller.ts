@@ -36,24 +36,30 @@ export class AdminController {
 
   @Get('audit-logs')
   @RequirePermissions('audit.read')
-  auditLogs() {
-    return this.adminService.auditLogs();
+  auditLogs(@Query() query: Record<string, unknown>) {
+    return this.adminService.auditLogs(query);
   }
 
   @Get('school-events')
-  @RequirePermissions('content.manage')
+  @RequirePermissions('school_events.manage')
   schoolEvents(@Query('from') from?: string, @Query('to') to?: string) {
     return this.schoolDataService.listManagedEvents(from, to, true);
   }
 
+  @Get('school-calendar')
+  @RequirePermissions('school_events.manage')
+  schoolCalendar(@Query('from') from?: string, @Query('to') to?: string) {
+    return this.schoolDataService.getAdminCalendar(from, to);
+  }
+
   @Post('school-events')
-  @RequirePermissions('content.manage')
+  @RequirePermissions('school_events.manage')
   createSchoolEvent(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
     return this.schoolDataService.createManagedEvent(body, request.authSession?.userId);
   }
 
   @Put('school-events/:id')
-  @RequirePermissions('content.manage')
+  @RequirePermissions('school_events.manage')
   updateSchoolEvent(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: unknown,
@@ -63,15 +69,15 @@ export class AdminController {
   }
 
   @Delete('school-events/:id')
-  @RequirePermissions('content.manage')
+  @RequirePermissions('school_events.manage')
   deleteSchoolEvent(@Param('id', ParseIntPipe) id: number, @Req() request: AuthenticatedRequest) {
     return this.schoolDataService.deleteManagedEvent(id, request.authSession?.userId);
   }
 
   @Get('students')
   @RequirePermissions('users.manage')
-  students() {
-    return this.adminService.students();
+  students(@Query() query: Record<string, string | undefined>) {
+    return this.adminService.students(query);
   }
 
   @Post('students')
@@ -92,8 +98,8 @@ export class AdminController {
 
   @Get('staff')
   @RequirePermissions('users.manage')
-  staff() {
-    return this.adminService.staff();
+  staff(@Query() query: Record<string, string | undefined>) {
+    return this.adminService.staff(query);
   }
 
   @Post('staff')
@@ -110,6 +116,26 @@ export class AdminController {
     @Req() request: AuthenticatedRequest,
   ) {
     return this.adminService.updateStaff(Number(id), body, request.authSession?.userId);
+  }
+
+  @Put('users/:id/status')
+  @RequirePermissions('users.manage')
+  updateUserStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.adminService.updateUserStatus(id, body, request.authSession?.userId);
+  }
+
+  @Put('users/:id/password')
+  @RequirePermissions('users.manage')
+  resetUserPassword(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.adminService.resetUserPassword(id, body, request.authSession?.userId);
   }
 
   @Get('iam/roles')
@@ -134,12 +160,6 @@ export class AdminController {
   @RequirePermissions('iam.manage')
   permissions() {
     return this.adminService.permissions();
-  }
-
-  @Post('iam/permissions')
-  @RequirePermissions('iam.manage')
-  createPermission(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
-    return this.adminService.createPermission(body, request.authSession?.userId);
   }
 
   @Get('users/:id/roles')

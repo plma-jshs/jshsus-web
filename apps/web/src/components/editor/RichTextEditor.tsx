@@ -1,6 +1,9 @@
 import type { JSONContent } from '@tiptap/react';
 import type {
+  RichTextColor,
   RichTextDocument as PersistedRichTextDocument,
+  RichTextFontSize,
+  RichTextHighlight,
   RichTextMark as PersistedRichTextMark,
   RichTextNode as PersistedRichTextNode,
 } from '@jshsus/types';
@@ -10,22 +13,37 @@ import Placeholder from '@tiptap/extension-placeholder';
 import StarterKit from '@tiptap/starter-kit';
 import {
   Bold,
+  ChevronDown,
+  Eraser,
   Heading2,
   Heading3,
+  Highlighter,
   ImagePlus,
   Italic,
   Link2,
   List,
   ListOrdered,
+  Palette,
   Quote,
   Redo2,
   Strikethrough,
+  Type,
   Underline,
   Undo2,
   Unlink,
 } from 'lucide-react';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import {
+  FontSizeMark,
+  RICH_TEXT_COLOR_STYLES,
+  RICH_TEXT_COLOR_OPTIONS,
+  RICH_TEXT_FONT_SIZE_OPTIONS,
+  RICH_TEXT_HIGHLIGHT_STYLES,
+  RICH_TEXT_HIGHLIGHT_OPTIONS,
+  TextColorMark,
+  TextHighlightMark,
+} from './richTextMarks';
 
 export type RichTextDocument = JSONContent;
 
@@ -78,6 +96,9 @@ function editorExtensions(
   const readonly = options.readonly ?? false;
   const allowImages = options.allowImages ?? true;
   return [
+    TextColorMark,
+    FontSizeMark,
+    TextHighlightMark,
     StarterKit.configure({
       code: false,
       codeBlock: false,
@@ -155,7 +176,7 @@ function ToolbarButton({
   disabled?: boolean;
   label: string;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button
@@ -169,6 +190,40 @@ function ToolbarButton({
     >
       {children}
     </button>
+  );
+}
+
+function ToolbarSelect({
+  children,
+  icon,
+  indicator,
+  label,
+  onChange,
+  value,
+}: {
+  children: ReactNode;
+  icon: ReactNode;
+  indicator?: ReactNode;
+  label: string;
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  return (
+    <label className={`rich-text-toolbar-select${value ? ' is-active' : ''}`} title={label}>
+      <span className="sr-only">{label}</span>
+      <span className="rich-text-toolbar-select__icon" aria-hidden="true">
+        {icon}
+      </span>
+      {indicator ? (
+        <span className="rich-text-toolbar-select__indicator" aria-hidden="true">
+          {indicator}
+        </span>
+      ) : null}
+      <ChevronDown className="rich-text-toolbar-select__chevron" size={12} aria-hidden="true" />
+      <select aria-label={label} onChange={(event) => onChange(event.target.value)} value={value}>
+        {children}
+      </select>
+    </label>
   );
 }
 
@@ -239,10 +294,13 @@ export function RichTextEditor({
       characterCount: currentEditor?.getText().length ?? 0,
       heading2: currentEditor?.isActive('heading', { level: 2 }) ?? false,
       heading3: currentEditor?.isActive('heading', { level: 3 }) ?? false,
+      highlight: (currentEditor?.getAttributes('highlight').color as string | undefined) ?? '',
       italic: currentEditor?.isActive('italic') ?? false,
+      fontSize: (currentEditor?.getAttributes('fontSize').size as string | undefined) ?? '',
       link: currentEditor?.isActive('link') ?? false,
       orderedList: currentEditor?.isActive('orderedList') ?? false,
       strike: currentEditor?.isActive('strike') ?? false,
+      textColor: (currentEditor?.getAttributes('textColor').color as string | undefined) ?? '',
       underline: currentEditor?.isActive('underline') ?? false,
     }),
   });
@@ -306,6 +364,27 @@ export function RichTextEditor({
     setLinkOpen(false);
   };
 
+  const setStyleMark = (mark: 'textColor' | 'fontSize' | 'highlight', value: string) => {
+    const chain = editor.chain().focus();
+    if (!value) {
+      chain.unsetMark(mark).run();
+      return;
+    }
+    const attribute = mark === 'fontSize' ? 'size' : 'color';
+    chain.setMark(mark, { [attribute]: value }).run();
+  };
+
+  const textColorStyle = (RICH_TEXT_COLOR_STYLES as Record<string, string>)[toolbar.textColor];
+  const highlightStyle = (RICH_TEXT_HIGHLIGHT_STYLES as Record<string, string>)[toolbar.highlight];
+  const fontSizeBadge =
+    toolbar.fontSize === 'small'
+      ? 'S'
+      : toolbar.fontSize === 'large'
+        ? 'L'
+        : toolbar.fontSize === 'xlarge'
+          ? 'XL'
+          : '';
+
   return (
     <div className="rich-text-editor">
       <div aria-label="본문 서식" className="rich-text-toolbar" role="group">
@@ -355,6 +434,64 @@ export function RichTextEditor({
             <Strikethrough size={17} />
           </ToolbarButton>
         </div>
+        <div className="rich-text-toolbar__group rich-text-toolbar__style-controls">
+          <ToolbarSelect
+            icon={<Type size={17} />}
+            indicator={fontSizeBadge ? <span>{fontSizeBadge}</span> : undefined}
+            label="글자 크기"
+            onChange={(value) => setStyleMark('fontSize', value)}
+            value={toolbar.fontSize}
+          >
+            <option value="">기본 크기</option>
+            {RICH_TEXT_FONT_SIZE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </ToolbarSelect>
+          <ToolbarSelect
+            icon={<Palette size={17} />}
+            indicator={
+              textColorStyle ? (
+                <span
+                  className="rich-text-toolbar-select__swatch"
+                  style={{ backgroundColor: textColorStyle }}
+                />
+              ) : undefined
+            }
+            label="글자색"
+            onChange={(value) => setStyleMark('textColor', value)}
+            value={toolbar.textColor}
+          >
+            <option value="">기본 글자색</option>
+            {RICH_TEXT_COLOR_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </ToolbarSelect>
+          <ToolbarSelect
+            icon={<Highlighter size={17} />}
+            indicator={
+              highlightStyle ? (
+                <span
+                  className="rich-text-toolbar-select__swatch"
+                  style={{ backgroundColor: highlightStyle }}
+                />
+              ) : undefined
+            }
+            label="배경 강조색"
+            onChange={(value) => setStyleMark('highlight', value)}
+            value={toolbar.highlight}
+          >
+            <option value="">강조 없음</option>
+            {RICH_TEXT_HIGHLIGHT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </ToolbarSelect>
+        </div>
         <div className="rich-text-toolbar__group">
           <ToolbarButton
             active={toolbar.bulletList}
@@ -376,6 +513,12 @@ export function RichTextEditor({
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
           >
             <Quote size={17} />
+          </ToolbarButton>
+          <ToolbarButton
+            label="서식 지우기"
+            onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
+          >
+            <Eraser size={17} />
           </ToolbarButton>
         </div>
         <div className="rich-text-toolbar__group">
@@ -476,6 +619,32 @@ function normalizeMarks(marks: JSONContent[] | undefined): PersistedRichTextMark
     if (['bold', 'italic', 'underline', 'strike'].includes(mark.type ?? '')) {
       return [{ type: mark.type as 'bold' | 'italic' | 'underline' | 'strike' }];
     }
+
+    const color = mark.attrs?.color;
+    if (
+      mark.type === 'textColor' &&
+      typeof color === 'string' &&
+      RICH_TEXT_COLOR_OPTIONS.some((option) => option.value === color)
+    ) {
+      return [{ type: 'textColor', attrs: { color: color as RichTextColor } }];
+    }
+    if (
+      mark.type === 'highlight' &&
+      typeof color === 'string' &&
+      RICH_TEXT_HIGHLIGHT_OPTIONS.some((option) => option.value === color)
+    ) {
+      return [{ type: 'highlight', attrs: { color: color as RichTextHighlight } }];
+    }
+
+    const size = mark.attrs?.size;
+    if (
+      mark.type === 'fontSize' &&
+      typeof size === 'string' &&
+      RICH_TEXT_FONT_SIZE_OPTIONS.some((option) => option.value === size)
+    ) {
+      return [{ type: 'fontSize', attrs: { size: size as RichTextFontSize } }];
+    }
+
     if (mark.type !== 'link' || typeof mark.attrs?.href !== 'string') return [];
 
     const href = normalizeLink(mark.attrs.href);

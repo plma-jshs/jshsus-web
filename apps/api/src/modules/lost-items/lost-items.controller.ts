@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { RequirePermissions, RequireRoles } from '../../shared/auth/auth.decorators';
 import { CsrfGuard } from '../../shared/auth/csrf.guard';
+import { OptionalSessionGuard } from '../../shared/auth/optional-session.guard';
 import { PermissionsGuard } from '../../shared/auth/permissions.guard';
 import type { AuthenticatedRequest } from '../../shared/auth/request-auth';
 import { RolesGuard } from '../../shared/auth/roles.guard';
@@ -25,13 +26,14 @@ export class LostItemsController {
   }
 
   @Get('lost-items/:id')
-  lostItem(@Param('id') id: string) {
-    return this.lostItemsService.getById(Number(id));
+  @UseGuards(OptionalSessionGuard)
+  lostItem(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
+    return this.lostItemsService.getById(Number(id), request.authSession?.userId);
   }
 
   @Get('admin/lost-items')
   @UseGuards(SessionGuard, PermissionsGuard)
-  @RequirePermissions('content.manage')
+  @RequirePermissions('lost_items.manage')
   adminLostItems() {
     return this.lostItemsService.list(100, true);
   }
@@ -43,6 +45,27 @@ export class LostItemsController {
     return this.lostItemsService.create(body, request.authSession?.userId);
   }
 
+  @Put('lost-items/:id')
+  @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
+  @RequireRoles(...memberRoles)
+  updateLostItem(
+    @Param('id') id: string,
+    @Body() body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.lostItemsService.update(Number(id), body, request.authSession?.userId);
+  }
+
+  @Put('lost-items/:id/status')
+  @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
+  @RequireRoles(...memberRoles)
+  updateOwnLostItemStatus(
+    @Param('id') id: string,
+    @Body() body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.lostItemsService.updateStatus(Number(id), body, request.authSession?.userId);
+  }
   @Delete('lost-items/:id')
   @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
   @RequireRoles(...memberRoles)
@@ -52,12 +75,19 @@ export class LostItemsController {
 
   @Put('admin/lost-items/:id/status')
   @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
-  @RequirePermissions('content.manage')
+  @RequirePermissions('lost_items.manage')
   updateLostItemStatus(
     @Param('id') id: string,
     @Body() body: unknown,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.lostItemsService.updateStatus(Number(id), body, request.authSession?.userId);
+    return this.lostItemsService.updateStatus(Number(id), body, request.authSession?.userId, true);
+  }
+
+  @Delete('admin/lost-items/:id')
+  @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
+  @RequirePermissions('lost_items.manage')
+  deleteManagedLostItem(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
+    return this.lostItemsService.discard(Number(id), request.authSession?.userId, true);
   }
 }

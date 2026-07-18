@@ -1,0 +1,322 @@
+.wake-song-admin-toolbar {
+  display: flex;
+  min-height: 62px;
+  padding: 10px 14px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  overflow-x: auto;
+}
+
+.wake-song-admin-toolbar .ui-segmented-tabs {
+  flex: 0 0 auto;
+}
+
+.wake-song-admin-toolbar .ui-segmented-tabs button {
+  min-width: 0;
+  padding-inline: 12px;
+}
+
+.wake-song-admin-toolbar > .ui-page-size-select {
+  width: 86px;
+  flex: 0 0 86px;
+}
+
+.wake-song-admin-search {
+  display: flex;
+  width: min(100%, 380px);
+  align-items: center;
+  gap: 7px;
+}
+
+.wake-song-admin-search label {
+  flex: 1;
+}
+
+.wake-song-admin-search input,
+.wake-song-admin-action-panel input {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: white;
+}
+
+.wake-song-admin-search .quiet-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.wake-song-admin-list {
+  padding: 0;
+  overflow: hidden;
+}
+
+.wake-song-admin-list > .panel-title {
+  min-height: 76px;
+  padding: 14px 18px;
+  margin: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.wake-song-admin-list > .empty-text,
+.wake-song-admin-list > .admin-panel.error {
+  margin: 0;
+}
+
+.wake-song-admin-list > .admin-table-toolbar {
+  min-height: 48px;
+  margin: 0 18px 10px;
+  padding-top: 12px;
+}
+
+.wake-song-admin-list > .admin-data-table {
+  padding: 0 18px 18px;
+}
+
+.wake-song-admin-list .table-action-row {
+  flex-wrap: nowrap;
+  justify-content: center;
+}
+
+.wake-song-admin-title {
+  max-width: 360px;
+}
+
+.wake-song-admin-cell {
+  display: grid;
+  gap: 2px;
+}
+
+.wake-song-admin-cell small,
+.wake-song-admin-title small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.wake-song-admin-title > button {
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  color: #172120;
+  background: transparent;
+  font-weight: 800;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.wake-song-admin-title > button:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.wake-admin-status {
+  display: inline-flex;
+  min-height: 26px;
+  padding: 0 8px;
+  align-items: center;
+  border-radius: 999px;
+  color: #52615f;
+  background: #f1f4f3;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.wake-admin-status.is-pending {
+  color: #895400;
+  background: #fff5df;
+}
+
+.wake-admin-status.is-approved {
+  color: #175b91;
+  background: #edf6ff;
+}
+
+.wake-admin-status.is-scheduled {
+  color: #6842a0;
+  background: #f3efff;
+}
+
+.wake-admin-status.is-played {
+  color: #176d49;
+  background: #e9f7ef;
+}
+
+.wake-admin-status.is-rejected {
+  color: var(--danger);
+  background: #fff0ee;
+}
+
+.wake-admin-status.is-canceled {
+  color: #596563;
+  background: #eef1f0;
+}
+
+.table-action.is-positive {
+  color: var(--positive);
+}
+
+.table-action.is-neutral {
+  color: var(--primary-dark);
+}
+
+.wake-song-admin-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 0;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.wake-song-admin-player {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #111827;
+}
+
+.wake-song-admin-player .youtube-segment-player__target,
+.wake-song-admin-player iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.wake-song-admin-player .youtube-segment-player__state {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  padding: 16px;
+  place-items: center;
+  color: #d8e2ea;
+  background: #111827;
+  font-size: 13px;
+  text-align: center;
+}
+
+.wake-song-admin-detail-copy {
+  padding: 16px 0 0;
+}
+
+.wake-song-admin-detail-copy dl {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.wake-song-admin-detail-copy dl > div {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
+  font-size: 13px;
+}
+
+.wake-song-admin-detail-copy dt {
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.wake-song-admin-detail-copy dd {
+  margin: 0;
+}
+
+.wake-song-admin-detail-copy > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.wake-song-admin-detail-copy > a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.wake-song-admin-action-panel {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.65fr) minmax(360px, 1.35fr);
+  align-items: end;
+  gap: 24px;
+}
+
+.wake-song-admin-action-panel h2,
+.wake-song-admin-action-panel p {
+  margin: 0;
+}
+
+.wake-song-admin-action-panel h2 {
+  font-size: 17px;
+}
+
+.wake-song-admin-action-panel form {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+}
+
+.wake-song-admin-action-panel form > label {
+  display: grid;
+  flex: 1;
+  gap: 5px;
+  color: #33413f;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.wake-song-admin-action-panel .button-row {
+  flex: 0 0 auto;
+}
+
+.wake-song-admin-action-panel .primary-button,
+.wake-song-admin-detail-copy .quiet-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.wake-song-admin .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 980px) {
+  .wake-song-admin-toolbar,
+  .wake-song-admin-action-panel {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .wake-song-admin-search {
+    width: 100%;
+  }
+
+  .wake-song-admin-toolbar > .ui-page-size-select {
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  .wake-song-admin-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .wake-song-admin-action-panel form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

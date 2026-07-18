@@ -30,6 +30,7 @@ export class HomeController {
         title: petition.title,
         participantCount: petition.participantCount,
         threshold: petition.threshold,
+        startsAt: petition.startsAt,
         endsAt: petition.endsAt,
         status: petition.status,
       })),

@@ -17,14 +17,19 @@ import type { UploadedFileSummary } from '@jshsus/types';
 import { randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { dirname, extname, join } from 'node:path';
-import { and, asc, eq, inArray, isNull, lt, lte, or } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, lt, lte, ne, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { env } from '../../shared/config/env';
 import { type AppDatabase, DatabaseService } from '../database/database.service';
 import type { AuthSession } from '../auth/auth.service';
 
 export type FileCleanupReason =
-  'upload_compensation' | 'target_delete' | 'notice_delete' | 'draft_delete' | 'lost_item_discard';
+  | 'upload_compensation'
+  | 'target_delete'
+  | 'notice_delete'
+  | 'draft_delete'
+  | 'lost_item_discard'
+  | 'profile_replace';
 
 type CleanupTarget = {
   targetType: string;
@@ -60,9 +65,32 @@ const uploadSchema = z.object({
   mimeType: z.string().min(1).max(120),
   bytes: z.instanceof(Buffer),
   visibility: z.enum(['public', 'private']).optional().default('private'),
-  targetType: z.enum(['notice', 'post', 'lost_item']),
+  targetType: z.enum(['notice', 'post', 'lost_item', 'profile']),
   targetId: z.coerce.number().int().positive(),
 });
+
+const PROFILE_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+
+type ManagedContentTarget = 'notice' | 'post' | 'lost_item';
+
+const targetManagerPermission: Record<ManagedContentTarget, string> = {
+  notice: 'notices.manage',
+  post: 'community.manage',
+  lost_item: 'lost_items.manage',
+};
+
+function canManageTarget(
+  session: AuthSession | null | undefined,
+  targetType: string | null | undefined,
+): boolean {
+  if (session?.roles?.includes('system_admin')) return true;
+  if (!targetType || !(targetType in targetManagerPermission)) return false;
+  return (
+    session?.permissions?.includes(targetManagerPermission[targetType as ManagedContentTarget]) ??
+    false
+  );
+}
 
 function isS3Enabled() {
   return Boolean(env.S3_BUCKET && env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY);
@@ -246,6 +274,72 @@ export class FilesService {
     return { ok: true, file };
   }
 
+  async uploadProfile(
+    input: { originalName: string; mimeType: string; bytes: Buffer },
+    session?: AuthSession | null,
+  ) {
+    if (!session?.userId || session.userId <= 0) {
+      throw new ForbiddenException('A persisted account is required to upload a profile image.');
+    }
+    if (!PROFILE_IMAGE_MIME_TYPES.has(input.mimeType)) {
+      throw new BadRequestException('프로필 사진은 JPG, PNG, WebP 파일만 사용할 수 있습니다.');
+    }
+    if (input.bytes.length <= 0 || input.bytes.length > PROFILE_IMAGE_MAX_BYTES) {
+      throw new BadRequestException('프로필 사진은 5MB 이하만 사용할 수 있습니다.');
+    }
+
+    const result = await this.upload(
+      {
+        ...input,
+        visibility: 'public',
+        targetType: 'profile',
+        targetId: session.userId,
+      },
+      session,
+    );
+    await this.removeSupersededProfileImages(session.userId, result.file.id);
+    return result;
+  }
+
+  async deleteProfile(session?: AuthSession | null) {
+    if (!session?.userId || session.userId <= 0) {
+      throw new ForbiddenException('A persisted account is required.');
+    }
+    const cleanup = await this.deleteForTarget('profile', session.userId);
+    await this.database.writeAudit({
+      actorId: session.userId,
+      action: 'me.profile_image.delete',
+      targetType: 'users',
+      targetId: session.userId,
+    });
+    return { ok: true as const, cleanupPending: cleanup.failed > 0 };
+  }
+
+  private async removeSupersededProfileImages(userId: number, currentFileId: number) {
+    const rows = await this.database.db
+      .select({ id: schema.files.id, objectKey: schema.files.objectKey })
+      .from(schema.files)
+      .where(
+        and(
+          eq(schema.files.targetType, 'profile'),
+          eq(schema.files.targetId, userId),
+          ne(schema.files.id, currentFileId),
+        ),
+      );
+
+    for (const row of rows) {
+      await this.enqueueCleanup({
+        fileId: row.id,
+        objectKey: row.objectKey,
+        targetType: 'profile',
+        targetId: userId,
+        reason: 'profile_replace',
+      });
+    }
+    if (rows.length > 0) {
+      await this.processCleanupBatch(rows.length, { targetType: 'profile', targetId: userId });
+    }
+  }
   async listForTarget(
     targetType: string,
     targetId: number,
@@ -469,8 +563,7 @@ export class FilesService {
         throw new UnauthorizedException('Login is required to access this file.');
       }
       const ownerId = await this.getAccessOwnerId(id);
-      const canManage =
-        session.roles?.includes('system_admin') || session.permissions?.includes('content.manage');
+      const canManage = canManageTarget(session, file.targetType);
       if (!canManage && ownerId !== session.userId) {
         throw new ForbiddenException('You cannot access this private file.');
       }
@@ -712,13 +805,23 @@ export class FilesService {
   ): Promise<void> {
     if (!file.targetType || !file.targetId) return;
 
-    const canManage =
-      session?.roles?.includes('system_admin') || session?.permissions?.includes('content.manage');
+    const canManage = canManageTarget(session, file.targetType);
     const canAccessStaff =
       canManage ||
       session?.roles?.includes('teacher') ||
       session?.roles?.includes('student_affairs_head');
 
+    if (file.targetType === 'profile') {
+      const [target] = await this.database.db
+        .select({ id: schema.users.id, status: schema.users.status })
+        .from(schema.users)
+        .where(eq(schema.users.id, file.targetId))
+        .limit(1);
+      if (!target || target.status === 'deleted') {
+        throw new NotFoundException('File was not found.');
+      }
+      return;
+    }
     if (file.targetType === 'post') {
       const [target] = await this.database.db
         .select({
@@ -782,15 +885,31 @@ export class FilesService {
   }
 
   private async assertCanAttach(
-    targetType: 'notice' | 'post' | 'lost_item',
+    targetType: 'notice' | 'post' | 'lost_item' | 'profile',
     targetId: number,
     session: AuthSession,
     visibility: 'public' | 'private',
     db: AppDatabase = this.database.db,
     forUpdate = false,
   ) {
-    const canManageContent =
-      session.roles?.includes('system_admin') || session.permissions?.includes('content.manage');
+    const canManageContent = canManageTarget(session, targetType);
+
+    if (targetType === 'profile') {
+      if (targetId !== session.userId) {
+        throw new ForbiddenException('You can only update your own profile image.');
+      }
+      if (visibility !== 'public') {
+        throw new BadRequestException('Profile images must be public.');
+      }
+      const query = db
+        .select({ id: schema.users.id })
+        .from(schema.users)
+        .where(eq(schema.users.id, targetId))
+        .limit(1);
+      const [target] = forUpdate ? await query.for('update') : await query;
+      if (!target) throw new NotFoundException('Profile does not exist.');
+      return;
+    }
 
     if (targetType === 'notice') {
       const query = db

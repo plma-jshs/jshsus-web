@@ -1,13 +1,17 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
+import { PenLine } from 'lucide-react';
 import {
   DataTablePagination,
   type DataTablePageSize,
   type DataTableSearchField,
   DataTableToolbar,
 } from '../../components/page/DataTableControls';
+import { ContentBadges } from '../../components/page/ContentBadges';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
+import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
+import { getSession } from '../auth/api';
 import { getNotices } from './api';
 
 const noticeDateFormatter = createKoreanDateFormatter({
@@ -17,10 +21,11 @@ const noticeDateFormatter = createKoreanDateFormatter({
 });
 
 export function NoticesPage() {
+  const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
   const rawSearch = useSearch({ from: '/notices' });
   const search = {
     page: rawSearch.page ?? 1,
-    pageSize: rawSearch.pageSize ?? 10,
+    pageSize: rawSearch.pageSize ?? 20,
     field: rawSearch.field ?? 'title_content',
     q: rawSearch.q ?? '',
   } as const;
@@ -49,9 +54,16 @@ export function NoticesPage() {
 
   return (
     <PageScaffold
-      breadcrumbs={[{ label: '소식·일정' }, { label: '공지사항' }]}
+      breadcrumbs={listBreadcrumbs('notices')}
       title="공지사항"
-      description="학교와 학생생활부에서 전하는 안내를 확인하세요."
+      description="학교 공지와 학생생활 안내를 확인하세요."
+      action={
+        sessionQuery.data?.isLogined && sessionQuery.data.permissions.includes('notices.manage') ? (
+          <Link className="detail-primary-button" to="/notices/new">
+            <PenLine size={16} aria-hidden="true" /> 공지 작성
+          </Link>
+        ) : undefined
+      }
     >
       <section className="data-table-section" aria-label="공지 목록">
         <DataTableToolbar
@@ -123,7 +135,7 @@ export function NoticesPage() {
                 </thead>
                 <tbody>
                   {notices.map((notice, index) => (
-                    <tr key={notice.id}>
+                    <tr className={notice.pinned ? 'is-pinned' : undefined} key={notice.id}>
                       <td className="data-table__number">
                         {Math.max(result.total - (result.page - 1) * result.pageSize - index, 1)}
                       </td>
@@ -133,12 +145,11 @@ export function NoticesPage() {
                           to="/notices/$noticeId"
                           params={{ noticeId: String(notice.id) }}
                         >
-                          {notice.title}
+                          <span className="data-table__title-text">{notice.title}</span>
+                          <ContentBadges pinned={notice.pinned} createdAt={notice.publishedAt} />
                         </Link>
                       </td>
-                      <td className="data-table__author">
-                        {notice.authorName ?? notice.department}
-                      </td>
+                      <td className="data-table__author">{notice.department}</td>
                       <td className="data-table__date">
                         <time dateTime={notice.publishedAt}>
                           {noticeDateFormatter.format(new Date(notice.publishedAt))}

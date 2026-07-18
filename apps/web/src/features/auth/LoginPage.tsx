@@ -2,6 +2,7 @@ import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
+import { Eye, EyeOff } from 'lucide-react';
 import { safeInternalReturnTo } from '../../shared/lib/route';
 import { login } from './api';
 import '../../styles/auth.css';
@@ -10,6 +11,7 @@ export function LoginPage() {
   const queryClient = useQueryClient();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const loginMutation = useMutation({
     mutationFn: login,
@@ -27,45 +29,59 @@ export function LoginPage() {
 
   return (
     <section className="auth-page" aria-labelledby="login-title">
-      <Link to="/" className="auth-brand" aria-label="과구리 홈으로 이동">
-        <img src="/assets/lIcon.png" alt="" width="34" height="34" />
-        <strong>과구리</strong>
-      </Link>
+      <section className="auth-panel">
+        <Link to="/" className="auth-brand" aria-label="과구리 홈으로 이동">
+          <img className="auth-brand-mark" src="/assets/lIcon.png" alt="" width="34" height="34" />
+          <strong>과구리</strong>
+        </Link>
 
-      <div className="auth-card">
-        <header>
+        <header className="auth-heading">
           <h1 id="login-title">전남과학고 통합로그인</h1>
         </header>
 
-        <form onSubmit={submit}>
+        <form className="auth-form" onSubmit={submit}>
           <label htmlFor="login-username">
-            <span>아이디 또는 학번</span>
+            <span>학번 또는 교사번호</span>
             <input
               id="login-username"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               autoComplete="username"
-              placeholder="아이디 또는 학번을 입력하세요"
+              placeholder="학번 또는 교사번호를 입력하세요"
               autoFocus
               required
             />
           </label>
-          <label htmlFor="login-password">
-            <span>비밀번호</span>
-            <input
-              id="login-password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-              placeholder="비밀번호를 입력하세요"
-              required
-            />
-          </label>
+          <div className="auth-form-field">
+            <label htmlFor="login-password">비밀번호</label>
+            <div className="auth-password-field">
+              <input
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                placeholder="비밀번호를 입력하세요"
+                required
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((current) => !current)}
+              >
+                {showPassword ? (
+                  <EyeOff aria-hidden="true" size={18} />
+                ) : (
+                  <Eye aria-hidden="true" size={18} />
+                )}
+              </button>
+            </div>
+          </div>
 
           {loginMutation.isError ? (
             <p className="auth-error" role="alert">
-              아이디 또는 비밀번호를 확인해 주세요.
+              학번·교사번호 또는 비밀번호를 확인해 주세요.
             </p>
           ) : null}
 
@@ -81,11 +97,7 @@ export function LoginPage() {
             <a href="https://iam.jshsus.kr/changepassword">비밀번호를 잊으셨나요?</a>
           </div>
 
-          <button
-            className="detail-primary-button auth-submit"
-            type="submit"
-            disabled={loginMutation.isPending}
-          >
+          <button className="auth-submit" type="submit" disabled={loginMutation.isPending}>
             {loginMutation.isPending ? '로그인 중' : '로그인'}
           </button>
         </form>
@@ -93,7 +105,7 @@ export function LoginPage() {
         <p className="auth-signup">
           전남과학고 신입생이신가요? <a href="https://iam.jshsus.kr/reg">통합로그인 계정 만들기</a>
         </p>
-      </div>
+      </section>
     </section>
   );
 }

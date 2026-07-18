@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getRichTextImageSources,
   hasTemporaryImageSources,
+  plainTextToRichTextDocument,
   resolvePendingImages,
   stripPendingImages,
   type RichTextDocument,
@@ -56,6 +57,22 @@ describe('rich-text document persistence', () => {
         target: '_blank',
       },
     });
+  });
+
+  it('persists only allowlisted visual style marks', () => {
+    const styled = plainTextToRichTextDocument('서식') as RichTextDocument;
+    styled.content![0]!.content![0]!.marks = [
+      { type: 'textColor', attrs: { color: 'blue' } },
+      { type: 'fontSize', attrs: { size: 'large' } },
+      { type: 'highlight', attrs: { color: 'yellow' } },
+      { type: 'textColor', attrs: { color: 'javascript:alert(1)' } },
+    ];
+
+    expect(stripPendingImages(styled).content[0]?.content?.[0]?.marks).toEqual([
+      { type: 'textColor', attrs: { color: 'blue' } },
+      { type: 'fontSize', attrs: { size: 'large' } },
+      { type: 'highlight', attrs: { color: 'yellow' } },
+    ]);
   });
 
   it('replaces pending images with the uploaded inline endpoint', () => {

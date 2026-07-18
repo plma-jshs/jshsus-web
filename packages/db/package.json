@@ -14,7 +14,11 @@
     "db:migrate": "drizzle-kit migrate",
     "db:backup": "node scripts/backup-database.cjs",
     "db:create-local-test-user": "node scripts/create-local-test-user.cjs",
-    "db:seed-local-demo": "node scripts/seed-local-demo-data.cjs"
+    "db:seed-local-demo": "node scripts/seed-local-demo-data.cjs",
+    "db:import-legacy-plma": "node scripts/import-legacy-plma-data.cjs",
+    "db:seed-demo": "node scripts/create-local-test-user.cjs && node scripts/seed-local-demo-data.cjs",
+    "db:assert-local": "node -e \"require('./scripts/local-seed-safety.cjs').assertLocalSeedAllowed(); console.log('Local database target verified.')\"",
+    "db:bootstrap-local": "pnpm db:assert-local && pnpm db:migrate && pnpm db:seed-demo"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

@@ -9,27 +9,45 @@ Node.js 24와 pnpm 10을 기준으로 합니다. `.nvmrc` 또는 `.node-version`
 ```bash
 pnpm install
 cp .env.example .env
-docker compose up -d mysql redis
-docker compose --profile tools run --rm migrate
-pnpm dev
+docker compose up -d --build
 ```
 
 - Web: `http://localhost:5173`
 - Admin: `http://localhost:5174`
 - API: `http://localhost:4000/api/health`
 
-공지사항·자유게시판·청원 상세 화면까지 로컬에서 확인하려면 테스트 계정과 데모 데이터를
-생성합니다. 명령은 `NODE_ENV=production`에서 항상 거부되고, 로컬 호스트의
+로컬 Compose는 DB 마이그레이션 뒤 테스트 계정과 공지사항·자유게시판·청원·상벌점·JBS·기상곡
+데모 데이터를 멱등하게 생성하고 나서 API를 시작합니다. 로컬 시드는 로컬 호스트의
 `jshsus`, `jshsus_dev`, `jshsus_test` DB에 대해 실행 시점에 명시적으로 허용해야만 작동합니다.
 재실행하면 동일 제목의 로컬 데모 행을 현재 시점 기준으로 갱신합니다.
+
+기존 로컬 DB를 비우고 현재 스키마와 데모 데이터로 완전히 다시 만들 때는 다음 명령을
+사용합니다.
+
+```bash
+pnpm local:reset-db
+```
+
+이 명령은 Docker Compose가 해석한 API·부트스트랩·마이그레이션 DB 주소가 모두
+`mysql:3306/jshsus`인지 확인하고, 실행 중인 MySQL 컨테이너의 볼륨과 Compose 소유권
+라벨도 확인한 뒤 해당 MySQL 볼륨만 제거합니다. 이후 이미지를 다시 빌드하고 전체
+마이그레이션과 데모 시드를 적용합니다. `upload-data`는 보존되며,
+`COMPOSE_DATABASE_URL`이 원격 DB를 가리키면 삭제 전에 즉시 중단합니다.
+`docker compose down -v`는 업로드 볼륨까지 삭제하므로 DB 초기화 용도로 사용하지 마세요.
+
+수동으로 시드를 다시 적용할 때만 다음 명령을 사용합니다.
 
 ```bash
 NODE_ENV=development ALLOW_LOCAL_SEED=true pnpm db:create-local-test-user
 NODE_ENV=development ALLOW_LOCAL_SEED=true pnpm db:seed-local-demo
 ```
 
-- 아이디: `test.student`
-- 비밀번호: `Test1234!`
+- 학번: `9999`
+- 비밀번호: `Hello00!`
+- 학생 정보: `9999 테스트` (9학년 9반 99번)
+
+데모 계정에는 학생 화면과 관리자 화면을 모두 검증할 수 있도록 `student`와
+`system_admin` 역할을 함께 부여합니다. 실제 운영 사용자에게는 이 조합을 사용하지 않습니다.
 
 `TEST_USER_USERNAME`, `TEST_USER_PASSWORD`, `TEST_USER_STUDENT_NO`로 계정값을 바꾸면
 데모 데이터 시드도 같은 `TEST_USER_USERNAME`의 작성자 계정을 사용합니다.
@@ -47,6 +65,10 @@ docs          planning docs
 ```
 
 구조와 기능 추가 규칙은 [`docs/architecture.md`](docs/architecture.md)를 기준으로 합니다.
+JBS·기상곡·세특 바이트 계산기의 확정 정책은
+[`docs/broadcast-tools-implementation-plan.md`](docs/broadcast-tools-implementation-plan.md)에 정리되어 있습니다.
+관리자 화면의 정보 구조와 UI 구현 기준은
+[`docs/admin-design-system.md`](docs/admin-design-system.md)를 따릅니다.
 
 API는 도메인별 Nest 모듈로 나뉘며, DB 오류를 mock 데이터로 대체하지 않습니다. 관리자 권한은 역할과 세부 permission을 분리해서 검사하고, 상벌점·청원·탐활서의 상태 변경은 트랜잭션으로 처리합니다.
 
@@ -106,6 +128,19 @@ GitHub `production` Environment에는 다음 secret이 필요합니다.
 - `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`
 - `PRODUCTION_ENV_FILE`
 - `NEIS_API_KEY` (NEIS 키만 독립적으로 교체할 수 있도록 별도 보관)
+- `YOUTUBE_API_KEY` (필수, JBS와 기상곡의 영상 제목·길이·임베드 가능 여부 검증)
+
+공개 스테이징에 테스트 계정과 데모 데이터를 유지하는 동안에는 GitHub Environment에 다음
+값도 설정합니다. `SEED_DEMO_DATA=false`로 바꾸면 이후 배포부터 시드를 건너뛰며, 기존 행은
+자동 삭제하지 않습니다.
+
+- Variables: `SEED_DEMO_DATA=true`, `DEMO_SEED_DATABASE_NAME=jshsus_v26`
+- Secrets: `TEST_USER_USERNAME`, 12자 이상의 비기본값 `TEST_USER_PASSWORD`,
+  `TEST_USER_STUDENT_NO`
+
+스테이징 시드는 `DEPLOYMENT_TIER=staging`, 명시적 허용 플래그, 대상 DB 이름의 정확한 일치가
+모두 확인될 때만 실행됩니다. 실제 운영 환경에서는 `SEED_DEMO_DATA=false`로 두며 시드 코드를
+삭제할 필요가 없습니다.
 
 교육청·학교 코드와 timeout/cache 값은 Compose의 안전한 기본값을 사용한다. NEIS 키는
 `PRODUCTION_ENV_FILE`에 중복 기록하지 않으며, 배포 시 임시 환경파일에만 병합된다.

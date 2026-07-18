@@ -43,7 +43,7 @@ export class NoticesService {
         ? query.field === 'title'
           ? like(schema.notices.title, pattern)
           : query.field === 'author'
-            ? like(schema.users.name, pattern)
+            ? like(schema.notices.department, pattern)
             : or(like(schema.notices.title, pattern), like(schema.notices.content, pattern))
         : undefined;
       const where = and(
@@ -52,25 +52,24 @@ export class NoticesService {
         search,
       );
 
-      const [totalRow] = await db
-        .select({ total: count() })
-        .from(schema.notices)
-        .leftJoin(schema.users, eq(schema.notices.authorId, schema.users.id))
-        .where(where);
+      const [totalRow] = await db.select({ total: count() }).from(schema.notices).where(where);
       const total = Number(totalRow?.total ?? 0);
       const items = await db
         .select({
           id: schema.notices.id,
           title: schema.notices.title,
           department: schema.notices.department,
+          pinned: schema.notices.pinned,
           publishedAt: schema.notices.publishedAt,
-          authorName: schema.users.name,
           viewCount: schema.notices.viewCount,
         })
         .from(schema.notices)
-        .leftJoin(schema.users, eq(schema.notices.authorId, schema.users.id))
         .where(where)
-        .orderBy(desc(schema.notices.publishedAt), desc(schema.notices.id))
+        .orderBy(
+          desc(schema.notices.pinned),
+          desc(schema.notices.publishedAt),
+          desc(schema.notices.id),
+        )
         .limit(query.pageSize)
         .offset((query.page - 1) * query.pageSize);
 
@@ -79,8 +78,8 @@ export class NoticesService {
           id: row.id,
           title: row.title,
           department: row.department ?? '학교',
+          pinned: row.pinned,
           publishedAt: toIso(row.publishedAt),
-          authorName: row.authorName ?? undefined,
           viewCount: row.viewCount,
         })),
         total,
@@ -101,12 +100,11 @@ export class NoticesService {
           title: schema.notices.title,
           content: schema.notices.content,
           department: schema.notices.department,
+          pinned: schema.notices.pinned,
           publishedAt: schema.notices.publishedAt,
-          authorName: schema.users.name,
           viewCount: schema.notices.viewCount,
         })
         .from(schema.notices)
-        .leftJoin(schema.users, eq(schema.notices.authorId, schema.users.id))
         .where(
           and(
             eq(schema.notices.id, id),
@@ -128,8 +126,8 @@ export class NoticesService {
         title: row.title,
         content: row.content,
         department: row.department ?? '학교',
+        pinned: row.pinned,
         publishedAt: toIso(row.publishedAt),
-        authorName: row.authorName ?? undefined,
         viewCount: row.viewCount + 1,
         attachments,
       };
@@ -146,11 +144,9 @@ export class NoticesService {
           department: schema.notices.department,
           pinned: schema.notices.pinned,
           publishedAt: schema.notices.publishedAt,
-          authorName: schema.users.name,
           viewCount: schema.notices.viewCount,
         })
         .from(schema.notices)
-        .leftJoin(schema.users, eq(schema.notices.authorId, schema.users.id))
         .where(
           includeRestricted
             ? undefined
@@ -178,7 +174,6 @@ export class NoticesService {
         department: row.department ?? '학교',
         pinned: row.pinned,
         publishedAt: toIso(row.publishedAt),
-        authorName: row.authorName ?? undefined,
         viewCount: row.viewCount,
         attachments: attachments.get(row.id) ?? [],
       }));

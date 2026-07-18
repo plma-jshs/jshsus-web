@@ -2,6 +2,7 @@ import type {
   BoardCommentSummary,
   BoardPostDetail,
   BoardPostListItem,
+  ContentLikeState,
   PaginatedResponse,
   PostStatus,
   RichTextDocument,
@@ -10,7 +11,7 @@ import { request } from '../../shared/api/http';
 
 export type BoardPostListQuery = {
   page: number;
-  pageSize: 10 | 20 | 30 | 50;
+  pageSize: 20 | 50 | 100;
   field: 'title_content' | 'title' | 'author';
   q: string;
 };
@@ -54,6 +55,19 @@ export function getBoardPost(slug: string, postId: number) {
 
 export function getBoardComments(slug: string, postId: number) {
   return request<BoardCommentSummary[]>(`/api/boards/${slug}/posts/${postId}/comments`);
+}
+
+export function toggleBoardPostLike(slug: string, postId: number) {
+  return request<ContentLikeState>(`/api/boards/${slug}/posts/${postId}/like`, {
+    method: 'POST',
+  });
+}
+
+export function toggleBoardCommentLike(slug: string, postId: number, commentId: number) {
+  return request<ContentLikeState>(
+    `/api/boards/${slug}/posts/${postId}/comments/${commentId}/like`,
+    { method: 'POST' },
+  );
 }
 
 export function createBoardPost(input: BoardPostInput) {

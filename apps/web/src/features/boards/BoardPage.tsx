@@ -7,21 +7,17 @@ import {
   type DataTableSearchField,
   DataTableToolbar,
 } from '../../components/page/DataTableControls';
+import { ContentBadges } from '../../components/page/ContentBadges';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
-import { createKoreanDateFormatter } from '../../shared/lib/date';
+import { listBreadcrumbs } from '../../components/page/pageHierarchy';
+import { formatKoreanRelativeTime } from '../../shared/lib/date';
 import { getBoardPosts } from './api';
-
-const dateFormatter = createKoreanDateFormatter({
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
 
 export function BoardPage() {
   const rawSearch = useSearch({ from: '/boards/free' });
   const search = {
     page: rawSearch.page ?? 1,
-    pageSize: rawSearch.pageSize ?? 10,
+    pageSize: rawSearch.pageSize ?? 20,
     field: rawSearch.field ?? 'title_content',
     q: rawSearch.q ?? '',
   } as const;
@@ -50,9 +46,9 @@ export function BoardPage() {
 
   return (
     <PageScaffold
-      breadcrumbs={[{ label: '커뮤니티' }, { label: '자유게시판' }]}
+      breadcrumbs={listBreadcrumbs('board')}
       title="자유게시판"
-      description="학교생활의 질문과 정보를 편안하게 나누는 공간입니다."
+      description="학교생활 관련 이야기와 정보를 나눕니다."
       action={
         <Link className="detail-primary-button" to="/boards/free/new">
           <PenLine size={16} aria-hidden="true" /> 글쓰기
@@ -138,12 +134,13 @@ export function BoardPage() {
                           to="/boards/free/$postId"
                           params={{ postId: String(post.id) }}
                         >
-                          {post.title}
+                          <span className="data-table__title-text">{post.title}</span>
                           {post.commentCount > 0 ? (
                             <span className="data-table__comment-count">
                               [{post.commentCount.toLocaleString('ko-KR')}]
                             </span>
                           ) : null}
+                          <ContentBadges createdAt={post.createdAt} />
                         </Link>
                       </td>
                       <td className="data-table__author">
@@ -151,7 +148,7 @@ export function BoardPage() {
                       </td>
                       <td className="data-table__date">
                         <time dateTime={post.createdAt}>
-                          {dateFormatter.format(new Date(post.createdAt))}
+                          {formatKoreanRelativeTime(post.createdAt)}
                         </time>
                       </td>
                       <td className="data-table__views">

@@ -28,14 +28,14 @@ export class ReportsController {
 
   @Get('admin/reports')
   @UseGuards(SessionGuard, PermissionsGuard)
-  @RequirePermissions('content.manage')
+  @RequirePermissions('community.manage')
   reports() {
     return this.reportsService.list();
   }
 
   @Put('admin/reports/:id/status')
   @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
-  @RequirePermissions('content.manage')
+  @RequirePermissions('community.manage')
   updateReportStatus(
     @Param('id') id: string,
     @Body() body: unknown,

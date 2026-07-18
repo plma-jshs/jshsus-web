@@ -25,8 +25,12 @@ export const users = mysqlTable(
     legacyIamId: int('legacy_iam_id'),
     legacyJshsusId: varchar('legacy_jshsus_id', { length: 64 }),
     legacyPlmaId: int('legacy_plma_id'),
+    // @deprecated Student identifiers belong to the student profile. Staff
+    // accounts receive a negative internal compatibility value until the
+    // forward-only contract migration can remove this legacy column.
     studentNo: int('student_no').notNull(),
     name: varchar('name', { length: 64 }).notNull(),
+    nickname: varchar('nickname', { length: 16 }),
     grade: int('grade'),
     classNo: int('class_no'),
     number: int('number'),
@@ -39,9 +43,20 @@ export const users = mysqlTable(
   },
   (table) => ({
     studentNoIdx: uniqueIndex('users_student_no_idx').on(table.studentNo),
+    nicknameIdx: uniqueIndex('users_nickname_idx').on(table.nickname),
     legacyIamIdx: uniqueIndex('users_legacy_iam_id_idx').on(table.legacyIamId),
   }),
 );
+
+/**
+ * Transaction-safe counters for identifiers issued by the application.
+ * The staff-number row starts at 100000 and is locked while a number is issued.
+ */
+export const identitySequences = mysqlTable('identity_sequences', {
+  key: varchar('sequence_key', { length: 32 }).primaryKey(),
+  nextValue: int('next_value').notNull(),
+  updatedAt: datetime('updated_at', { mode: 'date', fsp: 3 }).notNull().default(now),
+});
 
 export const passwordAlgorithmEnum = mysqlEnum('password_algorithm', ['legacy-sha512', 'argon2id']);
 

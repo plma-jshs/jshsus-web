@@ -10,6 +10,7 @@ import {
   stripPendingImages,
 } from '../../components/editor/RichTextEditor';
 import { PageScaffold } from '../../components/page/PageScaffold';
+import { taskBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createPetition } from './api';
 import '../../styles/petitions.css';
 
@@ -97,9 +98,9 @@ export function NewPetitionPage() {
   if (submitted && mutation.data) {
     return (
       <PageScaffold
-        breadcrumbs={[{ label: '청원·제안', to: '/petitions' }, { label: '제안 등록' }]}
-        title="제안이 등록되었습니다"
-        description="다른 학생들이 제안 내용을 확인하고 참여할 수 있습니다."
+        breadcrumbs={taskBreadcrumbs('petitions', '등록')}
+        title="청원·제안이 등록되었습니다"
+        description="등록된 내용은 청원·제안 목록에서 확인할 수 있습니다."
         width="reading"
         variant="form"
       >
@@ -123,9 +124,9 @@ export function NewPetitionPage() {
 
   return (
     <PageScaffold
-      breadcrumbs={[{ label: '청원·제안', to: '/petitions' }, { label: '제안 등록' }]}
-      title="새로운 변화를 제안하세요"
-      description="문제와 해결 방향을 구체적으로 작성하면 더 많은 공감을 얻을 수 있습니다."
+      breadcrumbs={taskBreadcrumbs('petitions', '등록')}
+      title="청원·제안 등록"
+      description="제목, 내용, 목표 인원과 마감일을 입력하세요."
       width="reading"
       variant="form"
     >
@@ -228,7 +229,7 @@ export function NewPetitionPage() {
           </Link>
           <button className="detail-primary-button" type="submit" disabled={mutation.isPending}>
             <Send size={16} aria-hidden="true" />
-            {mutation.isPending ? '등록 중' : '제안 등록'}
+            {mutation.isPending ? '등록 중' : '등록'}
           </button>
         </div>
       </form>

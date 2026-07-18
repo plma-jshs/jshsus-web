@@ -1,7 +1,14 @@
 import type {
-  ActivityRequestSummary,
+  AcademicEvent,
+  ActivityRequestAdminListQuery,
+  ActivityRequestAdminSummary,
+  ActivityRequestPrintBatch,
+  ActivityRequestStudentOption,
+  ActivityRequestTeacherOption,
   AdminAuditLog,
+  AdminAuditLogListQuery,
   AdminDashboard,
+  AdminIdentityListQuery,
   AdminPermissionSummary,
   AdminRoleSummary,
   AdminStaffSummary,
@@ -12,16 +19,17 @@ import type {
   DeviceCase,
   DeviceCaseCommand,
   DormAssignment,
+  DormDrawPreview,
   DormReport,
   DormReportStatus,
   DormRoom,
+  DormRoommateBlock,
   DormStudentOption,
-  PetitionSummary,
+  PaginatedResponse,
   PointReason,
   PointSummary,
   SessionUser,
   StudentOption,
-  UserRole,
   LostItemSummary,
   ManagedSchoolEvent,
   NoticeSummary,
@@ -30,12 +38,48 @@ import type {
 
 let csrfTokenCache: string | null = null;
 
+export class AdminApiError extends Error {
+  constructor(
+    message: string,
+    readonly status?: number,
+  ) {
+    super(message);
+    this.name = 'AdminApiError';
+  }
+}
+
+export function describeAdminApiError(error: unknown, resource: string) {
+  if (error instanceof AdminApiError) {
+    if (error.status === 401) return '로그인 세션이 만료되었습니다. 다시 로그인해 주세요.';
+    if (error.status === 403) return `${resource}을(를) 조회할 권한이 없습니다.`;
+    if (error.status && error.status >= 500) {
+      return `${resource}을(를) 처리하는 서버에서 오류가 발생했습니다.`;
+    }
+  }
+  return `${resource}을(를) 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.`;
+}
+
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
 };
 
 export type SchoolEventInput = Omit<ManagedSchoolEvent, 'id'>;
+
+export type AdminSchoolCalendarEvent = AcademicEvent & {
+  managedId?: number;
+  editable: boolean;
+  isPublic: boolean;
+};
+
+export type AdminSchoolCalendar = {
+  from: string;
+  to: string;
+  events: AdminSchoolCalendarEvent[];
+  availability: 'available' | 'partial' | 'unavailable';
+  neisAvailable: boolean;
+  schoolEventsAvailable: boolean;
+};
 
 async function getCsrfToken() {
   if (csrfTokenCache) {
@@ -48,7 +92,7 @@ async function getCsrfToken() {
   });
 
   if (!response.ok) {
-    throw new Error(`CSRF request failed: ${response.status}`);
+    throw new AdminApiError('CSRF request failed', response.status);
   }
 
   const data = (await response.json()) as { csrfToken: string };
@@ -76,10 +120,19 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   });
 
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
+    throw new AdminApiError('Request failed', response.status);
   }
 
   return response.json() as Promise<T>;
+}
+
+function withQuery(path: string, query: Record<string, string | number | boolean | undefined>) {
+  const params = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') params.set(key, String(value));
+  });
+  const suffix = params.toString();
+  return suffix ? `${path}?${suffix}` : path;
 }
 
 async function uploadRequest<T>(path: string, formData: FormData): Promise<T> {
@@ -94,7 +147,7 @@ async function uploadRequest<T>(path: string, formData: FormData): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`Upload failed: ${response.status}`);
+    throw new AdminApiError('Upload failed', response.status);
   }
 
   return response.json() as Promise<T>;
@@ -102,7 +155,7 @@ async function uploadRequest<T>(path: string, formData: FormData): Promise<T> {
 
 export const api = {
   session: () => request<SessionUser>('/api/auth/session'),
-  login: (input: { username: string; password: string; role: UserRole }) =>
+  login: (input: { username: string; password: string; remember: boolean }) =>
     request<Extract<SessionUser, { isLogined: true }>>('/api/auth/login', {
       method: 'POST',
       body: input,
@@ -116,38 +169,53 @@ export const api = {
       return result;
     }),
   dashboard: () => request<AdminDashboard>('/api/admin/dashboard'),
-  auditLogs: () => request<AdminAuditLog[]>('/api/admin/audit-logs'),
-  adminStudents: () => request<AdminStudentSummary[]>('/api/admin/students'),
-  createStudent: (
-    input: Omit<AdminStudentSummary, 'id' | 'currentPoint' | 'userId'> & {
-      initialPassword: string;
-      email?: string;
-      phone?: string;
-    },
-  ) =>
+  auditLogs: (query: AdminAuditLogListQuery = {}) =>
+    request<PaginatedResponse<AdminAuditLog>>(withQuery('/api/admin/audit-logs', { ...query })),
+  adminStudents: (query: AdminIdentityListQuery = {}) =>
+    request<PaginatedResponse<AdminStudentSummary>>(withQuery('/api/admin/students', { ...query })),
+  createStudent: (input: {
+    studentNo: number;
+    name: string;
+    gender: 'male' | 'female';
+    initialPassword: string;
+    email?: string;
+    phone?: string;
+  }) =>
     request<{ ok: true; studentId: number; userId: number }>('/api/admin/students', {
       method: 'POST',
       body: input,
     }),
   updateStudent: (
     id: number,
-    input: Partial<Omit<AdminStudentSummary, 'id' | 'currentPoint' | 'userId'>>,
+    input: Partial<{
+      studentNo: number;
+      name: string;
+      gender: 'male' | 'female';
+      email: string;
+      phone: string;
+    }>,
   ) =>
     request<{ ok: true; id: number }>(`/api/admin/students/${id}`, { method: 'PUT', body: input }),
-  adminStaff: () => request<AdminStaffSummary[]>('/api/admin/staff'),
-  createStaff: (
-    input: Omit<AdminStaffSummary, 'id' | 'userId'> & {
-      initialPassword: string;
-      email?: string;
-      phone?: string;
-    },
-  ) =>
-    request<{ ok: true; staffId: number; userId: number }>('/api/admin/staff', {
+  adminStaff: (query: AdminIdentityListQuery = {}) =>
+    request<PaginatedResponse<AdminStaffSummary>>(withQuery('/api/admin/staff', { ...query })),
+  createStaff: (input: { name: string; initialPassword: string; email?: string; phone?: string }) =>
+    request<{ ok: true; staffId: number; userId: number; staffNo: number }>('/api/admin/staff', {
       method: 'POST',
       body: input,
     }),
-  updateStaff: (id: number, input: Partial<Omit<AdminStaffSummary, 'id' | 'userId'>>) =>
-    request<{ ok: true; id: number }>(`/api/admin/staff/${id}`, { method: 'PUT', body: input }),
+  updateStaff: (
+    id: number,
+    input: Partial<{
+      name: string;
+      email: string;
+      phone: string;
+    }>,
+  ) => request<{ ok: true; id: number }>(`/api/admin/staff/${id}`, { method: 'PUT', body: input }),
+  resetUserPassword: (userId: number, password: string) =>
+    request<{ ok: true; userId: number }>(`/api/admin/users/${userId}/password`, {
+      method: 'PUT',
+      body: { password },
+    }),
   iamRoles: () => request<AdminRoleSummary[]>('/api/admin/iam/roles'),
   createRole: (input: { name: string; label: string }) =>
     request<{ ok: true; role: AdminRoleSummary }>('/api/admin/iam/roles', {
@@ -157,11 +225,6 @@ export const api = {
   updateRole: (id: number, input: { name?: string; label?: string }) =>
     request<{ ok: true; id: number }>(`/api/admin/iam/roles/${id}`, { method: 'PUT', body: input }),
   iamPermissions: () => request<AdminPermissionSummary[]>('/api/admin/iam/permissions'),
-  createPermission: (input: { name: string; label: string; description?: string }) =>
-    request<{ ok: true; permission: AdminPermissionSummary }>('/api/admin/iam/permissions', {
-      method: 'POST',
-      body: input,
-    }),
   userRoles: (userId: number) => request<number[]>(`/api/admin/users/${userId}/roles`),
   assignUserRoles: (userId: number, ids: number[]) =>
     request<{ ok: true; userId: number; roleIds: number[] }>(`/api/admin/users/${userId}/roles`, {
@@ -191,6 +254,10 @@ export const api = {
   schoolEvents: (range: { from: string; to: string }) => {
     const search = new URLSearchParams(range);
     return request<ManagedSchoolEvent[]>(`/api/admin/school-events?${search.toString()}`);
+  },
+  schoolCalendar: (range: { from: string; to: string }) => {
+    const search = new URLSearchParams(range);
+    return request<AdminSchoolCalendar>(`/api/admin/school-calendar?${search.toString()}`);
   },
   createSchoolEvent: (input: SchoolEventInput) =>
     request<ManagedSchoolEvent>('/api/admin/school-events', {
@@ -237,6 +304,10 @@ export const api = {
         body: { status },
       },
     ),
+  deleteLostItem: (id: number) =>
+    request<{ ok: true; id: number; cleanupPending: boolean }>(`/api/admin/lost-items/${id}`, {
+      method: 'DELETE',
+    }),
   uploadFile: async (input: {
     file: File;
     targetType: string;
@@ -256,7 +327,8 @@ export const api = {
   createPointRecord: (input: {
     studentId: number;
     reasonId: number;
-    comment: string;
+    point: number;
+    reasonText: string;
     baseDate: string;
   }) => request<{ ok: true }>('/api/admin/points/records', { method: 'POST', body: input }),
   cancelPointRecord: (id: number, reason: string) =>
@@ -269,10 +341,20 @@ export const api = {
   deviceCases: () => request<DeviceCase[]>('/api/admin/device-cases'),
   deviceCaseCommands: (id: number) =>
     request<DeviceCaseCommand[]>(`/api/admin/device-cases/${id}/commands`),
-  dormRooms: () => request<DormRoom[]>('/api/admin/dorm/rooms'),
-  dormStudents: () => request<DormStudentOption[]>('/api/admin/dorm/students'),
-  dormAssignments: () => request<DormAssignment[]>('/api/admin/dorm/assignments'),
+  dormRooms: (query: {
+    year: number;
+    semester: number;
+    search?: string;
+    dormName?: string;
+    grade?: number;
+  }) => request<DormRoom[]>(withQuery('/api/admin/dorm/rooms', query)),
+  dormStudents: (query: { year: number; semester: number }) =>
+    request<DormStudentOption[]>(withQuery('/api/admin/dorm/students', query)),
+  dormAssignments: (query: { year: number; semester: number }) =>
+    request<DormAssignment[]>(withQuery('/api/admin/dorm/assignments', query)),
   dormReports: () => request<DormReport[]>('/api/admin/dorm/reports'),
+  dormRoommateBlocks: (query: { year: number; semester: number }) =>
+    request<DormRoommateBlock[]>(withQuery('/api/admin/dorm/roommate-blocks', query)),
   createDormAssignment: (input: {
     roomId: number;
     userId: number;
@@ -280,6 +362,44 @@ export const api = {
     semester: number;
     bedPosition: number;
   }) => request<{ ok: true }>('/api/admin/dorm/assignments', { method: 'POST', body: input }),
+  moveDormAssignment: (id: number, input: { roomId: number; bedPosition: number }) =>
+    request<{ ok: true; id: number }>(`/api/admin/dorm/assignments/${id}`, {
+      method: 'PUT',
+      body: input,
+    }),
+  swapDormAssignments: (input: { leftAssignmentId: number; rightAssignmentId: number }) =>
+    request<{ ok: true }>('/api/admin/dorm/assignments/swap', { method: 'POST', body: input }),
+  cancelDormAssignment: (id: number) =>
+    request<{ ok: true }>(`/api/admin/dorm/assignments/${id}`, { method: 'DELETE' }),
+  createDormRoommateBlock: (input: {
+    studentUserId: number;
+    blockedUserId: number;
+    year: number;
+    semester: number;
+  }) => request<{ ok: true }>('/api/admin/dorm/roommate-blocks', { method: 'POST', body: input }),
+  deleteDormRoommateBlock: (id: number) =>
+    request<{ ok: true }>(`/api/admin/dorm/roommate-blocks/${id}`, { method: 'DELETE' }),
+  previewDormDraw: (input: {
+    year: number;
+    semester: number;
+    dormName?: DormRoom['dormName'];
+    grade?: number;
+    studentIds?: number[];
+    seed?: number;
+  }) => request<DormDrawPreview>('/api/admin/dorm/draw/preview', { method: 'POST', body: input }),
+  applyDormDraw: (input: {
+    year: number;
+    semester: number;
+    targetUserIds: number[];
+    placements: Array<{ userId: number; roomId: number; bedPosition: number }>;
+  }) =>
+    request<{ ok: true; assignmentCount: number; unassignedCount: number }>(
+      '/api/admin/dorm/draw/apply',
+      {
+        method: 'POST',
+        body: input,
+      },
+    ),
   updateDormReportStatus: (id: number, input: { status: DormReportStatus; comment?: string }) =>
     request<{ ok: true; id: number; status: DormReportStatus }>(
       `/api/admin/dorm/reports/${id}/status`,
@@ -288,7 +408,26 @@ export const api = {
         body: input,
       },
     ),
-  activityRequests: () => request<ActivityRequestSummary[]>('/api/admin/activity-requests'),
+  activityRequests: (query: ActivityRequestAdminListQuery = {}) =>
+    request<PaginatedResponse<ActivityRequestAdminSummary>>(
+      withQuery('/api/admin/activity-requests', query),
+    ),
+  activityRequestStudents: () =>
+    request<ActivityRequestStudentOption[]>('/api/admin/activity-requests/students'),
+  activityRequestTeachers: () =>
+    request<ActivityRequestTeacherOption[]>('/api/admin/activity-requests/teachers'),
+  createActivityRequest: (input: {
+    representativeStudentNo: number;
+    participantStudentNos: number[];
+    location: string;
+    startsAt: string;
+    endsAt: string;
+    purpose: string;
+  }) =>
+    request<{
+      ok: true;
+      request: { id: number; status: 'approved'; issuedNumber: string };
+    }>('/api/admin/activity-requests', { method: 'POST', body: input }),
   approveActivityRequest: (id: number) =>
     request<{ ok: true; id: number; status: 'approved'; issuedNumber: string }>(
       `/api/admin/activity-requests/${id}/approve`,
@@ -302,17 +441,9 @@ export const api = {
         body: { reason },
       },
     ),
-  markActivityRequestPrinted: (id: number) =>
-    request<{ ok: true; id: number }>(`/api/admin/activity-requests/${id}/print`, {
+  printTodayActivityRequests: (date?: string) =>
+    request<ActivityRequestPrintBatch>('/api/admin/activity-requests/print/today', {
       method: 'POST',
+      body: date ? { date } : {},
     }),
-  petitions: () => request<PetitionSummary[]>('/api/petitions'),
-  answerPetition: (id: number, content: string) =>
-    request<{ ok: true; id: number; answer: { id: number; content: string } }>(
-      `/api/admin/petitions/${id}/answer`,
-      {
-        method: 'POST',
-        body: { content },
-      },
-    ),
 };

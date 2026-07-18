@@ -2,6 +2,8 @@
   display: flex;
   min-height: 100vh;
   flex-direction: column;
+  background:
+    linear-gradient(180deg, rgb(237 249 246 / 74%) 0, rgb(247 251 250 / 92%) 340px), #f7faf9;
 }
 
 .skip-link {
@@ -27,7 +29,7 @@
   z-index: var(--j-layer-header);
   top: 0;
   border-bottom: 1px solid var(--j-color-border);
-  background: rgb(255 255 255 / 96%);
+  background: rgb(251 254 253 / 96%);
   backdrop-filter: blur(12px);
 }
 
@@ -186,6 +188,7 @@
 }
 
 .portal-header__actions {
+  position: relative;
   display: flex;
   margin-left: auto;
   align-items: center;
@@ -193,8 +196,7 @@
 }
 
 .header-login-button,
-.header-user-link,
-.header-logout-button {
+.header-user-link {
   display: inline-flex;
   min-height: 44px;
   padding-inline: var(--j-space-4);
@@ -220,19 +222,70 @@
   white-space: nowrap;
 }
 
-.header-logout-button {
-  padding-inline: var(--j-space-3);
-  border-color: transparent;
-  color: var(--j-color-text-muted);
-  background: transparent;
-}
-
 .header-login-button:hover,
-.header-user-link:hover,
-.header-logout-button:hover {
+.header-user-link:hover {
   border-color: var(--j-color-brand-subtle-strong);
   color: var(--j-color-brand-strong);
   background: var(--j-color-surface-selected);
+}
+
+.header-user-menu {
+  position: relative;
+}
+
+.header-user-link__chevron {
+  color: var(--j-color-text-muted);
+  transition: transform var(--j-motion-fast);
+}
+
+.header-user-link[aria-expanded='true'] .header-user-link__chevron {
+  transform: rotate(180deg);
+}
+
+.header-user-dropdown {
+  position: absolute;
+  z-index: var(--j-layer-popover);
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  width: 180px;
+  padding: 6px;
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-md);
+  background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-overlay);
+}
+
+.header-user-dropdown a,
+.header-user-dropdown button {
+  display: flex;
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  border-radius: var(--j-radius-sm);
+  color: var(--j-color-text-secondary);
+  background: transparent;
+  font: inherit;
+  font-size: var(--j-text-sm);
+  font-weight: var(--j-weight-semibold);
+  text-align: left;
+}
+
+.header-user-dropdown a:hover {
+  color: var(--j-color-info);
+  background: var(--j-color-info-subtle);
+}
+
+.header-user-dropdown .header-user-dropdown__logout {
+  color: var(--j-color-danger);
+}
+
+.header-user-dropdown .header-user-dropdown__logout:hover:not(:disabled) {
+  color: var(--j-color-danger-hover);
+  background: var(--j-color-danger-subtle);
 }
 
 .mobile-menu,

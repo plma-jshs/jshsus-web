@@ -9,6 +9,7 @@ import {
   PageToolbar,
   SearchField,
 } from '../../components/page/PageScaffold';
+import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { getLostItems } from './api';
 import { lostStatusLabels } from './presentation';
@@ -42,9 +43,9 @@ export function LostItemsPage() {
 
   return (
     <PageScaffold
-      breadcrumbs={[{ label: '학교생활' }, { label: '분실물' }]}
+      breadcrumbs={listBreadcrumbs('lostItems')}
       title="분실물"
-      description="잃어버린 물건과 습득한 물건을 확인하고 등록하세요."
+      description="분실·습득 물품을 조회하고 등록하세요."
       action={
         <Link className="detail-primary-button" to="/lost-items/new">
           <PackagePlus size={16} aria-hidden="true" /> 등록하기

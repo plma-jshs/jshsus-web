@@ -98,6 +98,27 @@ describe('board post rich-text validation', () => {
     }
   });
 
+  it('allows only the declared text color, size, and highlight tokens', () => {
+    const styledDocument = structuredClone(tiptapDocument) as unknown as {
+      content: Array<{ content?: Array<{ marks?: unknown[] }> }>;
+    };
+    styledDocument.content[1]!.content![0]!.marks = [
+      { type: 'textColor', attrs: { color: 'blue' } },
+      { type: 'fontSize', attrs: { size: 'large' } },
+      { type: 'highlight', attrs: { color: 'yellow' } },
+    ];
+    expect(
+      parsePostCreate({ title: '서식 글', contentDoc: styledDocument }, 'published').contentDoc,
+    ).toEqual(styledDocument);
+
+    styledDocument.content[1]!.content![0]!.marks = [
+      { type: 'textColor', attrs: { color: 'expression(alert(1))' } },
+    ];
+    expect(() =>
+      parsePostCreate({ title: '위험한 서식', contentDoc: styledDocument }, 'published'),
+    ).toThrow(BadRequestException);
+  });
+
   it('normalizes rich-text updates and rejects empty update objects', () => {
     expect(parsePostUpdate({ contentDoc: tiptapDocument }).content).toContain('본문 링크');
     expect(() => parsePostUpdate({})).toThrow(BadRequestException);

@@ -1,0 +1,235 @@
+.admin-main
+  :where(input:not([type='checkbox']):not([type='radio']):not([type='hidden']), select, textarea),
+.ui-control {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--control-height);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 0 11px;
+  outline: 0;
+  background-color: var(--surface);
+  color: var(--j-color-text);
+  font: inherit;
+  font-size: 14px;
+  transition:
+    border-color var(--j-motion-fast),
+    box-shadow var(--j-motion-fast),
+    background-color var(--j-motion-fast);
+}
+
+.admin-main
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+    select,
+    textarea
+  ):hover,
+.ui-control:hover {
+  border-color: #aebbc1;
+}
+
+.admin-main
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+    select,
+    textarea
+  ):focus,
+.ui-control:focus {
+  border-color: var(--primary);
+  box-shadow: var(--j-shadow-focus);
+}
+
+.admin-main :where(input, select, textarea):disabled,
+.ui-control:disabled {
+  cursor: not-allowed;
+  background: #f4f6f7;
+  color: var(--j-color-text-muted);
+}
+
+.admin-main :where(input, textarea)::placeholder,
+.ui-control::placeholder {
+  color: #98a2b3;
+  opacity: 1;
+}
+
+.admin-main :where(select:not([multiple])),
+select.ui-control:not([multiple]) {
+  appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+
+.admin-main :where(textarea),
+textarea.ui-control {
+  min-height: 104px;
+  padding-block: 10px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.admin-main :where(input[type='checkbox'], input[type='radio']),
+.ui-check {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+  border: 0;
+  accent-color: var(--primary);
+  box-shadow: none;
+}
+
+.admin-main :where(input[type='checkbox'], input[type='radio']):focus-visible,
+.ui-check:focus-visible {
+  outline: 2px solid rgb(8 124 130 / 48%);
+  outline-offset: 2px;
+}
+
+.ui-field,
+.admin-form-grid label,
+.answer-form label {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.ui-field__label,
+.admin-form-grid label,
+.answer-form label {
+  color: var(--j-color-text-secondary);
+  font-size: 13px;
+  font-weight: var(--j-weight-semibold);
+}
+
+.ui-field__hint,
+.ui-field__error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.ui-field__hint {
+  color: var(--j-color-text-muted);
+}
+
+.ui-field__error {
+  color: var(--danger);
+}
+
+.ui-field[data-invalid='true'] :where(input, select, textarea) {
+  border-color: var(--danger);
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(210px, 1.4fr) minmax(210px, 1.4fr) minmax(140px, 0.8fr) minmax(180px, 1fr)
+    auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.admin-form-grid.compact-form {
+  grid-template-columns: minmax(120px, 0.7fr) minmax(100px, 0.5fr) minmax(240px, 1.6fr) auto;
+  margin-bottom: 14px;
+}
+
+.admin-form-grid.dorm-assignment-form {
+  grid-template-columns:
+    minmax(160px, 1fr) minmax(260px, 1.4fr) minmax(96px, 0.5fr) minmax(96px, 0.5fr)
+    minmax(96px, 0.5fr) auto;
+  margin-bottom: 14px;
+}
+
+.admin-form-grid .full-field {
+  grid-column: 1 / -2;
+}
+
+.admin-form-grid.content-admin-form {
+  grid-template-columns:
+    minmax(220px, 1.3fr) minmax(150px, 0.7fr) minmax(90px, 0.4fr) minmax(220px, 1fr)
+    auto;
+}
+
+.checkbox-row {
+  display: flex !important;
+  min-height: var(--control-height);
+  align-items: center;
+  gap: 8px;
+}
+
+.answer-form {
+  display: grid;
+  gap: 12px;
+}
+
+.ui-page-size-select {
+  width: 88px !important;
+  min-width: 88px;
+}
+
+.ui-control--xs {
+  width: 84px !important;
+  max-width: 100%;
+}
+
+.ui-control--sm {
+  width: 120px !important;
+  max-width: 100%;
+}
+
+.ui-control--md {
+  width: 180px !important;
+  max-width: 100%;
+}
+
+.ui-control--search {
+  width: 280px !important;
+  max-width: 100%;
+}
+
+.ui-compact-controls {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ui-compact-controls > * {
+  flex: 0 0 auto;
+}
+
+.ui-date-range {
+  min-width: 326px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ui-date-range legend {
+  margin-bottom: 6px;
+  color: var(--j-color-text-secondary);
+  font-size: 13px;
+  font-weight: var(--j-weight-semibold);
+  white-space: nowrap;
+}
+
+.ui-date-range__controls {
+  display: grid;
+  grid-template-columns: 150px auto 150px;
+  align-items: center;
+  gap: 7px;
+}
+
+.ui-date-range__controls input {
+  width: 150px !important;
+}
+
+.ui-date-range__controls > span {
+  color: var(--j-color-text-muted);
+}

@@ -87,6 +87,7 @@ const envSchema = z
     S3_ENDPOINT: z.string().default(''),
     S3_FORCE_PATH_STYLE: booleanFromString.default(false),
     NEIS_API_KEY: z.string().max(256).default(''),
+    YOUTUBE_API_KEY: z.string().trim().max(256).default(''),
     NEIS_ATPT_OFCDC_SC_CODE: z
       .string()
       .regex(/^[A-Z][0-9]{2}$/)
@@ -129,6 +130,14 @@ const envSchema = z
           code: z.ZodIssueCode.custom,
           path: ['ALLOW_DEV_AUTH'],
           message: 'Development authentication must be disabled in production.',
+        });
+      }
+
+      if (!value.YOUTUBE_API_KEY) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['YOUTUBE_API_KEY'],
+          message: 'Production requires a YouTube Data API v3 key.',
         });
       }
 

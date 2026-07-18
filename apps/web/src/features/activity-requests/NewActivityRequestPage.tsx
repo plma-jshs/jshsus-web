@@ -1,59 +1,103 @@
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ArrowLeft, CheckCircle2, Send } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Send, X } from 'lucide-react';
+import { useToast } from '../../components/feedback/Toast';
 import { PageScaffold } from '../../components/page/PageScaffold';
-import { createActivityRequest } from './api';
+import { taskBreadcrumbs } from '../../components/page/pageHierarchy';
+import { getSession } from '../auth/api';
+import {
+  createActivityRequest,
+  getActivityRequestStudentOptions,
+  getActivityRequestTeacherOptions,
+} from './api';
+import {
+  activitySlotsDateTimes,
+  availableActivityTimeSlots,
+  koreaDateInput,
+  type ActivityTimeSlotId,
+} from './activitySchedule';
 import {
   type ActivityRequestForm,
-  getActivityDurationLabel,
+  searchActivityRequestStudents,
   validateActivityRequestForm,
 } from './presentation';
 import '../../styles/activity-requests.css';
 
-function toDateTimeLocal(date: Date) {
-  const next = new Date(date);
-  next.setMinutes(next.getMinutes() - next.getTimezoneOffset());
-  return next.toISOString().slice(0, 16);
-}
-
 function initialForm(): ActivityRequestForm {
-  const start = new Date();
-  start.setMinutes(0, 0, 0);
-  start.setHours(start.getHours() + 1);
-  const end = new Date(start);
-  end.setHours(end.getHours() + 1);
+  const date = koreaDateInput();
+  const [slot] = availableActivityTimeSlots(date);
+  const times = activitySlotsDateTimes(date, [slot?.id ?? 'evening-1']);
   return {
+    advisorTeacherId: null,
     location: '',
-    startsAt: toDateTimeLocal(start),
-    endsAt: toDateTimeLocal(end),
+    startsAt: times?.startsAt ?? '',
+    endsAt: times?.endsAt ?? '',
     purpose: '',
   };
 }
 
 export function NewActivityRequestPage() {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [form, setForm] = useState<ActivityRequestForm>(initialForm);
-  const [minimumStart] = useState(() => toDateTimeLocal(new Date()));
+  const [activityDate, setActivityDate] = useState(() => koreaDateInput());
+  const [activitySlotIds, setActivitySlotIds] = useState<ActivityTimeSlotId[]>(() => {
+    const [slot] = availableActivityTimeSlots(koreaDateInput());
+    return [slot?.id ?? 'evening-1'];
+  });
   const [touched, setTouched] = useState<Partial<Record<keyof ActivityRequestForm, boolean>>>({});
   const [attempted, setAttempted] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [studentSearch, setStudentSearch] = useState('');
+  const [participantStudentNos, setParticipantStudentNos] = useState<number[]>([]);
+  const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
+  const studentsQuery = useQuery({
+    queryKey: ['activity-request-student-options'],
+    queryFn: getActivityRequestStudentOptions,
+    staleTime: 5 * 60 * 1000,
+  });
+  const teachersQuery = useQuery({
+    queryKey: ['activity-request-teacher-options'],
+    queryFn: getActivityRequestTeacherOptions,
+    staleTime: 5 * 60 * 1000,
+  });
+  const studentByNo = useMemo(
+    () => new Map((studentsQuery.data ?? []).map((student) => [student.studentNo, student])),
+    [studentsQuery.data],
+  );
+  const filteredStudents = useMemo(
+    () => searchActivityRequestStudents(studentsQuery.data ?? [], studentSearch),
+    [studentSearch, studentsQuery.data],
+  );
   const errors = useMemo(() => validateActivityRequestForm(form), [form]);
-  const duration = getActivityDurationLabel(form.startsAt, form.endsAt);
+  const availableSlots = useMemo(() => availableActivityTimeSlots(activityDate), [activityDate]);
   const mutation = useMutation({
-    mutationFn: () =>
-      createActivityRequest({
+    mutationFn: () => {
+      if (!form.advisorTeacherId) throw new Error('담당 교사를 선택해 주세요.');
+      return createActivityRequest({
         ...form,
+        advisorTeacherId: form.advisorTeacherId,
+        participantStudentNos,
+        activitySlotIds,
         location: form.location.trim(),
         purpose: form.purpose.trim(),
         startsAt: new Date(form.startsAt).toISOString(),
         endsAt: new Date(form.endsAt).toISOString(),
-      }),
+      });
+    },
     onSuccess: async () => {
       setSubmitted(true);
       await queryClient.invalidateQueries({ queryKey: ['activity-requests', 'me'] });
+      showToast({ title: '탐구활동서를 제출했습니다.', tone: 'success' });
     },
+    onError: (error) =>
+      showToast({
+        title: '탐구활동서를 제출하지 못했습니다.',
+        description: error.message,
+        tone: 'danger',
+      }),
   });
 
   const updateField = <K extends keyof ActivityRequestForm>(
@@ -71,13 +115,30 @@ export function NewActivityRequestPage() {
     if (Object.keys(errors).length) return;
     mutation.mutate();
   };
+  const applySchedule = (date: string, slotIds: ActivityTimeSlotId[]) => {
+    const times = activitySlotsDateTimes(date, slotIds);
+    setActivityDate(date);
+    setActivitySlotIds(slotIds);
+    setForm((current) => ({
+      ...current,
+      startsAt: times?.startsAt ?? '',
+      endsAt: times?.endsAt ?? '',
+    }));
+    if (mutation.isError) mutation.reset();
+  };
+  const toggleActivitySlot = (slotId: ActivityTimeSlotId) => {
+    const next = activitySlotIds.includes(slotId)
+      ? activitySlotIds.filter((id) => id !== slotId)
+      : [...activitySlotIds, slotId];
+    if (next.length) applySchedule(activityDate, next);
+  };
 
   if (submitted && mutation.data) {
     return (
       <PageScaffold
-        breadcrumbs={[{ label: '탐구활동서', to: '/activity-requests' }, { label: '신규 신청' }]}
+        breadcrumbs={taskBreadcrumbs('activityRequests', '신청')}
         title="탐구활동서가 제출되었습니다"
-        description="담당 교사가 신청 내용을 검토하면 상태가 변경됩니다."
+        description="처리 상태는 탐구활동서 목록에서 확인할 수 있습니다."
         width="reading"
         variant="form"
       >
@@ -86,7 +147,7 @@ export function NewActivityRequestPage() {
           <div>
             <strong>{form.purpose}</strong>
             <p>
-              {form.location} · {duration ?? '활동 시간 확인 필요'}
+              {form.location} · {activitySlotIds.length}개 활동 시간
             </p>
           </div>
           <Link
@@ -103,9 +164,9 @@ export function NewActivityRequestPage() {
 
   return (
     <PageScaffold
-      breadcrumbs={[{ label: '탐구활동서', to: '/activity-requests' }, { label: '신규 신청' }]}
+      breadcrumbs={taskBreadcrumbs('activityRequests', '신청')}
       title="탐구활동서 신청"
-      description="활동 목적과 시간, 장소를 정확하게 입력해 주세요."
+      description="활동 목적, 일정, 장소와 참여 학생을 입력하세요."
       width="reading"
       variant="form"
     >
@@ -138,16 +199,96 @@ export function NewActivityRequestPage() {
                   {errors.purpose}
                 </span>
               ) : (
-                <span>10자 이상 구체적으로 작성해 주세요.</span>
+                <span>활동 목적을 입력해 주세요.</span>
               )}
               <span>{form.purpose.length} / 500</span>
             </div>
           </div>
         </section>
 
-        <section className="activity-form-section" aria-labelledby="activity-schedule-title">
+        <section className="activity-form-section" aria-labelledby="activity-participant-title">
           <div className="activity-form-section__heading">
             <span>2</span>
+            <div>
+              <h2 id="activity-participant-title">참여 학생</h2>
+              <p>신청자는 대표 학생으로 자동 포함됩니다. 함께 활동하는 학생을 추가해 주세요.</p>
+            </div>
+          </div>
+          <div className="activity-participant-picker">
+            <div className="activity-form-field">
+              <label htmlFor="activity-participant-search">학생 검색</label>
+              <input
+                id="activity-participant-search"
+                type="search"
+                value={studentSearch}
+                onChange={(event) => setStudentSearch(event.target.value)}
+                placeholder="학번 또는 이름을 입력하세요"
+                autoComplete="off"
+              />
+            </div>
+            {studentSearch.trim() ? (
+              <div className="activity-participant-results" aria-label="학생 검색 결과">
+                {studentsQuery.isPending ? <p>학생을 불러오는 중입니다.</p> : null}
+                {studentsQuery.isError ? (
+                  <p className="activity-form-field__error">학생 목록을 불러오지 못했습니다.</p>
+                ) : null}
+                {!studentsQuery.isPending && !studentsQuery.isError && !filteredStudents.length ? (
+                  <p>검색 결과가 없습니다.</p>
+                ) : null}
+                {filteredStudents.map((student) => {
+                  const selected = participantStudentNos.includes(student.studentNo);
+                  return (
+                    <button
+                      key={student.studentId}
+                      type="button"
+                      disabled={selected || participantStudentNos.length >= 29}
+                      onClick={() => {
+                        setParticipantStudentNos((current) => [...current, student.studentNo]);
+                        setStudentSearch('');
+                      }}
+                    >
+                      <span>
+                        <strong>{student.studentNo}</strong> {student.studentName}
+                      </span>
+                      <span>{selected ? '추가됨' : '추가'}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+          <div className="activity-participant-selection" aria-live="polite">
+            <strong>참여 학생 {participantStudentNos.length + 1}명</strong>
+            <div>
+              <span className="activity-participant-chip is-representative">
+                {sessionQuery.data?.isLogined
+                  ? `${sessionQuery.data.stuid ?? sessionQuery.data.identifier ?? ''} ${sessionQuery.data.name ?? '신청자'}`.trim()
+                  : '신청자'}{' '}
+                · 대표
+              </span>
+              {participantStudentNos.map((studentNo) => (
+                <span className="activity-participant-chip" key={studentNo}>
+                  {studentNo} {studentByNo.get(studentNo)?.studentName}
+                  <button
+                    type="button"
+                    aria-label={`${studentNo} 참여 학생 제거`}
+                    onClick={() =>
+                      setParticipantStudentNos((current) =>
+                        current.filter((value) => value !== studentNo),
+                      )
+                    }
+                  >
+                    <X size={14} aria-hidden="true" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="activity-form-section" aria-labelledby="activity-schedule-title">
+          <div className="activity-form-section__heading">
+            <span>3</span>
             <div>
               <h2 id="activity-schedule-title">시간과 장소</h2>
               <p>이동 시간을 포함해 실제 활동이 이루어지는 기간을 선택해 주세요.</p>
@@ -171,47 +312,86 @@ export function NewActivityRequestPage() {
               </span>
             ) : null}
           </div>
+          <div className="activity-form-field">
+            <label htmlFor="activity-advisor">담당 교사</label>
+            <select
+              id="activity-advisor"
+              value={form.advisorTeacherId ?? ''}
+              onChange={(event) =>
+                updateField(
+                  'advisorTeacherId',
+                  event.target.value ? Number(event.target.value) : null,
+                )
+              }
+              onBlur={() => setTouched((current) => ({ ...current, advisorTeacherId: true }))}
+              aria-invalid={showError('advisorTeacherId')}
+              aria-describedby={
+                showError('advisorTeacherId') ? 'activity-advisor-error' : undefined
+              }
+              required
+            >
+              <option value="">담당 교사를 선택하세요</option>
+              {(teachersQuery.data ?? []).map((teacher) => (
+                <option key={teacher.userId} value={teacher.userId}>
+                  {teacher.staffNo} {teacher.name}
+                </option>
+              ))}
+            </select>
+            {showError('advisorTeacherId') ? (
+              <span className="activity-form-field__error" id="activity-advisor-error">
+                {errors.advisorTeacherId}
+              </span>
+            ) : null}
+            {teachersQuery.isError ? (
+              <span className="activity-form-field__error">
+                담당 교사 목록을 불러오지 못했습니다.
+              </span>
+            ) : null}
+          </div>
           <div className="activity-form-time-grid">
             <div className="activity-form-field">
-              <label htmlFor="activity-start">시작 일시</label>
+              <label htmlFor="activity-date">활동 날짜</label>
               <input
-                id="activity-start"
-                type="datetime-local"
-                value={form.startsAt}
-                min={minimumStart}
-                onChange={(event) => updateField('startsAt', event.target.value)}
-                onBlur={() => setTouched((current) => ({ ...current, startsAt: true }))}
-                aria-invalid={showError('startsAt')}
-                aria-describedby={showError('startsAt') ? 'activity-start-error' : undefined}
+                id="activity-date"
+                type="date"
+                value={activityDate}
+                min={koreaDateInput()}
+                onChange={(event) => {
+                  const nextSlots = availableActivityTimeSlots(event.target.value);
+                  const nextIds = activitySlotIds.filter((id) =>
+                    nextSlots.some((slot) => slot.id === id),
+                  );
+                  applySchedule(
+                    event.target.value,
+                    nextIds.length ? nextIds : [nextSlots[0]?.id ?? 'evening-1'],
+                  );
+                }}
+                required
               />
-              {showError('startsAt') ? (
-                <span className="activity-form-field__error" id="activity-start-error">
-                  {errors.startsAt}
-                </span>
-              ) : null}
             </div>
-            <div className="activity-form-field">
-              <label htmlFor="activity-end">종료 일시</label>
-              <input
-                id="activity-end"
-                type="datetime-local"
-                value={form.endsAt}
-                min={form.startsAt}
-                onChange={(event) => updateField('endsAt', event.target.value)}
-                onBlur={() => setTouched((current) => ({ ...current, endsAt: true }))}
-                aria-invalid={showError('endsAt')}
-                aria-describedby={showError('endsAt') ? 'activity-end-error' : undefined}
-              />
-              {showError('endsAt') ? (
-                <span className="activity-form-field__error" id="activity-end-error">
-                  {errors.endsAt}
-                </span>
-              ) : null}
-            </div>
-          </div>
-          <div className={`activity-duration-summary${duration ? '' : ' is-invalid'}`}>
-            <span>예상 활동 시간</span>
-            <strong>{duration ?? '시간을 다시 확인해 주세요'}</strong>
+            <fieldset className="activity-slot-selector">
+              <legend>활동 시간</legend>
+              <div className="activity-slot-options">
+                {availableSlots.map((slot) => {
+                  const checked = activitySlotIds.includes(slot.id);
+                  return (
+                    <label className={checked ? 'is-selected' : undefined} key={slot.id}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleActivitySlot(slot.id)}
+                      />
+                      <span>
+                        <strong>{slot.label}</strong>
+                        <small>
+                          {slot.startsAt}~{slot.endsAt}
+                        </small>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
           </div>
         </section>
 

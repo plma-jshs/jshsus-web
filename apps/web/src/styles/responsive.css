@@ -41,7 +41,7 @@
 @media (max-width: 1199px) {
   .portal-nav,
   .header-user-link span,
-  .header-logout-button span {
+  .header-user-link__chevron {
     display: none;
   }
   .portal-header__inner {
@@ -152,7 +152,7 @@
     padding-inline: var(--j-space-4);
   }
   .header-user-link,
-  .header-logout-button {
+  .header-user-menu {
     width: 44px;
     min-height: 44px;
     padding: 0;
@@ -201,20 +201,6 @@
   }
   .home-dashboard {
     gap: var(--j-space-4);
-  }
-  .announcement-bar {
-    min-height: 62px;
-    padding: var(--j-space-3) var(--j-space-4);
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: var(--j-space-3);
-  }
-  .announcement-bar > span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .announcement-bar__link {
-    display: none;
   }
   .home-primary-grid {
     grid-template-areas: 'notices' 'meals' 'schedule';
@@ -311,7 +297,7 @@
   }
 
   .header-user-link,
-  .header-logout-button,
+  .header-user-menu,
   .mobile-menu__trigger {
     width: 44px;
     min-width: 44px;
@@ -340,9 +326,6 @@
 @media (max-width: 420px) {
   .portal-header__actions {
     gap: 4px;
-  }
-  .announcement-bar__label strong {
-    display: none;
   }
   .notice-preview-list a {
     grid-template-columns: minmax(0, 1fr) auto;

@@ -1,16 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
 import { ArrowLeft, Download, Eye, Paperclip } from 'lucide-react';
+import { getRichTextImageSources, RichTextContent } from '../../components/editor/RichTextEditor';
+import { ContentDetailHeader } from '../../components/page/ContentDetailHeader';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
+import { detailBreadcrumbs } from '../../components/page/pageHierarchy';
 import { ApiError } from '../../shared/api/http';
-import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { getNotice } from './api';
-
-const dateFormatter = createKoreanDateFormatter({
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-});
+import { parseRichNoticeContent } from './richNoticeContent';
 
 export function NoticeDetailPage() {
   const { noticeId } = useParams({ from: '/notices/$noticeId' });
@@ -32,7 +29,7 @@ export function NoticeDetailPage() {
     const isForbidden = status === 401 || status === 403;
     return (
       <PageScaffold
-        breadcrumbs={[{ label: '공지사항', to: '/notices' }]}
+        breadcrumbs={detailBreadcrumbs('notices')}
         title={
           isNotFound
             ? '공지를 찾을 수 없습니다'
@@ -80,39 +77,37 @@ export function NoticeDetailPage() {
     );
   }
 
+  const richContent = parseRichNoticeContent(notice.content);
+  const inlineImageSources = getRichTextImageSources(richContent.contentDoc);
+  const downloadableAttachments = notice.attachments.filter(
+    (file) =>
+      !inlineImageSources.has(file.inlineUrl) &&
+      !inlineImageSources.has(`/api/files/${file.id}/content`),
+  );
+
   return (
-    <PageScaffold
-      breadcrumbs={[
-        { label: '소식·일정' },
-        { label: '공지사항', to: '/notices' },
-        { label: '상세' },
-      ]}
-      title={notice.title}
-      width="reading"
-      variant="document"
-      meta={
-        <>
-          <span>{notice.department}</span>
-          <time dateTime={notice.publishedAt}>
-            {dateFormatter.format(new Date(notice.publishedAt))}
-          </time>
-          {notice.authorName ? <span>{notice.authorName}</span> : null}
+    <PageScaffold breadcrumbs={detailBreadcrumbs('notices')} width="reading" variant="document">
+      <article className="reading-surface">
+        <ContentDetailHeader
+          title={notice.title}
+          author={notice.department}
+          createdAt={notice.publishedAt}
+        >
           <span>
             <Eye size={14} aria-hidden="true" />
             <span className="sr-only">조회 </span>
             {notice.viewCount.toLocaleString('ko-KR')}
           </span>
-        </>
-      }
-    >
-      <article className="reading-surface">
-        <div className="reading-body">{notice.content}</div>
-        {notice.attachments?.length ? (
+        </ContentDetailHeader>
+        <div className="reading-body">
+          <RichTextContent contentDoc={richContent.contentDoc} plainText={richContent.plainText} />
+        </div>
+        {downloadableAttachments.length ? (
           <section className="detail-attachments" aria-labelledby="notice-attachments-title">
             <h2 id="notice-attachments-title">
               <Paperclip size={16} aria-hidden="true" /> 첨부파일
             </h2>
-            {notice.attachments.map((file) => (
+            {downloadableAttachments.map((file) => (
               <a href={file.url} key={file.id}>
                 <span>{file.originalName}</span>
                 <Download size={16} aria-hidden="true" />

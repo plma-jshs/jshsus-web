@@ -10,11 +10,13 @@ function selectChain(rows: unknown[], lockable = false) {
     leftJoin: vi.fn(),
     where: vi.fn(),
     limit: vi.fn(),
+    orderBy: vi.fn(),
     for: vi.fn().mockResolvedValue(rows),
   };
   chain.from.mockReturnValue(chain);
   chain.leftJoin.mockReturnValue(chain);
   chain.where.mockReturnValue(chain);
+  chain.orderBy.mockReturnValue(chain);
   if (lockable) chain.limit.mockReturnValue(chain);
   else chain.limit.mockResolvedValue(rows);
   return chain;
@@ -34,6 +36,7 @@ describe('LostItemsService detail and compensation', () => {
             description: '파란 케이스',
             status: 'open' as const,
             authorName: '작성자',
+            authorId: 100,
           },
         ]),
       ),
@@ -56,10 +59,12 @@ describe('LostItemsService detail and compensation', () => {
       ]),
     } as unknown as FilesService;
 
-    const result = await new LostItemsService(database, files).getById(31);
+    const result = await new LostItemsService(database, files).getById(31, 100);
 
     expect(result.id).toBe(31);
     expect(result.attachments).toHaveLength(1);
+    expect(result.status).toBe('PROCESSING');
+    expect(result.canEdit).toBe(true);
   });
 
   it('uses 404 only when the visible row is absent', async () => {
@@ -73,6 +78,89 @@ describe('LostItemsService detail and compensation', () => {
       NotFoundException,
     );
     expect(files.listForTarget).not.toHaveBeenCalled();
+  });
+
+  it('maps every legacy storage status to one of the two public states', async () => {
+    const storedStatuses = ['open', 'matched', 'closed', 'hidden'] as const;
+    const rows = storedStatuses.map((status, index) => ({
+      id: index + 1,
+      type: 'lost' as const,
+      itemName: `물품 ${index + 1}`,
+      location: null,
+      occurredAt: null,
+      description: null,
+      status,
+      authorId: 100,
+      authorName: '작성자',
+    }));
+    const db = { select: vi.fn().mockReturnValue(selectChain(rows)) };
+    const database = {
+      query: vi.fn(async (_name: string, work: (value: typeof db) => unknown) => work(db)),
+    } as unknown as DatabaseService;
+    const files = {
+      listForTargets: vi.fn().mockResolvedValue(new Map()),
+    } as unknown as FilesService;
+
+    const result = await new LostItemsService(database, files).list(10, true);
+
+    expect(result.map((item) => item.status)).toEqual([
+      'PROCESSING',
+      'PROCESSING',
+      'RETURNED',
+      'RETURNED',
+    ]);
+  });
+
+  it('rejects a status change by a different account', async () => {
+    const update = vi.fn();
+    const db = {
+      select: vi.fn().mockReturnValue(selectChain([{ authorId: 200 }])),
+      update,
+    };
+    const database = {
+      query: vi.fn(async (_name: string, work: (value: typeof db) => unknown) => work(db)),
+      writeAudit: vi.fn(),
+    } as unknown as DatabaseService;
+    const files = {} as FilesService;
+
+    await expect(
+      new LostItemsService(database, files).updateStatus(31, { status: 'RETURNED' }, 100),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(update).not.toHaveBeenCalled();
+    expect(database.writeAudit).not.toHaveBeenCalled();
+  });
+
+  it('stores a returned owner status using the legacy closed value', async () => {
+    const updateWhere = vi.fn().mockResolvedValue(undefined);
+    const set = vi.fn().mockReturnValue({ where: updateWhere });
+    const db = {
+      select: vi.fn().mockReturnValue(selectChain([{ authorId: 100 }])),
+      update: vi.fn().mockReturnValue({ set }),
+    };
+    const database = {
+      query: vi.fn(async (_name: string, work: (value: typeof db) => unknown) => work(db)),
+      writeAudit: vi.fn().mockResolvedValue(undefined),
+    } as unknown as DatabaseService;
+    const files = {} as FilesService;
+
+    const result = await new LostItemsService(database, files).updateStatus(
+      31,
+      { status: 'RETURNED' },
+      100,
+    );
+
+    expect(set).toHaveBeenCalledWith({
+      status: 'closed',
+      updatedAt: expect.any(Date),
+    });
+    expect(updateWhere).toHaveBeenCalledOnce();
+    expect(database.writeAudit).toHaveBeenCalledWith({
+      actorId: 100,
+      action: 'lost-item.status',
+      targetType: 'lost_items',
+      targetId: 31,
+    });
+    expect(result).toEqual({ ok: true, id: 31, status: 'RETURNED' });
   });
 
   it('rejects compensation deletion by a different account', async () => {
@@ -104,7 +192,7 @@ describe('LostItemsService detail and compensation', () => {
     const tx = {
       select: vi
         .fn()
-        .mockReturnValue(selectChain([{ id: 31, authorId: 100, status: 'open' as const }], true)),
+        .mockReturnValue(selectChain([{ id: 31, authorId: 100, status: 'closed' as const }], true)),
       delete: vi.fn().mockReturnValue({ where: deleteWhere }),
       insert: vi.fn().mockReturnValue({ values: auditValues }),
     };
@@ -135,7 +223,7 @@ describe('LostItemsService detail and compensation', () => {
     expect(files.deleteForTarget).toHaveBeenCalledWith('lost_item', 31);
     expect(deleteWhere).toHaveBeenCalledOnce();
     expect(auditValues).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'lost-item.discard', targetId: '31' }),
+      expect.objectContaining({ action: 'lost-item.delete', targetId: '31' }),
     );
     expect(events).toEqual(['enqueue', 'commit', 'cleanup']);
     expect(result).toEqual({ ok: true, id: 31, cleanupPending: false });

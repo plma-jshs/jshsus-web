@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -14,12 +13,28 @@ import { FilesService } from '../files/files.service';
 
 const lostItemSchema = z.object({
   type: z.enum(['lost', 'found']),
-  itemName: z.string().min(1).max(160),
-  location: z.string().max(160).optional().default(''),
+  itemName: z.string().trim().min(1).max(160),
+  location: z.string().trim().max(160).optional().default(''),
   occurredAt: z.coerce.date().optional(),
-  description: z.string().max(2000).optional().default(''),
+  description: z.string().trim().max(2000).optional().default(''),
 });
-const lostItemStatusSchema = z.object({ status: z.enum(['open', 'matched', 'closed', 'hidden']) });
+const lostItemUpdateSchema = lostItemSchema
+  .partial()
+  .refine(
+    (value) => Object.values(value).some((field) => field !== undefined),
+    'At least one field is required.',
+  );
+const lostItemStatusSchema = z.object({ status: z.enum(['PROCESSING', 'RETURNED']) });
+
+type StoredLostItemStatus = 'open' | 'matched' | 'closed' | 'hidden';
+
+function toPublicStatus(status: StoredLostItemStatus): LostItemSummary['status'] {
+  return status === 'closed' || status === 'hidden' ? 'RETURNED' : 'PROCESSING';
+}
+
+function toStoredStatus(status: LostItemSummary['status']): StoredLostItemStatus {
+  return status === 'RETURNED' ? 'closed' : 'open';
+}
 
 type LostItemRow = {
   id: number;
@@ -28,11 +43,16 @@ type LostItemRow = {
   location: string | null;
   occurredAt: Date | null;
   description: string | null;
-  status: LostItemSummary['status'];
+  status: StoredLostItemStatus;
+  authorId: number | null;
   authorName: string | null;
 };
 
-function toSummary(row: LostItemRow, attachments: LostItemDetail['attachments']): LostItemDetail {
+function toSummary(
+  row: LostItemRow,
+  attachments: LostItemDetail['attachments'],
+  actorId?: number | null,
+): LostItemDetail {
   return {
     id: row.id,
     type: row.type,
@@ -40,9 +60,10 @@ function toSummary(row: LostItemRow, attachments: LostItemDetail['attachments'])
     location: row.location ?? '',
     occurredAt: row.occurredAt?.toISOString(),
     description: row.description ?? undefined,
-    status: row.status,
+    status: toPublicStatus(row.status),
     authorName: row.authorName ?? undefined,
     attachments,
+    canEdit: Boolean(actorId && row.authorId === actorId),
   };
 }
 
@@ -65,6 +86,7 @@ export class LostItemsService {
           description: schema.lostItems.description,
           status: schema.lostItems.status,
           authorName: schema.users.name,
+          authorId: schema.lostItems.authorId,
         })
         .from(schema.lostItems)
         .leftJoin(schema.users, eq(schema.lostItems.authorId, schema.users.id))
@@ -81,7 +103,7 @@ export class LostItemsService {
     });
   }
 
-  async getById(id: number): Promise<LostItemDetail> {
+  async getById(id: number, actorId?: number | null): Promise<LostItemDetail> {
     if (!Number.isInteger(id) || id <= 0) {
       throw new BadRequestException('Lost item id must be a positive integer.');
     }
@@ -97,6 +119,7 @@ export class LostItemsService {
           description: schema.lostItems.description,
           status: schema.lostItems.status,
           authorName: schema.users.name,
+          authorId: schema.lostItems.authorId,
         })
         .from(schema.lostItems)
         .leftJoin(schema.users, eq(schema.lostItems.authorId, schema.users.id))
@@ -108,7 +131,7 @@ export class LostItemsService {
       }
 
       const attachments = await this.filesService.listForTarget('lost_item', id);
-      return toSummary(row, attachments);
+      return toSummary(row, attachments, actorId);
     });
   }
 
@@ -127,16 +150,54 @@ export class LostItemsService {
         targetType: 'lost_items',
         targetId: result.id,
       });
-      return { ok: true, lostItem: { id: result.id, status: 'open', ...parsed.data } };
+      return {
+        ok: true,
+        lostItem: { id: result.id, status: 'PROCESSING' as const, ...parsed.data },
+      };
     });
   }
 
-  async discard(id: number, actorId?: number | null) {
+  async update(id: number, body: unknown, actorId?: number | null, canManage = false) {
     if (!Number.isInteger(id) || id <= 0) {
       throw new BadRequestException('Lost item id must be a positive integer.');
     }
     if (!actorId || actorId <= 0) {
-      throw new ForbiddenException('A persisted account is required to discard a lost item.');
+      throw new ForbiddenException('A persisted account is required to update a lost item.');
+    }
+    const parsed = lostItemUpdateSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+
+    return this.database.query('lost-items.update', async (db) => {
+      const [item] = await db
+        .select({ authorId: schema.lostItems.authorId })
+        .from(schema.lostItems)
+        .where(eq(schema.lostItems.id, id))
+        .limit(1);
+      if (!item) throw new NotFoundException('Lost item does not exist.');
+      if (!canManage && item.authorId !== actorId) {
+        throw new ForbiddenException('Only the author can update this lost item.');
+      }
+
+      await db
+        .update(schema.lostItems)
+        .set({ ...parsed.data, updatedAt: new Date() })
+        .where(eq(schema.lostItems.id, id));
+      await this.database.writeAudit({
+        actorId,
+        action: 'lost-item.update',
+        targetType: 'lost_items',
+        targetId: id,
+      });
+      return { ok: true as const, id };
+    });
+  }
+
+  async discard(id: number, actorId?: number | null, canManage = false) {
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new BadRequestException('Lost item id must be a positive integer.');
+    }
+    if (!actorId || actorId <= 0) {
+      throw new ForbiddenException('A persisted account is required to delete a lost item.');
     }
 
     return this.database.query('lost-items.discard', async (db) => {
@@ -145,21 +206,15 @@ export class LostItemsService {
           .select({
             id: schema.lostItems.id,
             authorId: schema.lostItems.authorId,
-            status: schema.lostItems.status,
           })
           .from(schema.lostItems)
           .where(eq(schema.lostItems.id, id))
           .limit(1)
           .for('update');
 
-        if (!item) {
-          throw new NotFoundException('Lost item does not exist.');
-        }
-        if (item.authorId !== actorId) {
-          throw new ForbiddenException('Only the author can discard this lost item.');
-        }
-        if (item.status !== 'open') {
-          throw new ConflictException('Only open lost items can be discarded.');
+        if (!item) throw new NotFoundException('Lost item does not exist.');
+        if (!canManage && item.authorId !== actorId) {
+          throw new ForbiddenException('Only the author can delete this lost item.');
         }
 
         await this.filesService.enqueueForTarget(
@@ -168,44 +223,52 @@ export class LostItemsService {
           'lost_item_discard',
           tx as unknown as AppDatabase,
         );
-        await tx
-          .delete(schema.lostItems)
-          .where(
-            and(
-              eq(schema.lostItems.id, id),
-              eq(schema.lostItems.authorId, actorId),
-              eq(schema.lostItems.status, 'open'),
-            ),
-          );
+        await tx.delete(schema.lostItems).where(eq(schema.lostItems.id, id));
         await tx.insert(schema.auditLogs).values({
           actorId,
-          action: 'lost-item.discard',
+          action: 'lost-item.delete',
           targetType: 'lost_items',
           targetId: String(id),
         });
       });
 
-      // The cleanup outbox committed with the parent row and audit event. This
-      // immediate pass improves responsiveness; the worker owns every retry.
       const cleanup = await this.filesService.deleteForTarget('lost_item', id);
-      return { ok: true, id, cleanupPending: cleanup.failed > 0 };
+      return { ok: true as const, id, cleanupPending: cleanup.failed > 0 };
     });
   }
 
-  async updateStatus(id: number, body: unknown, actorId?: number | null) {
+  async updateStatus(id: number, body: unknown, actorId?: number | null, canManage = false) {
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new BadRequestException('Lost item id must be a positive integer.');
+    }
+    if (!actorId || actorId <= 0) {
+      throw new ForbiddenException('A persisted account is required to update a lost item.');
+    }
     const parsed = lostItemStatusSchema.safeParse(body);
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
 
-    await this.database.db
-      .update(schema.lostItems)
-      .set({ status: parsed.data.status, updatedAt: new Date() })
-      .where(eq(schema.lostItems.id, id));
-    await this.database.writeAudit({
-      actorId,
-      action: 'lost-item.status',
-      targetType: 'lost_items',
-      targetId: id,
+    return this.database.query('lost-items.status', async (db) => {
+      const [item] = await db
+        .select({ authorId: schema.lostItems.authorId })
+        .from(schema.lostItems)
+        .where(eq(schema.lostItems.id, id))
+        .limit(1);
+      if (!item) throw new NotFoundException('Lost item does not exist.');
+      if (!canManage && item.authorId !== actorId) {
+        throw new ForbiddenException('Only the author can update this lost item.');
+      }
+
+      await db
+        .update(schema.lostItems)
+        .set({ status: toStoredStatus(parsed.data.status), updatedAt: new Date() })
+        .where(eq(schema.lostItems.id, id));
+      await this.database.writeAudit({
+        actorId,
+        action: 'lost-item.status',
+        targetType: 'lost_items',
+        targetId: id,
+      });
+      return { ok: true as const, id, status: parsed.data.status };
     });
-    return { ok: true, id, status: parsed.data.status };
   }
 }

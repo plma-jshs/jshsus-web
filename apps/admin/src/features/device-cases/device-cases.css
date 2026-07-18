@@ -1,0 +1,34 @@
+.device-list-count {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.device-status {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: #eef2f1;
+  color: #53615f;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.device-status.success {
+  background: #e9f7ef;
+  color: #23714a;
+}
+
+.device-status.danger {
+  background: #faeeee;
+  color: #9b3d3d;
+}
+
+.device-cases-page .table-action.active {
+  border-color: #b8dcd7;
+  background: #edf8f6;
+  color: var(--primary-dark);
+}

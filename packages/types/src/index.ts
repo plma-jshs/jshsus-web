@@ -1,3 +1,29 @@
+export type NotificationType =
+  | 'point_awarded'
+  | 'activity_request_submitted'
+  | 'activity_request_approved'
+  | 'activity_request_rejected';
+
+export type NotificationMetadata = Record<string, unknown>;
+
+export type NotificationItem = {
+  id: number;
+  type: NotificationType;
+  title: string;
+  body?: string;
+  link?: string;
+  metadata?: NotificationMetadata;
+  isRead: boolean;
+  readAt?: string;
+  createdAt: string;
+  expiresAt: string;
+};
+
+export type NotificationListResponse = {
+  items: NotificationItem[];
+  unreadCount: number;
+};
+
 export type DashboardNotice = {
   id: number;
   title: string;
@@ -20,7 +46,7 @@ export type NoticeListItem = {
   id: number;
   title: string;
   department: string;
-  authorName?: string;
+  pinned: boolean;
   viewCount: number;
   publishedAt: string;
 };
@@ -32,7 +58,6 @@ export type NoticeDetail = NoticeListItem & {
 
 export type NoticeSummary = DashboardNotice & {
   content: string;
-  authorName?: string;
   viewCount: number;
   attachments?: UploadedFileSummary[];
 };
@@ -42,6 +67,7 @@ export type DashboardPetition = {
   title: string;
   participantCount: number;
   threshold: number;
+  startsAt: string;
   endsAt: string;
   status: 'open' | 'awaiting_answer' | 'answered' | 'expired' | 'hidden';
 };
@@ -67,7 +93,7 @@ export type LostItemSummary = {
   type: 'lost' | 'found';
   itemName: string;
   location: string;
-  status: 'open' | 'matched' | 'closed' | 'hidden';
+  status: 'PROCESSING' | 'RETURNED';
   description?: string;
   occurredAt?: string;
   authorName?: string;
@@ -76,6 +102,7 @@ export type LostItemSummary = {
 
 export type LostItemDetail = Omit<LostItemSummary, 'attachments'> & {
   attachments: UploadedFileSummary[];
+  canEdit: boolean;
 };
 
 export type BoardPostSummary = {
@@ -111,10 +138,24 @@ export type BoardPostDetail = BoardPostListItem & {
   content: string;
   contentDoc?: RichTextDocument;
   attachments: UploadedFileSummary[];
+  likeCount: number;
+  likedByMe: boolean;
 };
+
+export type ContentLikeState = {
+  liked: boolean;
+  likeCount: number;
+};
+
+export type RichTextColor = 'gray' | 'red' | 'orange' | 'green' | 'blue' | 'purple';
+export type RichTextFontSize = 'small' | 'large' | 'xlarge';
+export type RichTextHighlight = 'yellow' | 'green' | 'blue' | 'pink';
 
 export type RichTextMark =
   | { type: 'bold' | 'italic' | 'underline' | 'strike' }
+  | { type: 'textColor'; attrs: { color: RichTextColor } }
+  | { type: 'fontSize'; attrs: { size: RichTextFontSize } }
+  | { type: 'highlight'; attrs: { color: RichTextHighlight } }
   | {
       type: 'link';
       attrs: {
@@ -162,6 +203,8 @@ export type BoardCommentSummary = {
   content: string;
   isHidden: boolean;
   createdAt: string;
+  likeCount: number;
+  likedByMe: boolean;
 };
 
 export type ContentReportSummary = {
@@ -248,6 +291,9 @@ export type SessionUser =
       userId: number;
       plmaId: number;
       stuid?: number;
+      /** Student number or site-issued six-digit teacher number shown in the UI. */
+      identifier?: string;
+      identityType?: 'student' | 'staff' | 'local';
       name?: string;
       jshsus?: string;
       roles?: UserRole[];
@@ -257,8 +303,17 @@ export type SessionUser =
       isLogined: false;
     };
 
-export type UserRole =
-  'system_admin' | 'student_affairs_head' | 'teacher' | 'student_council' | 'student';
+export type KnownUserRole =
+  | 'system_admin'
+  | 'student_affairs_head'
+  | 'teacher'
+  | 'student_council'
+  | 'broadcast_club'
+  | 'student';
+
+// IAM roles are data, not a closed compile-time enum. Keep known roles discoverable
+// while allowing a newly-created role to travel through the session unchanged.
+export type UserRole = KnownUserRole | (string & {});
 
 export type StudentStatusSummary = {
   pointTotal: number;
@@ -278,6 +333,8 @@ export type StudentSelfStatus = {
     id: number;
     studentNo: number;
     name: string;
+    nickname?: string;
+    profileImageUrl?: string;
     grade: number;
     classNo: number;
     number: number;
@@ -303,6 +360,7 @@ export type PointReasonType = 'PLUS' | 'MINUS' | 'ETC';
 
 export type PointReason = {
   id: number;
+  legacyReasonCode?: number;
   type: PointReasonType;
   point: number;
   comment: string;
@@ -339,8 +397,15 @@ export type StudentOption = {
   currentPoint: number;
 };
 
+export type StudentGender = 'male' | 'female';
+
 export type AdminStudentSummary = StudentOption & {
   userId?: number;
+  gender?: StudentGender;
+  email?: string;
+  phone?: string;
+  roles: UserRole[];
+  lastLoginAt?: string;
 };
 
 export type AdminStaffSummary = {
@@ -348,9 +413,23 @@ export type AdminStaffSummary = {
   userId: number;
   staffNo: number;
   name: string;
-  department?: string;
-  title?: string;
-  isStudentAffairsHead: boolean;
+  managedClasses?: Array<{ grade: number; classNo: number }>;
+  email?: string;
+  phone?: string;
+  roles: UserRole[];
+  lastLoginAt?: string;
+};
+
+export type AdminUserStatus = 'active' | 'restricted' | 'graduated' | 'deleted';
+
+export type AdminIdentityListQuery = {
+  page?: number;
+  pageSize?: number;
+  q?: string;
+  grade?: number;
+  classNo?: number;
+  sortBy?: 'identifier' | 'name' | 'lastLoginAt';
+  sortOrder?: 'asc' | 'desc';
 };
 
 export type AdminRoleSummary = {
@@ -377,6 +456,16 @@ export type AdminAuditLog = {
   createdAt: string;
 };
 
+export type AdminAuditLogListQuery = {
+  page?: number;
+  pageSize?: number;
+  q?: string;
+  from?: string;
+  to?: string;
+  sortBy?: 'createdAt' | 'actorName' | 'action' | 'targetType';
+  sortOrder?: 'asc' | 'desc';
+};
+
 export type DeviceCase = {
   id: number;
   isConnected: boolean;
@@ -400,32 +489,117 @@ export type DormRoom = {
   grade: number;
   dormName: '송죽관' | '동백관';
   assignedCount: number;
+  residents?: DormRoomResident[];
+  openReportCount?: number;
 };
 
 export type DormAssignment = {
   id: number;
+  roomId: number;
+  userId: number;
+  studentId: number;
+  dormName: DormRoom['dormName'];
   roomName: string;
   studentNo: number;
   studentName: string;
+  grade: number;
+  classNo: number;
+  number: number;
   year: number;
   semester: number;
   bedPosition: number;
 };
 
+export type DormRoomResident = Pick<
+  DormAssignment,
+  | 'id'
+  | 'userId'
+  | 'studentId'
+  | 'studentNo'
+  | 'studentName'
+  | 'grade'
+  | 'classNo'
+  | 'number'
+  | 'bedPosition'
+>;
+
 export type DormStudentOption = {
+  studentId: number;
   userId: number;
   studentNo: number;
   name: string;
   grade: number;
   classNo: number;
   number: number;
+  gender?: string;
+  dormName?: DormRoom['dormName'];
   currentRoom?: string;
+};
+
+export type DormRoommateBlock = {
+  id: number;
+  studentUserId: number;
+  studentNo: number;
+  studentName: string;
+  blockedUserId: number;
+  blockedStudentNo: number;
+  blockedStudentName: string;
+  year: number;
+  semester: number;
+};
+
+export type DormDrawPlacement = {
+  userId: number;
+  studentNo: number;
+  studentName: string;
+  grade: number;
+  classNo: number;
+  roomId: number;
+  dormName: DormRoom['dormName'];
+  roomName: string;
+  bedPosition: number;
+};
+
+export type DormDrawViolation = {
+  code: string;
+  message: string;
+  userId?: number;
+  roomId?: number;
+};
+
+export type DormDrawBlockPair = {
+  studentUserId: number;
+  blockedUserId: number;
+};
+
+export type DormDrawPreview = {
+  year: number;
+  semester: number;
+  targetUserIds: number[];
+  placements: DormDrawPlacement[];
+  fixedPlacements: DormDrawPlacement[];
+  roommateBlocks: DormDrawBlockPair[];
+  unassigned: Array<{
+    userId: number;
+    studentNo: number;
+    name: string;
+    reason: string;
+  }>;
+  ineligible: Array<{
+    userId: number;
+    studentNo: number;
+    name: string;
+    reason: string;
+  }>;
+  violations: DormDrawViolation[];
 };
 
 export type DormReportStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED';
 
 export type DormReport = {
   id: number;
+  roomId: number;
+  dormName: string;
   roomName: string;
   studentNo: number;
   studentName: string;
@@ -439,22 +613,99 @@ export type DormReport = {
 export type ActivityRequestStatus =
   'draft' | 'submitted' | 'approved' | 'rejected' | 'canceled' | 'completed';
 
+export type ActivityTimeSlotId =
+  | 'morning-1'
+  | 'morning-2'
+  | 'afternoon-1'
+  | 'afternoon-2'
+  | 'evening-1'
+  | 'evening-2'
+  | 'evening-3';
+
+export type ActivityRequestAdminStatus = 'pending' | 'approved' | 'rejected';
+
+export type ActivityRequestAdminListQuery = {
+  page?: number;
+  pageSize?: 20 | 50 | 100;
+  search?: string;
+  date?: string;
+  status?: ActivityRequestAdminStatus;
+  assignedToMe?: boolean;
+  sortBy?:
+    | 'issuedNumber'
+    | 'representative'
+    | 'participantCount'
+    | 'purpose'
+    | 'location'
+    | 'startsAt'
+    | 'advisorTeacherName'
+    | 'status';
+  sortOrder?: 'asc' | 'desc';
+};
+
+export type ActivityRequestParticipant = {
+  studentId: number;
+  studentNo: number;
+  studentName: string;
+  isRepresentative: boolean;
+};
+
+export type ActivityRequestStudentOption = {
+  studentId: number;
+  studentNo: number;
+  studentName: string;
+  grade: number;
+  classNo: number;
+  number: number;
+};
+
+export type ActivityRequestTeacherOption = {
+  userId: number;
+  staffNo: number;
+  name: string;
+};
+
 export type ActivityRequestSummary = {
   id: number;
   createdAt?: string;
+  representativeStudentId?: number;
   studentNo: number;
   studentName: string;
+  participants?: ActivityRequestParticipant[];
+  creatorName?: string;
+  advisorTeacherName?: string;
+  reviewerName?: string;
+  /** @deprecated Use advisorTeacherName or reviewerName. */
   teacherName?: string;
   location: string;
   startsAt: string;
   endsAt: string;
+  activitySlotIds?: ActivityTimeSlotId[];
   purpose: string;
   status: ActivityRequestStatus;
   issuedNumber?: string;
+  issuedAt?: string;
   rejectionReason?: string;
 };
 
-export type ActivityRequestDetail = ActivityRequestSummary;
+export type ActivityRequestDetail = ActivityRequestSummary & {
+  participants: ActivityRequestParticipant[];
+};
+
+export type ActivityRequestAdminSummary = Omit<
+  ActivityRequestSummary,
+  'participants' | 'status'
+> & {
+  representativeStudentId: number;
+  participants: ActivityRequestParticipant[];
+  status: ActivityRequestAdminStatus;
+  workflowStatus: ActivityRequestStatus;
+};
+
+export type ActivityRequestPrintBatch = {
+  date: string;
+  documents: ActivityRequestAdminSummary[];
+};
 
 export type AdminDashboard = {
   pointSummary: Pick<
@@ -462,7 +713,5 @@ export type AdminDashboard = {
     'totalStudents' | 'totalMeritPoints' | 'totalPenaltyPoints' | 'watchListCount'
   >;
   deviceCases: DeviceCase[];
-  dormRooms: DormRoom[];
-  pendingActivityRequests: ActivityRequestSummary[];
-  pendingPetitions: DashboardPetition[];
+  pendingActivityRequests: ActivityRequestAdminSummary[];
 };

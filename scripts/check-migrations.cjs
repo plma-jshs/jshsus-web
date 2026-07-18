@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 const fs = require('node:fs');
 const path = require('node:path');
+const {
+  findOverlongMysqlConstraintAndIndexIdentifiers,
+} = require('./migration-identifier-policy.cjs');
 
 const migrationDir = path.resolve('packages/db/migrations');
 const files = fs
@@ -42,8 +45,27 @@ const forbidden = [
 ];
 
 const failures = [];
+const safeIndexReplacements = new Map([
+  ['0012_dorm_room_identity.sql', /^DROP\s+INDEX\s+`dorm_rooms_name_idx`\s+ON\s+`dorm_rooms`$/i],
+]);
 for (const file of files) {
   const sql = fs.readFileSync(path.join(migrationDir, file), 'utf8');
+  for (const violation of findOverlongMysqlConstraintAndIndexIdentifiers(sql)) {
+    failures.push(
+      `${file}: ${violation.keyword} identifier \`${violation.identifier}\` is ${violation.length} characters (MySQL maximum: ${violation.maxLength})`,
+    );
+  }
+  if (file === '0012_dorm_room_identity.sql') {
+    const createIndexAt = sql.search(
+      /CREATE\s+UNIQUE\s+INDEX\s+`dorm_rooms_dorm_name_name_idx`\s+ON\s+`dorm_rooms`\s*\(\s*`dorm_name`\s*,\s*`name`\s*\)/i,
+    );
+    const dropIndexAt = sql.search(/DROP\s+INDEX\s+`dorm_rooms_name_idx`\s+ON\s+`dorm_rooms`/i);
+    if (createIndexAt < 0 || dropIndexAt < 0 || createIndexAt > dropIndexAt) {
+      failures.push(
+        `${file}: replacement index must be created before the legacy index is removed`,
+      );
+    }
+  }
   const statements = sql.split(/;\s*(?:--[^\n]*)?\n|-->\s*statement-breakpoint/i);
   for (const statement of statements) {
     const normalized = statement
@@ -52,7 +74,11 @@ for (const file of files) {
       .trim();
     if (!normalized) continue;
     for (const [label, pattern] of forbidden) {
-      if (pattern.test(normalized)) failures.push(`${file}: ${label}`);
+      if (!pattern.test(normalized)) continue;
+      const allowedReplacement =
+        label === 'DROP DATABASE, TABLE, VIEW, INDEX, or COLUMN' &&
+        safeIndexReplacements.get(file)?.test(normalized);
+      if (!allowedReplacement) failures.push(`${file}: ${label}`);
     }
   }
 }

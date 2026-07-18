@@ -1,0 +1,330 @@
+.static-document {
+  display: grid;
+  gap: 34px;
+  padding: clamp(24px, 4vw, 42px);
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-lg);
+  background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-card);
+}
+
+.static-document section {
+  display: grid;
+  gap: 12px;
+}
+
+.static-document h2,
+.static-document h3,
+.static-document p,
+.static-document ul {
+  margin: 0;
+}
+
+.static-document h2 {
+  color: var(--j-color-text);
+  font-size: 19px;
+}
+
+.static-document h3 {
+  color: var(--j-color-text);
+  font-size: 15px;
+}
+
+.static-document p,
+.static-document li {
+  color: var(--j-color-text-secondary);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.static-document ul {
+  display: grid;
+  padding-left: 20px;
+  gap: 7px;
+}
+
+.static-document__lead {
+  padding-bottom: 30px;
+  border-bottom: 1px solid var(--j-color-border);
+}
+
+.static-document__lead > span {
+  color: var(--j-color-brand-strong);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.static-document__lead h2 {
+  font-size: clamp(23px, 3vw, 30px);
+  letter-spacing: 0;
+}
+
+.about-document strong {
+  color: var(--j-color-text);
+  font-weight: 650;
+}
+
+.about-tab-list {
+  display: inline-flex;
+  width: fit-content;
+  padding: 4px;
+  gap: 2px;
+  border: 1px solid var(--j-color-border);
+  border-radius: 999px;
+  background: var(--j-color-surface-subtle);
+}
+
+.about-tab-list button {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--j-color-text-secondary);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.about-tab-list button:hover {
+  color: var(--j-color-text);
+  background: var(--j-color-surface-hover);
+}
+
+.about-tab-list button.is-active {
+  color: var(--j-color-text-inverse);
+  background: var(--j-color-brand-strong);
+}
+
+.about-original-section {
+  display: block !important;
+}
+
+.about-featurette {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(180px, 0.65fr);
+  align-items: center;
+  gap: clamp(20px, 4vw, 42px);
+}
+
+.about-featurette.is-reversed {
+  grid-template-columns: minmax(180px, 0.65fr) minmax(0, 1.35fr);
+}
+
+.about-featurette.is-reversed .about-featurette__copy {
+  order: 2;
+}
+
+.about-featurette.is-reversed .about-featurette__media {
+  order: 1;
+}
+
+.about-featurette__copy {
+  min-width: 0;
+}
+
+.featurette-heading {
+  margin: 0 0 14px;
+  color: var(--j-color-text);
+  font-size: clamp(22px, 3vw, 31px) !important;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.lead {
+  margin: 0;
+  color: var(--j-color-text-secondary);
+  font-size: 16px !important;
+  line-height: 1.85 !important;
+}
+
+.about-featurette__media {
+  display: grid;
+  place-items: center;
+}
+
+.about-featurette__media img {
+  width: min(100%, 260px);
+  height: auto;
+  object-fit: contain;
+}
+
+.featurette-divider,
+.div-year {
+  height: 1px;
+  margin: 34px 0;
+  border: 0;
+  background: var(--j-color-border);
+}
+
+.text-muted,
+.text-secondary {
+  color: var(--j-color-text-muted);
+}
+
+.about-brand-text,
+.about-color-primary {
+  color: rgb(53 148 138);
+  font-weight: 700;
+}
+
+.about-color-secondary {
+  color: rgb(105 201 192);
+  font-weight: 700;
+}
+
+.about-color-light {
+  color: rgb(87 164 158);
+  font-weight: 700;
+}
+
+.about-color-dark {
+  color: rgb(64 64 64);
+  font-weight: 700;
+}
+
+.dev-title {
+  margin: 0 0 20px;
+  color: var(--j-color-text);
+  font-size: 28px !important;
+  font-weight: 800;
+}
+
+.dev-year {
+  margin: 0 0 18px !important;
+  color: var(--j-color-text);
+  font-size: 18px !important;
+  font-weight: 800;
+}
+
+.dev-year small {
+  margin-left: 5px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.about-dev-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 26px 22px;
+}
+
+.about-developer-profile {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  justify-items: center;
+  text-align: center;
+}
+
+.about-developer-profile > img,
+.about-developer-placeholder {
+  width: 140px;
+  height: 140px;
+  border: 1px solid var(--j-color-border);
+  border-radius: 50%;
+  background: var(--j-color-surface-subtle);
+  object-fit: cover;
+}
+
+.about-developer-placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--j-color-brand-strong);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.dev-3,
+.about-developer-profile .mt-3 {
+  margin: 14px 0 0;
+  color: var(--j-color-text);
+  font-size: 20px !important;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.smalltext {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dev-comment,
+.dev-commen {
+  margin: 12px 0 0;
+  color: var(--j-color-text-secondary);
+  font-size: 13px !important;
+  line-height: 1.7 !important;
+}
+
+.card {
+  width: 100%;
+  margin-top: 14px;
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-md);
+  background: var(--j-color-surface-subtle);
+}
+
+.card-body {
+  padding: 13px 14px;
+}
+
+.card-text {
+  margin: 0;
+  color: var(--j-color-text-secondary);
+  font-size: 12px !important;
+  line-height: 1.65 !important;
+  text-align: left;
+}
+
+.privacy-document__notice {
+  padding: 15px 17px;
+  border-left: 3px solid var(--j-color-info);
+  color: var(--j-color-text-secondary);
+  background: var(--j-color-info-subtle);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.privacy-document__updated {
+  padding-top: 20px;
+  border-top: 1px solid var(--j-color-border);
+  color: var(--j-color-text-muted) !important;
+  font-size: 12px !important;
+}
+
+@media (max-width: 640px) {
+  .static-document {
+    padding: 20px 16px;
+  }
+
+  .about-featurette,
+  .about-featurette.is-reversed {
+    grid-template-columns: 1fr;
+  }
+
+  .about-featurette.is-reversed .about-featurette__copy,
+  .about-featurette.is-reversed .about-featurette__media {
+    order: initial;
+  }
+
+  .about-dev-row {
+    grid-template-columns: 1fr;
+  }
+
+  .featurette-heading {
+    font-size: 22px !important;
+  }
+
+  .lead {
+    font-size: 14px !important;
+  }
+
+  .about-tab-list {
+    width: 100%;
+  }
+
+  .about-tab-list button {
+    flex: 1;
+  }
+}

@@ -2,8 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import { ChevronRight, Inbox, LoaderCircle, TriangleAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
-
-type BreadcrumbItem = { label: string; to?: string };
+import type { BreadcrumbItem } from './pageHierarchy';
 
 export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
   return (
@@ -25,7 +24,7 @@ export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
 
 type PageScaffoldProps = {
   breadcrumbs: BreadcrumbItem[];
-  title: string;
+  title?: string;
   description?: string;
   action?: ReactNode;
   meta?: ReactNode;
@@ -44,17 +43,21 @@ export function PageScaffold({
   variant = 'list',
   children,
 }: PageScaffoldProps) {
+  const hasHeader = Boolean(title || description || action || meta);
+
   return (
     <div className={`detail-page detail-page--${width} detail-page--${variant}`}>
       <Breadcrumbs items={breadcrumbs} />
-      <header className="detail-page-header">
-        <div className="detail-page-header__copy">
-          <h1>{title}</h1>
-          {description ? <p>{description}</p> : null}
-          {meta ? <div className="detail-page-header__meta">{meta}</div> : null}
-        </div>
-        {action ? <div className="detail-page-header__action">{action}</div> : null}
-      </header>
+      {hasHeader ? (
+        <header className="detail-page-header">
+          <div className="detail-page-header__copy">
+            {title ? <h1>{title}</h1> : null}
+            {description ? <p>{description}</p> : null}
+            {meta ? <div className="detail-page-header__meta">{meta}</div> : null}
+          </div>
+          {action ? <div className="detail-page-header__action">{action}</div> : null}
+        </header>
+      ) : null}
       {children}
     </div>
   );

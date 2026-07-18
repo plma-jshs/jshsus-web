@@ -26,6 +26,25 @@ function csrfToken(token) {
   return createHmac('sha256', csrfSecret).update(token).digest('hex');
 }
 
+function nextSmokeActivityPeriod() {
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const date = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(tomorrow);
+  const [year, month, day] = date.split('-').map(Number);
+  const dayOfWeek = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  const weekend = dayOfWeek === 0 || dayOfWeek === 6;
+  const startsAt = weekend ? '09:00' : '19:10';
+  const endsAt = weekend ? '10:40' : '20:20';
+  return {
+    startsAt: new Date(`${date}T${startsAt}:00+09:00`).toISOString(),
+    endsAt: new Date(`${date}T${endsAt}:00+09:00`).toISOString(),
+  };
+}
+
 async function request(path, options = {}) {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     method: options.method ?? 'GET',
@@ -166,7 +185,8 @@ async function main() {
     const pointRecord = await adminPost('/admin/points/records', {
       studentId: students[0].studentId,
       reasonId,
-      comment: 'smoke point record',
+      point: 1,
+      reasonText: 'smoke point record',
       baseDate: new Date().toISOString().slice(0, 10),
     });
     const pointRecordId = pointRecord.record.id;
@@ -191,11 +211,21 @@ async function main() {
     assert(Array.isArray(commands), 'Device command history response is not an array.');
     results.push('deviceCases=ok');
 
-    const room = await queryOne(connection, 'select id from dorm_rooms order by id limit 1');
-    assert(room, 'Dorm room was not found.');
+    const dormFixture = await queryOne(
+      connection,
+      `select r.id as roomId, s.user_id as userId
+         from dorm_rooms r
+         join students s on s.grade = r.grade
+         join users u on u.id = s.user_id
+        where (r.dorm_name = '송죽관' and lower(trim(u.gender)) in ('m', 'male', 'man', '남', '남자', '남성'))
+           or (r.dorm_name = '동백관' and lower(trim(u.gender)) in ('f', 'female', 'woman', '여', '여자', '여성'))
+        order by r.id, s.student_no
+        limit 1`,
+    );
+    assert(dormFixture, 'A gender/grade-compatible dorm smoke fixture was not found.');
     const assignment = await adminPost('/admin/dorm/assignments', {
-      roomId: room.id,
-      userId: students[0].userId,
+      roomId: dormFixture.roomId,
+      userId: dormFixture.userId,
       year: 2099,
       semester: 1,
       bedPosition: 1,
@@ -206,7 +236,7 @@ async function main() {
     const [reportResult] = await connection.execute(
       `insert into dorm_reports (user_id, room_id, description, dorm_report_status)
        values (?, ?, ?, 'PENDING')`,
-      [students[0].userId, room.id, 'smoke dorm report'],
+      [dormFixture.userId, dormFixture.roomId, 'smoke dorm report'],
     );
     const reportId = reportResult.insertId;
     cleanupTasks.push((db) => db.execute('delete from dorm_reports where id = ?', [reportId]));
@@ -216,9 +246,14 @@ async function main() {
     assert(report.status === 'PROCESSING', 'Dorm report status update failed.');
     results.push('dorm=ok');
 
-    const startsAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-    const endsAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+    const advisor = await queryOne(
+      connection,
+      'select user_id as userId from staff_profiles order by staff_no limit 1',
+    );
+    assert(advisor, 'At least one staff profile is required for activity smoke tests.');
+    const { startsAt, endsAt } = nextSmokeActivityPeriod();
     const activity = await studentPost('/activity-requests', {
+      advisorTeacherId: advisor.userId,
       location: 'smoke lab',
       startsAt,
       endsAt,
@@ -365,18 +400,20 @@ async function main() {
     await adminDelete(`/admin/notices/${noticeId}`);
     results.push('content=ok');
 
-    const [adminStudents, staff, roles, auditLogs] = await Promise.all([
+    const [adminStudents, staff, roles, permissions, auditLogs] = await Promise.all([
       request('/admin/students', { token: adminAuth.token }),
       request('/admin/staff', { token: adminAuth.token }),
       request('/admin/iam/roles', { token: adminAuth.token }),
+      request('/admin/iam/permissions', { token: adminAuth.token }),
       request('/admin/audit-logs', { token: adminAuth.token }),
     ]);
     assert(
-      Array.isArray(adminStudents) && adminStudents.length >= 2,
+      Array.isArray(adminStudents.items) && adminStudents.items.length >= 2,
       'Admin students endpoint failed.',
     );
-    assert(Array.isArray(staff), 'Admin staff endpoint failed.');
+    assert(Array.isArray(staff.items), 'Admin staff endpoint failed.');
     assert(Array.isArray(roles), 'IAM roles endpoint failed.');
+    assert(Array.isArray(permissions) && permissions.length > 0, 'IAM permissions failed.');
     assert(Array.isArray(auditLogs), 'Audit logs endpoint failed.');
 
     const smokeNo = 880000 + Math.floor(Date.now() % 100000);
@@ -386,21 +423,30 @@ async function main() {
       grade: 1,
       classNo: 1,
       number: 1,
+      initialPassword: 'SmokePassword00!',
     });
     cleanupTasks.push(async (db) => {
       await db.execute('delete from user_roles where user_id = ?', [createdStudent.userId]);
+      await db.execute('delete from auth_accounts where user_id = ?', [createdStudent.userId]);
       await db.execute('delete from students where id = ?', [createdStudent.studentId]);
       await db.execute('delete from users where id = ?', [createdStudent.userId]);
     });
     await adminPut(`/admin/students/${createdStudent.studentId}`, { number: 2 });
     const createdStaff = await adminPost('/admin/staff', {
-      staffNo: smokeNo + 1,
       name: 'smoke staff admin',
       department: 'smoke',
       title: 'teacher',
-      isStudentAffairsHead: false,
+      initialPassword: 'SmokePassword00!',
     });
+    assert(
+      Number.isInteger(createdStaff.staffNo) &&
+        createdStaff.staffNo >= 100000 &&
+        createdStaff.staffNo <= 999999,
+      'Issued teacher number is not a six-digit number.',
+    );
     cleanupTasks.push(async (db) => {
+      await db.execute('delete from user_roles where user_id = ?', [createdStaff.userId]);
+      await db.execute('delete from auth_accounts where user_id = ?', [createdStaff.userId]);
       await db.execute('delete from staff_profiles where id = ?', [createdStaff.staffId]);
       await db.execute('delete from users where id = ?', [createdStaff.userId]);
     });
@@ -415,22 +461,17 @@ async function main() {
       await db.execute('delete from user_roles where role_id = ?', [roleId]);
       await db.execute('delete from roles where id = ?', [roleId]);
     });
-    const createdPermission = await adminPost('/admin/iam/permissions', {
-      name: `smoke.permission.${Date.now()}`,
-      label: 'Smoke Permission',
-      description: 'smoke permission',
-    });
-    const permissionId = createdPermission.permission.id;
-    cleanupTasks.push(async (db) => {
-      await db.execute('delete from role_permissions where permission_id = ?', [permissionId]);
-      await db.execute('delete from permissions where id = ?', [permissionId]);
-    });
+    const permissionId = permissions[0].id;
     await adminPut(`/admin/iam/roles/${roleId}/permissions`, { ids: [permissionId] });
     const rolePermissions = await request(`/admin/iam/roles/${roleId}/permissions`, {
       token: adminAuth.token,
     });
     assert(rolePermissions.includes(permissionId), 'Role permission assignment failed.');
-    await adminPut(`/admin/users/${createdStudent.userId}/roles`, { ids: [roleId] });
+    const studentRole = roles.find((role) => role.name === 'student');
+    assert(studentRole, 'Student baseline role was not found.');
+    await adminPut(`/admin/users/${createdStudent.userId}/roles`, {
+      ids: [studentRole.id, roleId],
+    });
     const userRoles = await request(`/admin/users/${createdStudent.userId}/roles`, {
       token: adminAuth.token,
     });

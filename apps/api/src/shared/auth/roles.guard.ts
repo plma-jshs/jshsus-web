@@ -4,11 +4,12 @@ import type { UserRole } from '@jshsus/types';
 import { ROLES_KEY } from './auth.decorators';
 import type { AuthenticatedRequest } from './request-auth';
 
-const roleAliases: Record<UserRole, string[]> = {
+const roleAliases: Partial<Record<UserRole, string[]>> = {
   system_admin: ['system_admin', 'admin', 'root', 'plma_admin'],
   student_affairs_head: ['student_affairs_head', 'student_affairs', 'points_admin'],
   teacher: ['teacher', 'staff'],
   student_council: ['student_council', 'council'],
+  broadcast_club: ['broadcast_club', 'jbs'],
   student: ['student'],
 };
 
@@ -35,7 +36,7 @@ export class RolesGuard implements CanActivate {
 
     const roles = new Set(session.roles ?? []);
     const allowed = requiredRoles.some((role) =>
-      roleAliases[role].some((alias) => roles.has(alias)),
+      (roleAliases[role] ?? [role]).some((alias) => roles.has(alias)),
     );
 
     if (!allowed) {

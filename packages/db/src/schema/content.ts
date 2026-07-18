@@ -97,6 +97,45 @@ export const comments = mysqlTable(
   }),
 );
 
+/**
+ * Likes intentionally use concrete parent tables instead of the legacy
+ * polymorphic reactions table. This lets MySQL enforce parent existence and
+ * remove likes when either the content or account is deleted.
+ */
+export const postLikes = mysqlTable(
+  'post_likes',
+  {
+    postId: int('post_id')
+      .notNull()
+      .references(() => posts.id, { onDelete: 'cascade' }),
+    userId: int('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: datetime('created_at', { mode: 'date', fsp: 3 }).notNull().default(now),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.postId, table.userId] }),
+    userIdx: index('post_likes_user_idx').on(table.userId),
+  }),
+);
+
+export const commentLikes = mysqlTable(
+  'comment_likes',
+  {
+    commentId: int('comment_id')
+      .notNull()
+      .references(() => comments.id, { onDelete: 'cascade' }),
+    userId: int('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: datetime('created_at', { mode: 'date', fsp: 3 }).notNull().default(now),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.commentId, table.userId] }),
+    userIdx: index('comment_likes_user_idx').on(table.userId),
+  }),
+);
+
 export const reactionTargetEnum = mysqlEnum('reaction_target', ['post', 'comment', 'petition']);
 export const reactionTypeEnum = mysqlEnum('reaction_type', ['like', 'upvote', 'downvote']);
 
@@ -125,6 +164,7 @@ export const reports = mysqlTable(
     targetType: reportTargetEnum.notNull(),
     targetId: int('target_id').notNull(),
     reporterId: int('reporter_id').references(() => users.id),
+    dedupeKey: varchar('dedupe_key', { length: 190 }),
     reason: varchar('reason', { length: 120 }).notNull(),
     detail: text('detail'),
     status: varchar('status', { length: 32 }).notNull().default('open'),
@@ -132,6 +172,7 @@ export const reports = mysqlTable(
   },
   (table) => ({
     targetIdx: index('reports_target_idx').on(table.targetType, table.targetId),
+    dedupeKeyIdx: uniqueIndex('reports_dedupe_key_idx').on(table.dedupeKey),
   }),
 );
 

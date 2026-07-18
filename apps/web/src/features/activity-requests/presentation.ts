@@ -1,4 +1,8 @@
-import type { ActivityRequestStatus, ActivityRequestSummary } from '@jshsus/types';
+import type {
+  ActivityRequestStatus,
+  ActivityRequestStudentOption,
+  ActivityRequestSummary,
+} from '@jshsus/types';
 
 export type ActivityRequestFilter = 'all' | 'submitted' | 'approved' | 'rejected' | 'finished';
 
@@ -23,12 +27,45 @@ export function matchesActivityFilter(
 export function matchesActivityQuery(request: ActivityRequestSummary, query: string) {
   const normalized = query.trim().toLocaleLowerCase('ko-KR');
   if (!normalized) return true;
-  return `${request.purpose} ${request.location} ${request.teacherName ?? ''} ${request.issuedNumber ?? ''}`
+  return `${request.id} #${request.id} ${request.studentName} ${request.purpose} ${request.location} ${request.teacherName ?? ''}`
     .toLocaleLowerCase('ko-KR')
     .includes(normalized);
 }
 
+export function searchActivityRequestStudents(
+  students: ActivityRequestStudentOption[],
+  query: string,
+  limit = 30,
+) {
+  const keyword = query.trim().toLocaleLowerCase('ko-KR');
+  if (!keyword) return [];
+
+  const rank = (student: ActivityRequestStudentOption) => {
+    const studentNo = String(student.studentNo);
+    const name = student.studentName.toLocaleLowerCase('ko-KR');
+    if (studentNo === keyword) return 0;
+    if (studentNo.startsWith(keyword)) return 1;
+    if (name.startsWith(keyword)) return 2;
+    if (studentNo.includes(keyword)) return 3;
+    if (name.includes(keyword)) return 4;
+    return Number.POSITIVE_INFINITY;
+  };
+
+  return students
+    .map((student) => ({ student, rank: rank(student) }))
+    .filter(({ rank: score }) => Number.isFinite(score))
+    .sort(
+      (left, right) =>
+        left.rank - right.rank ||
+        left.student.studentNo - right.student.studentNo ||
+        left.student.studentName.localeCompare(right.student.studentName, 'ko-KR'),
+    )
+    .slice(0, limit)
+    .map(({ student }) => student);
+}
+
 export type ActivityRequestForm = {
+  advisorTeacherId: number | null;
   location: string;
   startsAt: string;
   endsAt: string;
@@ -44,6 +81,8 @@ export function validateActivityRequestForm(form: ActivityRequestForm) {
   const startsAt = form.startsAt ? new Date(form.startsAt).getTime() : Number.NaN;
   const endsAt = form.endsAt ? new Date(form.endsAt).getTime() : Number.NaN;
 
+  if (!form.advisorTeacherId) errors.advisorTeacherId = '담당 교사를 선택해 주세요.';
+
   if (!location) errors.location = '활동 장소를 입력해 주세요.';
   else if (location.length > 160) errors.location = '활동 장소는 160자 이내로 입력해 주세요.';
 
@@ -54,7 +93,6 @@ export function validateActivityRequestForm(form: ActivityRequestForm) {
   }
 
   if (!purpose) errors.purpose = '활동 목적을 입력해 주세요.';
-  else if (purpose.length < 10) errors.purpose = '활동 목적을 10자 이상 구체적으로 작성해 주세요.';
   else if (purpose.length > 500) errors.purpose = '활동 목적은 500자 이내로 입력해 주세요.';
 
   return errors;

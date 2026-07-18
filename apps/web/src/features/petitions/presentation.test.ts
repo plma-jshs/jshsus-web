@@ -19,10 +19,10 @@ describe('petition presentation', () => {
     expect(getPetitionProgress(petition)).toBe(100);
   });
 
-  it('groups expired and hidden petitions in the closed filter', () => {
-    expect(matchesPetitionFilter({ ...petition, status: 'expired' }, 'closed')).toBe(true);
-    expect(matchesPetitionFilter({ ...petition, status: 'hidden' }, 'closed')).toBe(true);
-    expect(matchesPetitionFilter(petition, 'closed')).toBe(false);
+  it('filters the active workflow states directly', () => {
+    expect(matchesPetitionFilter({ ...petition, status: 'open' }, 'open')).toBe(true);
+    expect(matchesPetitionFilter(petition, 'open')).toBe(false);
+    expect(matchesPetitionFilter({ ...petition, status: 'expired' }, 'all')).toBe(true);
   });
 
   it('searches title, content, and author without case sensitivity', () => {

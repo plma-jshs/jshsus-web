@@ -1,0 +1,177 @@
+.byte-calculator {
+  overflow: hidden;
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-lg);
+  background: var(--j-color-surface);
+}
+
+.byte-calculator__toolbar {
+  display: flex;
+  min-height: 64px;
+  padding: var(--j-space-3) var(--j-space-4);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--j-space-3);
+  border-bottom: 1px solid var(--j-color-border);
+  background: var(--j-color-surface-subtle);
+}
+
+.byte-calculator__toolbar > label,
+.byte-calculator__toolbar > div {
+  display: flex;
+  align-items: center;
+  gap: var(--j-space-2);
+}
+
+.byte-calculator__toolbar label span {
+  color: var(--j-color-text-secondary);
+  font-size: var(--j-text-sm);
+  font-weight: var(--j-weight-semibold);
+  white-space: nowrap;
+}
+
+.byte-calculator__toolbar input {
+  flex: 0 0 112px;
+  width: 112px;
+  min-height: 40px;
+  background: var(--j-color-surface);
+}
+
+.byte-calculator__toolbar button {
+  display: inline-flex;
+  min-height: 40px;
+  padding-inline: var(--j-space-3);
+  align-items: center;
+  justify-content: center;
+  gap: var(--j-space-1);
+  border: 1px solid var(--j-color-border-strong);
+  border-radius: var(--j-radius-sm);
+  color: var(--j-color-text-secondary);
+  background: var(--j-color-surface);
+  font-size: var(--j-text-sm);
+}
+
+.byte-calculator__toolbar button:hover:not(:disabled) {
+  color: var(--j-color-brand-strong);
+  background: var(--j-color-surface-selected);
+}
+
+.byte-calculator__toolbar button:disabled {
+  color: var(--j-color-disabled);
+  cursor: not-allowed;
+}
+
+.byte-calculator__field {
+  display: block;
+  padding: var(--j-space-4);
+}
+
+.byte-calculator__field textarea {
+  width: 100%;
+  min-height: 360px;
+  padding: var(--j-space-4);
+  border-color: var(--j-color-border);
+  resize: vertical;
+  font-size: var(--j-text-md);
+  line-height: 1.75;
+}
+
+.byte-calculator__result {
+  display: grid;
+  padding: var(--j-space-4);
+  border-top: 1px solid var(--j-color-border);
+  background: var(--j-color-surface-subtle);
+  gap: var(--j-space-3);
+}
+
+.byte-calculator__usage,
+.byte-calculator__secondary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--j-space-3);
+}
+
+.byte-calculator__usage {
+  color: var(--j-color-text-secondary);
+  font-size: var(--j-text-sm);
+}
+
+.byte-calculator__usage strong {
+  color: var(--j-color-brand-strong);
+  font-size: var(--j-text-xl);
+}
+
+.byte-calculator__result.is-over .byte-calculator__usage,
+.byte-calculator__result.is-over .byte-calculator__usage strong {
+  color: var(--j-color-danger);
+}
+
+.byte-calculator__progress {
+  height: 7px;
+  overflow: hidden;
+  border-radius: var(--j-radius-pill);
+  background: var(--j-color-border);
+}
+
+.byte-calculator__progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--j-color-brand);
+}
+
+.byte-calculator__result.is-over .byte-calculator__progress span {
+  background: var(--j-color-danger);
+}
+
+.byte-calculator__secondary {
+  justify-content: flex-start;
+  color: var(--j-color-text-muted);
+  font-size: var(--j-text-xs);
+}
+
+.byte-calculator__guide {
+  padding: var(--j-space-5);
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-md);
+  background: var(--j-color-surface-subtle);
+}
+
+.byte-calculator__guide h2 {
+  margin: 0 0 var(--j-space-3);
+  font-size: var(--j-text-md);
+}
+
+.byte-calculator__guide ul {
+  display: grid;
+  margin: 0;
+  padding-left: var(--j-space-5);
+  gap: var(--j-space-1);
+  color: var(--j-color-text-secondary);
+  font-size: var(--j-text-sm);
+}
+
+@media (max-width: 600px) {
+  .byte-calculator__toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .byte-calculator__toolbar > label,
+  .byte-calculator__toolbar > div {
+    justify-content: space-between;
+  }
+
+  .byte-calculator__toolbar > label {
+    flex-wrap: nowrap;
+  }
+
+  .byte-calculator__toolbar button {
+    flex: 1;
+  }
+
+  .byte-calculator__field textarea {
+    min-height: 280px;
+  }
+}

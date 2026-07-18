@@ -6,7 +6,7 @@ describe('content list query', () => {
   it('applies bounded pagination and search defaults', () => {
     expect(parseContentListQuery({})).toEqual({
       page: 1,
-      pageSize: 10,
+      pageSize: 20,
       field: 'title_content',
       q: '',
     });
@@ -15,9 +15,10 @@ describe('content list query', () => {
     ).toEqual({ page: 2, pageSize: 20, field: 'author', q: '학생' });
   });
 
-  it('rejects unsupported fields and oversized pages', () => {
+  it('rejects unsupported fields and page sizes', () => {
     expect(() => parseContentListQuery({ field: 'content' })).toThrow(BadRequestException);
-    expect(() => parseContentListQuery({ pageSize: 100 })).toThrow(BadRequestException);
+    expect(parseContentListQuery({ pageSize: 100 }).pageSize).toBe(100);
+    expect(() => parseContentListQuery({ pageSize: 30 })).toThrow(BadRequestException);
   });
 
   it('escapes SQL LIKE wildcard characters', () => {

@@ -53,10 +53,30 @@ Browser -> Nginx (/api proxy) -> Nest controller -> guards -> domain service -> 
 ## Authorization
 
 - 학생 본인 기능은 `student` 역할로 제한한다.
-- 관리자 행위는 `content.manage`, `petitions.answer`, `activity.review`, `points.manage`, `dorm.manage`, `devices.manage`, `users.manage`, `iam.manage`, `audit.read` permission으로 제한한다.
+- 관리자 행위는 `content.manage`, `petitions.answer`, `activity.review`, `points.manage`, `dorm.manage`, `devices.manage`, `wake_songs.review`, `users.manage`, `iam.manage`, `audit.read` permission으로 제한한다.
+- JBS 영상 등록은 `broadcast_club` 역할에 묶인 `jbs.publish` permission으로 제한한다. 게시글 조회와 댓글은 기존 공개 게시판 정책을 따르되 iframe URL은 서버가 검증한 YouTube video id로만 생성한다.
 - 역할은 permission 묶음이다. 사용자에게 직접 부여한 permission도 동일하게 동작해야 한다.
 - 역할 또는 permission이 바뀌면 해당 사용자의 Redis 세션을 무효화한다.
 - 상태 변경 요청은 세션, 권한, CSRF를 모두 통과해야 한다.
+- 예약 작업이나 학기 전환처럼 사람이 직접 실행하지 않은 변경은 로그인 가능한 테스트 계정을
+  재사용하지 않는다. 별도의 비로그인 시스템 actor를 두고 audit log와 변경 이력에 해당 actor를
+  기록한다. 사람이 시작한 일괄 작업은 실행한 관리자를 별도로 보존한다.
+
+## Domain policy decisions
+
+- 기상곡은 YouTube URL, 시작·종료 시각, 재생 속도만 저장하며 파일을 내려받거나 변환하지 않는다.
+  배속을 반영한 실제 재생 시간은 최대 180초이고 학생별 `PENDING` 신청은 최대 3건이다.
+  학생관리부장이 승인·반려하고, 승인된 곡은 담당자가 나중에 별도로 편성한다.
+- 상벌점 퇴사 기준은 순합계 `-20`점 이하이다. 퇴사 처리는 과거 원장을 삭제하지 않고 `ETC`
+  시스템 조정 원장을 추가해 현재 합계를 0점으로 만든다.
+- 학기 반감은 상점과 벌점의 절댓값 합계를 각각 절반으로 내림한 뒤, 차이를 `ETC` 시스템 조정
+  원장으로 남긴다. 자동 변경 actor는 로그인할 수 없는 전용 시스템 사용자다.
+- 시스템 actor가 만든 초기화·반감 원장은 개별 취소·복원하지 않는다. 완료된 퇴사 학생은 이후
+  학기 반감 대상에서 제외해 0점 초기화가 과거 원장 때문에 되돌아가지 않게 한다.
+- 이미 사용된 상벌점 사유의 종류와 기본 점수는 수정하지 않는다. 명칭·활성 상태만 바꿀 수
+  있으며 종류나 점수가 달라지면 새 사유를 만든다.
+- 세특 바이트 계산기는 서버에 내용을 전송하지 않는 클라이언트 기능이다. 한글은 3Byte,
+  영문·숫자·공백은 1Byte, 줄바꿈은 2Byte이며 나머지 문자는 UTF-8 byte 수를 사용한다.
 
 ## Persistence rules
 

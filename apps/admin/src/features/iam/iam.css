@@ -1,0 +1,293 @@
+.iam-page {
+  display: grid;
+  gap: 16px;
+}
+.iam-panel {
+  overflow: hidden;
+  border: 1px solid #dfe7e6;
+  border-radius: 12px;
+  background: #fff;
+}
+.iam-panel-header {
+  display: flex;
+  min-height: 68px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e4ebe9;
+}
+.iam-panel-header > div {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.iam-panel-header h2,
+.iam-matrix-title h3 {
+  margin: 0;
+  color: #14231f;
+  font-size: 18px;
+}
+.iam-panel-header span,
+.iam-matrix-title span {
+  color: #73807d;
+  font-size: 13px;
+}
+.iam-primary,
+.iam-secondary {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 15px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.iam-primary {
+  border: 1px solid #087f79;
+  background: #087f79;
+  color: #fff;
+}
+.iam-secondary {
+  border: 1px solid #d5dfdd;
+  background: #fff;
+  color: #263530;
+}
+.iam-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.iam-policy-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: 430px;
+}
+.iam-role-list {
+  padding: 10px;
+  border-right: 1px solid #e4ebe9;
+  background: #fafcfc;
+}
+.iam-role-list button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #33413d;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.iam-role-list button:hover {
+  background: #f0f6f4;
+}
+.iam-role-list button.active {
+  background: #e7f5f2;
+  color: #006e68;
+}
+.iam-role-list span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.iam-role-list strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.iam-role-list small {
+  overflow: hidden;
+  color: #80908c;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.iam-role-list em {
+  color: #6d7a77;
+  white-space: nowrap;
+  font-size: 12px;
+  font-style: normal;
+}
+.iam-matrix {
+  min-width: 0;
+}
+.iam-matrix-title {
+  display: flex;
+  min-height: 66px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+.iam-matrix-title > div {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+.iam-full-access-note {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #e7f5f2;
+  color: #006e68;
+  white-space: nowrap;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+.iam-icon-button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid #dae4e2;
+  border-radius: 8px;
+  background: #fff;
+  color: #52625e;
+  cursor: pointer;
+}
+.iam-matrix-table-wrap,
+.iam-catalog-wrap {
+  overflow: auto;
+  border-top: 3px solid #087f79;
+}
+.iam-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.iam-table th {
+  height: 44px;
+  padding: 0 12px;
+  border-bottom: 1px solid #d5dfdd;
+  background: #f6f9f8;
+  color: #273631;
+  text-align: center;
+  font-size: 13px;
+}
+.iam-table td {
+  height: 50px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5ecea;
+  color: #33413d;
+  text-align: center;
+  font-size: 13px;
+}
+.iam-table tbody tr:hover td {
+  background: #fafcfc;
+}
+.iam-table .align-left {
+  text-align: left;
+}
+.iam-table td strong {
+  display: block;
+  overflow: hidden;
+  color: #23322e;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.iam-table td small {
+  display: block;
+  margin-top: 3px;
+  color: #798682;
+}
+.iam-table .code {
+  color: #53635f;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+}
+.iam-table .description {
+  min-width: 300px;
+  color: #697773;
+}
+.iam-table input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: #087f79;
+}
+.iam-empty {
+  height: 140px !important;
+  color: #74817e !important;
+  text-align: center !important;
+}
+.iam-matrix-actions {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 10px 16px;
+}
+.iam-matrix-actions span {
+  margin-right: auto;
+  color: #6c7976;
+  font-size: 13px;
+}
+.iam-error {
+  margin: 10px 18px;
+  color: #ba352d;
+  font-size: 13px;
+}
+.iam-dialog-form {
+  display: grid;
+  gap: 15px;
+}
+.iam-field {
+  display: grid;
+  gap: 6px;
+  color: #34433f;
+  font-size: 13px;
+  font-weight: 650;
+}
+.iam-field input {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 1px solid #cedad7;
+  border-radius: 8px;
+  background: #fff;
+  color: #17221f;
+  font: inherit;
+  font-weight: 450;
+  outline: none;
+}
+.iam-field input:focus {
+  border-color: #168e87;
+  box-shadow: 0 0 0 3px rgb(22 142 135 / 12%);
+}
+.iam-field input[readonly] {
+  background: #f5f8f7;
+  color: #64726f;
+}
+.iam-note {
+  margin: 0;
+  color: #72807c;
+  font-size: 13px;
+}
+.iam-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 15px;
+  border-top: 1px solid #e5ecea;
+}
+@media (max-width: 800px) {
+  .iam-policy-layout {
+    grid-template-columns: 1fr;
+  }
+  .iam-role-list {
+    display: flex;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid #e4ebe9;
+  }
+  .iam-role-list button {
+    min-width: 180px;
+  }
+}

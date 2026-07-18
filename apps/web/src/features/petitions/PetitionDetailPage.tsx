@@ -4,6 +4,7 @@ import { Link, useParams } from '@tanstack/react-router';
 import { ArrowLeft, CheckCircle2, Users } from 'lucide-react';
 import { RichTextContent } from '../../components/editor/RichTextEditor';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
+import { detailBreadcrumbs } from '../../components/page/pageHierarchy';
 import { ApiError } from '../../shared/api/http';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { authActionRequiresLogin } from '../auth/action-access';
@@ -25,11 +26,11 @@ function PetitionDetailError({ status, onRetry }: { status?: number; onRetry: ()
       <PageState
         kind="empty"
         variant="page"
-        title="청원을 찾을 수 없습니다."
-        description="삭제되었거나 공개되지 않은 청원입니다."
+        title="청원·제안을 찾을 수 없습니다."
+        description="삭제되었거나 공개되지 않은 청원·제안입니다."
         action={
           <Link className="detail-secondary-button" to="/petitions">
-            청원 목록으로
+            청원·제안 목록으로
           </Link>
         }
       />
@@ -40,7 +41,7 @@ function PetitionDetailError({ status, onRetry }: { status?: number; onRetry: ()
       <PageState
         kind="error"
         variant="page"
-        title="이 청원을 확인할 권한이 없습니다."
+        title="이 청원·제안을 확인할 권한이 없습니다."
         description="로그인 상태를 확인해 주세요."
       />
     );
@@ -49,7 +50,7 @@ function PetitionDetailError({ status, onRetry }: { status?: number; onRetry: ()
     <PageState
       kind="error"
       variant="page"
-      title="청원을 불러오지 못했습니다."
+      title="청원·제안을 불러오지 못했습니다."
       description="잠시 후 다시 시도해 주세요."
       action={
         <button className="detail-secondary-button" type="button" onClick={onRetry}>
@@ -85,8 +86,8 @@ export function PetitionDetailPage() {
   if (parsedId === null) {
     return (
       <PageScaffold
-        breadcrumbs={[{ label: '청원·제안', to: '/petitions' }]}
-        title="청원을 확인할 수 없습니다"
+        breadcrumbs={detailBreadcrumbs('petitions')}
+        title="청원·제안을 확인할 수 없습니다"
         width="reading"
         variant="document"
       >
@@ -98,12 +99,12 @@ export function PetitionDetailPage() {
   if (petitionQuery.isLoading) {
     return (
       <PageScaffold
-        breadcrumbs={[{ label: '청원·제안', to: '/petitions' }]}
+        breadcrumbs={detailBreadcrumbs('petitions')}
         title="청원·제안"
         width="reading"
         variant="document"
       >
-        <PageState kind="loading" variant="page" title="청원을 불러오는 중입니다." />
+        <PageState kind="loading" variant="page" title="청원·제안을 불러오는 중입니다." />
       </PageScaffold>
     );
   }
@@ -112,8 +113,8 @@ export function PetitionDetailPage() {
     const status = petitionQuery.error instanceof ApiError ? petitionQuery.error.status : undefined;
     return (
       <PageScaffold
-        breadcrumbs={[{ label: '청원·제안', to: '/petitions' }]}
-        title="청원을 확인할 수 없습니다"
+        breadcrumbs={detailBreadcrumbs('petitions')}
+        title="청원·제안을 확인할 수 없습니다"
         width="reading"
         variant="document"
       >
@@ -130,7 +131,7 @@ export function PetitionDetailPage() {
 
   return (
     <PageScaffold
-      breadcrumbs={[{ label: '커뮤니티' }, { label: '청원·제안', to: '/petitions' }]}
+      breadcrumbs={detailBreadcrumbs('petitions')}
       title={petition.title}
       width="reading"
       variant="document"

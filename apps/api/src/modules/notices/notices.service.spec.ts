@@ -59,3 +59,56 @@ describe('NoticesService delete cleanup outbox', () => {
     expect(events).toEqual(['enqueue', 'parent-delete', 'audit', 'commit', 'cleanup']);
   });
 });
+
+describe('NoticesService public author display', () => {
+  it('returns the notice display author from department without an account author field', async () => {
+    const countQuery = {
+      from: vi.fn(),
+      where: vi.fn().mockResolvedValue([{ total: 1 }]),
+    };
+    countQuery.from.mockReturnValue(countQuery);
+    const itemsQuery = {
+      from: vi.fn(),
+      where: vi.fn(),
+      orderBy: vi.fn(),
+      limit: vi.fn(),
+      offset: vi.fn().mockResolvedValue([
+        {
+          id: 1,
+          title: '방송 안내',
+          department: '방송부',
+          publishedAt: new Date('2026-07-15T00:00:00.000Z'),
+          viewCount: 3,
+        },
+      ]),
+    };
+    itemsQuery.from.mockReturnValue(itemsQuery);
+    itemsQuery.where.mockReturnValue(itemsQuery);
+    itemsQuery.orderBy.mockReturnValue(itemsQuery);
+    itemsQuery.limit.mockReturnValue(itemsQuery);
+    const db = {
+      select: vi.fn().mockReturnValueOnce(countQuery).mockReturnValueOnce(itemsQuery),
+    };
+    const database = {
+      query: vi.fn(async (_label: string, work: (value: typeof db) => unknown) => work(db)),
+    } as unknown as DatabaseService;
+
+    const result = await new NoticesService(database, {} as FilesService).listPage({
+      page: 1,
+      pageSize: 10,
+      q: '',
+      field: 'title_content',
+    });
+
+    expect(result.items).toEqual([
+      {
+        id: 1,
+        title: '방송 안내',
+        department: '방송부',
+        publishedAt: '2026-07-15T00:00:00.000Z',
+        viewCount: 3,
+      },
+    ]);
+    expect(result.items[0]).not.toHaveProperty('authorName');
+  });
+});

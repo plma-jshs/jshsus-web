@@ -157,6 +157,21 @@ export type HomeSchoolData = {
   schoolEventsAvailability: SchoolDataSourceAvailability;
 };
 
+export type AdminSchoolCalendarEvent = AcademicEvent & {
+  managedId?: number;
+  editable: boolean;
+  isPublic: boolean;
+};
+
+export type AdminSchoolCalendar = {
+  from: string;
+  to: string;
+  events: AdminSchoolCalendarEvent[];
+  availability: SchoolDataAvailability;
+  neisAvailable: boolean;
+  schoolEventsAvailable: boolean;
+};
+
 function startOfKoreanDay(value: string): Date | null {
   if (!isValidCalendarDate(value)) return null;
   const date = new Date(`${value}T00:00:00.000+09:00`);
@@ -416,6 +431,70 @@ export class SchoolDataService {
     };
   }
 
+  async getAdminCalendar(inputFrom?: string, inputTo?: string): Promise<AdminSchoolCalendar> {
+    const today = formatKoreanDate();
+    const defaults = monthRange(today);
+    const parsed = dateRangeSchema.safeParse({
+      from: inputFrom ?? defaults.from,
+      to: inputTo ?? defaults.to,
+    });
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    }
+
+    const { from, to } = parsed.data;
+    const cacheRange = adjacentMonthRange(from, to);
+    const [neis, custom] = await Promise.all([
+      this.cachedLoad<AcademicEvent[]>(
+        `neis:calendar:${env.NEIS_ATPT_OFCDC_SC_CODE}:${env.NEIS_SD_SCHUL_CODE}:${cacheRange.from}:${cacheRange.to}`,
+        () => this.loadNeisCalendar(cacheRange.from, cacheRange.to),
+        (value): value is AcademicEvent[] => academicEventCacheSchema.safeParse(value).success,
+        [],
+      ),
+      this.safeListRawManagedEvents(from, to, true),
+    ]);
+
+    const visibleNeisEvents = neis.value.filter(
+      (event) =>
+        formatKoreanDate(new Date(event.startsAt)) <= to &&
+        formatKoreanDate(new Date(event.endsAt)) >= from,
+    );
+    const events: AdminSchoolCalendarEvent[] = [
+      ...visibleNeisEvents.map((event) => ({
+        ...event,
+        editable: false,
+        isPublic: true,
+      })),
+      ...custom.value.map((event) => ({
+        id: `school:${event.id}`,
+        managedId: event.id,
+        title: event.title,
+        startsAt: event.startsAt,
+        endsAt: event.endsAt,
+        allDay: event.allDay,
+        description: event.description,
+        category: event.category,
+        isHoliday: event.isHoliday,
+        source: 'school' as const,
+        editable: true,
+        isPublic: event.isPublic,
+      })),
+    ].sort((left, right) =>
+      left.startsAt === right.startsAt
+        ? left.title.localeCompare(right.title, 'ko')
+        : left.startsAt.localeCompare(right.startsAt),
+    );
+
+    return {
+      from,
+      to,
+      events,
+      availability: availability([neis.available, custom.available]),
+      neisAvailable: neis.available,
+      schoolEventsAvailable: custom.available,
+    };
+  }
+
   async listManagedEvents(
     inputFrom?: string,
     inputTo?: string,
@@ -541,6 +620,22 @@ export class SchoolDataService {
           id: `school:${event.id}`,
           source: 'school' as const,
         })),
+        available: true,
+      };
+    } catch (error) {
+      this.logger.warn(`School event lookup unavailable: ${this.safeError(error)}`);
+      return { value: [], available: false };
+    }
+  }
+
+  private async safeListRawManagedEvents(
+    from: string,
+    to: string,
+    includePrivate: boolean,
+  ): Promise<LoadResult<ManagedSchoolEvent[]>> {
+    try {
+      return {
+        value: await this.listManagedEvents(from, to, includePrivate),
         available: true,
       };
     } catch (error) {

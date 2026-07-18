@@ -21,6 +21,21 @@ function selectChain(rows: unknown[]) {
   return chain;
 }
 
+function lockedSelectChain(rows: unknown[]) {
+  const chain = selectChain(rows);
+  chain.limit.mockReturnValue({ for: vi.fn().mockResolvedValue(rows) });
+  return chain;
+}
+
+function whereResultChain(rows: unknown[]) {
+  const chain = {
+    from: vi.fn(),
+    where: vi.fn().mockResolvedValue(rows),
+  };
+  chain.from.mockReturnValue(chain);
+  return chain;
+}
+
 function createService(operationDb: object) {
   const database = {
     db: operationDb,
@@ -44,6 +59,8 @@ describe('BoardsService public comment target authorization', () => {
         authorName: 'student',
         content: 'comment',
         isHidden: false,
+        likeCount: 2,
+        likedByMe: 1,
         createdAt: new Date('2026-07-13T00:00:00Z'),
       },
     ]);
@@ -52,8 +69,14 @@ describe('BoardsService public comment target authorization', () => {
     };
     const { service } = createService(operationDb);
 
-    await expect(service.listComments('free', 41)).resolves.toEqual([
-      expect.objectContaining({ id: 7, postId: 41, content: 'comment' }),
+    await expect(service.listComments('free', 41, false, 12)).resolves.toEqual([
+      expect.objectContaining({
+        id: 7,
+        postId: 41,
+        content: 'comment',
+        likeCount: 2,
+        likedByMe: true,
+      }),
     ]);
     expect(operationDb.select).toHaveBeenCalledTimes(2);
   });
@@ -123,6 +146,126 @@ describe('BoardsService public comment target authorization', () => {
     expect(database.writeAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'board.comment.create', targetId: 8 }),
     );
+  });
+});
+
+describe('BoardsService free-board likes', () => {
+  it('returns the aggregate and current-user state on a public post detail', async () => {
+    const board = selectChain([{ id: 3, slug: 'free', visibility: 'public' }]);
+    const post = selectChain([
+      {
+        id: 41,
+        title: 'title',
+        content: 'content',
+        contentJson: null,
+        authorName: 'student',
+        isAnonymous: false,
+        viewCount: 5,
+        commentCount: 2,
+        likeCount: 4,
+        likedByMe: 1,
+        createdAt: new Date('2026-07-13T00:00:00Z'),
+      },
+    ]);
+    const updateWhere = vi.fn().mockResolvedValue(undefined);
+    const updateSet = vi.fn().mockReturnValue({ where: updateWhere });
+    const operationDb = {
+      select: vi.fn().mockReturnValueOnce(board).mockReturnValueOnce(post),
+      update: vi.fn().mockReturnValue({ set: updateSet }),
+    };
+    const database = {
+      db: operationDb,
+      query: vi.fn(async (_name: string, work: (value: typeof operationDb) => unknown) =>
+        work(operationDb),
+      ),
+    } as unknown as DatabaseService;
+    const files = {
+      listForTarget: vi.fn().mockResolvedValue([]),
+    } as unknown as FilesService;
+    const service = new BoardsService(database, files);
+
+    await expect(service.getPost('free', 41, 12)).resolves.toEqual(
+      expect.objectContaining({ likeCount: 4, likedByMe: true }),
+    );
+  });
+
+  it('serializes on the post, inserts one user like, and returns the updated count', async () => {
+    const insertValues = vi.fn().mockResolvedValue(undefined);
+    const tx = {
+      select: vi
+        .fn()
+        .mockReturnValueOnce(lockedSelectChain([{ id: 41 }]))
+        .mockReturnValueOnce(selectChain([]))
+        .mockReturnValueOnce(whereResultChain([{ total: 3 }])),
+      insert: vi.fn().mockReturnValue({ values: insertValues }),
+      delete: vi.fn(),
+    };
+    const operationDb = {
+      transaction: vi.fn(async (work: (value: typeof tx) => unknown) => work(tx)),
+    };
+    const { service } = createService(operationDb);
+
+    await expect(service.toggleFreePostLike('free', 41, 12)).resolves.toEqual({
+      liked: true,
+      likeCount: 3,
+    });
+    expect(insertValues).toHaveBeenCalledWith({ postId: 41, userId: 12 });
+    expect(tx.delete).not.toHaveBeenCalled();
+  });
+
+  it('deletes an existing post like instead of creating a duplicate', async () => {
+    const deleteWhere = vi.fn().mockResolvedValue(undefined);
+    const tx = {
+      select: vi
+        .fn()
+        .mockReturnValueOnce(lockedSelectChain([{ id: 41 }]))
+        .mockReturnValueOnce(selectChain([{ userId: 12 }]))
+        .mockReturnValueOnce(whereResultChain([{ total: 2 }])),
+      insert: vi.fn(),
+      delete: vi.fn().mockReturnValue({ where: deleteWhere }),
+    };
+    const operationDb = {
+      transaction: vi.fn(async (work: (value: typeof tx) => unknown) => work(tx)),
+    };
+    const { service } = createService(operationDb);
+
+    await expect(service.toggleFreePostLike('free', 41, 12)).resolves.toEqual({
+      liked: false,
+      likeCount: 2,
+    });
+    expect(deleteWhere).toHaveBeenCalledOnce();
+    expect(tx.insert).not.toHaveBeenCalled();
+  });
+
+  it('does not expose the generic board toggle to non-free boards', async () => {
+    const operationDb = { transaction: vi.fn() };
+    const { service } = createService(operationDb);
+
+    expect(() => service.toggleFreePostLike('jbs', 41, 12)).toThrow(NotFoundException);
+    expect(operationDb.transaction).not.toHaveBeenCalled();
+  });
+
+  it('validates and locks the exact comment target before inserting a like', async () => {
+    const insertValues = vi.fn().mockResolvedValue(undefined);
+    const tx = {
+      select: vi
+        .fn()
+        .mockReturnValueOnce(lockedSelectChain([{ id: 7 }]))
+        .mockReturnValueOnce(selectChain([]))
+        .mockReturnValueOnce(whereResultChain([{ total: 1 }])),
+      insert: vi.fn().mockReturnValue({ values: insertValues }),
+      delete: vi.fn(),
+    };
+    const operationDb = {
+      transaction: vi.fn(async (work: (value: typeof tx) => unknown) => work(tx)),
+    };
+    const { service } = createService(operationDb);
+
+    await expect(service.toggleFreeCommentLike('free', 41, 7, 12)).resolves.toEqual({
+      liked: true,
+      likeCount: 1,
+    });
+    expect(insertValues).toHaveBeenCalledWith({ commentId: 7, userId: 12 });
   });
 });
 
@@ -219,14 +362,28 @@ describe('BoardsService member post board contract', () => {
     const { database, service } = createService(operationDb);
 
     await expect(
-      service.createMemberPost('free', { title: 'title', content: 'content' }, 12),
+      service.createMemberPost(
+        'free',
+        { title: 'title', content: 'content', isAnonymous: true },
+        12,
+      ),
     ).resolves.toEqual({
       ok: true,
-      post: expect.objectContaining({ id: 51, boardSlug: 'free', status: 'published' }),
+      post: expect.objectContaining({
+        id: 51,
+        boardSlug: 'free',
+        status: 'published',
+        isAnonymous: false,
+      }),
     });
     expect(operationDb.insert).toHaveBeenCalledTimes(1);
     expect(postInsert.values).toHaveBeenCalledWith(
-      expect.objectContaining({ boardId: 3, authorId: 12, title: 'title' }),
+      expect.objectContaining({
+        boardId: 3,
+        authorId: 12,
+        title: 'title',
+        isAnonymous: false,
+      }),
     );
     expect(database.writeAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'board.post.create', targetId: 51 }),

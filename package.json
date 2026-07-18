@@ -29,6 +29,7 @@
     "db:migrate": "pnpm --filter @jshsus/db db:migrate",
     "db:create-local-test-user": "docker compose --profile tools run --rm migrate pnpm db:create-local-test-user",
     "db:seed-local-demo": "docker compose --profile tools run --rm migrate pnpm db:seed-local-demo",
+    "local:reset-db": "node scripts/reset-local-db.cjs",
     "db:migrations:check": "node scripts/check-migrations.cjs",
     "smoke:core": "pnpm --filter @jshsus/api smoke:core"
   },

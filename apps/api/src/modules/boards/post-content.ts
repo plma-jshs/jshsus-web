@@ -44,11 +44,37 @@ const linkMarkSchema = z
   })
   .strict();
 
+const textColorMarkSchema = z
+  .object({
+    type: z.literal('textColor'),
+    attrs: z
+      .object({ color: z.enum(['gray', 'red', 'orange', 'green', 'blue', 'purple']) })
+      .strict(),
+  })
+  .strict();
+
+const fontSizeMarkSchema = z
+  .object({
+    type: z.literal('fontSize'),
+    attrs: z.object({ size: z.enum(['small', 'large', 'xlarge']) }).strict(),
+  })
+  .strict();
+
+const highlightMarkSchema = z
+  .object({
+    type: z.literal('highlight'),
+    attrs: z.object({ color: z.enum(['yellow', 'green', 'blue', 'pink']) }).strict(),
+  })
+  .strict();
+
 const markSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('bold') }).strict(),
   z.object({ type: z.literal('italic') }).strict(),
   z.object({ type: z.literal('underline') }).strict(),
   z.object({ type: z.literal('strike') }).strict(),
+  textColorMarkSchema,
+  fontSizeMarkSchema,
+  highlightMarkSchema,
   linkMarkSchema,
 ]);
 

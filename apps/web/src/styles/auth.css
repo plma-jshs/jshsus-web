@@ -15,17 +15,25 @@
   background: #fff;
 }
 
-.auth-brand {
-  display: inline-flex;
-  margin-bottom: 22px;
-  align-items: center;
-  gap: 9px;
-  color: var(--j-color-brand-strong);
+.auth-panel {
+  width: min(100%, 420px);
+  padding: 8px 0 0;
 }
 
-.auth-brand img {
-  border-radius: 7px;
-  box-shadow: none;
+.auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 22px;
+  color: var(--j-color-brand-strong);
+  text-decoration: none;
+}
+
+.auth-brand-mark {
+  display: block;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
 }
 
 .auth-brand strong {
@@ -34,20 +42,7 @@
   letter-spacing: -0.04em;
 }
 
-.auth-card {
-  width: min(100%, 420px);
-  padding: 8px 0 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.auth-card > header {
-  text-align: left;
-}
-
-.auth-card h1 {
+.auth-heading h1 {
   margin: 0;
   color: var(--j-color-text);
   font-size: 24px;
@@ -56,24 +51,27 @@
   line-height: 1.4;
 }
 
-.auth-card form {
+.auth-form {
   display: grid;
   gap: 15px;
   margin-top: 26px;
 }
 
-.auth-card form > label {
+.auth-form > label,
+.auth-form-field {
   display: grid;
   gap: 7px;
 }
 
-.auth-card form > label > span {
+.auth-form > label > span,
+.auth-form-field > label {
   color: var(--j-color-text-secondary);
   font-size: 12px;
   font-weight: 600;
 }
 
-.auth-card form > label > input {
+.auth-form > label > input,
+.auth-password-field > input {
   width: 100%;
   height: 46px;
   min-height: 46px;
@@ -82,16 +80,49 @@
   border-radius: 8px;
   outline: 0;
   background: #fff;
+  color: var(--j-color-text);
   font: inherit;
 }
 
-.auth-card form > label > input:hover {
-  border-color: var(--j-color-text-muted);
+.auth-form > label > input:hover,
+.auth-password-field > input:hover {
+  border-color: #7c898a;
 }
 
-.auth-card form > label > input:focus {
+.auth-form > label > input:focus,
+.auth-password-field > input:focus {
   border-color: var(--j-color-brand);
   box-shadow: var(--j-shadow-focus);
+}
+
+.auth-password-field {
+  position: relative;
+}
+
+.auth-password-field > input {
+  padding-right: 48px;
+}
+
+.auth-password-field > button {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 6px;
+  color: var(--j-color-text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.auth-password-field > button:hover {
+  color: var(--j-color-brand-strong);
+  background: var(--j-color-surface-selected);
 }
 
 .auth-error {
@@ -102,6 +133,7 @@
   color: var(--j-color-danger);
   background: var(--j-color-danger-subtle);
   font-size: 12px;
+  font-weight: 500;
 }
 
 .auth-options {
@@ -118,6 +150,7 @@
 .auth-signup a {
   color: var(--j-color-brand-strong);
   font-weight: 600;
+  text-decoration: none;
 }
 
 .auth-options a:hover,
@@ -147,20 +180,40 @@
   box-shadow: none;
 }
 
-.auth-remember input:focus,
 .auth-remember input:focus-visible {
-  border-color: transparent;
-  border-radius: 3px;
   outline: 2px solid color-mix(in srgb, var(--j-color-brand) 48%, transparent);
   outline-offset: 2px;
-  box-shadow: none;
 }
 
 .auth-submit {
+  display: inline-flex;
   width: 100%;
   min-height: 46px;
-  margin-top: 0;
+  padding: 0 14px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--j-color-brand);
   border-radius: 8px;
+  color: #fff;
+  background: var(--j-color-brand);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    border-color var(--j-motion-fast),
+    background-color var(--j-motion-fast);
+}
+
+.auth-submit:hover:not(:disabled) {
+  border-color: var(--j-color-brand-hover);
+  background: var(--j-color-brand-hover);
+}
+
+.auth-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .auth-signup {
@@ -175,11 +228,7 @@
     padding: 32px 20px;
   }
 
-  .auth-card {
+  .auth-panel {
     padding-top: 4px;
-  }
-
-  .auth-options {
-    align-items: flex-start;
   }
 }

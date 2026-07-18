@@ -2,10 +2,20 @@ import { BadRequestException } from '@nestjs/common';
 import type { ContentSearchField } from '@jshsus/types';
 import { z } from 'zod';
 
+const contentPageSizes = [20, 50, 100] as const;
+
 const contentListQuerySchema = z
   .object({
     page: z.coerce.number().int().min(1).max(1_000_000).optional().default(1),
-    pageSize: z.coerce.number().int().min(1).max(50).optional().default(10),
+    pageSize: z.coerce
+      .number()
+      .int()
+      .refine(
+        (value) => contentPageSizes.some((pageSize) => pageSize === value),
+        'pageSize must be one of 20, 50, or 100',
+      )
+      .optional()
+      .default(20),
     field: z.enum(['title_content', 'title', 'author']).optional().default('title_content'),
     q: z.string().trim().max(100).optional().default(''),
   })

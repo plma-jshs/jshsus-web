@@ -34,21 +34,21 @@ export class NoticesController {
 
   @Get('admin/notices')
   @UseGuards(SessionGuard, PermissionsGuard)
-  @RequirePermissions('content.manage')
+  @RequirePermissions('notices.manage')
   adminNotices() {
     return this.noticesService.list(100, true);
   }
 
   @Post('admin/notices')
   @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
-  @RequirePermissions('content.manage')
+  @RequirePermissions('notices.manage')
   createNotice(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
     return this.noticesService.create(body, request.authSession?.userId);
   }
 
   @Put('admin/notices/:id')
   @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
-  @RequirePermissions('content.manage')
+  @RequirePermissions('notices.manage')
   updateNotice(
     @Param('id') id: string,
     @Body() body: unknown,
@@ -59,7 +59,7 @@ export class NoticesController {
 
   @Delete('admin/notices/:id')
   @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
-  @RequirePermissions('content.manage')
+  @RequirePermissions('notices.manage')
   deleteNotice(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
     return this.noticesService.delete(Number(id), request.authSession?.userId);
   }

@@ -1,0 +1,194 @@
+.ui-button,
+.primary-button,
+.quiet-button,
+.table-action {
+  display: inline-flex;
+  width: fit-content;
+  min-height: var(--control-height);
+  padding: 0 14px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: var(--j-weight-semibold);
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color var(--j-motion-fast),
+    background-color var(--j-motion-fast),
+    color var(--j-motion-fast);
+}
+
+.ui-button--primary,
+.primary-button {
+  border-color: var(--action-primary);
+  background: var(--action-primary);
+  color: white;
+}
+
+.ui-button--primary:hover:not(:disabled),
+.primary-button:hover:not(:disabled) {
+  border-color: var(--action-primary-hover);
+  background: var(--action-primary-hover);
+}
+
+.ui-button--primary:active:not(:disabled),
+.primary-button:active:not(:disabled) {
+  border-color: var(--action-primary-active);
+  background: var(--action-primary-active);
+}
+
+.ui-button--secondary,
+.quiet-button,
+.table-action {
+  border-color: var(--line-strong);
+  background: var(--surface);
+  color: var(--j-color-text-secondary);
+}
+
+.ui-button--secondary:hover:not(:disabled),
+.quiet-button:hover:not(:disabled),
+.table-action:hover:not(:disabled) {
+  border-color: #aebbc1;
+  background: var(--j-color-surface-hover);
+  color: var(--primary-dark);
+}
+
+.ui-button--danger {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: white;
+}
+
+.ui-button--danger:hover:not(:disabled) {
+  border-color: var(--j-color-danger-hover);
+  background: var(--j-color-danger-hover);
+}
+
+.ui-button--ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--j-color-text-secondary);
+}
+
+.ui-button--ghost:hover:not(:disabled) {
+  background: var(--j-color-surface-hover);
+  color: var(--primary-dark);
+}
+
+.ui-button--sm,
+.table-action {
+  min-height: 32px;
+  padding-inline: 10px;
+  font-size: 12px;
+}
+
+.ui-button--lg {
+  min-height: 46px;
+  padding-inline: 18px;
+}
+
+.ui-button--block {
+  width: 100%;
+}
+
+.ui-button:disabled,
+.primary-button:disabled,
+.quiet-button:disabled,
+.table-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.ui-button:focus-visible,
+.primary-button:focus-visible,
+.quiet-button:focus-visible,
+.table-action:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--action-primary) 24%, transparent);
+  outline-offset: 2px;
+}
+
+.ui-button__spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: ui-spin 700ms linear infinite;
+}
+
+.table-action {
+  color: var(--j-color-text-secondary);
+}
+
+.ui-icon-button {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  flex: 0 0 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #475569;
+  cursor: pointer;
+  transition:
+    border-color var(--j-motion-fast),
+    background-color var(--j-motion-fast),
+    color var(--j-motion-fast);
+}
+
+.ui-icon-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ui-icon-button--neutral:hover:not(:disabled) {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.ui-icon-button--primary {
+  border-color: var(--action-primary-border);
+  background: var(--action-primary-subtle);
+  color: var(--action-primary-hover);
+}
+
+.ui-icon-button--primary:hover:not(:disabled) {
+  border-color: #93c5fd;
+  background: #dbeafe;
+  color: var(--action-primary-active);
+}
+
+.ui-icon-button--danger {
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--line));
+  background: color-mix(in srgb, var(--danger) 7%, white);
+  color: var(--danger);
+}
+
+.ui-icon-button--danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, white);
+}
+
+.ui-icon-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--action-primary) 24%, transparent);
+  outline-offset: 2px;
+}
+
+.ui-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

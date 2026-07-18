@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { FilterChips, PageScaffold, PageState } from '../../components/page/PageScaffold';
+import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter, toKoreanDateKey } from '../../shared/lib/date';
 import { getCalendar } from './api';
 import '../../styles/calendar.css';
@@ -119,9 +120,9 @@ export function CalendarPage() {
 
   return (
     <PageScaffold
-      breadcrumbs={[{ label: '소식·일정' }, { label: '학사일정' }]}
+      breadcrumbs={listBreadcrumbs('calendar')}
       title="학사일정"
-      description="시험, 학교 행사와 휴일 일정을 월별로 확인하세요."
+      description="학교 일정과 공휴일을 월별로 확인하세요."
       width="wide"
       variant="workspace"
     >

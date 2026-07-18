@@ -4,7 +4,7 @@ import type { Request } from 'express';
 import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import type { UserRole } from '@jshsus/types';
 import { argon2id, hash as hashArgon2, verify as verifyArgon2 } from 'argon2';
-import { eq, or, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { DatabaseService } from '../database/database.service';
 import { RedisService } from '../redis/redis.service';
@@ -18,6 +18,8 @@ const legacySessionSchema = z.object({
   roles: z.array(z.string()).optional().default([]),
   expiresAt: z.number().optional(),
   stuid: z.number().optional(),
+  identifier: z.string().optional(),
+  identityType: z.enum(['student', 'staff', 'local']).optional(),
   name: z.string().optional(),
   jshsus: z.string().optional(),
 });
@@ -25,6 +27,36 @@ const legacySessionSchema = z.object({
 export type AuthSession = z.infer<typeof legacySessionSchema> & {
   isLogined: true;
 };
+
+export function resolveSessionIdentity(input: {
+  studentNo?: number | null;
+  legacyStudentNo?: number | null;
+  staffNo?: number | null;
+  providerAccountId?: string | null;
+  username: string;
+}): { identifier: string; identityType: 'student' | 'staff' | 'local'; stuid?: number } {
+  if (input.studentNo) {
+    return {
+      identifier: String(input.studentNo),
+      identityType: 'student',
+      stuid: input.studentNo,
+    };
+  }
+  if (input.staffNo) {
+    return { identifier: String(input.staffNo), identityType: 'staff' };
+  }
+  if (input.legacyStudentNo) {
+    return {
+      identifier: String(input.legacyStudentNo),
+      identityType: 'student',
+      stuid: input.legacyStudentNo,
+    };
+  }
+  return {
+    identifier: input.providerAccountId ?? input.username.trim(),
+    identityType: 'local',
+  };
+}
 
 @Injectable()
 export class AuthService {
@@ -184,7 +216,14 @@ export class AuthService {
         .where(eq(schema.authAccounts.id, account.authAccountId));
     }
 
-    const grants = await this.getGrantsForUser(account.userId, account.studentNo);
+    const identity = resolveSessionIdentity({
+      studentNo: account.studentProfileNo,
+      legacyStudentNo: account.staffNo ? undefined : account.legacyStudentNo,
+      staffNo: account.staffNo,
+      providerAccountId: account.providerAccountId,
+      username,
+    });
+    const grants = await this.getGrantsForUser(account.userId, identity.stuid ?? account.staffNo);
     const token = randomUUID();
     const now = Date.now();
     const session: AuthSession = {
@@ -194,9 +233,11 @@ export class AuthService {
       roles: grants.roles,
       permissions: grants.permissions,
       expiresAt: now + ttlSeconds * 1000,
-      stuid: account.studentNo,
+      ...(identity.stuid ? { stuid: identity.stuid } : {}),
+      identifier: identity.identifier,
+      identityType: identity.identityType,
       name: account.name,
-      jshsus: account.legacyJshsusId ?? String(account.studentNo),
+      jshsus: account.legacyJshsusId ?? identity.identifier,
       isLogined: true,
     };
 
@@ -236,7 +277,10 @@ export class AuthService {
         legacyIamId: schema.users.legacyIamId,
         legacyPlmaId: schema.users.legacyPlmaId,
         legacyJshsusId: schema.users.legacyJshsusId,
-        studentNo: schema.users.studentNo,
+        providerAccountId: schema.authAccounts.providerAccountId,
+        legacyStudentNo: schema.users.studentNo,
+        studentProfileNo: schema.students.studentNo,
+        staffNo: schema.staffProfiles.staffNo,
         name: schema.users.name,
         status: schema.users.status,
         passwordHash: schema.authAccounts.passwordHash,
@@ -244,11 +288,12 @@ export class AuthService {
       })
       .from(schema.authAccounts)
       .innerJoin(schema.users, eq(schema.authAccounts.userId, schema.users.id))
+      .leftJoin(schema.students, eq(schema.students.userId, schema.users.id))
+      .leftJoin(schema.staffProfiles, eq(schema.staffProfiles.userId, schema.users.id))
       .where(
-        or(
+        and(
+          eq(schema.authAccounts.provider, 'local'),
           eq(schema.authAccounts.providerAccountId, normalized),
-          eq(schema.users.legacyJshsusId, normalized),
-          sql`${schema.users.studentNo} = cast(${normalized} as unsigned)`,
         ),
       )
       .limit(1);
@@ -284,7 +329,7 @@ export class AuthService {
 
   private async getGrantsForUser(
     userId: number,
-    studentNo: number,
+    legacyIdentifier?: number | null,
   ): Promise<{ roles: UserRole[]; permissions: string[] }> {
     const [roleRows, rolePermissionRows, userPermissionRows] = await Promise.all([
       this.database.db
@@ -318,13 +363,12 @@ export class AuthService {
     ]);
 
     const roleSet = new Set(roleRows.map((row) => row.name as UserRole));
-    const stuid = String(studentNo);
+    const legacyId =
+      legacyIdentifier === undefined || legacyIdentifier === null ? '' : String(legacyIdentifier);
 
-    if (env.LEGACY_STUDENT_AFFAIRS_HEAD_STUIDS.includes(stuid)) {
-      roleSet.add('student_affairs_head');
-    }
-
-    if (env.LEGACY_SYSTEM_ADMIN_STUIDS.includes(stuid)) {
+    // Student-affairs authority is managed exclusively through IAM roles.
+    // The system-admin allow-list remains only as an emergency legacy bridge.
+    if (env.LEGACY_SYSTEM_ADMIN_STUIDS.includes(legacyId)) {
       roleSet.add('system_admin');
     }
 

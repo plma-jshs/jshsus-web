@@ -1,10 +1,52 @@
 .reading-surface {
   min-width: 0;
+  padding: clamp(20px, 4vw, 34px);
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-lg);
+  background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-card);
+}
+
+.content-detail-header {
+  display: grid;
+  padding-bottom: var(--j-space-5);
+  gap: var(--j-space-2);
   border-bottom: 1px solid var(--j-color-border);
 }
 
+.content-detail-header h1 {
+  margin: 0;
+  color: var(--j-color-text);
+  font-size: clamp(1.35rem, 3vw, 1.55rem);
+  font-weight: var(--j-weight-bold);
+  letter-spacing: -0.025em;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.content-detail-header__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 0;
+  color: var(--j-color-text-muted);
+  font-size: var(--j-text-xs);
+}
+
+.content-detail-header__meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.content-detail-header__meta > * + *::before {
+  margin-inline: 9px;
+  color: var(--j-color-border-strong);
+  content: '·';
+}
+
 .reading-body {
-  padding: var(--j-space-5) 0 var(--j-space-10);
+  padding: var(--j-space-5) 0 var(--j-space-6);
   color: var(--j-color-text);
   font-size: var(--j-text-md);
   line-height: 1.85;
@@ -51,8 +93,9 @@
 
 .post-detail-actions {
   display: flex;
-  min-height: 52px;
-  padding-block: var(--j-space-2);
+  min-height: 40px;
+  padding-top: var(--j-space-2);
+  padding-bottom: 0;
   align-items: center;
   gap: var(--j-space-3);
   border-top: 1px solid var(--j-color-border);
@@ -60,8 +103,8 @@
 
 .post-detail-actions button,
 .post-detail-actions .auth-required-action,
-.detail-comment-list article > button,
-.detail-comment-list article > .comment-report-login-link {
+.comment-item-actions button,
+.comment-item-actions .comment-report-login-link {
   display: inline-flex;
   min-height: 40px;
   padding-inline: var(--j-space-2);
@@ -71,6 +114,100 @@
   color: var(--j-color-text-muted);
   background: transparent;
   font-size: var(--j-text-xs);
+}
+
+.content-like-button {
+  border-radius: var(--j-radius-sm);
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: color 150ms ease;
+}
+
+.content-like-button__heart {
+  display: inline-grid;
+  place-items: center;
+  transform-origin: center;
+  transition:
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.content-like-button__heart:hover {
+  color: var(--j-color-danger);
+  transform: scale(1.12);
+}
+
+.content-like-button__heart.is-pulsing {
+  animation: content-like-heart-pulse 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.content-like-button.is-liked {
+  color: var(--j-color-danger);
+}
+
+.content-report-action {
+  color: var(--j-color-text) !important;
+}
+
+.content-report-action svg {
+  color: currentColor;
+  fill: none;
+  stroke: currentColor;
+}
+
+.content-report-action svg.is-filled {
+  fill: currentColor;
+}
+
+.content-report-action:disabled {
+  color: var(--j-color-text-muted) !important;
+  cursor: default;
+}
+
+.content-title-line {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 2px;
+  vertical-align: middle;
+}
+
+.content-title-line__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.content-badges {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.content-new-badge {
+  display: block;
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 999px;
+  background: #ff3b30;
+}
+
+.content-like-button.is-compact > span:not(.content-like-button__heart) {
+  display: none;
+}
+
+.content-like-button strong {
+  font-weight: var(--j-weight-semibold);
+}
+
+.content-like-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
 }
 
 .mutation-feedback {
@@ -89,9 +226,12 @@
 
 .comment-surface {
   display: grid;
-  padding-top: var(--j-space-6);
+  padding: clamp(20px, 4vw, 30px);
   gap: var(--j-space-4);
-  border-top: 1px solid var(--j-color-border-strong);
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-lg);
+  background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-card);
 }
 
 .comment-surface > header {
@@ -116,8 +256,9 @@
   border-bottom: 1px solid var(--j-color-border);
 }
 
-.detail-comment-list article > div {
+.detail-comment-list article > div:first-child {
   display: flex;
+  padding-right: 132px;
   align-items: center;
   gap: var(--j-space-2);
 }
@@ -130,19 +271,36 @@
   font-size: var(--j-text-xs);
 }
 .detail-comment-list p {
-  margin: var(--j-space-2) 44px 0 0;
+  margin: var(--j-space-2) 0 0;
   font-size: var(--j-text-sm);
   white-space: pre-wrap;
 }
-.detail-comment-list article > button,
-.detail-comment-list article > .comment-report-login-link {
+
+.comment-item-actions {
   position: absolute;
   top: var(--j-space-2);
   right: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.comment-item-actions button,
+.comment-item-actions .comment-report-login-link {
+  min-height: 36px;
+}
+
+.comment-item-actions .content-like-button {
+  min-width: 42px;
+  justify-content: center;
+}
+
+.comment-item-actions .comment-report-login-link {
+  white-space: nowrap;
 }
 
 .post-detail-actions .auth-required-action:hover,
-.detail-comment-list article > .comment-report-login-link:hover {
+.comment-item-actions .comment-report-login-link:hover {
   color: var(--j-color-brand-strong);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -191,7 +349,37 @@
   justify-content: flex-start;
 }
 
+@keyframes content-like-heart-pulse {
+  0% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.48);
+  }
+  72% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content-like-button__heart {
+    transition: none;
+  }
+
+  .content-like-button__heart.is-pulsing {
+    animation: none;
+  }
+}
+
 @media (max-width: 767px) {
+  .reading-surface,
+  .comment-surface {
+    padding: var(--j-space-4);
+  }
+
   .reading-body {
     padding-top: var(--j-space-3);
   }
@@ -202,6 +390,16 @@
 
   .detail-comment-form button {
     width: 100%;
+  }
+
+  .detail-comment-list article > div:first-child {
+    padding-right: 0;
+  }
+
+  .comment-item-actions {
+    position: static;
+    margin-top: var(--j-space-2);
+    justify-content: flex-end;
   }
 
   .comment-login-prompt {

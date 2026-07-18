@@ -200,6 +200,58 @@ describe('SchoolDataService', () => {
     expect(requestedUrl).toContain('AA_TO_YMD=20260831');
   });
 
+  it('returns a unified admin calendar while keeping NEIS read-only and private school events visible', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          SchoolSchedule: [
+            { head: [{ list_total_count: 1 }, { RESULT: { CODE: 'INFO-000' } }] },
+            {
+              row: [
+                {
+                  AA_YMD: '20260720',
+                  EVENT_NM: 'NEIS 일정',
+                  EVENT_CNTNT: '',
+                  SBTR_DD_SC_NM: '해당없음',
+                },
+              ],
+            },
+          ],
+        }),
+      ),
+    );
+    const service = createService();
+    vi.spyOn(service, 'listManagedEvents').mockResolvedValue([
+      {
+        id: 9,
+        title: '내부 검토 일정',
+        startsAt: '2026-07-21T00:00:00.000Z',
+        endsAt: '2026-07-21T23:59:59.999Z',
+        allDay: true,
+        category: 'school',
+        isHoliday: false,
+        isPublic: false,
+      },
+    ]);
+
+    const result = await service.getAdminCalendar('2026-07-01', '2026-07-31');
+
+    expect(result.events).toHaveLength(2);
+    expect(result.events.find((event) => event.source === 'neis')).toMatchObject({
+      title: 'NEIS 일정',
+      editable: false,
+      isPublic: true,
+    });
+    expect(result.events.find((event) => event.source === 'school')).toMatchObject({
+      id: 'school:9',
+      managedId: 9,
+      title: '내부 검토 일정',
+      editable: true,
+      isPublic: false,
+    });
+  });
+
   it('paginates NEIS schedules and verifies the complete row count', async () => {
     const fetchMock = vi.fn().mockImplementation((input: string | URL | Request) => {
       const page = Number(new URL(String(input)).searchParams.get('pIndex'));

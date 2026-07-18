@@ -1,10 +1,12 @@
 import {
   Link,
+  Navigate,
   Outlet,
   createRootRoute,
   createRoute,
   createRouter,
   lazyRouteComponent,
+  useRouterState,
 } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -16,22 +18,30 @@ import {
   KeyRound,
   ListChecks,
   LockKeyhole,
+  LogOut,
+  Menu,
+  Music2,
   Newspaper,
   ScrollText,
   School,
-  ShieldCheck,
+  Settings,
   Smartphone,
+  UserRound,
+  X,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../shared/api/adminApi';
-import type { UserRole } from '@jshsus/types';
 
 function LoginPage() {
   const queryClient = useQueryClient();
-  const [username, setUsername] = useState('local-admin');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('system_admin');
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
   const loginMutation = useMutation({
     mutationFn: api.login,
     onSuccess: async () => {
@@ -41,60 +51,312 @@ function LoginPage() {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    loginMutation.mutate({ username, password, role });
+    loginMutation.mutate({ username, password, remember });
   };
 
   return (
-    <main className="login-shell">
+    <main className="login-shell" aria-labelledby="admin-login-title">
       <section className="login-panel">
         <div className="login-brand">
-          <span>
-            <ShieldCheck size={22} />
-          </span>
-          <div>
-            <p>admin.jshsus.kr</p>
-            <h1>관리자 로그인</h1>
-          </div>
+          <img className="login-brand-mark" src="/admin-emblem.svg" alt="" width="38" height="38" />
+          <strong>전남과학고등학교 학생부 전산망</strong>
         </div>
 
+        <header className="login-heading">
+          <h1 id="admin-login-title">전남과학고 통합로그인</h1>
+        </header>
+
         <form className="login-form" onSubmit={handleSubmit}>
-          <label>
-            <span>계정</span>
-            <input value={username} onChange={(event) => setUsername(event.target.value)} />
-          </label>
-          <label>
-            <span>비밀번호</span>
+          <label htmlFor="admin-login-username">
+            <span>학번 또는 교사번호</span>
             <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              id="admin-login-username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              autoComplete="username"
+              placeholder="학번 또는 교사번호를 입력하세요"
+              autoFocus
+              required
             />
           </label>
-          <label>
-            <span>역할</span>
-            <select value={role} onChange={(event) => setRole(event.target.value as UserRole)}>
-              <option value="system_admin">system_admin</option>
-              <option value="student_affairs_head">student_affairs_head</option>
-              <option value="teacher">teacher</option>
-            </select>
-          </label>
-          <button className="primary-button" type="submit" disabled={loginMutation.isPending}>
-            {loginMutation.isPending ? '확인 중' : '로그인'}
+          <div className="login-form-field">
+            <label htmlFor="admin-login-password">비밀번호</label>
+            <div className="login-password-field">
+              <input
+                id="admin-login-password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                placeholder="비밀번호를 입력하세요"
+                required
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((current) => !current)}
+              >
+                {showPassword ? (
+                  <EyeOff aria-hidden="true" size={18} />
+                ) : (
+                  <Eye aria-hidden="true" size={18} />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {loginMutation.isError ? (
+            <p className="form-error" role="alert">
+              학번·교사번호 또는 비밀번호를 확인해 주세요.
+            </p>
+          ) : null}
+
+          <div className="login-options">
+            <label className="login-remember">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(event) => setRemember(event.target.checked)}
+              />
+              <span>로그인 기억하기</span>
+            </label>
+            <a href="https://iam.jshsus.kr/changepassword">비밀번호를 잊으셨나요?</a>
+          </div>
+
+          <button
+            className="primary-button login-submit"
+            type="submit"
+            disabled={loginMutation.isPending}
+          >
+            {loginMutation.isPending ? '로그인 중' : '로그인'}
           </button>
-          {loginMutation.isError ? <p className="form-error">로그인 정보를 확인해주세요.</p> : null}
         </form>
+
+        <p className="login-signup">
+          전남과학고 신입생이신가요? <a href="https://iam.jshsus.kr/reg">통합로그인 계정 만들기</a>
+        </p>
       </section>
     </main>
   );
 }
 
+type AdminNavEntry = {
+  label: string;
+  to: string;
+  icon: LucideIcon;
+  permissions?: string[];
+  roles?: string[];
+};
+
+type AdminNavGroup = {
+  label: string;
+  entries: AdminNavEntry[];
+};
+
+const adminNavigation: AdminNavGroup[] = [
+  {
+    label: '요약',
+    entries: [
+      {
+        label: '대시보드',
+        to: '/',
+        icon: Gauge,
+        roles: ['system_admin', 'student_affairs_head', 'teacher'],
+      },
+    ],
+  },
+  {
+    label: '상벌점',
+    entries: [
+      {
+        label: '상벌점 현황',
+        to: '/points',
+        icon: BadgeCheck,
+        permissions: ['points.manage'],
+      },
+      {
+        label: '상벌점 기록',
+        to: '/points/records',
+        icon: ScrollText,
+        permissions: ['points.manage'],
+      },
+      {
+        label: '상벌점 부여',
+        to: '/points/award',
+        icon: ClipboardCheck,
+        permissions: ['points.issue'],
+      },
+      {
+        label: '사유 관리',
+        to: '/points/reasons',
+        icon: ListChecks,
+        permissions: ['points.manage'],
+      },
+      {
+        label: '퇴사·학기 조정',
+        to: '/points/departures',
+        icon: School,
+        permissions: ['points.manage'],
+      },
+    ],
+  },
+  {
+    label: '탐구활동서',
+    entries: [
+      {
+        label: '탐구활동서 현황',
+        to: '/activity-requests',
+        icon: ClipboardCheck,
+        permissions: ['activity.review'],
+      },
+      {
+        label: '승인 · 발급',
+        to: '/activity-requests/review',
+        icon: BadgeCheck,
+        permissions: ['activity.review'],
+      },
+    ],
+  },
+  {
+    label: '기숙사',
+    entries: [
+      {
+        label: '기숙사 현황',
+        to: '/dorm',
+        icon: BedDouble,
+        permissions: ['dorm.manage'],
+      },
+      {
+        label: '기숙사 관리',
+        to: '/dorm/manage',
+        icon: School,
+        permissions: ['dorm.manage'],
+      },
+    ],
+  },
+  {
+    label: '기타',
+    entries: [
+      {
+        label: '휴대폰 보관함',
+        to: '/device-cases',
+        icon: Smartphone,
+        permissions: ['devices.manage'],
+      },
+      {
+        label: '기상곡',
+        to: '/wake-songs',
+        icon: Music2,
+        permissions: ['wake_songs.review'],
+      },
+    ],
+  },
+  {
+    label: '사용자와 권한',
+    entries: [
+      {
+        label: '학생 · 교직원',
+        to: '/users',
+        icon: School,
+        permissions: ['users.manage'],
+      },
+      {
+        label: 'IAM 권한',
+        to: '/iam',
+        icon: KeyRound,
+        permissions: ['iam.manage'],
+      },
+    ],
+  },
+  {
+    label: '사이트 운영',
+    entries: [
+      {
+        label: '공지 관리',
+        to: '/site/notices',
+        icon: Newspaper,
+        permissions: ['notices.manage'],
+      },
+      {
+        label: '자유게시판 관리',
+        to: '/site/community',
+        icon: ListChecks,
+        permissions: ['community.manage'],
+      },
+      {
+        label: '분실물 관리',
+        to: '/site/lost-items',
+        icon: School,
+        permissions: ['lost_items.manage'],
+      },
+      {
+        label: '학사일정',
+        to: '/school-events',
+        icon: CalendarDays,
+        permissions: ['school_events.manage'],
+      },
+    ],
+  },
+  {
+    label: '관리자',
+    entries: [
+      {
+        label: '감사 로그',
+        to: '/audit-logs',
+        icon: ScrollText,
+        permissions: ['audit.read'],
+      },
+      {
+        label: '시스템 관리',
+        to: '/system',
+        icon: Settings,
+        roles: ['system_admin'],
+      },
+    ],
+  },
+];
+
+const routeTitles: Array<{ prefix: string; eyebrow: string; title: string }> = [
+  { prefix: '/points/records', eyebrow: '상벌점', title: '상벌점 기록' },
+  { prefix: '/points/award', eyebrow: '상벌점', title: '상벌점 부여' },
+  { prefix: '/points/reasons', eyebrow: '상벌점', title: '사유 관리' },
+  { prefix: '/points/departures', eyebrow: '상벌점', title: '퇴사자 관리 / 새학기 상벌점 반감' },
+  { prefix: '/points', eyebrow: '상벌점', title: '상벌점 현황' },
+  { prefix: '/activity-requests/review', eyebrow: '탐구활동서', title: '승인 · 발급' },
+  { prefix: '/activity-requests', eyebrow: '탐구활동서', title: '탐구활동서 현황' },
+  { prefix: '/dorm/manage', eyebrow: '기숙사', title: '기숙사 관리' },
+  { prefix: '/dorm', eyebrow: '기숙사', title: '기숙사 현황' },
+  { prefix: '/device-cases', eyebrow: '기타', title: '휴대폰 보관함' },
+  { prefix: '/wake-songs', eyebrow: '기타', title: '기상곡' },
+  { prefix: '/users', eyebrow: '사용자와 권한', title: '학생 · 교직원' },
+  { prefix: '/iam', eyebrow: '사용자와 권한', title: 'IAM 권한' },
+  { prefix: '/site/notices', eyebrow: '사이트 운영', title: '공지 관리' },
+  { prefix: '/site/community', eyebrow: '사이트 운영', title: '자유게시판 관리' },
+  { prefix: '/site/lost-items', eyebrow: '사이트 운영', title: '분실물 관리' },
+  { prefix: '/school-events', eyebrow: '사이트 운영', title: '학사일정' },
+  { prefix: '/audit-logs', eyebrow: '관리자', title: '감사 로그' },
+  { prefix: '/system', eyebrow: '관리자', title: '시스템 관리' },
+  { prefix: '/', eyebrow: '요약', title: '대시보드' },
+];
+
 function AdminShell() {
   const queryClient = useQueryClient();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const activeRoute =
+    routeTitles.find((route) => pathname.startsWith(route.prefix)) ?? routeTitles.at(-1)!;
   const sessionQuery = useQuery({
     queryKey: ['admin-session'],
     queryFn: api.session,
     retry: false,
   });
+
+  useEffect(() => {
+    const pageTitle = sessionQuery.data?.isLogined ? activeRoute.title : '통합로그인';
+    document.title = `${pageTitle} | 전남과학고등학교 학생부 전산망`;
+  }, [activeRoute.title, sessionQuery.data?.isLogined]);
+
   const logoutMutation = useMutation({
     mutationFn: api.logout,
     onSuccess: async () => {
@@ -110,152 +372,156 @@ function AdminShell() {
     return <LoginPage />;
   }
 
-  const activeRole = sessionQuery.data.roles?.[0] ?? sessionQuery.data.permissions?.[0] ?? 'staff';
+  const roles = (sessionQuery.data.roles ?? []).map(String);
+  const permissions = sessionQuery.data.permissions ?? [];
+  const isSystemAdmin = roles.includes('system_admin');
+  const hasAccess = (entry: AdminNavEntry) => {
+    if (isSystemAdmin) return true;
+    const roleMatch = entry.roles?.some((role) => roles.includes(role)) ?? false;
+    const permissionMatch =
+      entry.permissions?.some((permission) => permissions.includes(permission)) ?? false;
+    if (!entry.roles?.length && !entry.permissions?.length) return permissions.length > 0;
+    if (entry.roles?.length && entry.permissions?.length) return roleMatch && permissionMatch;
+    return roleMatch || permissionMatch;
+  };
+  const visibleNavigation = adminNavigation
+    .map((group) => ({ ...group, entries: group.entries.filter(hasAccess) }))
+    .filter((group) => group.entries.length > 0);
+  const canUseAdmin = isSystemAdmin || visibleNavigation.length > 0;
+  const identitySession = sessionQuery.data as typeof sessionQuery.data & {
+    identifier?: string | number;
+    teacherNo?: string | number;
+  };
+  const accountIdentity = [
+    identitySession.identifier ?? identitySession.teacherNo ?? sessionQuery.data.stuid,
+    sessionQuery.data.name,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  if (!canUseAdmin) {
+    return (
+      <main className="login-shell">
+        <section className="access-denied-panel">
+          <LockKeyhole size={28} aria-hidden="true" />
+          <div>
+            <h1>관리자 권한이 없습니다</h1>
+            <p>현재 계정에 관리자 기능을 사용할 권한이 배정되어 있지 않습니다.</p>
+          </div>
+          <button className="quiet-button" type="button" onClick={() => logoutMutation.mutate()}>
+            다른 계정으로 로그인
+          </button>
+        </section>
+      </main>
+    );
+  }
+
+  if (pathname === '/' && !isSystemAdmin) {
+    const dashboardEntry = adminNavigation[0]?.entries[0];
+    if (dashboardEntry && !hasAccess(dashboardEntry)) {
+      const firstAccessibleEntry = visibleNavigation.flatMap((group) => group.entries)[0];
+      if (firstAccessibleEntry) {
+        return <Navigate to={firstAccessibleEntry.to as never} replace />;
+      }
+    }
+  }
 
   return (
     <div className="admin-shell">
-      <aside className="admin-sidebar">
-        <div className="admin-brand">
-          <span>관리</span>
-          <div>
-            <strong>과구리 운영</strong>
-            <small>Student Affairs Console</small>
-          </div>
+      <aside className={`admin-sidebar${mobileNavigationOpen ? ' open' : ''}`}>
+        <div className="admin-sidebar-header">
+          <Link to="/" className="admin-brand" onClick={() => setMobileNavigationOpen(false)}>
+            <img
+              className="admin-brand-mark"
+              src="/admin-emblem.svg"
+              alt=""
+              width="40"
+              height="40"
+            />
+            <div>
+              <strong>전남과학고등학교</strong>
+              <small>학생부 전산망</small>
+            </div>
+          </Link>
+          <button
+            className="admin-mobile-close"
+            type="button"
+            aria-label="관리자 메뉴 닫기"
+            onClick={() => setMobileNavigationOpen(false)}
+          >
+            <X size={20} />
+          </button>
         </div>
 
-        <nav className="admin-nav">
-          <span className="admin-nav-heading">요약</span>
-          <Link
-            to="/"
-            className="admin-nav-item"
-            activeProps={{ className: 'admin-nav-item active' }}
-            data-domain="dashboard"
-          >
-            <Gauge size={18} />
-            <span>대시보드</span>
-          </Link>
-          <span className="admin-nav-heading">생활 관리</span>
-          <Link
-            to="/points"
-            className="admin-nav-item"
-            activeProps={{ className: 'admin-nav-item active' }}
-            data-domain="points"
-          >
-            <BadgeCheck size={18} />
-            <span>상벌점</span>
-          </Link>
-          <Link
-            to="/device-cases"
-            className="admin-nav-item"
-            activeProps={{ className: 'admin-nav-item active' }}
-            data-domain="cases"
-          >
-            <Smartphone size={18} />
-            <span>보관함</span>
-          </Link>
-          <Link
-            to="/dorm"
-            className="admin-nav-item"
-            activeProps={{ className: 'admin-nav-item active' }}
-            data-domain="dorm"
-          >
-            <BedDouble size={18} />
-            <span>기숙사</span>
-          </Link>
-          <Link
-            to="/activity-requests"
-            className="admin-nav-item"
-            activeProps={{ className: 'admin-nav-item active' }}
-            data-domain="activity"
-          >
-            <ClipboardCheck size={18} />
-            <span>탐활서 승인</span>
-          </Link>
-          <span className="admin-nav-heading">커뮤니티</span>
-          <Link
-            to="/petitions"
-            className="admin-nav-item"
-            activeProps={{ className: 'admin-nav-item active' }}
-            data-domain="petitions"
-          >
-            <ListChecks size={18} />
-            <span>청원 답변</span>
-          </Link>
-          <Link
-            to="/content"
-            className="admin-nav-item"
-            activeProps={{ className: 'admin-nav-item active' }}
-            data-domain="content"
-          >
-            <Newspaper size={18} />
-            <span>콘텐츠 운영</span>
-          </Link>
-          <Link
-            to="/school-events"
-            className="admin-nav-item"
-            activeProps={{ className: 'admin-nav-item active' }}
-            data-domain="school-events"
-          >
-            <CalendarDays size={18} />
-            <span>학사일정</span>
-          </Link>
-          <span className="admin-nav-heading">운영</span>
-          <Link
-            to="/users"
-            className="admin-nav-item"
-            activeProps={{ className: 'admin-nav-item active' }}
-            data-domain="users"
-          >
-            <School size={18} />
-            <span>학생/교직원</span>
-          </Link>
-          <Link
-            to="/iam"
-            className="admin-nav-item"
-            activeProps={{ className: 'admin-nav-item active' }}
-            data-domain="iam"
-          >
-            <KeyRound size={18} />
-            <span>IAM 권한</span>
-          </Link>
-          <Link
-            to="/audit-logs"
-            className="admin-nav-item"
-            activeProps={{ className: 'admin-nav-item active' }}
-            data-domain="audit"
-          >
-            <ScrollText size={18} />
-            <span>감사 로그</span>
-          </Link>
+        <nav className="admin-nav" aria-label="관리자 메뉴">
+          {visibleNavigation.map((group) => (
+            <section className="admin-nav-group" key={group.label}>
+              <span className="admin-nav-heading">{group.label}</span>
+              {group.entries.map((entry) => {
+                const Icon = entry.icon;
+                return (
+                  <Link
+                    key={entry.to}
+                    to={entry.to as never}
+                    className="admin-nav-item"
+                    activeProps={{ className: 'admin-nav-item active' }}
+                    activeOptions={{ exact: true }}
+                    onClick={() => setMobileNavigationOpen(false)}
+                  >
+                    <Icon size={18} aria-hidden="true" />
+                    <span>{entry.label}</span>
+                  </Link>
+                );
+              })}
+            </section>
+          ))}
         </nav>
       </aside>
 
+      {mobileNavigationOpen ? (
+        <button
+          className="admin-sidebar-scrim"
+          type="button"
+          aria-label="관리자 메뉴 닫기"
+          onClick={() => setMobileNavigationOpen(false)}
+        />
+      ) : null}
+
       <main className="admin-main">
         <header className="admin-topbar">
-          <div>
-            <p>admin.jshsus.kr</p>
-            <h1>학생생활안전부 통합 관리자</h1>
+          <div className="admin-topbar-title">
+            <button
+              className="admin-mobile-menu"
+              type="button"
+              aria-label="관리자 메뉴 열기"
+              onClick={() => setMobileNavigationOpen(true)}
+            >
+              <Menu size={21} />
+            </button>
+            <div>
+              <p>{activeRoute.eyebrow}</p>
+              <h1>{activeRoute.title}</h1>
+            </div>
           </div>
           <div className="admin-topbar-actions">
-            <div className="admin-queue-chip">
-              <span>오늘 처리할 일</span>
-              <strong>상벌점 · 탐활서 · 청원 큐 확인</strong>
-            </div>
-            <div className="role-pill">
-              <LockKeyhole size={16} />
-              <span>{activeRole}</span>
+            <div className="admin-user-identity">
+              <UserRound size={17} aria-hidden="true" />
+              <span>{accountIdentity || sessionQuery.data.name || '관리자'}</span>
             </div>
             <button
-              className="quiet-button"
+              className="admin-logout-button"
               type="button"
               onClick={() => logoutMutation.mutate()}
               disabled={logoutMutation.isPending}
             >
-              로그아웃
+              <LogOut size={17} aria-hidden="true" />
+              <span>로그아웃</span>
             </button>
           </div>
         </header>
-        <Outlet />
+        <div className="admin-content">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
@@ -273,7 +539,42 @@ const indexRoute = createRoute({
 const pointsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/points',
-  component: lazyRouteComponent(() => import('../features/points/PointsPage'), 'PointsPage'),
+  component: lazyRouteComponent(
+    () => import('../features/points/PointsOverviewPage'),
+    'PointsOverviewPage',
+  ),
+});
+const pointRecordsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/points/records',
+  component: lazyRouteComponent(
+    () => import('../features/points/PointRecordsPage'),
+    'PointRecordsPage',
+  ),
+});
+const pointAwardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/points/award',
+  component: lazyRouteComponent(
+    () => import('../features/points/PointAwardPage'),
+    'PointAwardPage',
+  ),
+});
+const pointReasonsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/points/reasons',
+  component: lazyRouteComponent(
+    () => import('../features/points/PointReasonsPage'),
+    'PointReasonsPage',
+  ),
+});
+const pointDeparturesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/points/departures',
+  component: lazyRouteComponent(
+    () => import('../features/points/PointDeparturesPage'),
+    'PointDeparturesPage',
+  ),
 });
 const casesRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -283,31 +584,69 @@ const casesRoute = createRoute({
     'DeviceCasesPage',
   ),
 });
+const wakeSongsAdminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/wake-songs',
+  component: lazyRouteComponent(
+    () => import('../features/wake-songs/WakeSongsPage'),
+    'WakeSongsPage',
+  ),
+});
 const dormRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/dorm',
-  component: lazyRouteComponent(() => import('../features/dorm/DormPage'), 'DormPage'),
+  component: lazyRouteComponent(
+    () => import('../features/dorm/DormOverviewPage'),
+    'DormOverviewPage',
+  ),
+});
+const dormManagementRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/dorm/manage',
+  component: lazyRouteComponent(
+    () => import('../features/dorm/DormManagementPage'),
+    'DormManagementPage',
+  ),
 });
 const activityRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/activity-requests',
   component: lazyRouteComponent(
-    () => import('../features/activity-requests/ActivityPage'),
-    'ActivityPage',
+    () => import('../features/activity-requests/ActivityOverviewPage'),
+    'ActivityOverviewPage',
   ),
 });
-const petitionsRoute = createRoute({
+const activityReviewRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/petitions',
+  path: '/activity-requests/review',
   component: lazyRouteComponent(
-    () => import('../features/petitions/PetitionsPage'),
-    'PetitionsPage',
+    () => import('../features/activity-requests/ActivityReviewPage'),
+    'ActivityReviewPage',
   ),
 });
-const contentRoute = createRoute({
+const noticeManagementRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/content',
-  component: lazyRouteComponent(() => import('../features/content/ContentPage'), 'ContentPage'),
+  path: '/site/notices',
+  component: lazyRouteComponent(
+    () => import('../features/content/NoticeManagementPage'),
+    'NoticeManagementPage',
+  ),
+});
+const communityManagementRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/site/community',
+  component: lazyRouteComponent(
+    () => import('../features/content/CommunityModerationPage'),
+    'CommunityModerationPage',
+  ),
+});
+const lostItemsManagementRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/site/lost-items',
+  component: lazyRouteComponent(
+    () => import('../features/content/LostItemsManagementPage'),
+    'LostItemsManagementPage',
+  ),
 });
 const schoolEventsRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -335,19 +674,33 @@ const auditLogsRoute = createRoute({
     'AuditLogsPage',
   ),
 });
+const systemRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/system',
+  component: lazyRouteComponent(() => import('../features/system/SystemPage'), 'SystemPage'),
+});
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
   pointsRoute,
+  pointRecordsRoute,
+  pointAwardRoute,
+  pointReasonsRoute,
+  pointDeparturesRoute,
   casesRoute,
+  wakeSongsAdminRoute,
   dormRoute,
+  dormManagementRoute,
   activityRoute,
-  petitionsRoute,
-  contentRoute,
+  activityReviewRoute,
+  noticeManagementRoute,
+  communityManagementRoute,
+  lostItemsManagementRoute,
   schoolEventsRoute,
   usersRoute,
   iamRoute,
   auditLogsRoute,
+  systemRoute,
 ]);
 
 export const router = createRouter({ routeTree });

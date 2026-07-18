@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { FilePlus2 } from 'lucide-react';
+import { DataTablePagination } from '../../components/page/DataTableControls';
 import {
   FilterChips,
   PageScaffold,
@@ -9,8 +10,10 @@ import {
   PageToolbar,
   SearchField,
 } from '../../components/page/PageScaffold';
+import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { getMyActivityRequests } from './api';
+import { koreaDateInput } from './activitySchedule';
 import {
   type ActivityRequestFilter,
   activityStatusLabels,
@@ -40,14 +43,23 @@ export function ActivityRequestsPage() {
   });
   const [filter, setFilter] = useState<ActivityRequestFilter>('all');
   const [query, setQuery] = useState('');
+  const [activityDate, setActivityDate] = useState(() => koreaDateInput());
+  const [page, setPage] = useState(1);
   const requests = useMemo(() => requestsQuery.data ?? [], [requestsQuery.data]);
   const filtered = useMemo(
     () =>
       requests.filter(
-        (request) => matchesActivityFilter(request, filter) && matchesActivityQuery(request, query),
+        (request) =>
+          matchesActivityFilter(request, filter) &&
+          matchesActivityQuery(request, query) &&
+          (!activityDate || koreaDateInput(new Date(request.startsAt)) === activityDate),
       ),
-    [filter, query, requests],
+    [activityDate, filter, query, requests],
   );
+  const pageSize = 20;
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const safePage = Math.min(page, Math.max(totalPages, 1));
+  const visibleRequests = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const filterOptions: Array<{ value: ActivityRequestFilter; label: string; count: number }> = [
     { value: 'all', label: '전체', count: requests.length },
@@ -76,9 +88,9 @@ export function ActivityRequestsPage() {
 
   return (
     <PageScaffold
-      breadcrumbs={[{ label: '학교생활' }, { label: '탐구활동서' }]}
+      breadcrumbs={listBreadcrumbs('activityRequests')}
       title="탐구활동서"
-      description="면학 시간 중 진행할 탐구활동을 신청하고 처리 상태를 확인하세요."
+      description="탐구활동서를 신청하고 처리 상태를 확인하세요."
       action={
         <Link className="detail-primary-button" to="/activity-requests/new">
           <FilePlus2 size={16} aria-hidden="true" /> 신규 신청
@@ -92,20 +104,42 @@ export function ActivityRequestsPage() {
         <PageToolbar>
           <FilterChips
             value={filter}
-            onChange={setFilter}
+            onChange={(value) => {
+              setFilter(value);
+              setPage(1);
+            }}
             label="신청 상태"
             options={filterOptions}
           />
-          <SearchField
-            value={query}
-            onChange={setQuery}
-            label="탐구활동서 검색"
-            placeholder="활동 목적, 장소, 발급번호 검색"
-          />
+          <div className="activity-list-controls">
+            <div className="activity-date-control">
+              <label className="sr-only" htmlFor="activity-date-filter">
+                활동 날짜
+              </label>
+              <input
+                id="activity-date-filter"
+                type="date"
+                value={activityDate}
+                onChange={(event) => {
+                  setActivityDate(event.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+            <SearchField
+              value={query}
+              onChange={(value) => {
+                setQuery(value);
+                setPage(1);
+              }}
+              label="탐구활동서 검색"
+              placeholder="활동 목적, 장소 검색"
+            />
+          </div>
         </PageToolbar>
 
         <div className="workflow-table-summary activity-table-summary" aria-live="polite">
-          {query.trim() || filter !== 'all'
+          {query.trim() || filter !== 'all' || activityDate
             ? `검색 결과 ${filtered.length}건`
             : `총 ${requests.length}건`}
         </div>
@@ -143,15 +177,13 @@ export function ActivityRequestsPage() {
                   onClick={() => {
                     setFilter('all');
                     setQuery('');
+                    setActivityDate('');
+                    setPage(1);
                   }}
                 >
                   검색 초기화
                 </button>
-              ) : (
-                <Link className="detail-primary-button" to="/activity-requests/new">
-                  첫 신청 작성하기
-                </Link>
-              )
+              ) : undefined
             }
           />
         ) : null}
@@ -176,7 +208,7 @@ export function ActivityRequestsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((request) => (
+                {visibleRequests.map((request) => (
                   <tr key={request.id}>
                     <td data-label="상태">
                       <span className={`activity-status is-${request.status}`}>
@@ -190,7 +222,9 @@ export function ActivityRequestsPage() {
                       >
                         {request.purpose}
                       </Link>
-                      {request.issuedNumber ? <small>{request.issuedNumber}</small> : null}
+                      <small>
+                        #{request.id} · {request.studentNo} {request.studentName} · 대표
+                      </small>
                     </td>
                     <td className="activity-table__created" data-label="신청일">
                       {request.createdAt ? (
@@ -218,6 +252,9 @@ export function ActivityRequestsPage() {
               </tbody>
             </table>
           </div>
+        ) : null}
+        {filtered.length ? (
+          <DataTablePagination page={safePage} totalPages={totalPages} onChange={setPage} />
         ) : null}
       </section>
     </PageScaffold>

@@ -4,23 +4,40 @@
   }
 
   .admin-sidebar {
-    position: static;
-    height: auto;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(286px, calc(100vw - 52px));
+    height: 100vh;
+    transform: translateX(-104%);
+    box-shadow: 20px 0 50px rgba(18, 42, 38, 0.16);
+    transition: transform 180ms ease;
+  }
+
+  .admin-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .admin-mobile-close,
+  .admin-mobile-menu {
+    display: grid;
+  }
+
+  .admin-sidebar-scrim {
+    position: fixed;
+    z-index: 25;
+    inset: 0;
+    display: block;
+    padding: 0;
+    border: 0;
+    background: rgba(10, 26, 23, 0.3);
+    cursor: pointer;
   }
 
   .metric-grid,
   .metric-grid.compact {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .admin-topbar {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .admin-topbar-actions {
-    justify-content: flex-start;
-    width: 100%;
   }
 
   .school-event-form {
@@ -42,39 +59,69 @@
 }
 
 @media (max-width: 560px) {
-  .admin-main {
-    padding: 16px;
+  .admin-topbar {
+    min-height: 66px;
+    padding: 10px 16px;
   }
 
-  .admin-sidebar {
-    padding: 16px;
+  .admin-content {
+    padding: 18px 16px 36px;
   }
 
-  .admin-nav {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .admin-topbar-title {
+    min-width: 0;
   }
 
-  .admin-nav-heading {
-    grid-column: 1 / -1;
+  .admin-topbar-title > div {
+    min-width: 0;
   }
 
-  .admin-nav-item {
-    min-height: 40px;
+  .admin-topbar p {
+    display: none;
   }
 
   .admin-topbar h1 {
-    font-size: 23px;
+    overflow: hidden;
+    font-size: 18px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .admin-queue-chip,
-  .role-pill,
-  .admin-topbar-actions .quiet-button {
-    width: 100%;
+  .admin-user-identity {
+    max-width: 132px;
+  }
+
+  .admin-user-identity span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-logout-button span {
+    display: none;
+  }
+
+  .admin-topbar-actions {
+    flex-wrap: nowrap;
   }
 
   .metric-grid,
   .metric-grid.compact {
     grid-template-columns: 1fr;
+  }
+
+  .system-detail-list {
+    grid-template-columns: 1fr;
+  }
+
+  .system-detail-list div,
+  .system-detail-list div:last-child {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .system-detail-list div:last-child {
+    border-bottom: 0;
   }
 
   .panel-title {

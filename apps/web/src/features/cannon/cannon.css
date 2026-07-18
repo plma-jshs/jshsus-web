@@ -1,0 +1,390 @@
+.cannon-workspace {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  height: clamp(500px, 49vw, 760px);
+  min-height: 500px;
+  border: 1px solid rgb(15 23 42 / 12%);
+  border-radius: 18px;
+  background: #4dc8f2 url('/images/cannon-scene.png') center / cover no-repeat;
+  box-shadow: var(--j-shadow-card);
+}
+
+.cannon-toolbar {
+  position: absolute;
+  z-index: 4;
+  top: 18px;
+  left: 18px;
+  display: flex;
+  min-height: 46px;
+  box-sizing: border-box;
+  padding: 5px;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgb(255 255 255 / 70%);
+  border-radius: 13px;
+  background: rgb(255 255 255 / 92%);
+  box-shadow: 0 12px 30px rgb(15 23 42 / 16%);
+  backdrop-filter: blur(12px);
+}
+
+.cannon-toolbar__button,
+.cannon-fire,
+.cannon-configure {
+  display: inline-flex;
+  height: 36px;
+  padding: 0 12px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cannon-toolbar__button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #334155;
+}
+
+.cannon-toolbar__button:hover:not(:disabled),
+.cannon-toolbar__button[aria-expanded='true'] {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.cannon-toolbar__button:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.cannon-toolbar__status {
+  display: grid;
+  min-width: 82px;
+  padding: 0 11px;
+  border-right: 1px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
+  gap: 1px;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.cannon-toolbar__status strong {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.cannon-fire {
+  border: 1px solid #b91c1c;
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 4px 10px rgb(185 28 28 / 24%);
+  color: #fff;
+}
+
+.cannon-fire:hover {
+  border-color: #991b1b;
+  background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.cannon-scene-trigger {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  width: clamp(240px, 30%, 460px);
+  height: clamp(230px, 42%, 350px);
+  padding: 0;
+  border: 0;
+  border-radius: 50% 0 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.cannon-scene-trigger:focus-visible {
+  outline: 4px solid rgb(37 99 235 / 55%);
+  outline-offset: -8px;
+}
+
+.cannon-toolbar__button:focus-visible,
+.cannon-fire:focus-visible,
+.cannon-configure:focus-visible {
+  outline: 3px solid rgb(37 99 235 / 34%);
+  outline-offset: 2px;
+}
+
+.cannon-settings {
+  position: absolute;
+  z-index: 5;
+  top: 78px;
+  left: 18px;
+  width: min(440px, calc(100% - 36px));
+  box-sizing: border-box;
+  padding: 20px;
+  border: 1px solid rgb(255 255 255 / 76%);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 95%);
+  box-shadow: 0 18px 46px rgb(15 23 42 / 20%);
+  backdrop-filter: blur(14px);
+  animation: cannon-settings-in 180ms ease-out;
+}
+
+.cannon-settings__heading {
+  display: flex;
+  margin-bottom: 16px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cannon-settings h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 17px;
+}
+
+.cannon-settings p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.cannon-range {
+  display: grid;
+  margin-bottom: 14px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 9px;
+}
+
+.cannon-range label,
+.cannon-exclusions {
+  display: grid;
+  gap: 6px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cannon-range input,
+.cannon-exclusions input {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 0 11px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 14px;
+}
+
+.cannon-range input:focus,
+.cannon-exclusions input:focus {
+  border-color: #2563eb;
+  outline: 3px solid rgb(37 99 235 / 16%);
+}
+
+.cannon-range__separator {
+  padding-bottom: 11px;
+  color: #94a3b8;
+}
+
+.cannon-exclusions {
+  margin-bottom: 16px;
+}
+
+.cannon-exclusions input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.cannon-configure {
+  width: 100%;
+  border: 1px solid #1d4ed8;
+  background: #2563eb;
+  color: #fff;
+}
+
+.cannon-configure:hover {
+  border-color: #1e40af;
+  background: #1d4ed8;
+}
+
+.cannon-result {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.cannon-ball {
+  position: relative;
+  display: grid;
+  width: clamp(164px, 18vw, 236px);
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 66% 34%, #3d3d3d 0 42%, transparent 43%),
+    linear-gradient(102deg, #171717 0 28%, #303030 29% 100%);
+  box-shadow:
+    inset -16px -18px 24px rgb(0 0 0 / 35%),
+    inset 14px 10px 18px rgb(255 255 255 / 4%),
+    0 28px 44px rgb(15 23 42 / 34%);
+  color: #fff;
+  animation: cannon-ball-in 820ms cubic-bezier(0.16, 0.84, 0.24, 1.12);
+}
+
+.cannon-ball__number {
+  position: relative;
+  z-index: 2;
+  margin-left: -8%;
+  font-size: clamp(58px, 7.5vw, 96px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.07em;
+  text-shadow: 0 2px 4px rgb(0 0 0 / 34%);
+}
+
+.cannon-ball--digits-2 .cannon-ball__number {
+  font-size: clamp(50px, 6.7vw, 84px);
+}
+
+.cannon-ball--digits-3 .cannon-ball__number {
+  margin-left: -13%;
+  font-size: clamp(42px, 5.6vw, 70px);
+}
+
+.cannon-ball__bang {
+  position: absolute;
+  z-index: 2;
+  right: 13%;
+  bottom: 25%;
+  font-family: Arial, sans-serif;
+  font-size: clamp(54px, 7vw, 88px);
+  font-weight: 900;
+  line-height: 0.72;
+  transform: rotate(-8deg);
+  text-shadow: 0 2px 4px rgb(0 0 0 / 24%);
+}
+
+.cannon-ball__shine {
+  position: absolute;
+  z-index: 1;
+  top: 24%;
+  right: 17%;
+  width: 13%;
+  height: 25%;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 92%);
+  transform: rotate(-25deg);
+}
+
+@keyframes cannon-settings-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes cannon-ball-in {
+  0% {
+    opacity: 0;
+    transform: translate(72%, 58%) scale(0.14) rotate(32deg);
+  }
+
+  72% {
+    opacity: 1;
+    transform: translate(-2%, -2%) scale(1.06) rotate(-3deg);
+  }
+
+  100% {
+    transform: translate(0) scale(1) rotate(0);
+  }
+}
+
+@media (max-width: 720px) {
+  .cannon-workspace {
+    height: 640px;
+    min-height: 640px;
+    background-position: 67% center;
+  }
+
+  .cannon-toolbar {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    flex-wrap: wrap;
+  }
+
+  .cannon-toolbar__status {
+    flex: 1;
+    min-width: 70px;
+  }
+
+  .cannon-settings {
+    top: 112px;
+    left: 10px;
+    width: calc(100% - 20px);
+    padding: 17px;
+  }
+
+  .cannon-settings__heading {
+    display: block;
+  }
+
+  .cannon-settings p {
+    margin-top: 3px;
+  }
+
+  .cannon-ball {
+    width: min(48vw, 190px);
+  }
+}
+
+@media (max-width: 430px) {
+  .cannon-toolbar__button,
+  .cannon-fire {
+    padding: 0 9px;
+  }
+
+  .cannon-toolbar__status {
+    flex: 0 0 auto;
+    min-width: 38px;
+    padding: 0 7px;
+    border-right: 0;
+  }
+
+  .cannon-toolbar__status span {
+    display: none;
+  }
+
+  .cannon-settings {
+    top: 74px;
+  }
+}
+
+@media (max-width: 720px) {
+  .cannon-scene-trigger {
+    width: min(48vw, 330px);
+    height: 38%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cannon-settings,
+  .cannon-ball {
+    animation: none;
+  }
+}

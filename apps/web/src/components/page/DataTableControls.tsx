@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 export type DataTableSearchField = 'title_content' | 'title' | 'author';
-export type DataTablePageSize = 10 | 20 | 30 | 50;
+export type DataTablePageSize = 20 | 50 | 100;
 
 type DataTableToolbarProps = {
   total: number;
@@ -47,14 +47,14 @@ export function DataTableToolbar({
       </div>
       <div className="data-table-toolbar__controls">
         <label>
-          <span className="sr-only">페이지당 표시 개수</span>
+          <span className="sr-only">페이지당 표시 건수</span>
           <select
             value={pageSize}
             onChange={(event) => onPageSizeChange(Number(event.target.value) as DataTablePageSize)}
           >
-            {[10, 20, 30, 50].map((size) => (
+            {[20, 50, 100].map((size) => (
               <option value={size} key={size}>
-                {size}개
+                {size}건
               </option>
             ))}
           </select>

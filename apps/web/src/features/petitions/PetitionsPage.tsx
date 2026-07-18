@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { PenLine } from 'lucide-react';
+import { ContentBadges } from '../../components/page/ContentBadges';
+import { DataTablePagination } from '../../components/page/DataTableControls';
 import {
   FilterChips,
   PageScaffold,
@@ -9,6 +11,7 @@ import {
   PageToolbar,
   SearchField,
 } from '../../components/page/PageScaffold';
+import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { getPetitions } from './api';
 import {
@@ -30,6 +33,7 @@ export function PetitionsPage() {
   const petitionsQuery = useQuery({ queryKey: ['petitions'], queryFn: getPetitions });
   const [filter, setFilter] = useState<PetitionFilter>('all');
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
   const petitions = useMemo(() => petitionsQuery.data ?? [], [petitionsQuery.data]);
   const filtered = useMemo(
     () =>
@@ -39,6 +43,10 @@ export function PetitionsPage() {
       ),
     [filter, petitions, query],
   );
+  const pageSize = 20;
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const safePage = Math.min(page, Math.max(totalPages, 1));
+  const visiblePetitions = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const filterOptions: Array<{ value: PetitionFilter; label: string; count: number }> = [
     { value: 'all', label: '전체', count: petitions.length },
@@ -57,19 +65,13 @@ export function PetitionsPage() {
       label: '답변 완료',
       count: petitions.filter((item) => item.status === 'answered').length,
     },
-    {
-      value: 'closed',
-      label: '종료',
-      count: petitions.filter((item) => item.status === 'expired' || item.status === 'hidden')
-        .length,
-    },
   ];
 
   return (
     <PageScaffold
-      breadcrumbs={[{ label: '커뮤니티' }, { label: '청원·제안' }]}
+      breadcrumbs={listBreadcrumbs('petitions')}
       title="청원·제안"
-      description="학교생활의 변화를 제안하고 함께 의견을 모아보세요."
+      description="학교생활 개선 제안을 확인하고 참여하세요."
       action={
         <Link className="detail-primary-button" to="/petitions/new">
           <PenLine size={16} aria-hidden="true" /> 제안하기
@@ -80,13 +82,19 @@ export function PetitionsPage() {
         <PageToolbar>
           <FilterChips
             value={filter}
-            onChange={setFilter}
+            onChange={(value) => {
+              setFilter(value);
+              setPage(1);
+            }}
             label="청원 상태"
             options={filterOptions}
           />
           <SearchField
             value={query}
-            onChange={setQuery}
+            onChange={(value) => {
+              setQuery(value);
+              setPage(1);
+            }}
             label="청원 검색"
             placeholder="제목, 내용, 작성자 검색"
           />
@@ -99,13 +107,13 @@ export function PetitionsPage() {
         </div>
 
         {petitionsQuery.isLoading ? (
-          <PageState kind="loading" variant="table" title="청원을 불러오는 중입니다." />
+          <PageState kind="loading" variant="table" title="청원·제안을 불러오는 중입니다." />
         ) : null}
         {petitionsQuery.isError ? (
           <PageState
             kind="error"
             variant="table"
-            title="청원을 불러오지 못했습니다."
+            title="청원·제안을 불러오지 못했습니다."
             description="잠시 후 다시 시도해 주세요."
             action={
               <button
@@ -122,7 +130,7 @@ export function PetitionsPage() {
           <PageState
             kind="empty"
             variant="table"
-            title={petitions.length ? '검색 결과가 없습니다.' : '등록된 청원이 없습니다.'}
+            title={petitions.length ? '검색 결과가 없습니다.' : '등록된 청원·제안이 없습니다.'}
             action={
               petitions.length ? (
                 <button
@@ -131,6 +139,7 @@ export function PetitionsPage() {
                   onClick={() => {
                     setFilter('all');
                     setQuery('');
+                    setPage(1);
                   }}
                 >
                   검색 초기화
@@ -160,7 +169,7 @@ export function PetitionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((petition) => {
+                {visiblePetitions.map((petition) => {
                   const progress = getPetitionProgress(petition);
                   return (
                     <tr key={petition.id}>
@@ -174,7 +183,10 @@ export function PetitionsPage() {
                           to="/petitions/$petitionId"
                           params={{ petitionId: String(petition.id) }}
                         >
-                          {petition.title}
+                          <span className="content-title-line">
+                            <span className="content-title-line__text">{petition.title}</span>
+                            <ContentBadges createdAt={petition.startsAt} />
+                          </span>
                         </Link>
                       </td>
                       <td className="petition-table__date" data-label="마감일">
@@ -205,6 +217,9 @@ export function PetitionsPage() {
               </tbody>
             </table>
           </div>
+        ) : null}
+        {filtered.length ? (
+          <DataTablePagination page={safePage} totalPages={totalPages} onChange={setPage} />
         ) : null}
       </section>
     </PageScaffold>

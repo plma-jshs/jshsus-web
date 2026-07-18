@@ -12,7 +12,7 @@
 }
 
 .detail-page--reading {
-  width: min(100%, 800px);
+  width: min(100%, 880px);
 }
 
 .detail-page--wide {
@@ -178,6 +178,10 @@
 
 .page-state--page {
   min-height: min(52vh, 420px);
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-lg);
+  background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-card);
 }
 
 .page-state--inline {
@@ -235,9 +239,9 @@
 }
 
 .detail-primary-button {
-  border-color: var(--j-color-brand);
+  border-color: var(--j-color-info);
   color: var(--j-color-text-inverse);
-  background: var(--j-color-brand);
+  background: var(--j-color-info);
 }
 
 .detail-secondary-button:hover,
@@ -248,8 +252,8 @@
 }
 
 .detail-primary-button:hover {
-  border-color: var(--j-color-brand-hover);
-  background: var(--j-color-brand-hover);
+  border-color: color-mix(in srgb, var(--j-color-info) 86%, black);
+  background: color-mix(in srgb, var(--j-color-info) 86%, black);
 }
 
 @media (max-width: 767px) {

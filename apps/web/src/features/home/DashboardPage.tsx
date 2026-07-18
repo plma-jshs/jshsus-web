@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import {
-  Bell,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -18,6 +17,7 @@ import type {
   SchoolMeal,
   SchoolMealType,
 } from '@jshsus/types';
+import { ContentBadges } from '../../components/page/ContentBadges';
 import { toKoreanDateKey } from '../../shared/lib/date';
 import { getHomeDashboard, getSchoolCalendar, getSchoolMeals } from './api';
 import {
@@ -25,6 +25,7 @@ import {
   resolveCalendarCardState,
   resolveMealCardState,
 } from './data-state';
+import { buildCalendarDays } from './calendar-grid';
 
 const KOREA_TIME_ZONE = 'Asia/Seoul';
 
@@ -109,16 +110,6 @@ function formatDashboardDate(value: string) {
   })
     .format(new Date(`${value}T12:00:00+09:00`))
     .replace(/\.(?=\s*(?:\(|$))/g, '');
-}
-
-function buildCalendarDays(year: number, month: number) {
-  const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
-  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
-
-  return [
-    ...Array.from<null>({ length: firstWeekday }).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
-  ];
 }
 
 function MealColumn({
@@ -259,15 +250,17 @@ function CalendarDay({
   day,
   events,
   today,
+  isCurrentMonth,
 }: {
   year: number;
   month: number;
   day: number;
   events: AcademicEvent[];
   today: ReturnType<typeof getKoreaDateParts>;
+  isCurrentMonth: boolean;
 }) {
   const isToday = year === today.year && month === today.month && day === today.day;
-  const className = `mini-calendar__day${isToday ? ' is-today' : ''}${events.length ? ' has-events' : ''}`;
+  const className = `mini-calendar__day${isCurrentMonth ? '' : ' is-outside-month'}${isToday ? ' is-today' : ''}${events.length ? ' has-events' : ''}`;
   const tooltipId = `calendar-events-${year}-${month}-${day}`;
 
   if (!events.length) {
@@ -365,17 +358,16 @@ function CalendarCard({
   const today = getKoreaDateParts();
   const days = buildCalendarDays(visibleMonth.year, visibleMonth.month);
   const eventsByDay = useMemo(() => {
-    const map = new Map<number, AcademicEvent[]>();
-    const lastDay = new Date(Date.UTC(visibleMonth.year, visibleMonth.month, 0)).getUTCDate();
-    for (let day = 1; day <= lastDay; day += 1) {
-      const key = dateKey(visibleMonth.year, visibleMonth.month, day);
+    const map = new Map<string, AcademicEvent[]>();
+    for (const day of days) {
+      const key = day.key;
       const matches = events.filter(
         (event) => toKoreanDateKey(event.startsAt) <= key && toKoreanDateKey(event.endsAt) >= key,
       );
-      if (matches.length) map.set(day, matches);
+      if (matches.length) map.set(key, matches);
     }
     return map;
-  }, [events, visibleMonth.month, visibleMonth.year]);
+  }, [days, events]);
 
   const upcoming = useMemo(() => {
     if (range.to < today.key) return [];
@@ -442,20 +434,17 @@ function CalendarCard({
             {weekday}
           </span>
         ))}
-        {days.map((day, index) =>
-          day ? (
-            <CalendarDay
-              key={day}
-              year={visibleMonth.year}
-              month={visibleMonth.month}
-              day={day}
-              events={eventsByDay.get(day) ?? []}
-              today={today}
-            />
-          ) : (
-            <span aria-hidden="true" key={`empty-${index}`} />
-          ),
-        )}
+        {days.map((day) => (
+          <CalendarDay
+            key={day.key}
+            year={day.year}
+            month={day.month}
+            day={day.day}
+            events={eventsByDay.get(day.key) ?? []}
+            today={today}
+            isCurrentMonth={day.isCurrentMonth}
+          />
+        ))}
       </div>
 
       <div className="upcoming-events">
@@ -518,27 +507,10 @@ export function DashboardPage() {
   }
 
   const dashboard = dashboardQuery.data;
-  const featuredNotice = dashboard.notices.find((notice) => notice.pinned) ?? dashboard.notices[0];
 
   return (
     <div className="home-dashboard">
       <h1 className="sr-only">과구리 학생 정보포털</h1>
-      <aside className="announcement-bar" aria-label="주요 안내">
-        <div className="announcement-bar__label">
-          <Bell aria-hidden="true" size={17} />
-          <strong>안내</strong>
-        </div>
-        <span>{featuredNotice?.title ?? '과구리 학생 정보포털을 이용해 주세요.'}</span>
-        {featuredNotice ? (
-          <Link
-            to="/notices/$noticeId"
-            params={{ noticeId: String(featuredNotice.id) }}
-            className="announcement-bar__link"
-          >
-            자세히 보기 <ChevronRight aria-hidden="true" size={16} />
-          </Link>
-        ) : null}
-      </aside>
 
       <div className="home-primary-grid">
         <section className="home-card notices-card">
@@ -553,12 +525,18 @@ export function DashboardPage() {
               {dashboard.notices.slice(0, 5).map((notice) => {
                 const content = (
                   <>
-                    <strong>{notice.title}</strong>
+                    <span className="notice-preview-copy">
+                      <span className="notice-preview-title">
+                        <strong>{notice.title}</strong>
+                        <ContentBadges pinned={notice.pinned} createdAt={notice.publishedAt} />
+                      </span>
+                      <span className="notice-preview-author">[{notice.department}]</span>
+                    </span>
                     <time dateTime={notice.publishedAt}>{formatDate(notice.publishedAt)}</time>
                   </>
                 );
                 return (
-                  <li key={notice.id}>
+                  <li className={notice.pinned ? 'is-pinned' : undefined} key={notice.id}>
                     <Link to="/notices/$noticeId" params={{ noticeId: String(notice.id) }}>
                       {content}
                     </Link>
@@ -602,8 +580,13 @@ export function DashboardPage() {
               {dashboard.boardPosts.slice(0, 5).map((post) => {
                 const content = (
                   <>
-                    <span>{post.title}</span>
-                    <small className="community-comments">[{post.commentCount}]</small>
+                    <span className="content-title-line">
+                      <span className="content-title-line__text">{post.title}</span>
+                      {post.commentCount > 0 ? (
+                        <small className="community-comments">[{post.commentCount}]</small>
+                      ) : null}
+                      <ContentBadges createdAt={post.createdAt} />
+                    </span>
                   </>
                 );
                 return (
@@ -635,7 +618,10 @@ export function DashboardPage() {
                 const status = petitionStatus[petition.status] ?? petitionStatus.expired;
                 const content = (
                   <>
-                    <strong>{petition.title}</strong>
+                    <span className="content-title-line petition-preview-title">
+                      <strong className="content-title-line__text">{petition.title}</strong>
+                      <ContentBadges createdAt={petition.startsAt} />
+                    </span>
                     <span>
                       <Users aria-hidden="true" size={14} /> 참여 {petition.participantCount}명 ·
                       목표 {petition.threshold}명

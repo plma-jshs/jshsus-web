@@ -1,0 +1,390 @@
+.school-calendar-page {
+  display: grid;
+  gap: 16px;
+}
+
+.school-calendar-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.school-calendar-toolbar,
+.school-calendar-navigation,
+.school-calendar-actions,
+.school-calendar-legend {
+  display: flex;
+  align-items: center;
+}
+
+.school-calendar-toolbar {
+  min-height: 68px;
+  padding: 14px 18px;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--j-color-border, var(--line));
+}
+
+.school-calendar-navigation,
+.school-calendar-actions {
+  gap: 8px;
+}
+
+.school-calendar-navigation h2 {
+  min-width: 142px;
+  margin: 0;
+  text-align: center;
+  font-size: 18px;
+}
+
+.school-calendar-actions select {
+  width: auto;
+  min-width: 128px;
+}
+
+.school-calendar-actions .primary-button,
+.selected-day-panel button,
+.school-calendar-navigation button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.icon-button {
+  width: 40px;
+  padding: 0;
+}
+
+.school-calendar-legend {
+  min-height: 38px;
+  padding: 8px 18px;
+  gap: 16px;
+  color: var(--j-color-text-muted, var(--muted));
+  font-size: 12px;
+}
+
+.school-calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.school-calendar-legend em {
+  margin-left: auto;
+  color: var(--j-color-warning, #ad5f00);
+  font-style: normal;
+}
+
+.source-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #667085;
+}
+
+.source-dot.schedule {
+  background: var(--j-color-brand, #087c82);
+}
+
+.source-dot.holiday {
+  background: var(--j-color-danger, #d13c34);
+}
+
+.school-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-top: 1px solid var(--j-color-border, var(--line));
+  border-left: 1px solid var(--j-color-border, var(--line));
+}
+
+.school-calendar-weekday {
+  display: grid;
+  min-height: 38px;
+  place-items: center;
+  border-right: 1px solid var(--j-color-border, var(--line));
+  border-bottom: 1px solid var(--j-color-border, var(--line));
+  background: var(--j-color-surface-subtle, #f8fafb);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.school-calendar-weekday.weekday-0 {
+  color: var(--j-color-danger, #d13c34);
+}
+
+.school-calendar-weekday.weekday-6 {
+  color: var(--j-color-info, #1769aa);
+}
+
+.school-calendar-day {
+  min-width: 0;
+  min-height: 116px;
+  padding: 8px;
+  border-right: 1px solid var(--j-color-border, var(--line));
+  border-bottom: 1px solid var(--j-color-border, var(--line));
+  background: var(--j-color-surface, #fff);
+}
+
+.school-calendar-day.outside {
+  background: var(--j-color-surface-subtle, #f8fafb);
+}
+
+.school-calendar-day.selected {
+  box-shadow: inset 0 0 0 2px var(--j-color-brand, #087c82);
+}
+
+.school-calendar-date {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--j-color-text-secondary, #344054);
+  font-size: 12px;
+}
+
+.outside .school-calendar-date {
+  color: var(--j-color-text-muted, #667085);
+}
+
+.school-calendar-day.is-sunday .school-calendar-date:not(.today),
+.school-calendar-day.is-holiday .school-calendar-date:not(.today) {
+  color: var(--j-color-danger, #d13c34);
+}
+
+.school-calendar-day.is-saturday .school-calendar-date:not(.today) {
+  color: var(--j-color-info, #1769aa);
+}
+
+.school-calendar-date.today {
+  color: #fff;
+  background: var(--j-color-brand, #087c82);
+  font-weight: 700;
+}
+
+.school-calendar-events {
+  display: grid;
+  gap: 3px;
+  margin-top: 5px;
+}
+
+.school-calendar-event {
+  min-width: 0;
+  height: 22px;
+  padding: 0 6px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 4px;
+  color: #075f65;
+  background: #edfafa;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.school-calendar-event.holiday {
+  color: #a12b25;
+  background: #fff0ee;
+}
+
+.school-calendar-event.private {
+  border: 1px dashed currentColor;
+  opacity: 0.78;
+}
+
+.school-calendar-more {
+  padding-left: 5px;
+  color: var(--j-color-text-muted, #667085);
+  font-size: 11px;
+}
+
+.calendar-status {
+  margin: 0;
+  padding: 16px 18px;
+  color: var(--j-color-text-muted, var(--muted));
+  font-size: 13px;
+}
+
+.calendar-status.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--j-color-danger, #b42318);
+}
+
+.selected-day-panel .panel-title > div {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.selected-day-panel .panel-title span {
+  color: var(--j-color-text-muted, var(--muted));
+  font-size: 12px;
+}
+
+.selected-day-list {
+  display: grid;
+  border-top: 1px solid var(--j-color-border, var(--line));
+}
+
+.selected-day-list > button {
+  display: grid;
+  min-height: 48px;
+  padding: 8px 10px;
+  align-items: center;
+  grid-template-columns: 8px minmax(180px, 1fr) minmax(220px, 0.8fr) auto;
+  gap: 10px;
+  border: 0;
+  border-bottom: 1px solid var(--j-color-border, var(--line));
+  background: #fff;
+  color: inherit;
+  text-align: left;
+}
+
+.selected-day-list > button:hover {
+  background: var(--j-color-surface-hover, #f3f5f7);
+}
+
+.selected-day-list strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.selected-day-list span,
+.selected-day-list em {
+  color: var(--j-color-text-muted, var(--muted));
+  font-size: 12px;
+  font-style: normal;
+}
+
+.calendar-event-detail {
+  display: grid;
+  margin: 0;
+  border-top: 1px solid var(--j-color-border, var(--line));
+}
+
+.calendar-event-detail > div {
+  display: grid;
+  min-height: 48px;
+  padding: 12px 0;
+  grid-template-columns: 72px 1fr;
+  border-bottom: 1px solid var(--j-color-border, var(--line));
+}
+
+.calendar-event-detail dt,
+.calendar-event-detail dd {
+  margin: 0;
+  font-size: 13px;
+}
+
+.calendar-event-detail dt {
+  color: var(--j-color-text-muted, var(--muted));
+  font-weight: 600;
+}
+
+.calendar-event-detail dd {
+  white-space: pre-wrap;
+}
+
+.calendar-event-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.calendar-event-form > label {
+  display: grid;
+  gap: 6px;
+  color: var(--j-color-text-secondary, #344054);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.calendar-event-form .full {
+  grid-column: 1 / -1;
+}
+
+.calendar-event-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.compact-check {
+  width: fit-content;
+  min-height: 40px;
+  gap: 8px;
+}
+
+.danger-button {
+  display: inline-flex;
+  min-height: 40px;
+  padding: 0 14px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--j-color-danger, #d13c34);
+  border-radius: 8px;
+  color: var(--j-color-danger, #d13c34);
+  background: #fff;
+  font-weight: 600;
+}
+
+@media (max-width: 980px) {
+  .school-calendar-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .school-calendar-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .school-calendar-day {
+    min-height: 92px;
+    padding: 5px;
+  }
+
+  .school-calendar-event {
+    padding-inline: 4px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 720px) {
+  .school-calendar-grid {
+    min-width: 760px;
+  }
+
+  .school-calendar-panel {
+    overflow-x: auto;
+  }
+
+  .selected-day-list > button {
+    grid-template-columns: 8px 1fr;
+  }
+
+  .selected-day-list span,
+  .selected-day-list em {
+    grid-column: 2;
+  }
+
+  .calendar-event-form {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-event-form .full {
+    grid-column: 1;
+  }
+}

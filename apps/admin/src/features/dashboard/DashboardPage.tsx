@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, BadgeCheck, BedDouble, ClipboardCheck, Smartphone } from 'lucide-react';
-import { api } from '../../shared/api/adminApi';
+import { Link } from '@tanstack/react-router';
+import { AlertTriangle, BadgeCheck, ClipboardCheck, Smartphone } from 'lucide-react';
+import { api, describeAdminApiError } from '../../shared/api/adminApi';
 
 export function DashboardPage() {
   const dashboardQuery = useQuery({ queryKey: ['admin-dashboard'], queryFn: api.dashboard });
@@ -10,7 +11,11 @@ export function DashboardPage() {
   }
 
   if (dashboardQuery.isError || !dashboardQuery.data) {
-    return <section className="admin-panel error">관리자 API 연결을 확인해주세요.</section>;
+    return (
+      <section className="admin-panel error">
+        {describeAdminApiError(dashboardQuery.error, '관리자 대시보드')}
+      </section>
+    );
   }
 
   const data = dashboardQuery.data;
@@ -30,21 +35,20 @@ export function DashboardPage() {
           <strong>{disconnectedCases}대</strong>
         </article>
         <article className="metric-card">
-          <BedDouble size={20} />
-          <span>기숙사 방</span>
-          <strong>{data.dormRooms.length}개</strong>
-        </article>
-        <article className="metric-card">
           <ClipboardCheck size={20} />
-          <span>탐활서 승인 대기</span>
+          <span>탐구활동서 승인 대기</span>
           <strong>{data.pendingActivityRequests.length}건</strong>
         </article>
       </section>
 
       <section className="admin-panel">
         <div className="panel-title">
-          <AlertTriangle size={18} />
-          <h2>오늘의 운영 큐</h2>
+          <div className="panel-title-copy">
+            <AlertTriangle size={18} />
+            <div>
+              <h2>처리가 필요한 작업</h2>
+            </div>
+          </div>
         </div>
         <div className="queue-list">
           {data.pendingActivityRequests.map((request) => (
@@ -55,20 +59,26 @@ export function DashboardPage() {
                   {request.location} · {request.purpose}
                 </span>
               </div>
-              <em>탐활서 승인 대기</em>
+              <Link to="/activity-requests" className="table-link">
+                승인 검토
+              </Link>
             </article>
           ))}
-          {data.pendingPetitions.map((petition) => (
-            <article key={petition.id} className="queue-row">
-              <div>
-                <strong>{petition.title}</strong>
-                <span>
-                  참여 {petition.participantCount}/{petition.threshold}명
-                </span>
-              </div>
-              <em>청원 진행 중</em>
-            </article>
-          ))}
+          {data.deviceCases
+            .filter((deviceCase) => !deviceCase.isConnected)
+            .map((deviceCase) => (
+              <article key={deviceCase.id} className="queue-row">
+                <div>
+                  <strong>보관함 {deviceCase.id} 연결 확인</strong>
+                </div>
+                <Link to="/device-cases" className="table-link">
+                  보관함 확인
+                </Link>
+              </article>
+            ))}
+          {data.pendingActivityRequests.length === 0 && disconnectedCases === 0 ? (
+            <p className="empty-text compact-empty">지금 처리할 작업이 없습니다.</p>
+          ) : null}
         </div>
       </section>
     </div>

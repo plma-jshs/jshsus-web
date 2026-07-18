@@ -4,7 +4,9 @@
 }
 
 .petition-table__title a {
-  display: block;
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
   overflow: hidden;
   color: var(--j-color-text);
   font-size: 15px;
@@ -15,6 +17,15 @@
 
 .petition-table tbody tr:hover .petition-table__title a,
 .petition-table__title a:focus-visible {
+  color: var(--j-color-text);
+}
+
+.petition-table__title .content-title-line {
+  width: 100%;
+}
+
+.petition-table tbody tr:hover .petition-table__title .content-title-line__text,
+.petition-table__title a:focus-visible .content-title-line__text {
   text-decoration: underline;
   text-underline-offset: 3px;
 }

@@ -1,0 +1,367 @@
+.point-panel {
+  min-width: 0;
+}
+
+.point-filter {
+  display: grid;
+  min-width: 112px;
+  gap: 5px;
+}
+
+.point-filter > span {
+  color: var(--j-color-text-muted);
+  font-size: 11px;
+  font-weight: var(--j-weight-semibold);
+}
+
+.point-filter :where(input, select) {
+  min-height: 38px;
+}
+
+.point-filter--search {
+  width: min(240px, 100%);
+}
+
+.point-filter--date {
+  width: 142px;
+}
+
+.point-value--danger {
+  color: var(--danger);
+}
+
+.point-status {
+  display: inline-flex;
+  min-height: 26px;
+  padding: 3px 9px;
+  align-items: center;
+  border-radius: 999px;
+  background: #edf7f4;
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: var(--j-weight-semibold);
+  white-space: nowrap;
+}
+
+.point-status--risk {
+  background: #fff5dc;
+  color: #8b5e00;
+}
+
+.point-status--departure,
+.point-status--canceled {
+  background: #fff0ef;
+  color: #b42318;
+}
+
+.point-system-label {
+  color: var(--j-color-text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.point-table-actions {
+  display: inline-flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.point-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.point-action--edit {
+  color: #1d4ed8;
+}
+
+.point-action--edit:hover {
+  background: #eff6ff;
+}
+
+.point-action--delete {
+  color: #c02b24;
+}
+
+.point-action--delete:hover {
+  background: #fff0ef;
+}
+
+.point-dialog-form {
+  display: grid;
+  gap: 16px;
+}
+
+.point-dialog-copy {
+  margin: 0;
+  color: var(--j-color-text-secondary);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.point-section-heading {
+  display: flex;
+  margin-bottom: 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.point-section-heading h2 {
+  margin: 0;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+
+.point-award-combined {
+  display: grid;
+  gap: 22px;
+}
+
+.point-student-picker-section {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) auto minmax(0, 1fr);
+  gap: 12px 18px;
+  align-items: end;
+}
+
+.point-student-search {
+  min-width: 0;
+}
+
+.point-search-combobox {
+  position: relative;
+}
+
+.point-search-results {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.point-search-results > button {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--j-color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.point-search-results > button:hover,
+.point-search-results > button:focus-visible {
+  color: var(--primary-dark);
+}
+
+.point-search-results > button span:last-child,
+.point-search-results > p {
+  color: var(--j-color-text-muted);
+  font-size: 12px;
+}
+
+.point-search-results > p {
+  margin: 0;
+  padding: 14px;
+  text-align: center;
+}
+
+.point-direct-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 76px) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.point-selected-student {
+  display: flex;
+  min-height: 58px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid #cbe4df;
+  border-radius: 9px;
+  background: #f3faf8;
+}
+
+.point-student-picker-section .point-selected-student {
+  grid-column: 1 / -1;
+  min-height: 44px;
+  margin-top: 0;
+}
+
+.point-award-error {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+}
+
+.point-selected-student div {
+  display: grid;
+  gap: 2px;
+}
+
+.point-selected-student span {
+  color: var(--j-color-text-muted);
+  font-size: 13px;
+}
+
+.point-award-fields {
+  display: grid;
+  grid-template-columns: minmax(260px, 360px) 96px 156px auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.point-award-reason {
+  grid-column: 1 / 4;
+}
+
+.point-panel-actions {
+  display: flex;
+  min-height: 52px;
+  padding-top: 14px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.point-panel-action-buttons {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.point-row-checkbox {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #1d4ed8;
+  cursor: pointer;
+}
+
+.point-feedback,
+.point-page-feedback {
+  margin: 0;
+  color: var(--primary-dark);
+  font-size: 13px;
+}
+
+.point-import-errors {
+  display: grid;
+  max-height: 150px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  overflow-y: auto;
+  gap: 4px;
+  border: 1px solid #f0c9c5;
+  border-radius: 8px;
+  background: #fff7f6;
+}
+
+.point-import-errors p {
+  margin: 0;
+  color: #b42318;
+  font-size: 12px;
+}
+
+.point-page-feedback {
+  padding: 10px 14px;
+  border: 1px solid #cbe4df;
+  border-radius: 9px;
+  background: #f3faf8;
+}
+
+.point-tabs {
+  display: flex;
+  width: fit-content;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.point-tabs button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--j-color-text-secondary);
+  font-size: 13px;
+  font-weight: var(--j-weight-semibold);
+  cursor: pointer;
+}
+
+.point-tabs button[aria-selected='true'] {
+  background: var(--sidebar-soft);
+  color: var(--primary-dark);
+}
+
+.point-semester-form {
+  display: grid;
+  grid-template-columns: 130px 110px 160px auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+
+@media (max-width: 900px) {
+  .point-direct-picker,
+  .point-award-fields,
+  .point-semester-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .point-award-reason {
+    grid-column: auto;
+  }
+
+  .point-student-picker-section {
+    grid-template-columns: 1fr;
+  }
+
+  .point-student-picker-section .point-selected-student {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .point-direct-picker,
+  .point-award-fields,
+  .point-semester-form {
+    grid-template-columns: 1fr;
+  }
+
+  .point-selected-student,
+  .point-panel-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .point-panel-action-buttons {
+    width: 100%;
+  }
+
+  .point-panel-action-buttons > * {
+    flex: 1 1 auto;
+  }
+}

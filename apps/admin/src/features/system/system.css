@@ -1,0 +1,51 @@
+.system-status-panel {
+  max-width: 920px;
+}
+
+.system-status-heading {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.system-status-heading .panel-title-copy {
+  align-items: center;
+}
+
+.system-status-heading .panel-title-copy > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.system-status-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 8px;
+  background: #eaf6f4;
+  color: var(--primary);
+}
+
+.system-status-badge {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: #fff3db;
+  color: #825710;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.system-status-badge.healthy {
+  background: #e9f7ef;
+  color: #23714a;
+}
+
+.system-status-loading {
+  min-height: 48px;
+  margin: 0;
+  color: var(--muted);
+}

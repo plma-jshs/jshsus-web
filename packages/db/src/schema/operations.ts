@@ -1,12 +1,16 @@
+import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   date,
   datetime,
   foreignKey,
   index,
   int,
+  json,
   mysqlEnum,
   mysqlTable,
+  primaryKey,
   text,
   uniqueIndex,
   varchar,
@@ -46,25 +50,42 @@ export const staffProfiles = mysqlTable(
     name: varchar('name', { length: 64 }).notNull(),
     department: varchar('department', { length: 120 }),
     title: varchar('title', { length: 120 }),
+    /** Class homerooms or assigned cohorts used to scope staff work queues. */
+    managedClasses: json('managed_classes').$type<Array<{ grade: number; classNo: number }>>(),
+    /** @deprecated IAM user_roles is the authority for student-affairs access. */
     isStudentAffairsHead: boolean('is_student_affairs_head').notNull().default(false),
     ...timestamps,
   },
   (table) => ({
     userIdx: uniqueIndex('staff_profiles_user_id_idx').on(table.userId),
     staffNoIdx: uniqueIndex('staff_profiles_staff_no_idx').on(table.staffNo),
+    staffNoSixDigit: check(
+      'staff_profiles_staff_no_six_digit_check',
+      sql`${table.staffNo} between 100000 and 999999`,
+    ),
   }),
 );
 
 export const pointReasonTypeEnum = mysqlEnum('point_reason_type', ['PLUS', 'MINUS', 'ETC']);
 
-export const pointReasons = mysqlTable('point_reasons', {
-  id,
-  type: pointReasonTypeEnum.notNull(),
-  point: int('point').notNull(),
-  comment: varchar('comment', { length: 255 }).notNull(),
-  isActive: boolean('is_active').notNull().default(true),
-  ...timestamps,
-});
+export const pointReasons = mysqlTable(
+  'point_reasons',
+  {
+    id,
+    /** Source reason code retained when a legacy PLMA rule is imported. */
+    legacyReasonCode: int('legacy_reason_code'),
+    type: pointReasonTypeEnum.notNull(),
+    point: int('point').notNull(),
+    comment: varchar('comment', { length: 255 }).notNull(),
+    isActive: boolean('is_active').notNull().default(true),
+    ...timestamps,
+  },
+  (table) => ({
+    legacyReasonCodeIdx: uniqueIndex('point_reasons_legacy_reason_code_idx').on(
+      table.legacyReasonCode,
+    ),
+  }),
+);
 
 export const pointRecords = mysqlTable(
   'point_records',
@@ -79,6 +100,9 @@ export const pointRecords = mysqlTable(
     reasonId: int('reason_id')
       .notNull()
       .references(() => pointReasons.id),
+    // Snapshot fields preserve the exact ledger meaning even when a reason template is edited.
+    reasonType: mysqlEnum('reason_type', ['PLUS', 'MINUS', 'ETC']),
+    reasonText: varchar('reason_text', { length: 255 }),
     point: int('point').notNull().default(0),
     comment: varchar('comment', { length: 255 }).notNull().default(''),
     baseDate: date('base_date', { mode: 'date' }).notNull(),
@@ -90,6 +114,7 @@ export const pointRecords = mysqlTable(
     studentIdx: index('point_records_student_idx').on(table.studentId, table.baseDate),
     teacherIdx: index('point_records_teacher_idx').on(table.teacherId, table.baseDate),
     reasonIdx: index('point_records_reason_idx').on(table.reasonId),
+    baseCreatedIdx: index('point_records_base_created_idx').on(table.baseDate, table.createdAt),
   }),
 );
 
@@ -207,7 +232,7 @@ export const dormRooms = mysqlTable(
     ...timestamps,
   },
   (table) => ({
-    nameIdx: uniqueIndex('dorm_rooms_name_idx').on(table.name),
+    dormNameIdx: uniqueIndex('dorm_rooms_dorm_name_name_idx').on(table.dormName, table.name),
   }),
 );
 
@@ -270,12 +295,17 @@ export const dormReports = mysqlTable(
   }),
 );
 
+/**
+ * @deprecated Legacy placeholder retained only for forward-only migration compatibility.
+ * New wake-song code uses wakeSongRequests from ./broadcast.
+ */
 export const songRequestStatusEnum = mysqlEnum('song_request_status', [
   'PENDING',
   'APPROVED',
   'REJECTED',
 ]);
 
+/** @deprecated Use wakeSongRequests from ./broadcast. */
 export const songRequests = mysqlTable('song_requests', {
   id,
   title: varchar('title', { length: 255 }).notNull(),
@@ -299,13 +329,17 @@ export const activityRequests = mysqlTable(
   'activity_requests',
   {
     id,
-    studentId: int('student_id')
+    representativeStudentId: int('student_id')
       .notNull()
       .references(() => students.id),
-    teacherId: int('teacher_id').references(() => users.id),
+    createdById: int('created_by_id').references(() => users.id),
+    advisorTeacherId: int('teacher_id').references(() => users.id),
+    reviewedById: int('reviewed_by_id').references(() => users.id),
     location: varchar('location', { length: 160 }).notNull(),
     startsAt: datetime('starts_at', { mode: 'date', fsp: 3 }).notNull(),
     endsAt: datetime('ends_at', { mode: 'date', fsp: 3 }).notNull(),
+    /** Exact study periods selected by the applicant. startsAt/endsAt remain for range queries. */
+    activitySlotIds: json('activity_slot_ids').$type<string[]>(),
     purpose: varchar('purpose', { length: 500 }).notNull(),
     status: activityRequestStatusEnum.notNull().default('submitted'),
     rejectionReason: varchar('rejection_reason', { length: 500 }),
@@ -314,9 +348,34 @@ export const activityRequests = mysqlTable(
     ...timestamps,
   },
   (table) => ({
-    studentIdx: index('activity_requests_student_idx').on(table.studentId, table.startsAt),
-    teacherIdx: index('activity_requests_teacher_idx').on(table.teacherId, table.status),
+    studentIdx: index('activity_requests_student_idx').on(
+      table.representativeStudentId,
+      table.startsAt,
+    ),
+    creatorIdx: index('activity_requests_creator_idx').on(table.createdById, table.createdAt),
+    teacherIdx: index('activity_requests_teacher_idx').on(table.advisorTeacherId, table.status),
+    reviewerIdx: index('activity_requests_reviewer_idx').on(table.reviewedById, table.status),
     issuedIdx: uniqueIndex('activity_requests_issued_number_idx').on(table.issuedNumber),
+  }),
+);
+
+export const activityRequestParticipants = mysqlTable(
+  'activity_request_participants',
+  {
+    activityRequestId: int('activity_request_id')
+      .notNull()
+      .references(() => activityRequests.id, { onDelete: 'cascade' }),
+    studentId: int('student_id')
+      .notNull()
+      .references(() => students.id),
+    createdAt: datetime('created_at', { mode: 'date', fsp: 3 }).notNull().default(now),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.activityRequestId, table.studentId] }),
+    studentIdx: index('activity_request_participants_student_idx').on(
+      table.studentId,
+      table.activityRequestId,
+    ),
   }),
 );
 

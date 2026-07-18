@@ -92,6 +92,34 @@ describe('FilesService access policy', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('accepts only image MIME types for profile uploads', async () => {
+    const service = new FilesService({} as DatabaseService);
+    await expect(
+      service.uploadProfile(
+        {
+          originalName: 'profile.pdf',
+          mimeType: 'application/pdf',
+          bytes: Buffer.from('%PDF'),
+        },
+        memberSession,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects profile images over 5MB before storing them', async () => {
+    const service = new FilesService({} as DatabaseService);
+    await expect(
+      service.uploadProfile(
+        {
+          originalName: 'profile.png',
+          mimeType: 'image/png',
+          bytes: Buffer.alloc(5 * 1024 * 1024 + 1),
+        },
+        memberSession,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it('rejects anonymous access to private files', async () => {
     const service = new FilesService({} as DatabaseService);
     vi.spyOn(service, 'getById').mockResolvedValue(privateFile);
@@ -143,7 +171,7 @@ describe('FilesService access policy', () => {
     );
   });
 
-  it('allows a content manager to inspect a hidden target file', async () => {
+  it('allows a community manager to inspect a hidden board file', async () => {
     const file = {
       ...privateFile,
       visibility: 'public' as const,
@@ -167,8 +195,8 @@ describe('FilesService access policy', () => {
     await expect(
       service.getAccessibleById(file.id, {
         ...memberSession,
-        roles: ['system_admin'],
-        permissions: ['content.manage'],
+        roles: ['teacher'],
+        permissions: ['community.manage'],
       }),
     ).resolves.toEqual(file);
   });
@@ -294,7 +322,7 @@ describe('FilesService access policy', () => {
   );
 
   it.each(['public', 'members', 'staff', 'admin'] as const)(
-    'keeps scheduled $visibility notice attachments available to content managers',
+    'keeps scheduled $visibility notice attachments available to notice managers',
     async (visibility) => {
       const file = {
         ...privateFile,
@@ -317,12 +345,41 @@ describe('FilesService access policy', () => {
       await expect(
         service.getAccessibleById(file.id, {
           ...memberSession,
-          roles: ['system_admin'],
-          permissions: ['content.manage'],
+          roles: ['teacher'],
+          permissions: ['notices.manage'],
         }),
       ).resolves.toEqual(file);
     },
   );
+
+  it('does not let a community manager cross the notice boundary', async () => {
+    const file = {
+      ...privateFile,
+      visibility: 'public' as const,
+      targetType: 'notice',
+      targetId: 51,
+    };
+    const database = {
+      db: {
+        select: vi
+          .fn()
+          .mockReturnValue(
+            selectChain([
+              { visibility: 'admin', publishedAt: new Date(Date.now() + 60 * 60 * 1000) },
+            ]),
+          ),
+      },
+    } as unknown as DatabaseService;
+    const service = new FilesService(database);
+    vi.spyOn(service, 'getById').mockResolvedValue(file);
+
+    await expect(
+      service.getAccessibleById(file.id, {
+        ...memberSession,
+        permissions: ['community.manage'],
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
 
   it('compensates the stored object when the file or audit transaction fails', async () => {
     const fileInsert = {
