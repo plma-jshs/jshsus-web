@@ -489,6 +489,13 @@ async function importLegacyPeople(target, legacy) {
 
 async function ensureLegacyTeacher(target) {
   const staffNo = 999999;
+  const existingStaff = await selectOne(
+    target,
+    'SELECT user_id AS id FROM staff_profiles WHERE staff_no = ? LIMIT 1',
+    [staffNo],
+  );
+  if (existingStaff) return existingStaff.id;
+
   let user = await selectOne(target, 'SELECT id FROM users WHERE student_no = ? LIMIT 1', [
     -staffNo,
   ]);
@@ -514,7 +521,7 @@ function pointRecordKey(studentId, teacherId, reasonId, point, baseDate, created
 }
 
 async function importPointHistory(target, historyRows) {
-  const legacyTeacherId = await ensureLegacyTeacher(target);
+  let legacyTeacherId = null;
   const studentCache = new Map();
   const teacherCache = new Map();
   const reasonCache = new Map();
@@ -576,6 +583,7 @@ async function importPointHistory(target, historyRows) {
        LIMIT 1`,
       [staffNo],
     );
+    if (!row && !legacyTeacherId) legacyTeacherId = await ensureLegacyTeacher(target);
     const id = row?.id ?? legacyTeacherId;
     teacherCache.set(legacyStaffNo, id);
     return id;
