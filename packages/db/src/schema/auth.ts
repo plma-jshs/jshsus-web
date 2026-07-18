@@ -22,9 +22,6 @@ export const users = mysqlTable(
   'users',
   {
     id,
-    legacyIamId: int('legacy_iam_id'),
-    legacyJshsusId: varchar('legacy_jshsus_id', { length: 64 }),
-    legacyPlmaId: int('legacy_plma_id'),
     // @deprecated Student identifiers belong to the student profile. Staff
     // accounts receive a negative internal compatibility value until the
     // forward-only contract migration can remove this legacy column.
@@ -36,7 +33,7 @@ export const users = mysqlTable(
     number: int('number'),
     email: varchar('email', { length: 255 }),
     phone: varchar('phone', { length: 32 }),
-    gender: varchar('gender', { length: 24 }),
+    gender: mysqlEnum('gender', ['0', '1']),
     status: userStatusEnum.notNull().default('active'),
     lastLoginAt: datetime('last_login_at', { mode: 'date', fsp: 3 }),
     ...timestamps,
@@ -44,7 +41,6 @@ export const users = mysqlTable(
   (table) => ({
     studentNoIdx: uniqueIndex('users_student_no_idx').on(table.studentNo),
     nicknameIdx: uniqueIndex('users_nickname_idx').on(table.nickname),
-    legacyIamIdx: uniqueIndex('users_legacy_iam_id_idx').on(table.legacyIamId),
   }),
 );
 

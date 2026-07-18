@@ -19,11 +19,13 @@ function limitedSelect(rows: unknown[]) {
   const chain = {
     from: vi.fn(),
     innerJoin: vi.fn(),
+    leftJoin: vi.fn(),
     where: vi.fn(),
     limit: vi.fn().mockResolvedValue(rows),
   };
   chain.from.mockReturnValue(chain);
   chain.innerJoin.mockReturnValue(chain);
+  chain.leftJoin.mockReturnValue(chain);
   chain.where.mockReturnValue(chain);
   return chain;
 }
@@ -32,12 +34,14 @@ function lockingSelect(rows: unknown[]) {
   const chain = {
     from: vi.fn(),
     innerJoin: vi.fn(),
+    leftJoin: vi.fn(),
     where: vi.fn(),
     limit: vi.fn(),
     for: vi.fn().mockResolvedValue(rows),
   };
   chain.from.mockReturnValue(chain);
   chain.innerJoin.mockReturnValue(chain);
+  chain.leftJoin.mockReturnValue(chain);
   chain.where.mockReturnValue(chain);
   chain.limit.mockReturnValue(chain);
   return chain;
@@ -47,10 +51,12 @@ function whereSelect(rows: unknown[]) {
   const chain = {
     from: vi.fn(),
     innerJoin: vi.fn(),
+    leftJoin: vi.fn(),
     where: vi.fn().mockResolvedValue(rows),
   };
   chain.from.mockReturnValue(chain);
   chain.innerJoin.mockReturnValue(chain);
+  chain.leftJoin.mockReturnValue(chain);
   return chain;
 }
 

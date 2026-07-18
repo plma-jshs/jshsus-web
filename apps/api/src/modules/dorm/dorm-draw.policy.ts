@@ -47,6 +47,8 @@ export type DormPlacementViolation = {
 function normalizedGender(value?: string | null): 'male' | 'female' | undefined {
   const gender = value?.trim().toLocaleLowerCase();
   if (!gender) return undefined;
+  if (gender === '0') return 'male';
+  if (gender === '1') return 'female';
   if (['m', 'male', 'man', '남', '남자', '남성'].includes(gender)) return 'male';
   if (['f', 'female', 'woman', '여', '여자', '여성'].includes(gender)) return 'female';
   return undefined;

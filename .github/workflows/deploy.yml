@@ -220,11 +220,6 @@ jobs:
           PRODUCTION_ENV_FILE: ${{ secrets.PRODUCTION_ENV_FILE }}
           NEIS_API_KEY: ${{ secrets.NEIS_API_KEY }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-          SEED_DEMO_DATA: ${{ vars.SEED_DEMO_DATA }}
-          DEMO_SEED_DATABASE_NAME: ${{ vars.DEMO_SEED_DATABASE_NAME }}
-          TEST_USER_USERNAME: ${{ secrets.TEST_USER_USERNAME }}
-          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
-          TEST_USER_STUDENT_NO: ${{ secrets.TEST_USER_STUDENT_NO }}
         run: |
           set -euo pipefail
           umask 077
@@ -234,23 +229,6 @@ jobs:
           printf '%s\n' "$PRODUCTION_ENV_FILE" > .env.production
           printf 'NEIS_API_KEY=%s\n' "$NEIS_API_KEY" >> .env.production
           printf 'YOUTUBE_API_KEY=%s\n' "$YOUTUBE_API_KEY" >> .env.production
-          if [[ "$SEED_DEMO_DATA" == 'true' ]]; then
-            [[ "$DEMO_SEED_DATABASE_NAME" =~ ^[A-Za-z0-9_]+$ ]]
-            [[ "$TEST_USER_USERNAME" =~ ^[A-Za-z0-9._-]{3,64}$ ]]
-            [[ "$TEST_USER_STUDENT_NO" =~ ^[0-9]{1,9}$ ]]
-            [[ "$TEST_USER_PASSWORD" =~ ^[-A-Za-z0-9._~!@%+=:]{12,128}$ ]]
-            test "$TEST_USER_PASSWORD" != 'Test1234!'
-            printf '%s\n' \
-              'SEED_DEMO_DATA=true' \
-              'DEPLOYMENT_TIER=staging' \
-              'ALLOW_STAGING_DEMO_SEED=true' \
-              "DEMO_SEED_DATABASE_NAME=$DEMO_SEED_DATABASE_NAME" \
-              "TEST_USER_USERNAME=$TEST_USER_USERNAME" \
-              "TEST_USER_PASSWORD=$TEST_USER_PASSWORD" \
-              "TEST_USER_STUDENT_NO=$TEST_USER_STUDENT_NO" >> .env.production
-          else
-            printf '%s\n' 'SEED_DEMO_DATA=false' >> .env.production
-          fi
 
       - name: Authenticate the server to GHCR
         shell: bash

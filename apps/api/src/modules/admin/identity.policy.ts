@@ -1,14 +1,31 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import type { AdminUserStatus, StudentGender } from '@jshsus/types';
 
-const MALE_GENDER_VALUES = new Set(['m', 'male', 'man', '남', '남자', '남성']);
-const FEMALE_GENDER_VALUES = new Set(['f', 'female', 'woman', '여', '여자', '여성']);
+const MALE_GENDER_VALUES = new Set(['0', 'm', 'male', 'man', '남', '남자', '남성']);
+const FEMALE_GENDER_VALUES = new Set(['1', 'f', 'female', 'woman', '여', '여자', '여성']);
+export type StoredStudentGender = '0' | '1';
 
 export function normalizeStudentGender(value: unknown): StudentGender | undefined {
+  if (value === 0 || value === '0') return 'male';
+  if (value === 1 || value === '1') return 'female';
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim().toLocaleLowerCase('ko-KR');
   if (MALE_GENDER_VALUES.has(normalized)) return 'male';
   if (FEMALE_GENDER_VALUES.has(normalized)) return 'female';
+  return undefined;
+}
+
+export function toStoredStudentGender(value: StudentGender): StoredStudentGender {
+  return value === 'female' ? '1' : '0';
+}
+
+export function normalizePhoneNumber(value: unknown): string | undefined {
+  if (value === undefined || value === null) return '';
+  const raw = String(value).trim();
+  if (!raw) return '';
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 10 && digits.startsWith('10')) return `0${digits}`;
+  if (digits.length === 11 && digits.startsWith('010')) return digits;
   return undefined;
 }
 

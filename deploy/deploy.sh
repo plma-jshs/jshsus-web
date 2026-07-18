@@ -296,19 +296,6 @@ compose --profile tools run --rm backup
 echo 'Applying forward-only, backward-compatible database migrations'
 compose --profile tools run --rm migrate
 
-seed_demo_data="$(awk -F= '$1 == "SEED_DEMO_DATA" { value = substr($0, index($0, "=") + 1) } END { print value }' "$release_env")"
-case "$seed_demo_data" in
-  true)
-    echo 'Refreshing the explicitly enabled staging test account and demo content'
-    compose --profile tools run --rm demo-seed
-    ;;
-  '' | false) ;;
-  *)
-    echo 'SEED_DEMO_DATA must be true or false.' >&2
-    exit 1
-    ;;
-esac
-
 echo 'Starting isolated Redis and API services, followed by the frontends'
 if ! start_application; then
   echo 'New application release failed its internal health checks.' >&2

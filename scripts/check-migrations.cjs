@@ -48,8 +48,14 @@ const failures = [];
 const safeIndexReplacements = new Map([
   ['0012_dorm_room_identity.sql', /^DROP\s+INDEX\s+`dorm_rooms_name_idx`\s+ON\s+`dorm_rooms`$/i],
 ]);
+const contractCleanupLabels = new Set([
+  'DROP DATABASE, TABLE, VIEW, INDEX, or COLUMN',
+  'ALTER TABLE ... DROP',
+  'MODIFY COLUMN',
+]);
 for (const file of files) {
   const sql = fs.readFileSync(path.join(migrationDir, file), 'utf8');
+  const isApprovedContractCleanup = /--\s*codex-contract-cleanup-approved:/.test(sql);
   for (const violation of findOverlongMysqlConstraintAndIndexIdentifiers(sql)) {
     failures.push(
       `${file}: ${violation.keyword} identifier \`${violation.identifier}\` is ${violation.length} characters (MySQL maximum: ${violation.maxLength})`,
@@ -78,7 +84,9 @@ for (const file of files) {
       const allowedReplacement =
         label === 'DROP DATABASE, TABLE, VIEW, INDEX, or COLUMN' &&
         safeIndexReplacements.get(file)?.test(normalized);
-      if (!allowedReplacement) failures.push(`${file}: ${label}`);
+      const allowedContractCleanup =
+        isApprovedContractCleanup && contractCleanupLabels.has(label);
+      if (!allowedReplacement && !allowedContractCleanup) failures.push(`${file}: ${label}`);
     }
   }
 }

@@ -82,7 +82,9 @@ function main() {
 
   // Do not pass --volumes: upload-data must survive a database reset.
   runDocker(['compose', 'up', '-d', '--build', '--wait']);
-  console.log('Local database reset, migration, demo seed, and service startup completed.');
+  console.log(
+    'Local database reset, migration, test account setup, and service startup completed.',
+  );
 }
 
 try {

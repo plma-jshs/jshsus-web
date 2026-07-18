@@ -25,7 +25,9 @@ import {
   assertStudentNumberPartsMatch,
   assertUserStatusChangeAllowed,
   deriveStudentNumberParts,
+  normalizePhoneNumber,
   normalizeStudentGender,
+  toStoredStudentGender,
 } from './identity.policy';
 import { parseIdentityListQuery } from './identity-list-query';
 import { allocateStaffNumber, FIRST_STAFF_NUMBER, LAST_STAFF_NUMBER } from './staff-number';
@@ -33,6 +35,13 @@ import { allocateStaffNumber, FIRST_STAFF_NUMBER, LAST_STAFF_NUMBER } from './st
 const studentGenderSchema = z.preprocess(
   (value) => normalizeStudentGender(value) ?? value,
   z.enum(['male', 'female']),
+);
+const phoneSchema = z.preprocess(
+  (value) => {
+    if (value === undefined || value === null || String(value).trim() === '') return '';
+    return normalizePhoneNumber(value) ?? value;
+  },
+  z.union([z.literal(''), z.string().regex(/^010\d{8}$/, 'Phone number must start with 010.')]),
 );
 
 const studentSchema = z.object({
@@ -43,7 +52,7 @@ const studentSchema = z.object({
   classNo: z.coerce.number().int().optional(),
   number: z.coerce.number().int().optional(),
   email: z.string().email().optional().or(z.literal('')),
-  phone: z.string().max(32).optional().default(''),
+  phone: phoneSchema.optional().default(''),
 });
 const createStudentSchema = studentSchema.extend({
   initialPassword: z.string().min(10).max(128),
@@ -53,7 +62,7 @@ const updateStudentSchema = studentSchema.partial();
 const staffSchema = z.object({
   name: z.string().min(1).max(64),
   email: z.string().email().optional().or(z.literal('')),
-  phone: z.string().max(32).optional().default(''),
+  phone: phoneSchema.optional().default(''),
 });
 const createStaffSchema = staffSchema.extend({
   initialPassword: z.string().min(10).max(128),
@@ -318,7 +327,7 @@ export class AdminService {
           grade: studentIdentity.grade,
           classNo: studentIdentity.classNo,
           number: studentIdentity.number,
-          gender: parsed.data.gender,
+          gender: toStoredStudentGender(parsed.data.gender),
           email: parsed.data.email || null,
           phone: parsed.data.phone || null,
         })
@@ -416,7 +425,10 @@ export class AdminService {
             grade: studentIdentity.grade,
             classNo: studentIdentity.classNo,
             number: studentIdentity.number,
-            gender: parsed.data.gender,
+            gender:
+              parsed.data.gender === undefined
+                ? undefined
+                : toStoredStudentGender(parsed.data.gender),
             email: parsed.data.email === undefined ? undefined : parsed.data.email || null,
             phone: parsed.data.phone === undefined ? undefined : parsed.data.phone || null,
             updatedAt: new Date(),

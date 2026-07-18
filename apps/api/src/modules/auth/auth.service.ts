@@ -30,7 +30,6 @@ export type AuthSession = z.infer<typeof legacySessionSchema> & {
 
 export function resolveSessionIdentity(input: {
   studentNo?: number | null;
-  legacyStudentNo?: number | null;
   staffNo?: number | null;
   providerAccountId?: string | null;
   username: string;
@@ -44,13 +43,6 @@ export function resolveSessionIdentity(input: {
   }
   if (input.staffNo) {
     return { identifier: String(input.staffNo), identityType: 'staff' };
-  }
-  if (input.legacyStudentNo) {
-    return {
-      identifier: String(input.legacyStudentNo),
-      identityType: 'student',
-      stuid: input.legacyStudentNo,
-    };
   }
   return {
     identifier: input.providerAccountId ?? input.username.trim(),
@@ -218,7 +210,6 @@ export class AuthService {
 
     const identity = resolveSessionIdentity({
       studentNo: account.studentProfileNo,
-      legacyStudentNo: account.staffNo ? undefined : account.legacyStudentNo,
       staffNo: account.staffNo,
       providerAccountId: account.providerAccountId,
       username,
@@ -227,9 +218,9 @@ export class AuthService {
     const token = randomUUID();
     const now = Date.now();
     const session: AuthSession = {
-      iamId: account.legacyIamId ?? account.userId,
+      iamId: account.userId,
       userId: account.userId,
-      plmaId: account.legacyPlmaId ?? 0,
+      plmaId: 0,
       roles: grants.roles,
       permissions: grants.permissions,
       expiresAt: now + ttlSeconds * 1000,
@@ -237,7 +228,7 @@ export class AuthService {
       identifier: identity.identifier,
       identityType: identity.identityType,
       name: account.name,
-      jshsus: account.legacyJshsusId ?? identity.identifier,
+      jshsus: identity.identifier,
       isLogined: true,
     };
 
@@ -274,11 +265,7 @@ export class AuthService {
       .select({
         userId: schema.users.id,
         authAccountId: schema.authAccounts.id,
-        legacyIamId: schema.users.legacyIamId,
-        legacyPlmaId: schema.users.legacyPlmaId,
-        legacyJshsusId: schema.users.legacyJshsusId,
         providerAccountId: schema.authAccounts.providerAccountId,
-        legacyStudentNo: schema.users.studentNo,
         studentProfileNo: schema.students.studentNo,
         staffNo: schema.staffProfiles.staffNo,
         name: schema.users.name,

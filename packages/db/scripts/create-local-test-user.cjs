@@ -1,16 +1,15 @@
 const { createHash } = require('node:crypto');
 const mysql = require('mysql2/promise');
-const { assertDemoSeedAllowed } = require('./local-seed-safety.cjs');
+const { assertLocalSeedAllowed } = require('./local-seed-safety.cjs');
 const {
   DEFAULT_TEST_PASSWORD,
   DEFAULT_TEST_STUDENT_NO,
   DEFAULT_TEST_USERNAME,
-  isKnownDemoProfile,
-  isKnownLegacyDemoProfile,
-} = require('./demo-account-policy.cjs');
+  isKnownTestProfile,
+} = require('./test-account-policy.cjs');
 const { seedConnectionOptions } = require('./seed-connection.cjs');
 
-const databaseUrl = assertDemoSeedAllowed();
+const databaseUrl = assertLocalSeedAllowed();
 const username = process.env.TEST_USER_USERNAME || DEFAULT_TEST_USERNAME;
 const password = process.env.TEST_USER_PASSWORD || DEFAULT_TEST_PASSWORD;
 const studentNo = Number(process.env.TEST_USER_STUDENT_NO || DEFAULT_TEST_STUDENT_NO);
@@ -52,101 +51,6 @@ async function loadUserProfile(connection, userId) {
   };
 }
 
-async function migrateLegacyDemoStudent(
-  connection,
-  legacyUserId,
-  canonicalUserId,
-  canonicalStudentId,
-) {
-  const legacy = await selectOne(
-    connection,
-    `SELECT u.id AS userId, s.id AS studentId
-     FROM users u
-     LEFT JOIN students s ON s.user_id = u.id
-     WHERE u.id = ?
-     LIMIT 1 FOR UPDATE`,
-    [legacyUserId],
-  );
-  if (!legacy) return;
-
-  if (legacy.studentId) {
-    await connection.execute('UPDATE point_records SET student_id = ? WHERE student_id = ?', [
-      canonicalStudentId,
-      legacy.studentId,
-    ]);
-    await connection.execute(
-      'UPDATE IGNORE activity_request_participants SET student_id = ? WHERE student_id = ?',
-      [canonicalStudentId, legacy.studentId],
-    );
-    await connection.execute('DELETE FROM activity_request_participants WHERE student_id = ?', [
-      legacy.studentId,
-    ]);
-    await connection.execute('UPDATE activity_requests SET student_id = ? WHERE student_id = ?', [
-      canonicalStudentId,
-      legacy.studentId,
-    ]);
-    await connection.execute('UPDATE point_award_cases SET student_id = ? WHERE student_id = ?', [
-      canonicalStudentId,
-      legacy.studentId,
-    ]);
-    await connection.execute('DELETE FROM students WHERE id = ?', [legacy.studentId]);
-  }
-
-  // A roommate exclusion involving two aliases of the same fixture can become
-  // a self-reference or duplicate after consolidation, so discard only those
-  // fixture-only rows before the user FK is migrated.
-  await connection.execute(
-    `DELETE FROM dorm_roommate_blocks
-     WHERE student_user_id = ? OR blocked_user_id = ?`,
-    [legacy.userId, legacy.userId],
-  );
-
-  const userReferences = [
-    ['activity_request_events', 'actor_id'],
-    ['activity_requests', 'created_by_id'],
-    ['activity_requests', 'reviewed_by_id'],
-    ['activity_requests', 'teacher_id'],
-    ['audit_logs', 'actor_id'],
-    ['comments', 'author_id'],
-    ['device_case_commands', 'actor_id'],
-    ['dorm_assignments', 'user_id'],
-    ['dorm_roommate_blocks', 'submitted_by'],
-    ['dorm_reports', 'user_id'],
-    ['files', 'owner_id'],
-    ['lost_items', 'author_id'],
-    ['notices', 'author_id'],
-    ['notifications', 'user_id'],
-    ['petition_answers', 'author_id'],
-    ['petition_participants', 'user_id'],
-    ['petitions', 'author_id'],
-    ['point_adjustments', 'actor_id'],
-    ['point_award_cases', 'handled_by_id'],
-    ['point_records', 'teacher_id'],
-    ['posts', 'author_id'],
-    ['reactions', 'user_id'],
-    ['reports', 'reporter_id'],
-    ['school_events', 'created_by_id'],
-    ['song_requests', 'requester_id'],
-    ['staff_profiles', 'user_id'],
-    ['user_permissions', 'user_id'],
-    ['user_roles', 'user_id'],
-    ['wake_song_request_events', 'actor_id'],
-    ['wake_song_requests', 'requester_id'],
-    ['wake_song_requests', 'reviewed_by_id'],
-  ];
-
-  for (const [table, column] of userReferences) {
-    await connection.query(
-      `UPDATE IGNORE \`${table}\` SET \`${column}\` = ? WHERE \`${column}\` = ?`,
-      [canonicalUserId, legacy.userId],
-    );
-    await connection.query(`DELETE FROM \`${table}\` WHERE \`${column}\` = ?`, [legacy.userId]);
-  }
-
-  await connection.execute('DELETE FROM auth_accounts WHERE user_id = ?', [legacy.userId]);
-  await connection.execute('DELETE FROM users WHERE id = ?', [legacy.userId]);
-}
-
 async function main() {
   const connection = await mysql.createConnection(seedConnectionOptions(databaseUrl));
 
@@ -173,33 +77,21 @@ async function main() {
     const usernameProfile = await loadUserProfile(connection, usernameOwner?.id);
     const numberProfile = await loadUserProfile(connection, numberOwner?.id);
 
-    if (
-      usernameProfile &&
-      !isKnownDemoProfile(usernameProfile, username) &&
-      !isKnownLegacyDemoProfile(usernameProfile)
-    ) {
+    if (usernameProfile && !isKnownTestProfile(usernameProfile, username)) {
       throw new Error(
-        `TEST_USER_USERNAME ${username} belongs to a non-demo user; refusing to overwrite it.`,
+        `TEST_USER_USERNAME ${username} belongs to a non-test user; refusing to overwrite it.`,
       );
     }
 
-    if (!usernameProfile && numberProfile && !isKnownDemoProfile(numberProfile, username)) {
+    if (!usernameProfile && numberProfile && !isKnownTestProfile(numberProfile, username)) {
       throw new Error(
-        `TEST_USER_STUDENT_NO ${studentNo} belongs to a non-demo user; refusing to overwrite it.`,
+        `TEST_USER_STUDENT_NO ${studentNo} belongs to a non-test user; refusing to overwrite it.`,
       );
     }
 
-    const legacyProfiles = [];
     let user = usernameOwner || numberOwner;
     if (usernameOwner && numberOwner && usernameOwner.id !== numberOwner.id) {
-      if (
-        !isKnownLegacyDemoProfile(usernameProfile) ||
-        !isKnownDemoProfile(numberProfile, username)
-      ) {
-        throw new Error('Conflicting test identities are not both recognized demo fixtures.');
-      }
-      user = numberOwner;
-      legacyProfiles.push(usernameProfile);
+      throw new Error('Conflicting local test identities must be resolved manually.');
     }
 
     if (!user) {
@@ -253,28 +145,6 @@ async function main() {
       'SELECT id FROM students WHERE user_id = ? LIMIT 1 FOR UPDATE',
       [user.id],
     );
-    const [knownLegacyRows] = await connection.execute(
-      `SELECT DISTINCT u.id
-       FROM users u
-       INNER JOIN auth_accounts a ON a.user_id = u.id
-       WHERE u.student_no = 29999 AND u.id <> ?
-         AND u.name IN ('테스트', '테스트 학생', '김성찬')
-         AND a.provider = 'local' AND a.provider_account_id IN ('test', 'test.student')
-       FOR UPDATE`,
-      [user.id],
-    );
-    for (const legacyRow of knownLegacyRows) {
-      const profile = await loadUserProfile(connection, legacyRow.id);
-      if (isKnownLegacyDemoProfile(profile)) legacyProfiles.push(profile);
-    }
-
-    const migratedLegacyIds = new Set();
-    for (const legacyProfile of legacyProfiles) {
-      if (!legacyProfile || migratedLegacyIds.has(legacyProfile.id)) continue;
-      migratedLegacyIds.add(legacyProfile.id);
-      await migrateLegacyDemoStudent(connection, legacyProfile.id, user.id, canonicalStudent.id);
-    }
-
     await connection.execute(
       `UPDATE students
        SET current_point = (
@@ -339,7 +209,9 @@ async function main() {
       `SELECT id, name FROM roles WHERE name IN ('student', 'teacher', 'system_admin') FOR UPDATE`,
     );
     if (requiredRoles.length !== 3) {
-      throw new Error('Required demo roles are missing; run all database migrations first.');
+      throw new Error(
+        'Required test account roles are missing; run all database migrations first.',
+      );
     }
 
     await connection.execute(
@@ -350,7 +222,7 @@ async function main() {
 
     await connection.commit();
     console.log(
-      `Demo test account ready: ${username} / ${studentNo} 테스트 (student, teacher, system_admin; staff ${staffNo})`,
+      `Local test account ready: ${username} / ${studentNo} 테스트 (student, teacher, system_admin; staff ${staffNo})`,
     );
   } catch (error) {
     await connection.rollback();

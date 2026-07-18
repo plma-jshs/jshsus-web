@@ -70,7 +70,7 @@ services:
     env_file:
       - .env
     environment:
-      NODE_ENV: ${NODE_ENV:-development}
+      NODE_ENV: development
       DATABASE_URL: ${COMPOSE_DATABASE_URL:-mysql://${MYSQL_USER:-jshs_web}:${MYSQL_PASSWORD:-local_mysql_password}@mysql:3306/jshsus}
       DATABASE_SSL_MODE: disabled
       ALLOW_LOCAL_SEED: ${ALLOW_LOCAL_SEED:-false}

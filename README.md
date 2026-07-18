@@ -39,7 +39,6 @@ pnpm local:reset-db
 
 ```bash
 NODE_ENV=development ALLOW_LOCAL_SEED=true pnpm db:create-local-test-user
-NODE_ENV=development ALLOW_LOCAL_SEED=true pnpm db:seed-local-demo
 ```
 
 - 학번: `9999`
@@ -130,19 +129,6 @@ GitHub `production` Environment에는 다음 secret이 필요합니다.
 - `NEIS_API_KEY` (NEIS 키만 독립적으로 교체할 수 있도록 별도 보관)
 - `YOUTUBE_API_KEY` (필수, JBS와 기상곡의 영상 제목·길이·임베드 가능 여부 검증)
 
-공개 스테이징에 테스트 계정과 데모 데이터를 유지하는 동안에는 GitHub Environment에 다음
-값도 설정합니다. `SEED_DEMO_DATA=false`로 바꾸면 이후 배포부터 시드를 건너뛰며, 기존 행은
-자동 삭제하지 않습니다.
-
-- Variables: `SEED_DEMO_DATA=true`, `DEMO_SEED_DATABASE_NAME=jshsus_v26`
-- Secrets: `TEST_USER_USERNAME`, 12자 이상의 비기본값 `TEST_USER_PASSWORD`,
-  `TEST_USER_STUDENT_NO`
-
-스테이징 시드는 `DEPLOYMENT_TIER=staging`, 명시적 허용 플래그, 대상 DB 이름의 정확한 일치가
-모두 확인될 때만 실행됩니다. 실제 운영 환경에서는 `SEED_DEMO_DATA=false`로 두며 시드 코드를
-삭제할 필요가 없습니다.
-
-교육청·학교 코드와 timeout/cache 값은 Compose의 안전한 기본값을 사용한다. NEIS 키는
 `PRODUCTION_ENV_FILE`에 중복 기록하지 않으며, 배포 시 임시 환경파일에만 병합된다.
 
 배포는 DB 백업과 마이그레이션을 먼저 실행하고, Redis/API/web/admin을 순서대로 갱신해 내부 health check를 통과시킵니다. 환경파일과 Compose manifest도 릴리스별로 보관하므로 이미지뿐 아니라 직전 실행 설정까지 함께 되돌릴 수 있습니다. 공개 smoke test가 실패해도 직전 릴리스로 자동 복구합니다. DB 마이그레이션은 자동으로 되돌리지 않으므로 항상 이전 이미지와 호환되는 expand/contract 방식으로 작성합니다.

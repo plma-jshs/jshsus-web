@@ -243,7 +243,16 @@ function normalizeGender(value) {
   const normalized = String(value ?? '')
     .trim()
     .toLowerCase();
-  return normalized === 'female' || normalized === 'f' ? 'female' : 'male';
+  return normalized === 'female' || normalized === 'f' ? '1' : '0';
+}
+
+function normalizePhone(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 10 && digits.startsWith('10')) return `0${digits}`;
+  if (digits.length === 11 && digits.startsWith('010')) return digits;
+  return null;
 }
 
 function parseManagedClasses(value) {
@@ -298,27 +307,22 @@ async function importLegacyPeople(target, legacy) {
     const name = cleanText(row.name);
     if (!studentNo || !name || grade < 1 || grade > 3 || classNo < 1 || classNo > 4) continue;
     const iam = iamByStudentNo.get(studentNo);
-    let user = await selectOne(
-      target,
-      'SELECT id FROM users WHERE legacy_iam_id <=> ? OR student_no = ? LIMIT 1',
-      [iam?.id ?? null, studentNo],
-    );
-    const legacyJshsusId = cleanText(iam?.jshsus) || `plma-student-${studentNo}`;
+    let user = await selectOne(target, 'SELECT id FROM users WHERE student_no = ? LIMIT 1', [
+      studentNo,
+    ]);
     if (!user) {
       const [result] = await target.execute(
         `INSERT INTO users
-          (legacy_iam_id, legacy_jshsus_id, student_no, name, grade, class_no, number, email, phone, gender, user_status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (student_no, name, grade, class_no, number, email, phone, gender, user_status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          iam?.id ?? null,
-          legacyJshsusId,
           studentNo,
           name,
           grade,
           classNo,
           number,
           cleanText(iam?.email) || null,
-          cleanText(iam?.phone || row.phone_number) || null,
+          normalizePhone(iam?.phone || row.phone_number),
           normalizeGender(iam?.gender || row.gender),
           Number(iam?.restricted ?? 0) ? 'restricted' : 'active',
         ],
@@ -327,20 +331,17 @@ async function importLegacyPeople(target, legacy) {
     } else {
       await target.execute(
         `UPDATE users
-         SET legacy_iam_id = COALESCE(legacy_iam_id, ?), legacy_jshsus_id = ?, student_no = ?,
-             name = ?, grade = ?, class_no = ?, number = ?, email = ?, phone = ?, gender = ?,
+         SET student_no = ?, name = ?, grade = ?, class_no = ?, number = ?, email = ?, phone = ?, gender = ?,
              user_status = ?, updated_at = now(3)
          WHERE id = ?`,
         [
-          iam?.id ?? null,
-          legacyJshsusId,
           studentNo,
           name,
           grade,
           classNo,
           number,
           cleanText(iam?.email) || null,
-          cleanText(iam?.phone || row.phone_number) || null,
+          normalizePhone(iam?.phone || row.phone_number),
           normalizeGender(iam?.gender || row.gender),
           Number(iam?.restricted ?? 0) ? 'restricted' : 'active',
           user.id,
@@ -349,12 +350,12 @@ async function importLegacyPeople(target, legacy) {
     }
 
     await target.execute(
-      `INSERT INTO students (user_id, legacy_student_id, student_no, name, grade, class_no, number, current_point)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 0)
-       ON DUPLICATE KEY UPDATE user_id = VALUES(user_id), legacy_student_id = VALUES(legacy_student_id),
+      `INSERT INTO students (user_id, student_no, name, grade, class_no, number, current_point)
+       VALUES (?, ?, ?, ?, ?, ?, 0)
+       ON DUPLICATE KEY UPDATE user_id = VALUES(user_id),
          name = VALUES(name), grade = VALUES(grade), class_no = VALUES(class_no), number = VALUES(number),
          updated_at = now(3)`,
-      [user.id, row.id ?? null, studentNo, name, grade, classNo, number],
+      [user.id, studentNo, name, grade, classNo, number],
     );
     await target.execute('INSERT IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)', [
       user.id,
@@ -384,38 +385,32 @@ async function importLegacyPeople(target, legacy) {
       Number(iam.grade) <= 3 &&
       legacyStudentNos.has(Number(row.stuid))
     ) {
-      const studentUser = await selectOne(
-        target,
-        'SELECT id FROM users WHERE legacy_iam_id <=> ? OR student_no = ? LIMIT 1',
-        [iam.id, Number(row.stuid)],
-      );
-      if (studentUser) {
-        await target.execute(
-          'UPDATE users SET legacy_plma_id = ?, updated_at = now(3) WHERE id = ?',
-          [legacyStaffNo, studentUser.id],
-        );
-      }
       continue;
     }
-    const legacyJshsusId = cleanText(iam?.jshsus) || `plma-teacher-${legacyStaffNo}`;
     let user = await selectOne(
       target,
-      'SELECT id FROM users WHERE legacy_iam_id <=> ? OR legacy_jshsus_id = ? OR student_no = ? LIMIT 1',
-      [iam?.id ?? null, legacyJshsusId, -staffNo],
+      `SELECT users.id
+       FROM staff_profiles
+       INNER JOIN users ON users.id = staff_profiles.user_id
+       WHERE staff_profiles.staff_no = ?
+       LIMIT 1`,
+      [staffNo],
     );
+    if (!user) {
+      user = await selectOne(target, 'SELECT id FROM users WHERE student_no = ? LIMIT 1', [
+        -staffNo,
+      ]);
+    }
     if (!user) {
       const [result] = await target.execute(
         `INSERT INTO users
-          (legacy_iam_id, legacy_jshsus_id, legacy_plma_id, student_no, name, email, phone, gender, user_status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (student_no, name, email, phone, gender, user_status)
+         VALUES (?, ?, ?, ?, ?, ?)`,
         [
-          iam?.id ?? null,
-          legacyJshsusId,
-          legacyStaffNo,
           -staffNo,
           name,
           cleanText(iam?.email) || null,
-          cleanText(iam?.phone) || null,
+          normalizePhone(iam?.phone),
           normalizeGender(iam?.gender),
           Number(iam?.restricted ?? 0) ? 'restricted' : 'active',
         ],
@@ -424,18 +419,13 @@ async function importLegacyPeople(target, legacy) {
     } else {
       await target.execute(
         `UPDATE users
-         SET legacy_iam_id = COALESCE(legacy_iam_id, ?), legacy_jshsus_id = ?,
-             legacy_plma_id = ?, student_no = ?,
-             name = ?, email = ?, phone = ?, gender = ?, user_status = ?, updated_at = now(3)
+         SET student_no = ?, name = ?, email = ?, phone = ?, gender = ?, user_status = ?, updated_at = now(3)
          WHERE id = ?`,
         [
-          iam?.id ?? null,
-          legacyJshsusId,
-          legacyStaffNo,
           -staffNo,
           name,
           cleanText(iam?.email) || null,
-          cleanText(iam?.phone) || null,
+          normalizePhone(iam?.phone),
           normalizeGender(iam?.gender),
           Number(iam?.restricted ?? 0) ? 'restricted' : 'active',
           user.id,
@@ -474,46 +464,27 @@ async function importLegacyPeople(target, legacy) {
     if (!code || deleted || !comment) continue;
     const point = plus > 0 ? plus : minus > 0 ? -minus : plus - minus;
     const type = point > 0 ? 'PLUS' : point < 0 ? 'MINUS' : 'ETC';
-    await target.execute(
-      `INSERT INTO point_reasons (legacy_reason_code, point_reason_type, point, comment, is_active)
-       VALUES (?, ?, ?, ?, 1)
-       ON DUPLICATE KEY UPDATE point_reason_type = VALUES(point_reason_type), point = VALUES(point),
-         comment = VALUES(comment), is_active = 1, updated_at = now(3)`,
-      [code, type, point, comment],
+    const existingReason = await selectOne(
+      target,
+      'SELECT id FROM point_reasons WHERE point_reason_type = ? AND point = ? AND comment = ? LIMIT 1',
+      [type, point, comment],
     );
+    if (existingReason) {
+      await target.execute(
+        'UPDATE point_reasons SET is_active = 1, updated_at = now(3) WHERE id = ?',
+        [existingReason.id],
+      );
+    } else {
+      await target.execute(
+        `INSERT INTO point_reasons (point_reason_type, point, comment, is_active)
+         VALUES (?, ?, ?, 1)`,
+        [type, point, comment],
+      );
+    }
     reasons += 1;
   }
 
   return { students, teachers, reasons };
-}
-
-async function ensureLegacyTeacher(target) {
-  const staffNo = 999999;
-  const existingStaff = await selectOne(
-    target,
-    'SELECT user_id AS id FROM staff_profiles WHERE staff_no = ? LIMIT 1',
-    [staffNo],
-  );
-  if (existingStaff) return existingStaff.id;
-
-  let user = await selectOne(target, 'SELECT id FROM users WHERE student_no = ? LIMIT 1', [
-    -staffNo,
-  ]);
-  if (!user) {
-    const [result] = await target.execute(
-      `INSERT INTO users (legacy_jshsus_id, student_no, name, user_status)
-       VALUES ('legacy-import', ?, 'Legacy Import', 'active')`,
-      [-staffNo],
-    );
-    user = { id: result.insertId };
-  }
-  await target.execute(
-    `INSERT INTO staff_profiles (user_id, staff_no, name, department, title)
-     VALUES (?, ?, 'Legacy Import', NULL, 'Legacy Import')
-     ON DUPLICATE KEY UPDATE updated_at = now(3)`,
-    [user.id, staffNo],
-  );
-  return user.id;
 }
 
 function pointRecordKey(studentId, teacherId, reasonId, point, baseDate, createdAt, comment) {
@@ -521,7 +492,6 @@ function pointRecordKey(studentId, teacherId, reasonId, point, baseDate, created
 }
 
 async function importPointHistory(target, historyRows) {
-  let legacyTeacherId = null;
   const studentCache = new Map();
   const teacherCache = new Map();
   const reasonCache = new Map();
@@ -564,15 +534,6 @@ async function importPointHistory(target, historyRows) {
   };
   const getTeacher = async (legacyStaffNo) => {
     if (teacherCache.has(legacyStaffNo)) return teacherCache.get(legacyStaffNo);
-    const legacyActor = await selectOne(
-      target,
-      'SELECT id FROM users WHERE legacy_plma_id = ? LIMIT 1',
-      [legacyStaffNo],
-    );
-    if (legacyActor) {
-      teacherCache.set(legacyStaffNo, legacyActor.id);
-      return legacyActor.id;
-    }
     const staffNo = 100000 + Number(legacyStaffNo);
     const row = await selectOne(
       target,
@@ -580,30 +541,30 @@ async function importPointHistory(target, historyRows) {
        FROM staff_profiles
        INNER JOIN users ON users.id = staff_profiles.user_id
        WHERE staff_profiles.staff_no = ?
-       LIMIT 1`,
+      LIMIT 1`,
       [staffNo],
     );
-    if (!row && !legacyTeacherId) legacyTeacherId = await ensureLegacyTeacher(target);
-    const id = row?.id ?? legacyTeacherId;
+    const id = row?.id ?? null;
     teacherCache.set(legacyStaffNo, id);
     return id;
   };
   const getReason = async (code, caption, point, type) => {
-    if (reasonCache.has(code)) return reasonCache.get(code);
+    const key = `${code}:${type}:${point}:${caption}`;
+    if (reasonCache.has(key)) return reasonCache.get(key);
     let row = await selectOne(
       target,
-      'SELECT id FROM point_reasons WHERE legacy_reason_code = ? LIMIT 1',
-      [code],
+      'SELECT id FROM point_reasons WHERE point_reason_type = ? AND point = ? AND comment = ? LIMIT 1',
+      [type, point, caption || `Legacy reason ${code}`],
     );
     if (!row) {
       const [result] = await target.execute(
-        `INSERT INTO point_reasons (legacy_reason_code, point_reason_type, point, comment, is_active)
-         VALUES (?, ?, ?, ?, 1)`,
-        [code, type, point, caption || `Legacy reason ${code}`],
+        `INSERT INTO point_reasons (point_reason_type, point, comment, is_active)
+         VALUES (?, ?, ?, 1)`,
+        [type, point, caption || `Legacy reason ${code}`],
       );
       row = { id: result.insertId };
     }
-    reasonCache.set(code, row.id);
+    reasonCache.set(key, row.id);
     return row.id;
   };
 
@@ -716,14 +677,21 @@ function asDateTime(value) {
     .slice(0, 19);
 }
 
-async function importWakeSongs(target, songRows) {
+async function importWakeSongs(target, songRows, iamStudentNoById = new Map()) {
   let imported = 0;
   let skipped = 0;
   for (const row of songRows) {
     const [legacyId, requester, requestWeek, ytlink, confirmed, createdAt, start, end, speed] = row;
-    const user = await selectOne(target, 'SELECT id FROM users WHERE legacy_iam_id = ? LIMIT 1', [
-      requester,
-    ]);
+    const requesterStudentNo = iamStudentNoById.get(Number(requester)) ?? Number(requester);
+    const user = await selectOne(
+      target,
+      `SELECT users.id
+       FROM students
+       INNER JOIN users ON users.id = students.user_id
+       WHERE students.student_no = ?
+       LIMIT 1`,
+      [requesterStudentNo],
+    );
     const videoId = extractYoutubeVideoId(ytlink);
     if (!user || !videoId) {
       skipped += 1;
@@ -1079,12 +1047,16 @@ async function main() {
     const songsPath = windowsPathToWsl(process.env.PLMA_SONGS_DUMP || DEFAULT_SONGS_DUMP);
     const historyRows = extractRows(readFileSync(historyPath, 'utf8'), 'history');
     const songRows = extractRows(readFileSync(songsPath, 'utf8'), 'songs');
+    const [iamRows] = await legacy.execute('SELECT id, stuid FROM iam');
+    const iamStudentNoById = new Map(
+      iamRows.map((row) => [Number(row.id), Number(row.stuid)]).filter(([, stuid]) => stuid),
+    );
 
     try {
       await target.beginTransaction();
       const people = await importLegacyPeople(target, legacy);
       const pointHistory = await importPointHistory(target, historyRows);
-      const wakeSongs = await importWakeSongs(target, songRows);
+      const wakeSongs = await importWakeSongs(target, songRows, iamStudentNoById);
       await target.commit();
       console.log('Legacy PLMA import complete:', { people, pointHistory, wakeSongs });
     } catch (error) {

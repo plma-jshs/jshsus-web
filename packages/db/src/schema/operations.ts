@@ -23,7 +23,6 @@ export const students = mysqlTable(
   {
     id,
     userId: int('user_id').references(() => users.id),
-    legacyStudentId: int('legacy_student_id'),
     studentNo: int('student_no').notNull(),
     name: varchar('name', { length: 64 }).notNull(),
     grade: int('grade').notNull(),
@@ -35,7 +34,6 @@ export const students = mysqlTable(
   (table) => ({
     studentNoIdx: uniqueIndex('students_student_no_idx').on(table.studentNo),
     userIdx: uniqueIndex('students_user_id_idx').on(table.userId),
-    legacyIdx: uniqueIndex('students_legacy_student_id_idx').on(table.legacyStudentId),
   }),
 );
 
@@ -52,8 +50,6 @@ export const staffProfiles = mysqlTable(
     title: varchar('title', { length: 120 }),
     /** Class homerooms or assigned cohorts used to scope staff work queues. */
     managedClasses: json('managed_classes').$type<Array<{ grade: number; classNo: number }>>(),
-    /** @deprecated IAM user_roles is the authority for student-affairs access. */
-    isStudentAffairsHead: boolean('is_student_affairs_head').notNull().default(false),
     ...timestamps,
   },
   (table) => ({
@@ -68,24 +64,14 @@ export const staffProfiles = mysqlTable(
 
 export const pointReasonTypeEnum = mysqlEnum('point_reason_type', ['PLUS', 'MINUS', 'ETC']);
 
-export const pointReasons = mysqlTable(
-  'point_reasons',
-  {
-    id,
-    /** Source reason code retained when a legacy PLMA rule is imported. */
-    legacyReasonCode: int('legacy_reason_code'),
-    type: pointReasonTypeEnum.notNull(),
-    point: int('point').notNull(),
-    comment: varchar('comment', { length: 255 }).notNull(),
-    isActive: boolean('is_active').notNull().default(true),
-    ...timestamps,
-  },
-  (table) => ({
-    legacyReasonCodeIdx: uniqueIndex('point_reasons_legacy_reason_code_idx').on(
-      table.legacyReasonCode,
-    ),
-  }),
-);
+export const pointReasons = mysqlTable('point_reasons', {
+  id,
+  type: pointReasonTypeEnum.notNull(),
+  point: int('point').notNull(),
+  comment: varchar('comment', { length: 255 }).notNull(),
+  isActive: boolean('is_active').notNull().default(true),
+  ...timestamps,
+});
 
 export const pointRecords = mysqlTable(
   'point_records',
@@ -94,9 +80,7 @@ export const pointRecords = mysqlTable(
     studentId: int('student_id')
       .notNull()
       .references(() => students.id),
-    teacherId: int('teacher_id')
-      .notNull()
-      .references(() => users.id),
+    teacherId: int('teacher_id').references(() => users.id),
     reasonId: int('reason_id')
       .notNull()
       .references(() => pointReasons.id),
@@ -294,27 +278,6 @@ export const dormReports = mysqlTable(
     roomIdx: index('dorm_reports_room_idx').on(table.roomId),
   }),
 );
-
-/**
- * @deprecated Legacy placeholder retained only for forward-only migration compatibility.
- * New wake-song code uses wakeSongRequests from ./broadcast.
- */
-export const songRequestStatusEnum = mysqlEnum('song_request_status', [
-  'PENDING',
-  'APPROVED',
-  'REJECTED',
-]);
-
-/** @deprecated Use wakeSongRequests from ./broadcast. */
-export const songRequests = mysqlTable('song_requests', {
-  id,
-  title: varchar('title', { length: 255 }).notNull(),
-  url: varchar('url', { length: 500 }).notNull(),
-  duration: int('duration').notNull(),
-  status: songRequestStatusEnum.notNull().default('PENDING'),
-  requesterId: int('requester_id').references(() => users.id),
-  ...timestamps,
-});
 
 export const activityRequestStatusEnum = mysqlEnum('activity_request_status', [
   'draft',

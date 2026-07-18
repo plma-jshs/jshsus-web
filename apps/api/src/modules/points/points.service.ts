@@ -378,7 +378,6 @@ export class PointsService {
       const reasons = await db
         .select({
           id: schema.pointReasons.id,
-          legacyReasonCode: schema.pointReasons.legacyReasonCode,
           type: schema.pointReasons.type,
           point: schema.pointReasons.point,
           comment: schema.pointReasons.comment,
@@ -388,10 +387,7 @@ export class PointsService {
         .where(eq(schema.pointReasons.isActive, true))
         .orderBy(schema.pointReasons.type, schema.pointReasons.comment);
 
-      return reasons.map((reason) => ({
-        ...reason,
-        legacyReasonCode: reason.legacyReasonCode ?? undefined,
-      }));
+      return reasons;
     });
   }
 
@@ -426,7 +422,6 @@ export class PointsService {
       const items = await db
         .select({
           id: schema.pointReasons.id,
-          legacyReasonCode: schema.pointReasons.legacyReasonCode,
           type: schema.pointReasons.type,
           point: schema.pointReasons.point,
           comment: schema.pointReasons.comment,
@@ -467,13 +462,17 @@ export class PointsService {
         })
         .from(schema.pointRecords)
         .innerJoin(schema.students, eq(schema.pointRecords.studentId, schema.students.id))
-        .innerJoin(schema.users, eq(schema.pointRecords.teacherId, schema.users.id))
+        .leftJoin(schema.users, eq(schema.pointRecords.teacherId, schema.users.id))
         .innerJoin(schema.pointReasons, eq(schema.pointRecords.reasonId, schema.pointReasons.id))
         .where(isNull(schema.pointRecords.canceledAt))
         .orderBy(desc(schema.pointRecords.baseDate), desc(schema.pointRecords.id))
         .limit(limit);
 
-      return rows.map((row) => ({ ...row, baseDate: toDateOnly(row.baseDate) }));
+      return rows.map((row) => ({
+        ...row,
+        teacherName: row.teacherName ?? '이관 데이터',
+        baseDate: toDateOnly(row.baseDate),
+      }));
     });
   }
 
@@ -528,7 +527,7 @@ export class PointsService {
         .select({ total: count() })
         .from(schema.pointRecords)
         .innerJoin(schema.students, eq(schema.pointRecords.studentId, schema.students.id))
-        .innerJoin(schema.users, eq(schema.pointRecords.teacherId, schema.users.id))
+        .leftJoin(schema.users, eq(schema.pointRecords.teacherId, schema.users.id))
         .innerJoin(schema.pointReasons, eq(schema.pointRecords.reasonId, schema.pointReasons.id))
         .where(where);
       const [{ total }] = await baseQuery;
@@ -551,7 +550,7 @@ export class PointsService {
         })
         .from(schema.pointRecords)
         .innerJoin(schema.students, eq(schema.pointRecords.studentId, schema.students.id))
-        .innerJoin(schema.users, eq(schema.pointRecords.teacherId, schema.users.id))
+        .leftJoin(schema.users, eq(schema.pointRecords.teacherId, schema.users.id))
         .innerJoin(schema.pointReasons, eq(schema.pointRecords.reasonId, schema.pointReasons.id))
         .where(where)
         .orderBy(orderExpression, desc(schema.pointRecords.createdAt), desc(schema.pointRecords.id))
@@ -561,6 +560,7 @@ export class PointsService {
       return {
         items: rows.map(({ teacherStudentNo, ...row }) => ({
           ...row,
+          teacherName: row.teacherName ?? '이관 데이터',
           isSystemGenerated: isSystemPointRecord({
             teacherStudentNo,
             reason: row.reason,
@@ -914,7 +914,7 @@ export class PointsService {
             reason: sql<string>`coalesce(${schema.pointRecords.reasonText}, ${schema.pointReasons.comment})`,
           })
           .from(schema.pointRecords)
-          .innerJoin(schema.users, eq(schema.pointRecords.teacherId, schema.users.id))
+          .leftJoin(schema.users, eq(schema.pointRecords.teacherId, schema.users.id))
           .innerJoin(schema.pointReasons, eq(schema.pointRecords.reasonId, schema.pointReasons.id))
           .where(eq(schema.pointRecords.id, id))
           .limit(1)
@@ -966,7 +966,7 @@ export class PointsService {
             reason: sql<string>`coalesce(${schema.pointRecords.reasonText}, ${schema.pointReasons.comment})`,
           })
           .from(schema.pointRecords)
-          .innerJoin(schema.users, eq(schema.pointRecords.teacherId, schema.users.id))
+          .leftJoin(schema.users, eq(schema.pointRecords.teacherId, schema.users.id))
           .innerJoin(schema.pointReasons, eq(schema.pointRecords.reasonId, schema.pointReasons.id))
           .where(eq(schema.pointRecords.id, id))
           .limit(1)

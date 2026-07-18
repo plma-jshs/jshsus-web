@@ -2,11 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { resolveSessionIdentity } from './auth.service';
 
 describe('resolveSessionIdentity', () => {
-  it('uses the student profile number for display and legacy stuid compatibility', () => {
+  it('uses the student profile number for display and stuid compatibility', () => {
     expect(
       resolveSessionIdentity({
         studentNo: 9999,
-        legacyStudentNo: 29999,
         providerAccountId: 'test',
         username: 'test',
       }),
@@ -17,7 +16,6 @@ describe('resolveSessionIdentity', () => {
     expect(
       resolveSessionIdentity({
         staffNo: 100123,
-        legacyStudentNo: 100123,
         providerAccountId: '100123',
         username: '100123',
       }),

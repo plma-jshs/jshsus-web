@@ -249,7 +249,6 @@ export const lostItems = mysqlTable(
     description: text('description'),
     status: lostItemStatusEnum.notNull().default('open'),
     authorId: int('author_id').references(() => users.id),
-    metadata: json('metadata'),
     ...timestamps,
   },
   (table) => ({

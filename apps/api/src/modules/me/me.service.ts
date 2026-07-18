@@ -120,7 +120,7 @@ export class MeService {
             })
             .from(schema.pointRecords)
             .innerJoin(schema.students, eq(schema.pointRecords.studentId, schema.students.id))
-            .innerJoin(schema.users, eq(schema.pointRecords.teacherId, schema.users.id))
+            .leftJoin(schema.users, eq(schema.pointRecords.teacherId, schema.users.id))
             .innerJoin(
               schema.pointReasons,
               eq(schema.pointRecords.reasonId, schema.pointReasons.id),
@@ -204,6 +204,7 @@ export class MeService {
 
       const records: PointRecord[] = pointRows.map((row) => ({
         ...row,
+        teacherName: row.teacherName ?? '이관 데이터',
         baseDate: toDateOnly(row.baseDate),
       }));
       const dorm = dormRows[0];

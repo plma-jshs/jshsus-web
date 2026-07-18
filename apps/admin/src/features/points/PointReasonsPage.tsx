@@ -122,7 +122,7 @@ export function PointReasonsPage() {
       {
         id: 'id',
         header: '사유코드',
-        cell: ({ row }) => row.original.legacyReasonCode ?? row.original.id,
+        cell: ({ row }) => row.original.id,
         meta: { align: 'center', width: 120 },
       },
       {

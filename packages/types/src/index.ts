@@ -360,7 +360,6 @@ export type PointReasonType = 'PLUS' | 'MINUS' | 'ETC';
 
 export type PointReason = {
   id: number;
-  legacyReasonCode?: number;
   type: PointReasonType;
   point: number;
   comment: string;

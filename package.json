@@ -27,8 +27,7 @@
     "test": "vitest run",
     "db:generate": "pnpm --filter @jshsus/db db:generate",
     "db:migrate": "pnpm --filter @jshsus/db db:migrate",
-    "db:create-local-test-user": "docker compose --profile tools run --rm migrate pnpm db:create-local-test-user",
-    "db:seed-local-demo": "docker compose --profile tools run --rm migrate pnpm db:seed-local-demo",
+    "db:create-local-test-user": "docker compose --profile tools run --rm -e ALLOW_LOCAL_SEED=true migrate pnpm db:create-local-test-user",
     "local:reset-db": "node scripts/reset-local-db.cjs",
     "db:migrations:check": "node scripts/check-migrations.cjs",
     "smoke:core": "pnpm --filter @jshsus/api smoke:core"
