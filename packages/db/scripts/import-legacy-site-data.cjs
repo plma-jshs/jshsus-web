@@ -15,8 +15,7 @@ const ROOT_DIR = resolve(__dirname, '../../..');
 const NOTICE_BASE = 'https://jshsus.kr/contents/council/';
 const BOARD_BASE = 'https://jshsus.kr/contents/school/';
 const RICH_NOTICE_PREFIX = 'jshsus-rich-text:v1\n';
-const DEFAULT_HISTORY_DUMP =
-  'C:/Users/Newbiedev/Desktop/plma_history_2026-07-17_175008.sql';
+const DEFAULT_HISTORY_DUMP = 'C:/Users/Newbiedev/Desktop/plma_history_2026-07-17_175008.sql';
 const DEFAULT_SONGS_DUMP = 'C:/Users/Newbiedev/Desktop/plma_songs_2026-07-17_180219.sql';
 
 function loadEnv() {
@@ -143,15 +142,6 @@ function decodeHtml(value) {
     .replace(/&#(\d+);/g, (_, decimal) => String.fromCodePoint(Number(decimal)));
 }
 
-function stripTags(value) {
-  return cleanText(
-    String(value ?? '')
-      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-      .replace(/<[^>]+>/g, ' '),
-  );
-}
-
 function firstMatch(value, pattern) {
   const match = String(value ?? '').match(pattern);
   return match ? cleanText(match[1]) : '';
@@ -168,7 +158,9 @@ function resolveLegacyUrl(src, baseUrl) {
 
 function attrsFromTag(tag) {
   const attrs = {};
-  for (const match of String(tag ?? '').matchAll(/([A-Za-z_:][-A-Za-z0-9_:.]*)\s*=\s*(["'])(.*?)\2/g)) {
+  for (const match of String(tag ?? '').matchAll(
+    /([A-Za-z_:][-A-Za-z0-9_:.]*)\s*=\s*(["'])(.*?)\2/g,
+  )) {
     attrs[match[1].toLowerCase()] = match[3];
   }
   return attrs;
@@ -237,7 +229,10 @@ function projectDocumentToPlainText(document) {
     if (['paragraph', 'heading', 'listItem', 'blockquote'].includes(node.type)) parts.push('\n');
   };
   for (const node of document.content ?? []) visit(node);
-  return parts.join('').replace(/\n{3,}/g, '\n\n').trim();
+  return parts
+    .join('')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function serializeNoticeContent(contentDoc, plainText) {
@@ -245,7 +240,9 @@ function serializeNoticeContent(contentDoc, plainText) {
 }
 
 function normalizeGender(value) {
-  const normalized = String(value ?? '').trim().toLowerCase();
+  const normalized = String(value ?? '')
+    .trim()
+    .toLowerCase();
   return normalized === 'female' || normalized === 'f' ? 'female' : 'male';
 }
 
@@ -451,7 +448,13 @@ async function importLegacyPeople(target, legacy) {
        VALUES (?, ?, ?, NULL, ?, CAST(? AS JSON))
        ON DUPLICATE KEY UPDATE name = VALUES(name), title = VALUES(title),
          managed_classes = VALUES(managed_classes), updated_at = now(3)`,
-      [user.id, staffNo, name, cleanText(row.job) || null, JSON.stringify(parseManagedClasses(row.manage))],
+      [
+        user.id,
+        staffNo,
+        name,
+        cleanText(row.job) || null,
+        JSON.stringify(parseManagedClasses(row.manage)),
+      ],
     );
     await target.execute('INSERT IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)', [
       user.id,
@@ -486,7 +489,9 @@ async function importLegacyPeople(target, legacy) {
 
 async function ensureLegacyTeacher(target) {
   const staffNo = 999999;
-  let user = await selectOne(target, 'SELECT id FROM users WHERE student_no = ? LIMIT 1', [-staffNo]);
+  let user = await selectOne(target, 'SELECT id FROM users WHERE student_no = ? LIMIT 1', [
+    -staffNo,
+  ]);
   if (!user) {
     const [result] = await target.execute(
       `INSERT INTO users (legacy_jshsus_id, student_no, name, user_status)
@@ -617,7 +622,8 @@ async function importPointHistory(target, historyRows) {
       continue;
     }
     const point =
-      (Number(afterPlus ?? 0) - Number(beforePlus ?? 0)) -
+      Number(afterPlus ?? 0) -
+      Number(beforePlus ?? 0) -
       (Number(afterMinus ?? 0) - Number(beforeMinus ?? 0));
     const type = point > 0 ? 'PLUS' : point < 0 ? 'MINUS' : 'ETC';
     const caption = cleanText(reasonCaption);
@@ -661,16 +667,19 @@ async function importPointHistory(target, historyRows) {
     if (Number(display) !== 0 && Number.isFinite(Number(aftersum))) {
       const previous = latestPointByStudentNo.get(studentNo);
       if (!previous || Number(legacyId) > previous.legacyId) {
-        latestPointByStudentNo.set(studentNo, { legacyId: Number(legacyId), point: Number(aftersum) });
+        latestPointByStudentNo.set(studentNo, {
+          legacyId: Number(legacyId),
+          point: Number(aftersum),
+        });
       }
     }
   }
 
   for (const [studentNo, { point }] of latestPointByStudentNo) {
-    await target.execute('UPDATE students SET current_point = ?, updated_at = now(3) WHERE student_no = ?', [
-      point,
-      studentNo,
-    ]);
+    await target.execute(
+      'UPDATE students SET current_point = ?, updated_at = now(3) WHERE student_no = ?',
+      [point, studentNo],
+    );
   }
 
   return { imported, skipped, balances: latestPointByStudentNo.size };
@@ -694,7 +703,9 @@ function extractYoutubeVideoId(url) {
 
 function asDateTime(value) {
   if (value instanceof Date) return value.toISOString().slice(0, 19).replace('T', ' ');
-  return String(value ?? '').replace('T', ' ').slice(0, 19);
+  return String(value ?? '')
+    .replace('T', ' ')
+    .slice(0, 19);
 }
 
 async function importWakeSongs(target, songRows) {
@@ -780,10 +791,22 @@ async function fetchText(url, headers = {}) {
 function parseNoticeDetail(html, url) {
   const title = firstMatch(html, /<h1 class=["']Mess["'][^>]*>([\s\S]*?)<\/h1>/i);
   const department = firstMatch(html, /<h2 class=["']department-h2["'][^>]*>([\s\S]*?)<\/h2>/i);
-  const bodyHtml = html.match(/<div class=["']main-text["'][^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<hr class=["']mid-hr["']/i)?.[1] ?? '';
+  const bodyHtml =
+    html.match(
+      /<div class=["']main-text["'][^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<hr class=["']mid-hr["']/i,
+    )?.[1] ?? '';
   const author = firstMatch(html, /<p class=["']text-info["']>\s*작성자\s*:\s*([\s\S]*?)<\/p>/i);
-  const publishedAt = firstMatch(html, /<p class=["']text-info["']>\s*작성시각\s*:\s*([\s\S]*?)<\/p>/i);
-  const viewCount = Number(firstMatch(html, /<p class=["']text-info["']>\s*조회수\s*:\s*([\d,]+)\s*<\/p>/i).replaceAll(',', '')) || 0;
+  const publishedAt = firstMatch(
+    html,
+    /<p class=["']text-info["']>\s*작성시각\s*:\s*([\s\S]*?)<\/p>/i,
+  );
+  const viewCount =
+    Number(
+      firstMatch(html, /<p class=["']text-info["']>\s*조회수\s*:\s*([\d,]+)\s*<\/p>/i).replaceAll(
+        ',',
+        '',
+      ),
+    ) || 0;
   const contentDoc = htmlToRichTextDocument(bodyHtml, url);
   const plainText = projectDocumentToPlainText(contentDoc);
   return {
@@ -797,7 +820,9 @@ function parseNoticeDetail(html, url) {
 
 async function importNotices(target) {
   const indexHtml = await fetchText(`${NOTICE_BASE}index.php`);
-  const ids = [...new Set([...indexHtml.matchAll(/readDocument\.php\?id=([^"'&]+)/g)].map((m) => m[1]))];
+  const ids = [
+    ...new Set([...indexHtml.matchAll(/readDocument\.php\?id=([^"'&]+)/g)].map((m) => m[1])),
+  ];
   let imported = 0;
   let skipped = 0;
   for (const legacyId of ids) {
@@ -833,7 +858,9 @@ async function importNotices(target) {
 }
 
 function parseLegacyProfile(html) {
-  const tip = html.match(/<span class=['"]tip['"][^>]*>\s*\|\s*([\s\S]*?)\s*\|\s*<span>\s*(\d+)\s*<\/span>/i);
+  const tip = html.match(
+    /<span class=['"]tip['"][^>]*>\s*\|\s*([\s\S]*?)\s*\|\s*<span>\s*(\d+)\s*<\/span>/i,
+  );
   return {
     nickname: tip ? cleanText(tip[1]) : '',
     studentNo: tip ? Number(tip[2]) : null,
@@ -868,7 +895,8 @@ function parseBoardList(html) {
       studentNo: profile.studentNo,
       createdAt: parseLegacyAge(profile.ago),
       viewCount: Number(firstMatch(block, /조회수\s*([\d,]+)\s*회/i).replaceAll(',', '')) || 0,
-      commentCount: Number(firstMatch(block, /<p class=["']board-comment["'][^>]*>([\d,]+)<\/p>/i)) || 0,
+      commentCount:
+        Number(firstMatch(block, /<p class=["']board-comment["'][^>]*>([\d,]+)<\/p>/i)) || 0,
     });
   }
   return entries;
@@ -894,13 +922,16 @@ async function collectBoardEntries() {
 }
 
 function parseBoardDetail(html, url, listEntry) {
-  const title = firstMatch(html, /<h2 class=["']read-board-title["'][^>]*>([\s\S]*?)<\/h2>/i) || listEntry.title;
+  const title =
+    firstMatch(html, /<h2 class=["']read-board-title["'][^>]*>([\s\S]*?)<\/h2>/i) ||
+    listEntry.title;
   const titleMatch = html.match(/<h2 class=["']read-board-title["'][^>]*>[\s\S]*?<\/h2>/i);
   const start = titleMatch ? titleMatch.index + titleMatch[0].length : 0;
   const end = html.indexOf('<div class="board-dis-line">', start);
   const bodyHtml = end > start ? html.slice(start, end) : '';
   const profile = parseLegacyProfile(html);
-  const viewCount = Number(firstMatch(html, /조회수\s*([\d,]+)\s*회/i).replaceAll(',', '')) || listEntry.viewCount;
+  const viewCount =
+    Number(firstMatch(html, /조회수\s*([\d,]+)\s*회/i).replaceAll(',', '')) || listEntry.viewCount;
   const contentDoc = htmlToRichTextDocument(bodyHtml, url);
   const content = projectDocumentToPlainText(contentDoc);
   const comments = [];

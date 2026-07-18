@@ -345,7 +345,9 @@ export class WakeSongsService {
     return this.database.query('wake-songs.admin-list', async (db) => {
       const conditions = [];
       if (status === 'APPROVED') {
-        conditions.push(inArray(schema.wakeSongRequests.status, ['APPROVED', 'SCHEDULED', 'PLAYED']));
+        conditions.push(
+          inArray(schema.wakeSongRequests.status, ['APPROVED', 'SCHEDULED', 'PLAYED']),
+        );
       } else if (status === 'REJECTED') {
         conditions.push(inArray(schema.wakeSongRequests.status, ['REJECTED', 'CANCELED']));
       } else if (status) {

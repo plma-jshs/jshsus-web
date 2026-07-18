@@ -8,12 +8,7 @@ export function isRecentContent(dateValue?: string | null) {
   return age >= 0 && age <= RECENT_CONTENT_WINDOW_MS;
 }
 
-export function ContentBadges({
-  createdAt,
-}: {
-  createdAt?: string | null;
-  pinned?: boolean;
-}) {
+export function ContentBadges({ createdAt }: { createdAt?: string | null; pinned?: boolean }) {
   const isRecent = isRecentContent(createdAt);
   if (!isRecent) return null;
 

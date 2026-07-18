@@ -33,9 +33,7 @@ export function NoticeManagementPage() {
     onSuccess: async (_, variables) => {
       await refreshNotices();
       showToast({
-        title: variables.pinned
-          ? '공지 목록 상단에 고정했습니다.'
-          : '공지 고정을 해제했습니다.',
+        title: variables.pinned ? '공지 목록 상단에 고정했습니다.' : '공지 고정을 해제했습니다.',
         tone: 'success',
       });
     },
