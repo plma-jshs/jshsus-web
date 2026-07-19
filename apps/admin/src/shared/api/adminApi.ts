@@ -238,7 +238,6 @@ export const api = {
     studentNo: number;
     name: string;
     gender: 'male' | 'female';
-    initialPassword: string;
     email?: string;
     phone?: string;
   }) =>
@@ -279,7 +278,7 @@ export const api = {
     }),
   adminStaff: (query: AdminIdentityListQuery = {}) =>
     request<PaginatedResponse<AdminStaffSummary>>(withQuery('/api/admin/staff', { ...query })),
-  createStaff: (input: { name: string; initialPassword: string; email?: string; phone?: string }) =>
+  createStaff: (input: { name: string; email?: string; phone?: string }) =>
     request<{ ok: true; staffId: number; userId: number; staffNo: number }>('/api/admin/staff', {
       method: 'POST',
       body: input,
@@ -292,11 +291,6 @@ export const api = {
       phone: string;
     }>,
   ) => request<{ ok: true; id: number }>(`/api/admin/staff/${id}`, { method: 'PUT', body: input }),
-  resetUserPassword: (userId: number, password: string) =>
-    request<{ ok: true; userId: number }>(`/api/admin/users/${userId}/password`, {
-      method: 'PUT',
-      body: { password },
-    }),
   iamRoles: () => request<AdminRoleSummary[]>('/api/admin/iam/roles'),
   createRole: (input: { name: string; label: string }) =>
     request<{ ok: true; role: AdminRoleSummary }>('/api/admin/iam/roles', {

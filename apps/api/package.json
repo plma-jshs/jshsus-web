@@ -20,7 +20,6 @@
     "@nestjs/common": "11.1.28",
     "@nestjs/core": "11.1.28",
     "@nestjs/platform-express": "11.1.28",
-    "argon2": "0.44.0",
     "cookie-parser": "1.4.7",
     "dotenv": "16.4.5",
     "drizzle-orm": "0.45.2",

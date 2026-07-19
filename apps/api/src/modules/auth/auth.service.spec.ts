@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UnauthorizedException } from '@nestjs/common';
 import { AuthService, resolveSessionIdentity } from './auth.service';
 import { CognitoAuthError } from './cognito-auth.service';
-import { env } from '../../shared/config/env';
 
 describe('resolveSessionIdentity', () => {
   it('uses the student profile number for display and stuid compatibility', () => {
@@ -25,23 +24,19 @@ describe('resolveSessionIdentity', () => {
     ).toEqual({ identifier: '100123', identityType: 'staff' });
   });
 
-  it('falls back to the provider account id for non-profile local accounts', () => {
+  it('falls back to the provider account id when no profile number exists', () => {
     expect(
       resolveSessionIdentity({ providerAccountId: 'local-admin', username: 'ignored' }),
     ).toEqual({ identifier: 'local-admin', identityType: 'local' });
   });
 });
 
-describe('hybrid authentication routing', () => {
-  const originalMode = env.AUTH_MODE;
-
+describe('Cognito authentication routing', () => {
   afterEach(() => {
-    env.AUTH_MODE = originalMode;
     vi.restoreAllMocks();
   });
 
-  it('never falls back to a local password after a linked Cognito failure', async () => {
-    env.AUTH_MODE = 'hybrid';
+  it('routes password login through Cognito only', async () => {
     const cognito = {
       authenticate: vi
         .fn()
@@ -52,14 +47,6 @@ describe('hybrid authentication routing', () => {
       {} as never,
       cognito as never,
     );
-    const internal = service as unknown as {
-      findPasswordAccount: (username: string) => Promise<{ userId: number } | null>;
-      findCognitoLinkForUser: (userId: number) => Promise<{ subject: string } | null>;
-      loginLocally: (...args: unknown[]) => Promise<unknown>;
-    };
-    vi.spyOn(internal, 'findPasswordAccount').mockResolvedValue({ userId: 1 });
-    vi.spyOn(internal, 'findCognitoLinkForUser').mockResolvedValue({ subject: 'sub-1' });
-    const localLogin = vi.spyOn(internal, 'loginLocally');
 
     await expect(
       service.login({
@@ -70,43 +57,36 @@ describe('hybrid authentication routing', () => {
       }),
     ).rejects.toMatchObject({ status: 401 });
 
-    expect(cognito.authenticate).toHaveBeenCalledOnce();
-    expect(localLogin).not.toHaveBeenCalled();
+    expect(cognito.authenticate).toHaveBeenCalledWith('9999', 'wrong', 'web');
   });
 
-  it('does not route password recovery for an unlinked local account to Cognito', async () => {
-    env.AUTH_MODE = 'hybrid';
-    const cognito = { forgotPassword: vi.fn() };
+  it('routes password recovery through Cognito while hiding unknown accounts', async () => {
+    const cognito = {
+      forgotPassword: vi
+        .fn()
+        .mockRejectedValue(new CognitoAuthError('AUTH_INVALID_CREDENTIALS', 'invalid credentials')),
+    };
     const service = new AuthService(
       { incrementWithTtl: vi.fn().mockResolvedValue(1) } as never,
       {} as never,
       cognito as never,
     );
-    const internal = service as unknown as {
-      findPasswordAccount: (username: string) => Promise<{ userId: number } | null>;
-      findCognitoLinkForUser: (userId: number) => Promise<{ subject: string } | null>;
-    };
-    vi.spyOn(internal, 'findPasswordAccount').mockResolvedValue({ userId: 1 });
-    vi.spyOn(internal, 'findCognitoLinkForUser').mockResolvedValue(null);
 
     await expect(service.requestPasswordReset('9999', 'web')).resolves.toEqual({ ok: true });
-    expect(cognito.forgotPassword).not.toHaveBeenCalled();
+    expect(cognito.forgotPassword).toHaveBeenCalledWith('9999', 'web');
   });
 
-  it('returns the same invalid-code response when an unlinked local account confirms recovery', async () => {
-    env.AUTH_MODE = 'hybrid';
-    const cognito = { confirmForgotPassword: vi.fn() };
+  it('maps Cognito reset-confirm credential failures to the public invalid-code response', async () => {
+    const cognito = {
+      confirmForgotPassword: vi
+        .fn()
+        .mockRejectedValue(new CognitoAuthError('AUTH_INVALID_CREDENTIALS', 'invalid credentials')),
+    };
     const service = new AuthService(
       { incrementWithTtl: vi.fn().mockResolvedValue(1) } as never,
       {} as never,
       cognito as never,
     );
-    const internal = service as unknown as {
-      findPasswordAccount: (username: string) => Promise<{ userId: number } | null>;
-      findCognitoLinkForUser: (userId: number) => Promise<{ subject: string } | null>;
-    };
-    vi.spyOn(internal, 'findPasswordAccount').mockResolvedValue({ userId: 1 });
-    vi.spyOn(internal, 'findCognitoLinkForUser').mockResolvedValue(null);
 
     await expect(
       service.confirmPasswordReset({
@@ -119,7 +99,7 @@ describe('hybrid authentication routing', () => {
       status: 400,
       response: { code: 'AUTH_CODE_MISMATCH' },
     });
-    expect(cognito.confirmForgotPassword).not.toHaveBeenCalled();
+    expect(cognito.confirmForgotPassword).toHaveBeenCalledOnce();
   });
 
   it('does not allow a web challenge flow to be completed through the admin surface', async () => {
@@ -148,7 +128,7 @@ describe('hybrid authentication routing', () => {
     expect(cognito.completeNewPassword).not.toHaveBeenCalled();
   });
 
-  it('does not mask a local account-link failure after Cognito changes the password', async () => {
+  it('does not mask an account-link failure after Cognito changes the password', async () => {
     const cognito = {
       completeNewPassword: vi.fn().mockResolvedValue({
         kind: 'authenticated',

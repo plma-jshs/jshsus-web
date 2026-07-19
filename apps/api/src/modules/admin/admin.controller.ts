@@ -146,16 +146,6 @@ export class AdminController {
     return this.adminService.updateUserStatus(id, body, request.authSession?.userId);
   }
 
-  @Put('users/:id/password')
-  @RequirePermissions('users.manage')
-  resetUserPassword(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() body: unknown,
-    @Req() request: AuthenticatedRequest,
-  ) {
-    return this.adminService.resetUserPassword(id, body, request.authSession?.userId);
-  }
-
   @Get('iam/roles')
   @RequirePermissions('iam.manage')
   roles() {

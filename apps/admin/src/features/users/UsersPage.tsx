@@ -11,7 +11,7 @@ import type {
   RosterImportRowInput,
   StudentGender,
 } from '@jshsus/types';
-import { Download, FileSpreadsheet, KeyRound, Pencil, Plus, ShieldCheck } from 'lucide-react';
+import { Download, FileSpreadsheet, Pencil, Plus, ShieldCheck } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   Dialog,
@@ -34,7 +34,6 @@ type DialogState =
   | { type: 'roster' }
   | { type: 'edit'; identity: Identity }
   | { type: 'roles'; identity: Identity }
-  | { type: 'password'; identity: Identity }
   | null;
 
 const BUILT_IN_ROLE_LABELS: Record<string, string> = {
@@ -189,14 +188,6 @@ async function parseRosterWorkbook(file: File): Promise<RosterImportRowInput[]> 
     'oldStudentNo',
   ]);
   const userIdColumn = headerColumn(headers, ['user_id', 'userId', '사용자id', '사용자번호']);
-  const initialPasswordColumn = headerColumn(headers, [
-    '초기비밀번호',
-    '비밀번호',
-    'initial_password',
-    'initialPassword',
-    'password',
-  ]);
-
   const rows: RosterImportRowInput[] = [];
   worksheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return;
@@ -208,7 +199,6 @@ async function parseRosterWorkbook(file: File): Promise<RosterImportRowInput[]> 
       emailColumn,
       previousStudentNoColumn,
       userIdColumn,
-      initialPasswordColumn,
     ]
       .filter((column): column is number => column !== undefined)
       .map((column) => row.getCell(column).text.trim());
@@ -231,9 +221,6 @@ async function parseRosterWorkbook(file: File): Promise<RosterImportRowInput[]> 
       const value = Number(row.getCell(userIdColumn).text.trim());
       if (Number.isFinite(value) && value > 0) input.userId = value;
     }
-    if (initialPasswordColumn) {
-      input.initialPassword = row.getCell(initialPasswordColumn).text.trim();
-    }
     rows.push(input);
   });
 
@@ -253,7 +240,6 @@ async function downloadRosterTemplate() {
     { header: '이메일', key: 'email', width: 24 },
     { header: '이전학번', key: 'previousStudentNo', width: 12 },
     { header: 'user_id', key: 'userId', width: 12 },
-    { header: '초기비밀번호', key: 'initialPassword', width: 18 },
   ];
   worksheet.addRow({
     studentNo: 1101,
@@ -263,7 +249,6 @@ async function downloadRosterTemplate() {
     email: '',
     previousStudentNo: '',
     userId: '',
-    initialPassword: 'ChangeMe123!',
   });
   const buffer = await workbook.xlsx.writeBuffer();
   const url = URL.createObjectURL(
@@ -378,15 +363,6 @@ export function UsersPage() {
       showToast({ title: '교직원 정보를 저장했습니다.', tone: 'success' });
     },
     onError: () => showToast({ title: '교직원 정보를 저장하지 못했습니다.', tone: 'danger' }),
-  });
-  const resetPassword = useMutation({
-    mutationFn: ({ userId, password }: { userId: number; password: string }) =>
-      api.resetUserPassword(userId, password),
-    onSuccess: () => {
-      setDialog(null);
-      showToast({ title: '비밀번호를 초기화했습니다.', tone: 'success' });
-    },
-    onError: () => showToast({ title: '비밀번호를 초기화하지 못했습니다.', tone: 'danger' }),
   });
   const assignRoles = useMutation({
     mutationFn: ({ userId, ids }: { userId: number; ids: number[] }) =>
@@ -583,7 +559,6 @@ export function UsersPage() {
       gender: String(form.get('gender')) as StudentGender,
       email: String(form.get('email') || ''),
       phone: String(form.get('phone') || ''),
-      initialPassword: String(form.get('initialPassword')),
     });
   };
 
@@ -594,7 +569,6 @@ export function UsersPage() {
       name: String(form.get('name')),
       email: String(form.get('email') || ''),
       phone: String(form.get('phone') || ''),
-      initialPassword: String(form.get('initialPassword')),
     });
   };
 
@@ -970,15 +944,6 @@ export function UsersPage() {
                   <option value="female">여</option>
                 </select>
               </Field>
-              <Field label="초기 비밀번호">
-                <input
-                  name="initialPassword"
-                  type="password"
-                  minLength={10}
-                  autoComplete="new-password"
-                  required
-                />
-              </Field>
               <Field label="이메일">
                 <input name="email" type="email" />
               </Field>
@@ -1003,15 +968,6 @@ export function UsersPage() {
             <div className="identity-form-grid two">
               <Field label="이름">
                 <input name="name" required />
-              </Field>
-              <Field label="초기 비밀번호">
-                <input
-                  name="initialPassword"
-                  type="password"
-                  minLength={10}
-                  autoComplete="new-password"
-                  required
-                />
               </Field>
               <Field label="이메일">
                 <input name="email" type="email" />
@@ -1098,58 +1054,6 @@ export function UsersPage() {
           </form>
         </IdentityDialog>
       ) : null}
-
-      {dialog?.type === 'password' ? (
-        <IdentityDialog
-          title={`${displayIdentity(dialog.identity)} 비밀번호 초기화`}
-          onClose={() => setDialog(null)}
-        >
-          <form
-            className="identity-dialog-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const form = new FormData(event.currentTarget);
-              const password = String(form.get('password'));
-              const confirmation = event.currentTarget.elements.namedItem(
-                'confirmPassword',
-              ) as HTMLInputElement;
-              if (password !== String(form.get('confirmPassword'))) {
-                confirmation.setCustomValidity('비밀번호가 일치하지 않습니다.');
-                confirmation.reportValidity();
-                return;
-              }
-              confirmation.setCustomValidity('');
-              const userId = dialog.identity.value.userId;
-              if (userId) resetPassword.mutate({ userId, password });
-            }}
-          >
-            <Field label="새 비밀번호">
-              <input
-                name="password"
-                type="password"
-                minLength={10}
-                autoComplete="new-password"
-                required
-                onInput={(event) => event.currentTarget.setCustomValidity('')}
-              />
-            </Field>
-            <Field label="새 비밀번호 확인">
-              <input
-                name="confirmPassword"
-                type="password"
-                minLength={10}
-                autoComplete="new-password"
-                required
-                onInput={(event) => event.currentTarget.setCustomValidity('')}
-              />
-            </Field>
-            {resetPassword.isError ? (
-              <p className="identity-form-error">비밀번호를 초기화하지 못했습니다.</p>
-            ) : null}
-            <DialogActions pending={resetPassword.isPending} onClose={() => setDialog(null)} />
-          </form>
-        </IdentityDialog>
-      ) : null}
     </div>
   );
 }
@@ -1182,13 +1086,6 @@ function IdentityActions({
           <ShieldCheck aria-hidden="true" />
         </IconButton>
       ) : null}
-      <IconButton
-        label="비밀번호 초기화"
-        disabled={disabled}
-        onClick={() => onOpen({ type: 'password', identity })}
-      >
-        <KeyRound aria-hidden="true" />
-      </IconButton>
     </div>
   );
 }

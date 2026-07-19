@@ -28,10 +28,10 @@ const envSchema = z
     SESSION_COOKIE_SECURE: booleanFromString.default(false),
     CSRF_SECRET: z.string().min(12).default('change-this-csrf-secret'),
     CSRF_COOKIE_NAME: z.string().default('jshsus.csrf'),
-    ALLOW_DEV_AUTH: booleanFromString.default(false),
-    DEV_AUTH_PASSWORD: z.string().default('local-dev-only'),
-    PASSWORD_REHASH_ON_LOGIN: booleanFromString.default(true),
-    AUTH_MODE: z.enum(['local', 'hybrid', 'cognito']).default('local'),
+    AUTH_MODE: z
+      .enum(['local', 'hybrid', 'cognito'])
+      .default('cognito')
+      .transform(() => 'cognito' as const),
     COGNITO_REGION: z.string().default('ap-northeast-2'),
     COGNITO_USER_POOL_ID: z.string().default(''),
     COGNITO_CLIENT_ID: z.string().default(''),
@@ -150,14 +150,6 @@ const envSchema = z
         });
       }
 
-      if (value.ALLOW_DEV_AUTH) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['ALLOW_DEV_AUTH'],
-          message: 'Development authentication must be disabled in production.',
-        });
-      }
-
       if (!value.YOUTUBE_API_KEY) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
@@ -194,43 +186,31 @@ const envSchema = z
         });
       }
 
-      if (value.AUTH_MODE !== 'local') {
-        if (!value.SESSION_COOKIE_HOST_ONLY) {
-          context.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['SESSION_COOKIE_HOST_ONLY'],
-            message: 'Cognito-backed production sessions must use host-only cookies.',
-          });
-        }
-
-        if (!value.IAM_COOKIE_NAME.startsWith('__Host-')) {
-          context.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['IAM_COOKIE_NAME'],
-            message: 'Cognito-backed production sessions require a dedicated __Host- cookie name.',
-          });
-        }
-
-        if (!value.CSRF_COOKIE_NAME.startsWith('__Host-')) {
-          context.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['CSRF_COOKIE_NAME'],
-            message:
-              'Cognito-backed production CSRF cookies require a dedicated __Host- cookie name.',
-          });
-        }
+      if (!value.SESSION_COOKIE_HOST_ONLY) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['SESSION_COOKIE_HOST_ONLY'],
+          message: 'Cognito-backed production sessions must use host-only cookies.',
+        });
       }
-    }
 
-    if (value.DATABASE_SSL_MODE === 'verify_identity' && !value.DATABASE_SSL_CA_PATH) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['DATABASE_SSL_CA_PATH'],
-        message: 'verify_identity requires a CA certificate path.',
-      });
-    }
+      if (!value.IAM_COOKIE_NAME.startsWith('__Host-')) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['IAM_COOKIE_NAME'],
+          message: 'Cognito-backed production sessions require a dedicated __Host- cookie name.',
+        });
+      }
 
-    if (value.AUTH_MODE !== 'local') {
+      if (!value.CSRF_COOKIE_NAME.startsWith('__Host-')) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['CSRF_COOKIE_NAME'],
+          message:
+            'Cognito-backed production CSRF cookies require a dedicated __Host- cookie name.',
+        });
+      }
+
       const requiredCognitoValues: Array<
         [
           keyof Pick<
@@ -256,10 +236,18 @@ const envSchema = z
           context.addIssue({
             code: z.ZodIssueCode.custom,
             path: [key],
-            message: `${key} is required when AUTH_MODE is ${value.AUTH_MODE}.`,
+            message: `${key} is required for Cognito-backed production authentication.`,
           });
         }
       }
+    }
+
+    if (value.DATABASE_SSL_MODE === 'verify_identity' && !value.DATABASE_SSL_CA_PATH) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['DATABASE_SSL_CA_PATH'],
+        message: 'verify_identity requires a CA certificate path.',
+      });
     }
 
     if (value.FILE_CLEANUP_RETRY_MAX_MS < value.FILE_CLEANUP_RETRY_BASE_MS) {

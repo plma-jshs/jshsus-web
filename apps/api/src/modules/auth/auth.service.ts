@@ -11,7 +11,6 @@ import * as schema from '@jshsus/db';
 import type { Request } from 'express';
 import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import type { UserRole } from '@jshsus/types';
-import { argon2id, hash as hashArgon2, verify as verifyArgon2 } from 'argon2';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { DatabaseService } from '../database/database.service';
@@ -69,8 +68,6 @@ type SessionAccountRecord = {
   staffNo: number | null;
   name: string;
   status: string;
-  passwordHash: string | null;
-  passwordAlgorithm: string;
 };
 
 export function resolveSessionIdentity(input: {
@@ -159,145 +156,14 @@ export class AuthService {
     };
   }
 
-  async createDevelopmentSession(input: {
-    username: string;
-    password: string;
-    role?: UserRole;
-    ttlSeconds?: number;
-  }): Promise<{ token: string; session: AuthSession; csrfToken: string }> {
-    if (!env.ALLOW_DEV_AUTH || env.NODE_ENV === 'production') {
-      throw new UnauthorizedException('Development login is disabled.');
-    }
-
-    if (input.password !== env.DEV_AUTH_PASSWORD) {
-      throw new UnauthorizedException('Invalid credentials.');
-    }
-
-    const token = randomUUID();
-    const role = input.role ?? 'system_admin';
-    const ttlSeconds = input.ttlSeconds ?? env.IAM_TOKEN_TTL_SECONDS;
-    const now = Date.now();
-    const session: AuthSession = {
-      iamId: 0,
-      userId: 0,
-      plmaId: 0,
-      roles: [role],
-      permissions: [role],
-      expiresAt: now + ttlSeconds * 1000,
-      name: input.username || 'local-admin',
-      isLogined: true,
-    };
-
-    await this.redis.setJson(`iam_token:${token}`, session, ttlSeconds);
-
-    return {
-      token,
-      session,
-      csrfToken: this.createCsrfToken(token),
-    };
-  }
-
   async login(input: {
     username: string;
     password: string;
-    devRole?: UserRole;
     remember?: boolean;
     surface: CognitoSurface;
   }): Promise<AuthLoginResult> {
     await this.assertAccountRateLimit('login', input.username, 15, 300);
-    const ttlSeconds = input.remember
-      ? env.IAM_REMEMBER_TOKEN_TTL_SECONDS
-      : env.IAM_TOKEN_TTL_SECONDS;
-
-    if (env.AUTH_MODE === 'local') {
-      return {
-        status: 'AUTHENTICATED',
-        persistent: input.remember === true,
-        ...(await this.loginLocally(input, ttlSeconds)),
-      };
-    }
-
-    const localAccount = await this.findPasswordAccount(input.username);
-
-    if (env.AUTH_MODE === 'hybrid' && localAccount) {
-      const cognitoLink = await this.findCognitoLinkForUser(localAccount.userId);
-
-      if (!cognitoLink) {
-        return {
-          status: 'AUTHENTICATED',
-          persistent: input.remember === true,
-          ...(await this.loginLocally(input, ttlSeconds)),
-        };
-      }
-
-      return this.loginWithCognito(input, {
-        expectedUserId: localAccount.userId,
-        expectedSubject: cognitoLink.subject,
-      });
-    }
-
-    // In Cognito mode, and for identifiers that are no longer backed by a
-    // local password account in hybrid mode, authenticate with Cognito only.
-    // A failed Cognito attempt must never fall back to the legacy password.
     return this.loginWithCognito(input);
-  }
-
-  private async loginLocally(
-    input: {
-      username: string;
-      password: string;
-      devRole?: UserRole;
-    },
-    ttlSeconds: number,
-  ): Promise<{ token: string; session: AuthSession; csrfToken: string }> {
-    try {
-      return await this.createPasswordSession(input.username, input.password, ttlSeconds);
-    } catch (error) {
-      if (
-        env.ALLOW_DEV_AUTH &&
-        env.NODE_ENV !== 'production' &&
-        input.password === env.DEV_AUTH_PASSWORD
-      ) {
-        return this.createDevelopmentSession({
-          username: input.username,
-          password: input.password,
-          role: input.devRole,
-          ttlSeconds,
-        });
-      }
-
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-
-      throw new UnauthorizedException('Invalid credentials.');
-    }
-  }
-
-  async createPasswordSession(
-    username: string,
-    password: string,
-    ttlSeconds = env.IAM_TOKEN_TTL_SECONDS,
-  ): Promise<{ token: string; session: AuthSession; csrfToken: string }> {
-    const account = await this.findPasswordAccount(username);
-
-    if (
-      !account?.passwordHash ||
-      account.status !== 'active' ||
-      !(await this.verifyPassword(password, account.passwordHash, account.passwordAlgorithm))
-    ) {
-      throw new UnauthorizedException('Invalid credentials.');
-    }
-
-    if (account.passwordAlgorithm === 'legacy-sha512' && env.PASSWORD_REHASH_ON_LOGIN) {
-      const passwordHash = await hashArgon2(password, { type: argon2id });
-      await this.database.db
-        .update(schema.authAccounts)
-        .set({ passwordHash, passwordAlgorithm: 'argon2id', updatedAt: new Date() })
-        .where(eq(schema.authAccounts.id, account.authAccountId));
-    }
-
-    return this.issueSession(account, ttlSeconds, username);
   }
 
   private async issueSession(
@@ -481,17 +347,6 @@ export class AuthService {
 
   async requestPasswordReset(username: string, surface: CognitoSurface): Promise<{ ok: true }> {
     await this.assertAccountRateLimit('forgot', username, 5, 900);
-    if (env.AUTH_MODE === 'local') {
-      throw new ServiceUnavailableException({
-        code: 'AUTH_PASSWORD_RESET_UNAVAILABLE',
-        message: '현재 비밀번호 재설정을 사용할 수 없습니다.',
-      });
-    }
-
-    if (!(await this.canUseCognitoRecovery(username))) {
-      return { ok: true };
-    }
-
     try {
       await this.cognito.forgotPassword(username.trim(), surface);
     } catch (error) {
@@ -514,20 +369,6 @@ export class AuthService {
     surface: CognitoSurface;
   }): Promise<{ ok: true }> {
     await this.assertAccountRateLimit('confirm', input.username, 10, 900);
-    if (env.AUTH_MODE === 'local') {
-      throw new ServiceUnavailableException({
-        code: 'AUTH_PASSWORD_RESET_UNAVAILABLE',
-        message: '현재 비밀번호 재설정을 사용할 수 없습니다.',
-      });
-    }
-
-    if (!(await this.canUseCognitoRecovery(input.username))) {
-      throw new BadRequestException({
-        code: 'AUTH_CODE_MISMATCH',
-        message: '인증 코드 또는 계정 정보를 확인해 주세요.',
-      });
-    }
-
     try {
       await this.cognito.confirmForgotPassword({
         username: input.username.trim(),
@@ -679,16 +520,6 @@ export class AuthService {
     return account?.subject ? { subject: account.subject } : null;
   }
 
-  private async canUseCognitoRecovery(username: string): Promise<boolean> {
-    if (env.AUTH_MODE !== 'hybrid') return true;
-
-    const localAccount = await this.findPasswordAccount(username);
-    if (!localAccount) return true;
-
-    const cognitoLink = await this.findCognitoLinkForUser(localAccount.userId);
-    return cognitoLink !== null;
-  }
-
   private async resolveRequiredCognitoAttributes(
     flow: CognitoChallengeFlow,
   ): Promise<Record<string, string>> {
@@ -771,8 +602,6 @@ export class AuthService {
         staffNo: schema.staffProfiles.staffNo,
         name: schema.users.name,
         status: schema.users.status,
-        passwordHash: schema.authAccounts.passwordHash,
-        passwordAlgorithm: schema.authAccounts.passwordAlgorithm,
       })
       .from(schema.authAccounts)
       .innerJoin(schema.users, eq(schema.authAccounts.userId, schema.users.id))
@@ -787,66 +616,6 @@ export class AuthService {
       .limit(1);
 
     return account ?? null;
-  }
-
-  private async findPasswordAccount(username: string) {
-    const normalized = username.trim();
-
-    if (!normalized) {
-      return null;
-    }
-
-    const [account] = await this.database.db
-      .select({
-        userId: schema.users.id,
-        authAccountId: schema.authAccounts.id,
-        providerAccountId: schema.authAccounts.providerAccountId,
-        studentProfileNo: schema.students.studentNo,
-        staffNo: schema.staffProfiles.staffNo,
-        name: schema.users.name,
-        status: schema.users.status,
-        passwordHash: schema.authAccounts.passwordHash,
-        passwordAlgorithm: schema.authAccounts.passwordAlgorithm,
-      })
-      .from(schema.authAccounts)
-      .innerJoin(schema.users, eq(schema.authAccounts.userId, schema.users.id))
-      .leftJoin(schema.students, eq(schema.students.userId, schema.users.id))
-      .leftJoin(schema.staffProfiles, eq(schema.staffProfiles.userId, schema.users.id))
-      .where(
-        and(
-          eq(schema.authAccounts.provider, 'local'),
-          eq(schema.authAccounts.providerAccountId, normalized),
-        ),
-      )
-      .limit(1);
-
-    return account ?? null;
-  }
-
-  private async verifyPassword(
-    password: string,
-    passwordHash: string,
-    algorithm: string,
-  ): Promise<boolean> {
-    if (algorithm === 'argon2id') {
-      try {
-        return await verifyArgon2(passwordHash, password);
-      } catch {
-        return false;
-      }
-    }
-
-    if (algorithm !== 'legacy-sha512') {
-      return false;
-    }
-
-    const expected = createHash('sha512').update(password).digest('base64');
-
-    try {
-      return timingSafeEqual(Buffer.from(expected), Buffer.from(passwordHash));
-    } catch {
-      return false;
-    }
   }
 
   private async getGrantsForUser(

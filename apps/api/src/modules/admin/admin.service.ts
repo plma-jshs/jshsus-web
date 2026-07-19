@@ -18,7 +18,6 @@ import type {
   StudentGender,
   UserRole,
 } from '@jshsus/types';
-import { argon2id, hash as hashArgon2 } from 'argon2';
 import { and, asc, desc, eq, gte, inArray, like, lte, or, sql, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
 import { ActivityRequestsService } from '../activity-requests/activity-requests.service';
@@ -61,9 +60,7 @@ const studentSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
   phone: phoneSchema.optional().default(''),
 });
-const createStudentSchema = studentSchema.extend({
-  initialPassword: z.string().min(10).max(128),
-});
+const createStudentSchema = studentSchema;
 const updateStudentSchema = studentSchema.partial();
 
 const schoolYearValueSchema = z.coerce.number().int().min(2000).max(2100);
@@ -77,7 +74,6 @@ const rosterRowInputSchema = z.object({
   email: z.string().trim().optional(),
   previousStudentNo: z.coerce.number().int().positive().optional(),
   userId: z.coerce.number().int().positive().optional(),
-  initialPassword: z.string().optional(),
 });
 
 const rosterImportSchema = z.object({
@@ -93,9 +89,7 @@ const staffSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
   phone: phoneSchema.optional().default(''),
 });
-const createStaffSchema = staffSchema.extend({
-  initialPassword: z.string().min(10).max(128),
-});
+const createStaffSchema = staffSchema;
 
 const auditLogListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -128,10 +122,6 @@ const idListSchema = z.object({
 
 const userStatusSchema = z.object({
   status: z.enum(['active', 'restricted', 'graduated']),
-});
-
-const passwordResetSchema = z.object({
-  password: z.string().min(10).max(128),
 });
 
 const BUILT_IN_ROLE_NAMES = new Set([
@@ -193,7 +183,6 @@ type NormalizedRosterRow = {
   email?: string | null;
   previousStudentNo?: number;
   userId?: number;
-  initialPassword?: string;
 };
 
 type PlannedRosterRow = RosterImportPreviewRow & {
@@ -471,7 +460,6 @@ export class AdminService {
     assertStudentNumberPartsMatch(studentIdentity, parsed.data);
 
     const activeSchoolYear = await this.getActiveSchoolYear();
-    const passwordHash = await hashArgon2(parsed.data.initialPassword, { type: argon2id });
     const result = await this.database.db.transaction(async (tx) => {
       const [user] = await tx
         .insert(schema.users)
@@ -520,14 +508,6 @@ export class AdminService {
             updatedAt: new Date(),
           },
         });
-
-      await tx.insert(schema.authAccounts).values({
-        userId: user.id,
-        provider: 'local',
-        providerAccountId: String(parsed.data.studentNo),
-        passwordHash,
-        passwordAlgorithm: 'argon2id',
-      });
 
       const [studentRole] = await tx
         .select({ id: schema.roles.id })
@@ -611,20 +591,6 @@ export class AdminService {
             updatedAt: new Date(),
           })
           .where(eq(schema.users.id, student.userId));
-
-        if (studentIdentity.studentNo !== student.studentNo) {
-          // Preserve explicit local aliases such as the development `test` account.
-          await tx
-            .update(schema.authAccounts)
-            .set({ providerAccountId: String(studentIdentity.studentNo), updatedAt: new Date() })
-            .where(
-              and(
-                eq(schema.authAccounts.userId, student.userId),
-                eq(schema.authAccounts.provider, 'local'),
-                eq(schema.authAccounts.providerAccountId, String(student.studentNo)),
-              ),
-            );
-        }
       }
 
       await tx
@@ -706,7 +672,7 @@ export class AdminService {
   private async buildRosterPlan(input: RosterImportPayload): Promise<RosterPlan> {
     const activeSchoolYear = await this.getActiveSchoolYear();
     const enrollmentYears = [...new Set([input.schoolYear, activeSchoolYear])];
-    const [students, enrollments, authAccounts] = await Promise.all([
+    const [students, enrollments] = await Promise.all([
       this.database.db
         .select({
           studentId: schema.students.id,
@@ -737,13 +703,6 @@ export class AdminService {
         })
         .from(schema.studentEnrollments)
         .where(inArray(schema.studentEnrollments.schoolYear, enrollmentYears)),
-      this.database.db
-        .select({
-          userId: schema.authAccounts.userId,
-          providerAccountId: schema.authAccounts.providerAccountId,
-        })
-        .from(schema.authAccounts)
-        .where(eq(schema.authAccounts.provider, 'local')),
     ]);
 
     const studentById = new Map<number, ExistingStudentSnapshot>();
@@ -776,13 +735,6 @@ export class AdminService {
       if (snapshot.schoolYear === activeSchoolYear && snapshot.status === 'active') {
         activeEnrollmentByStudentNo.set(snapshot.studentNo, snapshot);
         activeEnrollments.set(snapshot.studentId, snapshot);
-      }
-    }
-
-    const authUserByProviderId = new Map<string, number>();
-    for (const account of authAccounts) {
-      if (account.providerAccountId) {
-        authUserByProviderId.set(account.providerAccountId, account.userId);
       }
     }
 
@@ -917,12 +869,6 @@ export class AdminService {
         messages.push('기존 학생 레코드에 연결된 사용자 계정이 없습니다.');
       }
 
-      const authUserId = authUserByProviderId.get(String(row.studentNo));
-      if (authUserId !== undefined && (!existing?.userId || authUserId !== existing.userId)) {
-        conflict = true;
-        messages.push('해당 학번으로 로그인하는 다른 계정이 이미 있습니다.');
-      }
-
       const normalized: NormalizedRosterRow | undefined =
         identity && !invalid
           ? {
@@ -938,7 +884,6 @@ export class AdminService {
               email,
               previousStudentNo: row.previousStudentNo,
               userId: row.userId,
-              initialPassword: row.initialPassword?.trim(),
             }
           : undefined;
 
@@ -958,10 +903,6 @@ export class AdminService {
           : 'unchanged';
       } else {
         action = 'create';
-        if (!normalized?.initialPassword || normalized.initialPassword.length < 10) {
-          action = 'invalid';
-          messages.push('신규 학생은 초기 비밀번호를 10자 이상으로 입력해야 합니다.');
-        }
       }
 
       if (messages.length === 0) {
@@ -1051,15 +992,6 @@ export class AdminService {
       throw new BadRequestException('Roster contains invalid or conflicting rows.');
     }
 
-    const createPasswordHashes = new Map<number, string>();
-    for (const row of plan.plannedRows) {
-      if (row.action !== 'create' || !row.normalized?.initialPassword) continue;
-      createPasswordHashes.set(
-        row.rowNumber,
-        await hashArgon2(row.normalized.initialPassword, { type: argon2id }),
-      );
-    }
-
     const affectedUserIds = new Set<number>();
     const result = await this.database.db.transaction(async (tx) => {
       const now = new Date();
@@ -1093,8 +1025,7 @@ export class AdminService {
       for (const row of plan.plannedRows) {
         if (row.action === 'create') {
           const normalized = row.normalized;
-          const passwordHash = createPasswordHashes.get(row.rowNumber);
-          if (!normalized || !passwordHash) throw new BadRequestException('Invalid create row.');
+          if (!normalized) throw new BadRequestException('Invalid create row.');
 
           const [user] = await tx
             .insert(schema.users)
@@ -1121,13 +1052,6 @@ export class AdminService {
               number: normalized.number,
             })
             .$returningId();
-          await tx.insert(schema.authAccounts).values({
-            userId: user.id,
-            provider: 'local',
-            providerAccountId: String(normalized.studentNo),
-            passwordHash,
-            passwordAlgorithm: 'argon2id',
-          });
           await tx.insert(schema.userRoles).values({ userId: user.id, roleId: studentRole.id });
           await tx.insert(schema.studentEnrollments).values({
             studentId: student.id,
@@ -1174,26 +1098,6 @@ export class AdminService {
               updatedAt: now,
             })
             .where(eq(schema.users.id, existing.userId));
-
-          const providerIds = [
-            ...new Set(
-              [existing.currentStudentNo, normalized.previousStudentNo]
-                .filter((value): value is number => value !== undefined)
-                .map(String),
-            ),
-          ];
-          if (providerIds.length > 0) {
-            await tx
-              .update(schema.authAccounts)
-              .set({ providerAccountId: String(normalized.studentNo), updatedAt: now })
-              .where(
-                and(
-                  eq(schema.authAccounts.userId, existing.userId),
-                  eq(schema.authAccounts.provider, 'local'),
-                  inArray(schema.authAccounts.providerAccountId, providerIds),
-                ),
-              );
-          }
 
           await tx
             .insert(schema.studentEnrollments)
@@ -1351,7 +1255,6 @@ export class AdminService {
       throw new BadRequestException(parsed.error.flatten().fieldErrors);
     }
 
-    const passwordHash = await hashArgon2(parsed.data.initialPassword, { type: argon2id });
     const result = await this.database.db.transaction(async (tx) => {
       await tx
         .insert(schema.identitySequences)
@@ -1372,23 +1275,13 @@ export class AdminService {
             .from(schema.staffProfiles)
             .where(eq(schema.staffProfiles.staffNo, candidate))
             .limit(1);
-          const [loginCollision] = await tx
-            .select({ id: schema.authAccounts.id })
-            .from(schema.authAccounts)
-            .where(
-              and(
-                eq(schema.authAccounts.provider, 'local'),
-                eq(schema.authAccounts.providerAccountId, String(candidate)),
-              ),
-            )
-            .limit(1);
           const [legacyBridgeCollision] = await tx
             .select({ id: schema.users.id })
             .from(schema.users)
             .where(eq(schema.users.studentNo, -candidate))
             .limit(1);
 
-          if (!staffCollision && !loginCollision && !legacyBridgeCollision) break;
+          if (!staffCollision && !legacyBridgeCollision) break;
           candidate += 1;
         }
 
@@ -1421,14 +1314,6 @@ export class AdminService {
           title: '',
         })
         .$returningId();
-
-      await tx.insert(schema.authAccounts).values({
-        userId: user.id,
-        provider: 'local',
-        providerAccountId: String(staffNo),
-        passwordHash,
-        passwordAlgorithm: 'argon2id',
-      });
 
       const [teacherRole] = await tx
         .select({ id: schema.roles.id })
@@ -1551,28 +1436,6 @@ export class AdminService {
       targetId: userId,
     });
     return { ok: true, userId, status: parsed.data.status };
-  }
-
-  async resetUserPassword(userId: number, body: unknown, actorId?: number | null) {
-    const parsed = passwordResetSchema.safeParse(body);
-    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
-    const passwordHash = await hashArgon2(parsed.data.password, { type: argon2id });
-    const result = await this.database.db
-      .update(schema.authAccounts)
-      .set({ passwordHash, passwordAlgorithm: 'argon2id', updatedAt: new Date() })
-      .where(
-        and(eq(schema.authAccounts.userId, userId), eq(schema.authAccounts.provider, 'local')),
-      );
-    if (result[0].affectedRows === 0) throw new NotFoundException('Local account not found.');
-
-    await this.authService.invalidateUserSessions(userId);
-    await this.database.writeAudit({
-      actorId,
-      action: 'admin.user.password.reset',
-      targetType: 'users',
-      targetId: userId,
-    });
-    return { ok: true, userId };
   }
 
   async roles(): Promise<AdminRoleSummary[]> {

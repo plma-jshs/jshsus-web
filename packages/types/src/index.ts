@@ -476,7 +476,6 @@ export type RosterImportRowInput = {
   email?: string;
   previousStudentNo?: number;
   userId?: number;
-  initialPassword?: string;
 };
 
 export type RosterImportAction =

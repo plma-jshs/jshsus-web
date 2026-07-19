@@ -11,7 +11,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import type { UserRole } from '@jshsus/types';
 import { z } from 'zod';
 import { AuthService } from './auth.service';
 import { env } from '../../shared/config/env';
@@ -24,7 +23,6 @@ import type { CognitoSurface } from './cognito-auth.service';
 const loginSchema = z.object({
   username: z.string().trim().min(1).max(128),
   password: z.string().min(1).max(512),
-  role: z.custom<UserRole>().optional(),
   remember: z.boolean().optional().default(false),
 });
 
@@ -129,7 +127,7 @@ export function inferCognitoSurface(
 
 const cookieBaseOptions = (request: Request) => {
   const isLocalhost = ['localhost', '127.0.0.1'].includes(request.hostname);
-  const useHostOnlyCookie = env.SESSION_COOKIE_HOST_ONLY || env.AUTH_MODE !== 'local';
+  const useHostOnlyCookie = env.SESSION_COOKIE_HOST_ONLY || env.AUTH_MODE === 'cognito';
 
   return {
     domain:
@@ -179,7 +177,6 @@ export class AuthController {
     const result = await this.authService.login({
       username: input.username,
       password: input.password,
-      devRole: input.role,
       remember: input.remember,
       surface: inferCognitoSurface(request),
     });
