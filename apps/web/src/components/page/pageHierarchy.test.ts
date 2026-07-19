@@ -14,6 +14,7 @@ describe('portal page hierarchy', () => {
       { label: '탐구활동서' },
     ]);
     expect(listBreadcrumbs('board')).toEqual([{ label: '커뮤니티' }, { label: '자유게시판' }]);
+    expect(listBreadcrumbs('thanks')).toEqual([{ label: '커뮤니티' }, { label: '감사챌린지' }]);
     expect(listBreadcrumbs('jbs')).toEqual([{ label: '방송·도구' }, { label: 'JBS' }]);
   });
 

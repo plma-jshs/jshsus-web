@@ -240,7 +240,7 @@ export function BoardPostDetailPage() {
               to="/login"
               search={{ returnTo: `/boards/free/${postId}` }}
             >
-              <Flag size={14} aria-hidden="true" /> 로그인하고 신고
+              <Flag size={14} aria-hidden="true" /> 신고
             </Link>
           ) : (
             <button

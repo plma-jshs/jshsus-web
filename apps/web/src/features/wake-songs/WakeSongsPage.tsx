@@ -386,18 +386,18 @@ export function WakeSongsPage() {
           <div className="wake-song-history-viewport">
             <table className="workflow-table wake-song-history-table">
               <colgroup>
-                <col style={{ width: 110 }} />
+                <col style={{ width: 130 }} />
                 <col />
                 <col style={{ width: 150 }} />
-                <col style={{ width: 130 }} />
+                <col style={{ width: 110 }} />
                 <col style={{ width: 160 }} />
               </colgroup>
               <thead>
                 <tr>
-                  <th scope="col">상태</th>
+                  <th scope="col">신청일</th>
                   <th scope="col">영상</th>
                   <th scope="col">재생 구간</th>
-                  <th scope="col">신청일</th>
+                  <th scope="col">상태</th>
                   <th scope="col">작업</th>
                 </tr>
               </thead>
@@ -406,10 +406,10 @@ export function WakeSongsPage() {
                   const displayStatus = wakeSongStatusPresentation(request.status);
                   return (
                     <tr key={request.id}>
-                      <td data-label="상태">
-                        <span className={`wake-song-status is-${displayStatus.tone}`}>
-                          {displayStatus.label}
-                        </span>
+                      <td data-label="신청일">
+                        <time dateTime={request.createdAt}>
+                          {dateFormatter.format(new Date(request.createdAt))}
+                        </time>
                       </td>
                       <td className="wake-song-history-title" data-label="영상">
                         <a href={request.canonicalUrl} target="_blank" rel="noreferrer">
@@ -427,10 +427,10 @@ export function WakeSongsPage() {
                           {formatDuration(request.effectiveDurationSeconds)}
                         </small>
                       </td>
-                      <td data-label="신청일">
-                        <time dateTime={request.createdAt}>
-                          {dateFormatter.format(new Date(request.createdAt))}
-                        </time>
+                      <td data-label="상태">
+                        <span className={`wake-song-status is-${displayStatus.tone}`}>
+                          {displayStatus.label}
+                        </span>
                       </td>
                       <td data-label="작업">
                         {request.status === 'PENDING' ? (

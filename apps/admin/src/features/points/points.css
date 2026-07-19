@@ -169,6 +169,12 @@
   color: var(--primary-dark);
 }
 
+.point-search-results > button:disabled {
+  background: var(--j-color-surface-hover);
+  color: var(--j-color-text-muted);
+  cursor: default;
+}
+
 .point-search-results > button span:last-child,
 .point-search-results > p {
   color: var(--j-color-text-muted);
@@ -193,7 +199,7 @@
   min-height: 58px;
   margin-top: 14px;
   padding: 10px 14px;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   border: 1px solid #cbe4df;
@@ -212,7 +218,7 @@
   margin: 2px 0 0;
 }
 
-.point-selected-student div {
+.point-selected-student > div:not(.point-selected-student-list) {
   display: grid;
   gap: 2px;
 }
@@ -220,6 +226,44 @@
 .point-selected-student span {
   color: var(--j-color-text-muted);
   font-size: 13px;
+}
+
+.point-selected-student-list {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.point-selected-student-chip {
+  display: inline-flex;
+  min-height: 28px;
+  padding: 4px 7px 4px 10px;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #b9d9d3;
+  border-radius: 999px;
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+.point-selected-student-chip button {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--j-color-text-muted);
+  cursor: pointer;
+}
+
+.point-selected-student-chip button:hover {
+  background: var(--j-color-surface-hover);
+  color: var(--j-color-text);
 }
 
 .point-award-fields {

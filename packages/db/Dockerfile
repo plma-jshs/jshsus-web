@@ -6,4 +6,4 @@ COPY packages/db/package.json packages/db/package.json
 RUN pnpm install --frozen-lockfile --filter @jshsus/db...
 COPY packages/db packages/db
 WORKDIR /app/packages/db
-CMD ["pnpm", "db:migrate"]
+CMD ["pnpm", "db:deploy"]

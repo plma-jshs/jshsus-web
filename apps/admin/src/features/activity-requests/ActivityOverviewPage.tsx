@@ -82,7 +82,7 @@ export function ActivityOverviewPage() {
   const [date, setDate] = useState(() => koreaDateInput());
   const [status, setStatus] = useState<'all' | ActivityRequestAdminStatus>('all');
   const [pageSize, setPageSize] = useState(20);
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'issuedNumber', desc: true }]);
   const sort = sorting[0];
   const requestsQuery = useActivityRequests({
     page,
@@ -91,7 +91,7 @@ export function ActivityOverviewPage() {
     date: date || undefined,
     status: status === 'all' ? undefined : status,
     sortBy: (sort?.id as ActivityRequestAdminListQuery['sortBy']) ?? 'issuedNumber',
-    sortOrder: sort?.desc ? 'desc' : 'asc',
+    sortOrder: sort ? (sort.desc ? 'desc' : 'asc') : 'desc',
   });
   const resetPage = () => setPage(1);
 

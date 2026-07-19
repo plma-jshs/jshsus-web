@@ -27,6 +27,7 @@ type InternalNavigationPath =
   | '/lost-items'
   | '/boards/free'
   | '/petitions'
+  | '/thanks'
   | '/jbs'
   | '/wake-songs'
   | '/tools/bytes'
@@ -58,6 +59,7 @@ const navigationCategories = [
     links: [
       { label: '자유게시판', to: '/boards/free' },
       { label: '청원·제안', to: '/petitions' },
+      { label: '감사챌린지', to: '/thanks' },
     ],
   },
   {

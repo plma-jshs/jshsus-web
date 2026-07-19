@@ -56,7 +56,9 @@ export function PointDeparturesPage() {
   const [classNo, setClassNo] = useState('');
   const [riskStatus, setRiskStatus] = useState<'risk' | 'departure' | 'all'>('all');
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [historySorting, setHistorySorting] = useState<SortingState>([]);
+  const [historySorting, setHistorySorting] = useState<SortingState>([
+    { id: 'handledAt', desc: true },
+  ]);
   const [selected, setSelected] = useState<DepartureCandidate | null>(null);
   const [memo, setMemo] = useState('');
   const [baseDate, setBaseDate] = useState(today);
@@ -118,7 +120,7 @@ export function PointDeparturesPage() {
         grade: grade ? Number(grade) : undefined,
         classNo: classNo ? Number(classNo) : undefined,
         sortBy: (historySort?.id as 'studentNo' | 'name' | 'handledAt' | undefined) ?? 'handledAt',
-        sortOrder: historySort?.desc ? 'desc' : 'asc',
+        sortOrder: historySort ? (historySort.desc ? 'desc' : 'asc') : 'desc',
       }),
     enabled: tab === 'departures',
   });

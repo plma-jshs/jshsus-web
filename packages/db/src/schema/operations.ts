@@ -400,16 +400,22 @@ export const activityRequests = mysqlTable(
 export const activityRequestParticipants = mysqlTable(
   'activity_request_participants',
   {
-    activityRequestId: int('activity_request_id')
-      .notNull()
-      .references(() => activityRequests.id, { onDelete: 'cascade' }),
-    studentId: int('student_id')
-      .notNull()
-      .references(() => students.id),
+    activityRequestId: int('activity_request_id').notNull(),
+    studentId: int('student_id').notNull(),
     createdAt: datetime('created_at', { mode: 'date', fsp: 3 }).notNull().default(now),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.activityRequestId, table.studentId] }),
+    requestFk: foreignKey({
+      columns: [table.activityRequestId],
+      foreignColumns: [activityRequests.id],
+      name: 'activity_participants_request_fk',
+    }).onDelete('cascade'),
+    studentFk: foreignKey({
+      columns: [table.studentId],
+      foreignColumns: [students.id],
+      name: 'activity_participants_student_fk',
+    }),
     studentIdx: index('activity_request_participants_student_idx').on(
       table.studentId,
       table.activityRequestId,

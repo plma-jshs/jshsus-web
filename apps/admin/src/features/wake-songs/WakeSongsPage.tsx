@@ -49,7 +49,7 @@ export function WakeSongsPage() {
   const [appliedQuery, setAppliedQuery] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -62,8 +62,10 @@ export function WakeSongsPage() {
         query: appliedQuery || undefined,
         page,
         pageSize,
-        sortBy: sorting[0]?.id as 'status' | 'requester' | 'videoTitle' | 'createdAt',
-        sortOrder: sorting[0]?.desc ? 'desc' : 'asc',
+        sortBy:
+          (sorting[0]?.id as 'status' | 'requester' | 'videoTitle' | 'createdAt' | undefined) ??
+          'createdAt',
+        sortOrder: sorting[0] ? (sorting[0].desc ? 'desc' : 'asc') : 'desc',
       }),
   });
 
@@ -92,16 +94,12 @@ export function WakeSongsPage() {
 
   const columns: ColumnDef<WakeSongRequest>[] = [
     {
-      id: 'status',
-      accessorKey: 'status',
-      header: '상태',
-      cell: ({ row }) => (
-        <span className={`wake-admin-status is-${statusTone(row.original.status)}`}>
-          {statusLabels[row.original.status]}
-        </span>
-      ),
-      enableSorting: false,
-      meta: { align: 'center', width: 110 },
+      id: 'createdAt',
+      accessorKey: 'createdAt',
+      header: '신청일',
+      cell: ({ row }) =>
+        new Date(row.original.createdAt).toLocaleDateString('ko-KR').replace(/\.$/, ''),
+      meta: { align: 'center', width: 130 },
     },
     {
       id: 'requester',
@@ -148,12 +146,16 @@ export function WakeSongsPage() {
       meta: { align: 'center', width: 180 },
     },
     {
-      id: 'createdAt',
-      accessorKey: 'createdAt',
-      header: '신청일',
-      cell: ({ row }) =>
-        new Date(row.original.createdAt).toLocaleDateString('ko-KR').replace(/\.$/, ''),
-      meta: { align: 'center', width: 130 },
+      id: 'status',
+      accessorKey: 'status',
+      header: '상태',
+      cell: ({ row }) => (
+        <span className={`wake-admin-status is-${statusTone(row.original.status)}`}>
+          {statusLabels[row.original.status]}
+        </span>
+      ),
+      enableSorting: false,
+      meta: { align: 'center', width: 110 },
     },
     {
       id: 'actions',

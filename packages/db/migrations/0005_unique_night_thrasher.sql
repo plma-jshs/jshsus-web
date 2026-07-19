@@ -1,1 +1,0 @@
-ALTER TABLE `petitions` ADD `content_json` json;

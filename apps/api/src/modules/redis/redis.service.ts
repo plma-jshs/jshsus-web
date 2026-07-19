@@ -57,6 +57,14 @@ export class RedisService implements OnModuleInit, OnApplicationShutdown {
     await this.client.del(key);
   }
 
+  async take(key: string): Promise<string | null> {
+    if (!this.client) {
+      return null;
+    }
+
+    return this.client.getDel(key);
+  }
+
   async addToSet(key: string, value: string, ttlSeconds: number): Promise<void> {
     if (!this.client) return;
     await this.client.sAdd(key, value);

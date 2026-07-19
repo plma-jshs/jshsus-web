@@ -28,118 +28,11 @@ import {
   Smartphone,
   UserRound,
   X,
-  Eye,
-  EyeOff,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
+import { LoginPage } from '../features/auth/LoginPage';
 import { api } from '../shared/api/adminApi';
-
-function LoginPage() {
-  const queryClient = useQueryClient();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(false);
-  const loginMutation = useMutation({
-    mutationFn: api.login,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['admin-session'] });
-    },
-  });
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    loginMutation.mutate({ username, password, remember });
-  };
-
-  return (
-    <main className="login-shell" aria-labelledby="admin-login-title">
-      <section className="login-panel">
-        <div className="login-brand">
-          <img className="login-brand-mark" src="/admin-emblem.svg" alt="" width="38" height="38" />
-          <strong>전남과학고등학교 학생부 전산망</strong>
-        </div>
-
-        <header className="login-heading">
-          <h1 id="admin-login-title">전남과학고 통합로그인</h1>
-        </header>
-
-        <form className="login-form" onSubmit={handleSubmit}>
-          <label htmlFor="admin-login-username">
-            <span>학번 또는 교사번호</span>
-            <input
-              id="admin-login-username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              autoComplete="username"
-              placeholder="학번 또는 교사번호를 입력하세요"
-              autoFocus
-              required
-            />
-          </label>
-          <div className="login-form-field">
-            <label htmlFor="admin-login-password">비밀번호</label>
-            <div className="login-password-field">
-              <input
-                id="admin-login-password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                autoComplete="current-password"
-                placeholder="비밀번호를 입력하세요"
-                required
-              />
-              <button
-                type="button"
-                aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
-                aria-pressed={showPassword}
-                onClick={() => setShowPassword((current) => !current)}
-              >
-                {showPassword ? (
-                  <EyeOff aria-hidden="true" size={18} />
-                ) : (
-                  <Eye aria-hidden="true" size={18} />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {loginMutation.isError ? (
-            <p className="form-error" role="alert">
-              학번·교사번호 또는 비밀번호를 확인해 주세요.
-            </p>
-          ) : null}
-
-          <div className="login-options">
-            <label className="login-remember">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(event) => setRemember(event.target.checked)}
-              />
-              <span>로그인 기억하기</span>
-            </label>
-            <a href="https://iam.jshsus.kr/changepassword">비밀번호를 잊으셨나요?</a>
-          </div>
-
-          <button
-            className="primary-button login-submit"
-            type="submit"
-            disabled={loginMutation.isPending}
-          >
-            {loginMutation.isPending ? '로그인 중' : '로그인'}
-          </button>
-        </form>
-
-        <p className="login-signup">
-          전남과학고 신입생이신가요? <a href="https://iam.jshsus.kr/reg">통합로그인 계정 만들기</a>
-        </p>
-      </section>
-    </main>
-  );
-}
 
 type AdminNavEntry = {
   label: string;

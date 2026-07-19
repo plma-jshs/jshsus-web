@@ -181,7 +181,7 @@ export function PetitionDetailPage() {
                   to="/login"
                   search={{ returnTo: `/petitions/${petitionId}` }}
                 >
-                  <Users size={16} aria-hidden="true" /> 로그인하고 참여하기
+                  <Users size={16} aria-hidden="true" /> 참여하기
                 </Link>
               ) : (
                 <button

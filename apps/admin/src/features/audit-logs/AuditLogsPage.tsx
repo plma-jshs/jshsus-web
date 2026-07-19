@@ -62,7 +62,7 @@ const columns: ColumnDef<AdminAuditLog>[] = [
 export function AuditLogsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
   const [draft, setDraft] = useState({ q: '', from: '', to: '' });
   const [filters, setFilters] = useState(draft);
   const query: AdminAuditLogListQuery = {
@@ -71,8 +71,8 @@ export function AuditLogsPage() {
     q: filters.q || undefined,
     from: filters.from || undefined,
     to: filters.to || undefined,
-    sortBy: sorting[0]?.id as AdminAuditLogListQuery['sortBy'],
-    sortOrder: sorting[0]?.desc ? 'desc' : 'asc',
+    sortBy: (sorting[0]?.id as AdminAuditLogListQuery['sortBy']) ?? 'createdAt',
+    sortOrder: sorting[0] ? (sorting[0].desc ? 'desc' : 'asc') : 'desc',
   };
   const logsQuery = useQuery({
     queryKey: ['audit-logs', query],

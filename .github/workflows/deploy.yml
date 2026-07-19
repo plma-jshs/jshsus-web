@@ -220,15 +220,74 @@ jobs:
           PRODUCTION_ENV_FILE: ${{ secrets.PRODUCTION_ENV_FILE }}
           NEIS_API_KEY: ${{ secrets.NEIS_API_KEY }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
+          COGNITO_WEB_CLIENT_ID: ${{ secrets.COGNITO_WEB_CLIENT_ID }}
+          COGNITO_WEB_CLIENT_SECRET: ${{ secrets.COGNITO_WEB_CLIENT_SECRET }}
+          COGNITO_ADMIN_CLIENT_ID: ${{ secrets.COGNITO_ADMIN_CLIENT_ID }}
+          COGNITO_ADMIN_CLIENT_SECRET: ${{ secrets.COGNITO_ADMIN_CLIENT_SECRET }}
         run: |
           set -euo pipefail
           umask 077
+
+          require_scalar_secret() {
+            local name="$1"
+            local value="${!name}"
+            if [[ -z "$value" ]]; then
+              printf '::error::Required production secret %s is missing.\n' "$name" >&2
+              return 1
+            fi
+            if [[ "$value" == *$'\n'* || "$value" == *$'\r'* ]]; then
+              printf '::error::Required production secret %s must be a single line.\n' "$name" >&2
+              return 1
+            fi
+          }
+
+          set_env_value() {
+            local key="$1"
+            local value="$2"
+            local next_file
+            next_file="$(mktemp .env.production.XXXXXX)"
+            awk -v key="$key" '
+              {
+                candidate = $0
+                sub(/^[[:space:]]*/, "", candidate)
+                sub(/^export[[:space:]]+/, "", candidate)
+                if (candidate !~ ("^" key "[[:space:]]*=")) {
+                  print
+                }
+              }
+            ' .env.production > "$next_file"
+            printf '%s=%s\n' "$key" "$value" >> "$next_file"
+            chmod 600 "$next_file"
+            mv "$next_file" .env.production
+          }
+
           test -n "$PRODUCTION_ENV_FILE"
-          test -n "$NEIS_API_KEY"
-          test -n "$YOUTUBE_API_KEY"
+          for secret_name in \
+            NEIS_API_KEY \
+            YOUTUBE_API_KEY \
+            COGNITO_USER_POOL_ID \
+            COGNITO_WEB_CLIENT_ID \
+            COGNITO_WEB_CLIENT_SECRET \
+            COGNITO_ADMIN_CLIENT_ID \
+            COGNITO_ADMIN_CLIENT_SECRET; do
+            require_scalar_secret "$secret_name"
+          done
+
           printf '%s\n' "$PRODUCTION_ENV_FILE" > .env.production
-          printf 'NEIS_API_KEY=%s\n' "$NEIS_API_KEY" >> .env.production
-          printf 'YOUTUBE_API_KEY=%s\n' "$YOUTUBE_API_KEY" >> .env.production
+          set_env_value NEIS_API_KEY "$NEIS_API_KEY"
+          set_env_value YOUTUBE_API_KEY "$YOUTUBE_API_KEY"
+          set_env_value AUTH_MODE hybrid
+          set_env_value SESSION_COOKIE_HOST_ONLY true
+          set_env_value SESSION_COOKIE_SECURE true
+          set_env_value IAM_COOKIE_NAME __Host-jshsus-v26.sid
+          set_env_value CSRF_COOKIE_NAME __Host-jshsus-v26.csrf
+          set_env_value COGNITO_REGION ap-northeast-2
+          set_env_value COGNITO_USER_POOL_ID "$COGNITO_USER_POOL_ID"
+          set_env_value COGNITO_WEB_CLIENT_ID "$COGNITO_WEB_CLIENT_ID"
+          set_env_value COGNITO_WEB_CLIENT_SECRET "$COGNITO_WEB_CLIENT_SECRET"
+          set_env_value COGNITO_ADMIN_CLIENT_ID "$COGNITO_ADMIN_CLIENT_ID"
+          set_env_value COGNITO_ADMIN_CLIENT_SECRET "$COGNITO_ADMIN_CLIENT_SECRET"
 
       - name: Authenticate the server to GHCR
         shell: bash

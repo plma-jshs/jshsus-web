@@ -293,7 +293,7 @@ install -d -m 700 "$DEPLOY_DIR/backups"
 echo 'Creating a logical database backup before migration'
 compose --profile tools run --rm backup
 
-echo 'Applying forward-only, backward-compatible database migrations'
+echo 'Applying database migrations and core bootstrap data'
 compose --profile tools run --rm migrate
 
 echo 'Starting isolated Redis and API services, followed by the frontends'

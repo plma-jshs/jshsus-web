@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "250304ea-0097-4f22-9e4b-962aafbadc13",
+  "id": "25b675ff-78d2-4639-b247-5921a3c3349c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "audit_logs": {
@@ -105,7 +105,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "auth_accounts": {
       "name": "auth_accounts",
@@ -212,7 +213,47 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "identity_sequences": {
+      "name": "identity_sequences",
+      "columns": {
+        "sequence_key": {
+          "name": "sequence_key",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "next_value": {
+          "name": "next_value",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "identity_sequences_sequence_key": {
+          "name": "identity_sequences_sequence_key",
+          "columns": [
+            "sequence_key"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "permissions": {
       "name": "permissions",
@@ -280,7 +321,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "role_permissions": {
       "name": "role_permissions",
@@ -346,7 +388,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "roles": {
       "name": "roles",
@@ -407,7 +450,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "user_permissions": {
       "name": "user_permissions",
@@ -481,7 +525,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "user_roles": {
       "name": "user_roles",
@@ -547,7 +592,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "users": {
       "name": "users",
@@ -558,27 +604,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": true
-        },
-        "legacy_iam_id": {
-          "name": "legacy_iam_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "legacy_jshsus_id": {
-          "name": "legacy_jshsus_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "legacy_plma_id": {
-          "name": "legacy_plma_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         },
         "student_no": {
           "name": "student_no",
@@ -592,6 +617,13 @@
           "type": "varchar(64)",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "grade": {
@@ -631,7 +663,7 @@
         },
         "gender": {
           "name": "gender",
-          "type": "varchar(24)",
+          "type": "enum('0','1')",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -676,10 +708,10 @@
           ],
           "isUnique": true
         },
-        "users_legacy_iam_id_idx": {
-          "name": "users_legacy_iam_id_idx",
+        "users_nickname_idx": {
+          "name": "users_nickname_idx",
           "columns": [
-            "legacy_iam_id"
+            "nickname"
           ],
           "isUnique": true
         }
@@ -693,7 +725,324 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "wake_song_request_events": {
+      "name": "wake_song_request_events",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "wake_song_request_id": {
+          "name": "wake_song_request_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "wake_song_request_event_type": {
+          "name": "wake_song_request_event_type",
+          "type": "enum('SUBMITTED','UPDATED','APPROVED','REJECTED','SCHEDULED','PLAYED','CANCELED')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "note": {
+          "name": "note",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {
+        "wake_song_events_request_idx": {
+          "name": "wake_song_events_request_idx",
+          "columns": [
+            "wake_song_request_id",
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "wake_song_request_events_actor_id_users_id_fk": {
+          "name": "wake_song_request_events_actor_id_users_id_fk",
+          "tableFrom": "wake_song_request_events",
+          "tableTo": "users",
+          "columnsFrom": [
+            "actor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "wake_song_events_request_fk": {
+          "name": "wake_song_events_request_fk",
+          "tableFrom": "wake_song_request_events",
+          "tableTo": "wake_song_requests",
+          "columnsFrom": [
+            "wake_song_request_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "wake_song_request_events_id": {
+          "name": "wake_song_request_events_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "wake_song_requests": {
+      "name": "wake_song_requests",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "requester_id": {
+          "name": "requester_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "youtube_video_id": {
+          "name": "youtube_video_id",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "canonical_url": {
+          "name": "canonical_url",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "video_title": {
+          "name": "video_title",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "channel_title": {
+          "name": "channel_title",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "video_duration_seconds": {
+          "name": "video_duration_seconds",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "start_seconds": {
+          "name": "start_seconds",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "end_seconds": {
+          "name": "end_seconds",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "playback_rate_hundredths": {
+          "name": "playback_rate_hundredths",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 100
+        },
+        "effective_duration_seconds": {
+          "name": "effective_duration_seconds",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "request_note": {
+          "name": "request_note",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "wake_song_request_status": {
+          "name": "wake_song_request_status",
+          "type": "enum('PENDING','APPROVED','REJECTED','SCHEDULED','PLAYED','CANCELED')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'PENDING'"
+        },
+        "reviewed_by_id": {
+          "name": "reviewed_by_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "rejection_reason": {
+          "name": "rejection_reason",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "scheduled_at": {
+          "name": "scheduled_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "played_at": {
+          "name": "played_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "canceled_at": {
+          "name": "canceled_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {
+        "wake_song_requester_status_idx": {
+          "name": "wake_song_requester_status_idx",
+          "columns": [
+            "requester_id",
+            "wake_song_request_status"
+          ],
+          "isUnique": false
+        },
+        "wake_song_status_created_idx": {
+          "name": "wake_song_status_created_idx",
+          "columns": [
+            "wake_song_request_status",
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "wake_song_scheduled_idx": {
+          "name": "wake_song_scheduled_idx",
+          "columns": [
+            "scheduled_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "wake_song_requests_requester_id_users_id_fk": {
+          "name": "wake_song_requests_requester_id_users_id_fk",
+          "tableFrom": "wake_song_requests",
+          "tableTo": "users",
+          "columnsFrom": [
+            "requester_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "wake_song_requests_reviewed_by_id_users_id_fk": {
+          "name": "wake_song_requests_reviewed_by_id_users_id_fk",
+          "tableFrom": "wake_song_requests",
+          "tableTo": "users",
+          "columnsFrom": [
+            "reviewed_by_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "wake_song_requests_id": {
+          "name": "wake_song_requests_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "boards": {
       "name": "boards",
@@ -777,7 +1126,83 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "comment_likes": {
+      "name": "comment_likes",
+      "columns": {
+        "comment_id": {
+          "name": "comment_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {
+        "comment_likes_user_idx": {
+          "name": "comment_likes_user_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "comment_likes_comment_id_comments_id_fk": {
+          "name": "comment_likes_comment_id_comments_id_fk",
+          "tableFrom": "comment_likes",
+          "tableTo": "comments",
+          "columnsFrom": [
+            "comment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "comment_likes_user_id_users_id_fk": {
+          "name": "comment_likes_user_id_users_id_fk",
+          "tableFrom": "comment_likes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "comment_likes_comment_id_user_id_pk": {
+          "name": "comment_likes_comment_id_user_id_pk",
+          "columns": [
+            "comment_id",
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "comments": {
       "name": "comments",
@@ -888,7 +1313,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "lost_items": {
       "name": "lost_items",
@@ -950,13 +1376,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "metadata": {
-          "name": "metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "datetime(3)",
@@ -1007,7 +1426,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "notices": {
       "name": "notices",
@@ -1128,7 +1548,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "petition_answers": {
       "name": "petition_answers",
@@ -1223,7 +1644,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "petition_participants": {
       "name": "petition_participants",
@@ -1289,7 +1711,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "petitions": {
       "name": "petitions",
@@ -1320,6 +1743,13 @@
           "type": "longtext",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "content_json": {
+          "name": "content_json",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "petition_status": {
@@ -1402,7 +1832,83 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "post_likes": {
+      "name": "post_likes",
+      "columns": {
+        "post_id": {
+          "name": "post_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {
+        "post_likes_user_idx": {
+          "name": "post_likes_user_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "post_likes_post_id_posts_id_fk": {
+          "name": "post_likes_post_id_posts_id_fk",
+          "tableFrom": "post_likes",
+          "tableTo": "posts",
+          "columnsFrom": [
+            "post_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "post_likes_user_id_users_id_fk": {
+          "name": "post_likes_user_id_users_id_fk",
+          "tableFrom": "post_likes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "post_likes_post_id_user_id_pk": {
+          "name": "post_likes_post_id_user_id_pk",
+          "columns": [
+            "post_id",
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "posts": {
       "name": "posts",
@@ -1441,6 +1947,21 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "content_json": {
+          "name": "content_json",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "post_status": {
+          "name": "post_status",
+          "type": "enum('draft','published')",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'published'"
         },
         "is_anonymous": {
           "name": "is_anonymous",
@@ -1491,6 +2012,15 @@
             "created_at"
           ],
           "isUnique": false
+        },
+        "posts_board_status_created_idx": {
+          "name": "posts_board_status_created_idx",
+          "columns": [
+            "board_id",
+            "post_status",
+            "created_at"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {
@@ -1529,7 +2059,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "reactions": {
       "name": "reactions",
@@ -1598,7 +2129,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "reports": {
       "name": "reports",
@@ -1627,6 +2159,13 @@
         "reporter_id": {
           "name": "reporter_id",
           "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "dedupe_key": {
+          "name": "dedupe_key",
+          "type": "varchar(190)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -1678,6 +2217,13 @@
             "target_id"
           ],
           "isUnique": false
+        },
+        "reports_dedupe_key_idx": {
+          "name": "reports_dedupe_key_idx",
+          "columns": [
+            "dedupe_key"
+          ],
+          "isUnique": true
         }
       },
       "foreignKeys": {
@@ -1703,7 +2249,371 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "thanks_messages": {
+      "name": "thanks_messages",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "school_number": {
+          "name": "school_number",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {
+        "thanks_messages_submitted_idx": {
+          "name": "thanks_messages_submitted_idx",
+          "columns": [
+            "submitted_at"
+          ],
+          "isUnique": false
+        },
+        "thanks_messages_student_idx": {
+          "name": "thanks_messages_student_idx",
+          "columns": [
+            "school_number",
+            "submitted_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "thanks_messages_id": {
+          "name": "thanks_messages_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "dorm_roommate_blocks": {
+      "name": "dorm_roommate_blocks",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "student_user_id": {
+          "name": "student_user_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "blocked_user_id": {
+          "name": "blocked_user_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "year": {
+          "name": "year",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "semester": {
+          "name": "semester",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "submitted_by": {
+          "name": "submitted_by",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {
+        "dorm_roommate_blocks_student_term_idx": {
+          "name": "dorm_roommate_blocks_student_term_idx",
+          "columns": [
+            "student_user_id",
+            "year",
+            "semester"
+          ],
+          "isUnique": false
+        },
+        "dorm_roommate_blocks_blocked_term_idx": {
+          "name": "dorm_roommate_blocks_blocked_term_idx",
+          "columns": [
+            "blocked_user_id",
+            "year",
+            "semester"
+          ],
+          "isUnique": false
+        },
+        "dorm_roommate_blocks_pair_term_idx": {
+          "name": "dorm_roommate_blocks_pair_term_idx",
+          "columns": [
+            "student_user_id",
+            "blocked_user_id",
+            "year",
+            "semester"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "dorm_roommate_blocks_student_user_id_users_id_fk": {
+          "name": "dorm_roommate_blocks_student_user_id_users_id_fk",
+          "tableFrom": "dorm_roommate_blocks",
+          "tableTo": "users",
+          "columnsFrom": [
+            "student_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "dorm_roommate_blocks_blocked_user_id_users_id_fk": {
+          "name": "dorm_roommate_blocks_blocked_user_id_users_id_fk",
+          "tableFrom": "dorm_roommate_blocks",
+          "tableTo": "users",
+          "columnsFrom": [
+            "blocked_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "dorm_roommate_blocks_submitted_by_users_id_fk": {
+          "name": "dorm_roommate_blocks_submitted_by_users_id_fk",
+          "tableFrom": "dorm_roommate_blocks",
+          "tableTo": "users",
+          "columnsFrom": [
+            "submitted_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "dorm_roommate_blocks_id": {
+          "name": "dorm_roommate_blocks_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {
+        "dorm_roommate_blocks_not_self_chk": {
+          "name": "dorm_roommate_blocks_not_self_chk",
+          "value": "`dorm_roommate_blocks`.`student_user_id` <> `dorm_roommate_blocks`.`blocked_user_id`"
+        }
+      }
+    },
+    "file_cleanup_jobs": {
+      "name": "file_cleanup_jobs",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "file_id": {
+          "name": "file_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "object_key": {
+          "name": "object_key",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "target_type": {
+          "name": "target_type",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "target_id": {
+          "name": "target_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'target_delete'"
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "next_attempt_at": {
+          "name": "next_attempt_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "locked_by": {
+          "name": "locked_by",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "locked_at": {
+          "name": "locked_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {
+        "file_cleanup_jobs_object_key_idx": {
+          "name": "file_cleanup_jobs_object_key_idx",
+          "columns": [
+            "object_key"
+          ],
+          "isUnique": true
+        },
+        "file_cleanup_jobs_due_idx": {
+          "name": "file_cleanup_jobs_due_idx",
+          "columns": [
+            "next_attempt_at",
+            "locked_at"
+          ],
+          "isUnique": false
+        },
+        "file_cleanup_jobs_target_idx": {
+          "name": "file_cleanup_jobs_target_idx",
+          "columns": [
+            "target_type",
+            "target_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "file_cleanup_jobs_id": {
+          "name": "file_cleanup_jobs_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "files": {
       "name": "files",
@@ -1837,7 +2747,84 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "jbs_videos": {
+      "name": "jbs_videos",
+      "columns": {
+        "post_id": {
+          "name": "post_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "youtube_video_id": {
+          "name": "youtube_video_id",
+          "type": "varchar(11)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "canonical_url": {
+          "name": "canonical_url",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {
+        "jbs_videos_video_idx": {
+          "name": "jbs_videos_video_idx",
+          "columns": [
+            "youtube_video_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "jbs_videos_post_id_posts_id_fk": {
+          "name": "jbs_videos_post_id_posts_id_fk",
+          "tableFrom": "jbs_videos",
+          "tableTo": "posts",
+          "columnsFrom": [
+            "post_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "jbs_videos_post_id_pk": {
+          "name": "jbs_videos_post_id_pk",
+          "columns": [
+            "post_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "notifications": {
       "name": "notifications",
@@ -1870,9 +2857,30 @@
           "notNull": true,
           "autoincrement": false
         },
+        "body": {
+          "name": "body",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "link": {
           "name": "link",
           "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "dedupe_key": {
+          "name": "dedupe_key",
+          "type": "varchar(190)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -1882,6 +2890,13 @@
           "type": "datetime(3)",
           "primaryKey": false,
           "notNull": false,
+          "autoincrement": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
           "autoincrement": false
         },
         "created_at": {
@@ -1909,6 +2924,28 @@
             "read_at"
           ],
           "isUnique": false
+        },
+        "notifications_user_created_idx": {
+          "name": "notifications_user_created_idx",
+          "columns": [
+            "user_id",
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "notifications_expires_idx": {
+          "name": "notifications_expires_idx",
+          "columns": [
+            "expires_at"
+          ],
+          "isUnique": false
+        },
+        "notifications_dedupe_idx": {
+          "name": "notifications_dedupe_idx",
+          "columns": [
+            "dedupe_key"
+          ],
+          "isUnique": true
         }
       },
       "foreignKeys": {
@@ -1934,7 +2971,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "activity_request_events": {
       "name": "activity_request_events",
@@ -2028,7 +3066,84 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "activity_request_participants": {
+      "name": "activity_request_participants",
+      "columns": {
+        "activity_request_id": {
+          "name": "activity_request_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {
+        "activity_request_participants_student_idx": {
+          "name": "activity_request_participants_student_idx",
+          "columns": [
+            "student_id",
+            "activity_request_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "activity_participants_request_fk": {
+          "name": "activity_participants_request_fk",
+          "tableFrom": "activity_request_participants",
+          "tableTo": "activity_requests",
+          "columnsFrom": [
+            "activity_request_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "activity_participants_student_fk": {
+          "name": "activity_participants_student_fk",
+          "tableFrom": "activity_request_participants",
+          "tableTo": "students",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "activity_request_participants_activity_request_id_student_id_pk": {
+          "name": "activity_request_participants_activity_request_id_student_id_pk",
+          "columns": [
+            "activity_request_id",
+            "student_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "activity_requests": {
       "name": "activity_requests",
@@ -2047,8 +3162,22 @@
           "notNull": true,
           "autoincrement": false
         },
+        "created_by_id": {
+          "name": "created_by_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "teacher_id": {
           "name": "teacher_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "reviewed_by_id": {
+          "name": "reviewed_by_id",
           "type": "int",
           "primaryKey": false,
           "notNull": false,
@@ -2073,6 +3202,13 @@
           "type": "datetime(3)",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "activity_slot_ids": {
+          "name": "activity_slot_ids",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "purpose": {
@@ -2137,10 +3273,26 @@
           ],
           "isUnique": false
         },
+        "activity_requests_creator_idx": {
+          "name": "activity_requests_creator_idx",
+          "columns": [
+            "created_by_id",
+            "created_at"
+          ],
+          "isUnique": false
+        },
         "activity_requests_teacher_idx": {
           "name": "activity_requests_teacher_idx",
           "columns": [
             "teacher_id",
+            "activity_request_status"
+          ],
+          "isUnique": false
+        },
+        "activity_requests_reviewer_idx": {
+          "name": "activity_requests_reviewer_idx",
+          "columns": [
+            "reviewed_by_id",
             "activity_request_status"
           ],
           "isUnique": false
@@ -2167,12 +3319,38 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "activity_requests_created_by_id_users_id_fk": {
+          "name": "activity_requests_created_by_id_users_id_fk",
+          "tableFrom": "activity_requests",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "activity_requests_teacher_id_users_id_fk": {
           "name": "activity_requests_teacher_id_users_id_fk",
           "tableFrom": "activity_requests",
           "tableTo": "users",
           "columnsFrom": [
             "teacher_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "activity_requests_reviewed_by_id_users_id_fk": {
+          "name": "activity_requests_reviewed_by_id_users_id_fk",
+          "tableFrom": "activity_requests",
+          "tableTo": "users",
+          "columnsFrom": [
+            "reviewed_by_id"
           ],
           "columnsTo": [
             "id"
@@ -2189,7 +3367,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "device_case_commands": {
       "name": "device_case_commands",
@@ -2306,7 +3485,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "device_case_schedules": {
       "name": "device_case_schedules",
@@ -2317,6 +3497,13 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": true
+        },
+        "device_case_id": {
+          "name": "device_case_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "scheduled_at": {
           "name": "scheduled_at",
@@ -2351,7 +3538,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "device_case_schedules_device_case_id_device_cases_id_fk": {
+          "name": "device_case_schedules_device_case_id_device_cases_id_fk",
+          "tableFrom": "device_case_schedules",
+          "tableTo": "device_cases",
+          "columnsFrom": [
+            "device_case_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {
         "device_case_schedules_id": {
           "name": "device_case_schedules_id",
@@ -2360,7 +3561,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "device_cases": {
       "name": "device_cases",
@@ -2423,7 +3625,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "dorm_assignments": {
       "name": "dorm_assignments",
@@ -2544,7 +3747,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "dorm_reports": {
       "name": "dorm_reports",
@@ -2675,7 +3879,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "dorm_rooms": {
       "name": "dorm_rooms",
@@ -2733,9 +3938,10 @@
         }
       },
       "indexes": {
-        "dorm_rooms_name_idx": {
-          "name": "dorm_rooms_name_idx",
+        "dorm_rooms_dorm_name_name_idx": {
+          "name": "dorm_rooms_dorm_name_name_idx",
           "columns": [
+            "dorm_name",
             "name"
           ],
           "isUnique": true
@@ -2750,7 +3956,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "point_adjustments": {
       "name": "point_adjustments",
@@ -2865,7 +4072,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "point_award_cases": {
       "name": "point_award_cases",
@@ -2990,7 +4198,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "point_reasons": {
       "name": "point_reasons",
@@ -3058,7 +4267,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "point_records": {
       "name": "point_records",
@@ -3081,7 +4291,7 @@
           "name": "teacher_id",
           "type": "int",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "reason_id": {
@@ -3089,6 +4299,20 @@
           "type": "int",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "reason_type": {
+          "name": "reason_type",
+          "type": "enum('PLUS','MINUS','ETC')",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "reason_text": {
+          "name": "reason_text",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "point": {
@@ -3168,6 +4392,14 @@
             "reason_id"
           ],
           "isUnique": false
+        },
+        "point_records_base_created_idx": {
+          "name": "point_records_base_created_idx",
+          "columns": [
+            "base_date",
+            "created_at"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {
@@ -3219,10 +4451,11 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
-    "song_requests": {
-      "name": "song_requests",
+    "roster_import_batches": {
+      "name": "roster_import_batches",
       "columns": {
         "id": {
           "name": "id",
@@ -3231,41 +4464,74 @@
           "notNull": true,
           "autoincrement": true
         },
-        "title": {
-          "name": "title",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "url": {
-          "name": "url",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "duration": {
-          "name": "duration",
+        "school_year": {
+          "name": "school_year",
           "type": "int",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "song_request_status": {
-          "name": "song_request_status",
-          "type": "enum('PENDING','APPROVED','REJECTED')",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'PENDING'"
-        },
-        "requester_id": {
-          "name": "requester_id",
+        "applied_by_id": {
+          "name": "applied_by_id",
           "type": "int",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "row_count": {
+          "name": "row_count",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "created_count": {
+          "name": "created_count",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "updated_count": {
+          "name": "updated_count",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "unchanged_count": {
+          "name": "unchanged_count",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "graduated_count": {
+          "name": "graduated_count",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "applied_at": {
+          "name": "applied_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
         },
         "created_at": {
           "name": "created_at",
@@ -3284,14 +4550,44 @@
           "default": "(now(3))"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "roster_import_batches_year_idx": {
+          "name": "roster_import_batches_year_idx",
+          "columns": [
+            "school_year",
+            "applied_at"
+          ],
+          "isUnique": false
+        },
+        "roster_import_batches_actor_idx": {
+          "name": "roster_import_batches_actor_idx",
+          "columns": [
+            "applied_by_id",
+            "applied_at"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
-        "song_requests_requester_id_users_id_fk": {
-          "name": "song_requests_requester_id_users_id_fk",
-          "tableFrom": "song_requests",
+        "roster_import_batches_school_year_school_years_year_fk": {
+          "name": "roster_import_batches_school_year_school_years_year_fk",
+          "tableFrom": "roster_import_batches",
+          "tableTo": "school_years",
+          "columnsFrom": [
+            "school_year"
+          ],
+          "columnsTo": [
+            "year"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "roster_import_batches_applied_by_id_users_id_fk": {
+          "name": "roster_import_batches_applied_by_id_users_id_fk",
+          "tableFrom": "roster_import_batches",
           "tableTo": "users",
           "columnsFrom": [
-            "requester_id"
+            "applied_by_id"
           ],
           "columnsTo": [
             "id"
@@ -3301,14 +4597,86 @@
         }
       },
       "compositePrimaryKeys": {
-        "song_requests_id": {
-          "name": "song_requests_id",
+        "roster_import_batches_id": {
+          "name": "roster_import_batches_id",
           "columns": [
             "id"
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "school_years": {
+      "name": "school_years",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "year": {
+          "name": "year",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {
+        "school_years_year_idx": {
+          "name": "school_years_year_idx",
+          "columns": [
+            "year"
+          ],
+          "isUnique": true
+        },
+        "school_years_active_idx": {
+          "name": "school_years_active_idx",
+          "columns": [
+            "is_active",
+            "year"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "school_years_id": {
+          "name": "school_years_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "staff_profiles": {
       "name": "staff_profiles",
@@ -3355,13 +4723,12 @@
           "notNull": false,
           "autoincrement": false
         },
-        "is_student_affairs_head": {
-          "name": "is_student_affairs_head",
-          "type": "boolean",
+        "managed_classes": {
+          "name": "managed_classes",
+          "type": "json",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "notNull": false,
+          "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
@@ -3419,7 +4786,163 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {
+        "staff_profiles_staff_no_six_digit_check": {
+          "name": "staff_profiles_staff_no_six_digit_check",
+          "value": "`staff_profiles`.`staff_no` between 100000 and 999999"
+        }
+      }
+    },
+    "student_enrollments": {
+      "name": "student_enrollments",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "school_year": {
+          "name": "school_year",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "student_no": {
+          "name": "student_no",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "grade": {
+          "name": "grade",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "class_no": {
+          "name": "class_no",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "number": {
+          "name": "number",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "student_enrollment_status": {
+          "name": "student_enrollment_status",
+          "type": "enum('active','graduated','transferred','withdrawn')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'active'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {
+        "student_enrollments_year_student_idx": {
+          "name": "student_enrollments_year_student_idx",
+          "columns": [
+            "school_year",
+            "student_id"
+          ],
+          "isUnique": true
+        },
+        "student_enrollments_year_student_no_idx": {
+          "name": "student_enrollments_year_student_no_idx",
+          "columns": [
+            "school_year",
+            "student_no"
+          ],
+          "isUnique": true
+        },
+        "student_enrollments_student_idx": {
+          "name": "student_enrollments_student_idx",
+          "columns": [
+            "student_id",
+            "school_year"
+          ],
+          "isUnique": false
+        },
+        "student_enrollments_status_idx": {
+          "name": "student_enrollments_status_idx",
+          "columns": [
+            "school_year",
+            "student_enrollment_status"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "student_enrollments_student_id_students_id_fk": {
+          "name": "student_enrollments_student_id_students_id_fk",
+          "tableFrom": "student_enrollments",
+          "tableTo": "students",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "student_enrollments_school_year_school_years_year_fk": {
+          "name": "student_enrollments_school_year_school_years_year_fk",
+          "tableFrom": "student_enrollments",
+          "tableTo": "school_years",
+          "columnsFrom": [
+            "school_year"
+          ],
+          "columnsTo": [
+            "year"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "student_enrollments_id": {
+          "name": "student_enrollments_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     },
     "students": {
       "name": "students",
@@ -3433,13 +4956,6 @@
         },
         "user_id": {
           "name": "user_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "legacy_student_id": {
-          "name": "legacy_student_id",
           "type": "int",
           "primaryKey": false,
           "notNull": false,
@@ -3519,13 +5035,6 @@
             "user_id"
           ],
           "isUnique": true
-        },
-        "students_legacy_student_id_idx": {
-          "name": "students_legacy_student_id_idx",
-          "columns": [
-            "legacy_student_id"
-          ],
-          "isUnique": true
         }
       },
       "foreignKeys": {
@@ -3551,9 +5060,149 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "school_events": {
+      "name": "school_events",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "category": {
+          "name": "category",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'school'"
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "all_day": {
+          "name": "all_day",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "is_holiday": {
+          "name": "is_holiday",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "is_public": {
+          "name": "is_public",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "created_by_id": {
+          "name": "created_by_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {
+        "school_events_range_idx": {
+          "name": "school_events_range_idx",
+          "columns": [
+            "starts_at",
+            "ends_at"
+          ],
+          "isUnique": false
+        },
+        "school_events_visibility_idx": {
+          "name": "school_events_visibility_idx",
+          "columns": [
+            "is_public",
+            "starts_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "school_events_created_by_id_users_id_fk": {
+          "name": "school_events_created_by_id_users_id_fk",
+          "tableFrom": "school_events",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "school_events_id": {
+          "name": "school_events_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
     }
   },
+  "views": {},
   "_meta": {
     "schemas": {},
     "tables": {},

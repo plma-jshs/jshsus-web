@@ -1,2 +1,0 @@
-ALTER TABLE `device_case_schedules` ADD `device_case_id` int;--> statement-breakpoint
-ALTER TABLE `device_case_schedules` ADD CONSTRAINT `device_case_schedules_device_case_id_device_cases_id_fk` FOREIGN KEY (`device_case_id`) REFERENCES `device_cases`(`id`) ON DELETE no action ON UPDATE no action;

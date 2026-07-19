@@ -183,12 +183,18 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 10px;
   padding: 13px 14px;
-  align-items: start;
+  align-items: center;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface);
   box-shadow: var(--j-shadow-overlay);
   pointer-events: auto;
+}
+
+.ui-toast__content {
+  display: grid;
+  min-width: 0;
+  align-content: center;
 }
 
 .ui-toast--success {

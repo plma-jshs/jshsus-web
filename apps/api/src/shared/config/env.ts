@@ -24,12 +24,24 @@ const envSchema = z
     DATABASE_SSL_CA_PATH: z.string().default(''),
     REDIS_URL: z.string().default('redis://localhost:6379/0'),
     SESSION_COOKIE_DOMAIN: z.string().default('localhost'),
+    SESSION_COOKIE_HOST_ONLY: booleanFromString.default(false),
     SESSION_COOKIE_SECURE: booleanFromString.default(false),
     CSRF_SECRET: z.string().min(12).default('change-this-csrf-secret'),
     CSRF_COOKIE_NAME: z.string().default('jshsus.csrf'),
     ALLOW_DEV_AUTH: booleanFromString.default(false),
     DEV_AUTH_PASSWORD: z.string().default('local-dev-only'),
     PASSWORD_REHASH_ON_LOGIN: booleanFromString.default(true),
+    AUTH_MODE: z.enum(['local', 'hybrid', 'cognito']).default('local'),
+    COGNITO_REGION: z.string().default('ap-northeast-2'),
+    COGNITO_USER_POOL_ID: z.string().default(''),
+    COGNITO_CLIENT_ID: z.string().default(''),
+    COGNITO_CLIENT_SECRET: z.string().default(''),
+    COGNITO_WEB_CLIENT_ID: z.string().default(''),
+    COGNITO_WEB_CLIENT_SECRET: z.string().default(''),
+    COGNITO_ADMIN_CLIENT_ID: z.string().default(''),
+    COGNITO_ADMIN_CLIENT_SECRET: z.string().default(''),
+    COGNITO_FLOW_TTL_SECONDS: z.coerce.number().int().min(120).max(900).default(300),
+    COGNITO_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(15_000).default(5_000),
     LEGACY_SYSTEM_ADMIN_STUIDS: z
       .string()
       .default('')
@@ -98,6 +110,19 @@ const envSchema = z
       .default('7140163'),
     NEIS_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(500).max(10_000).default(3_500),
     NEIS_CACHE_TTL_SECONDS: z.coerce.number().int().min(60).max(86_400).default(3_600),
+  })
+  .transform((value) => {
+    const cognitoClientId = value.COGNITO_CLIENT_ID.trim();
+    const cognitoClientSecret = value.COGNITO_CLIENT_SECRET.trim();
+
+    return {
+      ...value,
+      COGNITO_REGION: value.COGNITO_REGION.trim() || value.AWS_REGION,
+      COGNITO_WEB_CLIENT_ID: value.COGNITO_WEB_CLIENT_ID.trim() || cognitoClientId,
+      COGNITO_WEB_CLIENT_SECRET: value.COGNITO_WEB_CLIENT_SECRET.trim() || cognitoClientSecret,
+      COGNITO_ADMIN_CLIENT_ID: value.COGNITO_ADMIN_CLIENT_ID.trim() || cognitoClientId,
+      COGNITO_ADMIN_CLIENT_SECRET: value.COGNITO_ADMIN_CLIENT_SECRET.trim() || cognitoClientSecret,
+    };
   })
   .superRefine((value, context) => {
     if (value.NODE_ENV === 'production') {
@@ -168,6 +193,33 @@ const envSchema = z
           message: 'Production Redis credentials must not use local defaults.',
         });
       }
+
+      if (value.AUTH_MODE !== 'local') {
+        if (!value.SESSION_COOKIE_HOST_ONLY) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['SESSION_COOKIE_HOST_ONLY'],
+            message: 'Cognito-backed production sessions must use host-only cookies.',
+          });
+        }
+
+        if (!value.IAM_COOKIE_NAME.startsWith('__Host-')) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['IAM_COOKIE_NAME'],
+            message: 'Cognito-backed production sessions require a dedicated __Host- cookie name.',
+          });
+        }
+
+        if (!value.CSRF_COOKIE_NAME.startsWith('__Host-')) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['CSRF_COOKIE_NAME'],
+            message:
+              'Cognito-backed production CSRF cookies require a dedicated __Host- cookie name.',
+          });
+        }
+      }
     }
 
     if (value.DATABASE_SSL_MODE === 'verify_identity' && !value.DATABASE_SSL_CA_PATH) {
@@ -178,6 +230,38 @@ const envSchema = z
       });
     }
 
+    if (value.AUTH_MODE !== 'local') {
+      const requiredCognitoValues: Array<
+        [
+          keyof Pick<
+            typeof value,
+            | 'COGNITO_USER_POOL_ID'
+            | 'COGNITO_WEB_CLIENT_ID'
+            | 'COGNITO_WEB_CLIENT_SECRET'
+            | 'COGNITO_ADMIN_CLIENT_ID'
+            | 'COGNITO_ADMIN_CLIENT_SECRET'
+          >,
+          string,
+        ]
+      > = [
+        ['COGNITO_USER_POOL_ID', value.COGNITO_USER_POOL_ID],
+        ['COGNITO_WEB_CLIENT_ID', value.COGNITO_WEB_CLIENT_ID],
+        ['COGNITO_WEB_CLIENT_SECRET', value.COGNITO_WEB_CLIENT_SECRET],
+        ['COGNITO_ADMIN_CLIENT_ID', value.COGNITO_ADMIN_CLIENT_ID],
+        ['COGNITO_ADMIN_CLIENT_SECRET', value.COGNITO_ADMIN_CLIENT_SECRET],
+      ];
+
+      for (const [key, configuredValue] of requiredCognitoValues) {
+        if (!configuredValue.trim()) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [key],
+            message: `${key} is required when AUTH_MODE is ${value.AUTH_MODE}.`,
+          });
+        }
+      }
+    }
+
     if (value.FILE_CLEANUP_RETRY_MAX_MS < value.FILE_CLEANUP_RETRY_BASE_MS) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
@@ -186,8 +270,7 @@ const envSchema = z
       });
     }
 
-    const s3Values = [value.S3_BUCKET, value.AWS_ACCESS_KEY_ID, value.AWS_SECRET_ACCESS_KEY];
-    if (s3Values.some(Boolean) && !s3Values.every(Boolean)) {
+    if (value.S3_BUCKET && (!value.AWS_ACCESS_KEY_ID || !value.AWS_SECRET_ACCESS_KEY)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['S3_BUCKET'],

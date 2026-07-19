@@ -88,6 +88,30 @@ export type PetitionSummary = DashboardPetition & {
 
 export type PetitionDetail = PetitionSummary;
 
+export type ThanksChallengeMessage = {
+  id: number;
+  schoolNumber: string;
+  message: string;
+  submittedAt: string;
+};
+
+export type ThanksChallengeSummary = {
+  schoolNumber: string;
+  messageCount: number;
+};
+
+export type ThanksChallengeData = {
+  messages: ThanksChallengeMessage[];
+  summary: ThanksChallengeSummary[];
+  totalMessages: number;
+  totalStudents: number;
+};
+
+export type ThanksChallengeCreateResult = {
+  ok: true;
+  message: ThanksChallengeMessage;
+};
+
 export type LostItemSummary = {
   id: number;
   type: 'lost' | 'found';

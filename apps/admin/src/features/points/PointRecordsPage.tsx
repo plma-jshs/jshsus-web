@@ -37,7 +37,7 @@ export function PointRecordsPage() {
   const [type, setType] = useState<PointReason['type'] | ''>('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'baseDate', desc: true }]);
   const sort = sorting[0];
   const recordsQuery = useQuery({
     queryKey: ['point-record-page', page, pageSize, search, type, from, to, sort?.id, sort?.desc],
@@ -50,7 +50,7 @@ export function PointRecordsPage() {
         from: from || undefined,
         to: to || undefined,
         sortBy: (sort?.id as RecordSort | undefined) ?? 'baseDate',
-        sortOrder: sort?.desc ? 'desc' : 'asc',
+        sortOrder: sort ? (sort.desc ? 'desc' : 'asc') : 'desc',
       }),
   });
 

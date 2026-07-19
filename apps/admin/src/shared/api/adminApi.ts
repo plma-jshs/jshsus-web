@@ -46,6 +46,7 @@ export class AdminApiError extends Error {
   constructor(
     message: string,
     readonly status?: number,
+    readonly code?: string,
   ) {
     super(message);
     this.name = 'AdminApiError';
@@ -66,7 +67,26 @@ export function describeAdminApiError(error: unknown, resource: string) {
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
+  csrf?: boolean;
 };
+
+type ApiErrorPayload = {
+  message?: string | string[];
+  error?: string;
+  code?: string;
+};
+
+export type AdminLoginResponse =
+  | {
+      status: 'AUTHENTICATED';
+      session: Extract<SessionUser, { isLogined: true }>;
+    }
+  | {
+      status: 'NEW_PASSWORD_REQUIRED';
+      flowId: string;
+    };
+
+export type AdminAuthenticatedResponse = Extract<AdminLoginResponse, { status: 'AUTHENTICATED' }>;
 
 export type SchoolEventInput = Omit<ManagedSchoolEvent, 'id'>;
 
@@ -112,7 +132,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     headers['content-type'] = 'application/json';
   }
 
-  if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && path !== '/api/auth/login') {
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && options.csrf !== false) {
     headers['x-csrf-token'] = await getCsrfToken();
   }
 
@@ -124,7 +144,18 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   });
 
   if (!response.ok) {
-    throw new AdminApiError('Request failed', response.status);
+    const payload = await response
+      .json()
+      .then((value) => value as ApiErrorPayload)
+      .catch(() => null);
+    const payloadMessage = Array.isArray(payload?.message)
+      ? payload.message.join(' ')
+      : payload?.message;
+    throw new AdminApiError(
+      payloadMessage || payload?.error || 'Request failed',
+      response.status,
+      payload?.code,
+    );
   }
 
   return response.json() as Promise<T>;
@@ -160,12 +191,37 @@ async function uploadRequest<T>(path: string, formData: FormData): Promise<T> {
 export const api = {
   session: () => request<SessionUser>('/api/auth/session'),
   login: (input: { username: string; password: string; remember: boolean }) =>
-    request<Extract<SessionUser, { isLogined: true }>>('/api/auth/login', {
+    request<AdminLoginResponse>('/api/auth/login', {
       method: 'POST',
       body: input,
-    }).then((session) => {
+      csrf: false,
+    }).then((result) => {
       csrfTokenCache = null;
-      return session;
+      return result;
+    }),
+  completeNewPassword: (input: { flowId: string; newPassword: string }) =>
+    request<AdminAuthenticatedResponse>('/api/auth/challenges/new-password', {
+      method: 'POST',
+      body: input,
+      csrf: false,
+    }).then((result) => {
+      csrfTokenCache = null;
+      return result;
+    }),
+  requestPasswordReset: (input: { username: string }) =>
+    request<{ ok: true }>('/api/auth/password/forgot', {
+      method: 'POST',
+      body: input,
+      csrf: false,
+    }),
+  confirmPasswordReset: (input: { username: string; code: string; newPassword: string }) =>
+    request<{ ok: true }>('/api/auth/password/confirm', {
+      method: 'POST',
+      body: input,
+      csrf: false,
+    }).then((result) => {
+      csrfTokenCache = null;
+      return result;
     }),
   logout: () =>
     request<{ ok: true }>('/api/auth/logout', { method: 'POST' }).then((result) => {

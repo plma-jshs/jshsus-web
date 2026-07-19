@@ -45,6 +45,18 @@
   line-height: 1.4;
 }
 
+.login-heading p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.login-heading p strong {
+  color: #344342;
+  font-weight: 650;
+}
+
 .login-form {
   display: grid;
   gap: 15px;
@@ -130,6 +142,18 @@
   font-weight: 500;
 }
 
+.login-notice {
+  padding: 10px 12px;
+  margin: 18px 0 -8px;
+  border: 1px solid rgba(22, 124, 114, 0.2);
+  border-radius: 7px;
+  color: var(--primary-dark);
+  background: #edf8f7;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
 .login-options {
   display: flex;
   min-height: 28px;
@@ -140,17 +164,30 @@
   font-size: 12px;
 }
 
+.login-text-button,
 .login-options a,
 .login-signup a {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
   color: var(--primary-dark);
+  background: transparent;
+  font: inherit;
   font-weight: 600;
   text-decoration: none;
+  cursor: pointer;
 }
 
+.login-text-button:hover,
 .login-options a:hover,
 .login-signup a:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.login-text-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
 }
 
 .login-remember {
@@ -183,6 +220,57 @@
   width: 100%;
   min-height: 46px;
   border-radius: 8px;
+}
+
+.login-actions {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 9px;
+}
+
+.login-secondary-button {
+  min-height: 46px;
+  padding: 0 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  color: #344342;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.login-secondary-button:hover {
+  border-color: #9aa5a5;
+  background: #f6f8f8;
+}
+
+.login-resend-button {
+  width: fit-content;
+  justify-self: end;
+  margin-top: -3px;
+  font-size: 12px;
+}
+
+.login-account-summary {
+  display: flex;
+  min-height: 42px;
+  padding: 0 13px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid #dce5e4;
+  border-radius: 8px;
+  color: var(--muted);
+  background: #f7f9f9;
+  font-size: 12px;
+}
+
+.login-account-summary strong {
+  color: #263332;
+  font-size: 13px;
+  font-weight: 650;
 }
 
 .login-signup {

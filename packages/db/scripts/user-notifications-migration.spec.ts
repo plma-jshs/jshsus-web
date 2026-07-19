@@ -4,18 +4,28 @@ import { describe, expect, it } from 'vitest';
 
 describe('user notification migration', () => {
   const migration = readFileSync(
-    resolve(process.cwd(), 'packages/db/migrations/0019_user_notifications.sql'),
+    resolve(process.cwd(), 'packages/db/migrations/0000_baseline.sql'),
     'utf8',
   );
 
-  it('expands the existing notification table without dropping legacy data', () => {
-    expect(migration).toContain('ADD COLUMN body varchar(500) NULL');
-    expect(migration).toContain('ADD COLUMN metadata json NULL');
-    expect(migration).toContain('ADD COLUMN dedupe_key varchar(190) NULL');
-    expect(migration).toContain('ADD COLUMN expires_at datetime(3) NULL');
-    expect(migration).toContain('DATE_ADD(created_at, INTERVAL 7 DAY)');
-    expect(migration).toContain("CHECK (COALESCE(expires_at, '1000-01-01 00:00:00')");
-    expect(migration).toContain('CREATE UNIQUE INDEX notifications_dedupe_idx');
-    expect(migration).not.toMatch(/DELETE|DROP|TRUNCATE/i);
+  it('keeps notification delivery fields and expiry indexes in the baseline schema', () => {
+    const start = migration.indexOf('CREATE TABLE `notifications`');
+    const end = migration.indexOf(';', start);
+    const tableDefinition = migration.slice(start, end);
+
+    expect(tableDefinition).toContain('`body` varchar(500)');
+    expect(tableDefinition).toContain('`metadata` json');
+    expect(tableDefinition).toContain('`dedupe_key` varchar(190)');
+    expect(tableDefinition).toContain('`expires_at` datetime(3) NOT NULL');
+    expect(tableDefinition).toContain('CONSTRAINT `notifications_dedupe_idx` UNIQUE(`dedupe_key`)');
+    expect(migration).toContain(
+      'CREATE INDEX `notifications_user_read_idx` ON `notifications` (`user_id`,`read_at`)',
+    );
+    expect(migration).toContain(
+      'CREATE INDEX `notifications_user_created_idx` ON `notifications` (`user_id`,`created_at`)',
+    );
+    expect(migration).toContain(
+      'CREATE INDEX `notifications_expires_idx` ON `notifications` (`expires_at`)',
+    );
   });
 });

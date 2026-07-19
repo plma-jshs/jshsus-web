@@ -84,8 +84,7 @@ for (const file of files) {
       const allowedReplacement =
         label === 'DROP DATABASE, TABLE, VIEW, INDEX, or COLUMN' &&
         safeIndexReplacements.get(file)?.test(normalized);
-      const allowedContractCleanup =
-        isApprovedContractCleanup && contractCleanupLabels.has(label);
+      const allowedContractCleanup = isApprovedContractCleanup && contractCleanupLabels.has(label);
       if (!allowedReplacement && !allowedContractCleanup) failures.push(`${file}: ${label}`);
     }
   }

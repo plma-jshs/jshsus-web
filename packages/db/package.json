@@ -12,12 +12,16 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:bootstrap-core": "node scripts/bootstrap-core-data.cjs",
+    "db:deploy": "pnpm db:migrate && pnpm db:bootstrap-core",
     "db:backup": "node scripts/backup-database.cjs",
+    "db:provision-cognito-students": "node scripts/provision-cognito-students.cjs",
     "db:create-local-test-user": "node scripts/create-local-test-user.cjs",
     "db:assert-local": "node -e \"require('./scripts/local-seed-safety.cjs').assertLocalSeedAllowed(); console.log('Local database target verified.')\"",
-    "db:bootstrap-local": "pnpm db:assert-local && pnpm db:migrate && pnpm db:create-local-test-user"
+    "db:bootstrap-local": "pnpm db:assert-local && pnpm db:migrate && pnpm db:bootstrap-core && pnpm db:create-local-test-user"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "3.1084.0",
     "drizzle-orm": "0.45.2",
     "mysql2": "3.22.6"
   },

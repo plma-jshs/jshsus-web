@@ -1,7 +1,7 @@
 import type { PointReason } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Check, Pencil, Trash2 } from 'lucide-react';
+import { Check, Pencil, Trash2, X } from 'lucide-react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
@@ -154,7 +154,7 @@ export function PointAwardPage() {
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const reasonsQuery = useQuery({ queryKey: ['point-reasons'], queryFn: pointsApi.reasons });
-  const [selectedStudent, setSelectedStudent] = useState<PointStudentRow | null>(null);
+  const [selectedStudents, setSelectedStudents] = useState<PointStudentRow[]>([]);
   const [search, setSearch] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [direct, setDirect] = useState<DirectStudentSelection>(emptyDirectStudentSelection);
@@ -171,22 +171,24 @@ export function PointAwardPage() {
   const [importErrors, setImportErrors] = useState<string[]>([]);
 
   const activeReasons = useMemo(
-    () => reasonsQuery.data?.filter((reason) => reason.isActive) ?? [],
+    () =>
+      [...(reasonsQuery.data?.filter((reason) => reason.isActive) ?? [])].sort(
+        (left, right) => left.id - right.id,
+      ),
     [reasonsQuery.data],
   );
   const selectedReason = activeReasons.find((reason) => reason.id === Number(form.reasonId));
-  const selectedStudentLabel = selectedStudent
-    ? `${selectedStudent.studentNo} ${selectedStudent.name}`
-    : '';
-  const pickerSearch =
-    selectedStudent && search === selectedStudentLabel ? String(selectedStudent.studentNo) : search;
+  const selectedStudentIds = useMemo(
+    () => new Set(selectedStudents.map((student) => student.id)),
+    [selectedStudents],
+  );
   const searchQuery = useQuery({
-    queryKey: ['point-student-inline-picker', pickerSearch],
+    queryKey: ['point-student-inline-picker', search],
     queryFn: () =>
       pointsApi.students({
         page: 1,
         pageSize: 20,
-        search: pickerSearch || undefined,
+        search: search || undefined,
         sortBy: 'studentNo',
         sortOrder: 'asc',
       }),
@@ -203,11 +205,8 @@ export function PointAwardPage() {
       }),
     onSuccess: (result) => {
       const student = result.items.length === 1 ? result.items[0] : null;
-      setSelectedStudent(student);
       if (!student) return;
-      setSearch(`${student.studentNo} ${student.name}`);
-      setDirect(directSelectionFromStudent(student));
-      setSearchOpen(false);
+      addStudentSelection(student);
     },
     onError: (error) => {
       showToast({
@@ -296,17 +295,24 @@ export function PointAwardPage() {
       });
     },
   });
-
-  const selectStudent = (student: PointStudentRow) => {
-    setSelectedStudent(student);
-    setSearch(`${student.studentNo} ${student.name}`);
-    setDirect(directSelectionFromStudent(student));
+  function addStudentSelection(student: PointStudentRow) {
+    setSelectedStudents((current) => {
+      if (editKey) return [student];
+      if (current.some((item) => item.id === student.id)) return current;
+      return [...current, student].sort((left, right) => left.studentNo - right.studentNo);
+    });
+    setSearch('');
+    setDirect(emptyDirectStudentSelection);
     directMutation.reset();
     setSearchOpen(false);
+  }
+
+  const selectStudent = (student: PointStudentRow) => {
+    addStudentSelection(student);
   };
 
   const clearStudentSelection = () => {
-    setSelectedStudent(null);
+    setSelectedStudents([]);
     setSearch('');
     setSearchOpen(false);
     setDirect(emptyDirectStudentSelection);
@@ -314,10 +320,20 @@ export function PointAwardPage() {
     setEditKey(null);
   };
 
+  const removeStudentSelection = (studentId: number) => {
+    setSelectedStudents((current) => current.filter((student) => student.id !== studentId));
+    if (editKey) setEditKey(null);
+  };
+
   const addToQueue = (event: FormEvent) => {
     event.preventDefault();
     const point = Number(form.point);
-    if (!selectedStudent || !selectedReason || !form.reasonText.trim() || Number.isNaN(point))
+    if (
+      !selectedStudents.length ||
+      !selectedReason ||
+      !form.reasonText.trim() ||
+      Number.isNaN(point)
+    )
       return;
     if (selectedReason.type === 'PLUS' && point <= 0) {
       setFeedback('상점은 1점 이상이어야 합니다.');
@@ -327,18 +343,20 @@ export function PointAwardPage() {
       setFeedback('벌점은 -1점 이하여야 합니다.');
       return;
     }
-    const next: QueuedRecord = {
-      key: editKey ?? crypto.randomUUID(),
-      studentId: selectedStudent.id,
-      studentNo: selectedStudent.studentNo,
-      studentName: selectedStudent.name,
+    const nextRecords = selectedStudents.map((student) => ({
+      key: editKey && selectedStudents.length === 1 ? editKey : crypto.randomUUID(),
+      studentId: student.id,
+      studentNo: student.studentNo,
+      studentName: student.name,
       reasonId: selectedReason.id,
       point,
       reasonText: form.reasonText.trim(),
       baseDate: form.baseDate,
-    };
+    }));
     setQueue((items) =>
-      editKey ? items.map((item) => (item.key === editKey ? next : item)) : [...items, next],
+      editKey && nextRecords.length === 1
+        ? items.map((item) => (item.key === editKey ? nextRecords[0] : item))
+        : [...items, ...nextRecords],
     );
     clearStudentSelection();
     setFeedback('');
@@ -490,7 +508,7 @@ export function PointAwardPage() {
               aria-label={`${row.original.studentNo} ${row.original.studentName} 수정`}
               onClick={() => {
                 const item = row.original;
-                setSelectedStudent({
+                const student = {
                   id: item.studentId,
                   studentNo: item.studentNo,
                   name: item.studentName,
@@ -502,23 +520,10 @@ export function PointAwardPage() {
                   penaltyPoint: 0,
                   isDepartureCandidate: false,
                   riskStatus: 'normal',
-                });
+                } satisfies PointStudentRow;
+                setSelectedStudents([student]);
                 setSearch(`${item.studentNo} ${item.studentName}`);
-                setDirect(
-                  directSelectionFromStudent({
-                    id: item.studentId,
-                    studentNo: item.studentNo,
-                    name: item.studentName,
-                    grade: Math.floor(item.studentNo / 1000),
-                    classNo: Math.floor((item.studentNo % 1000) / 100),
-                    number: item.studentNo % 100,
-                    currentPoint: 0,
-                    meritPoint: 0,
-                    penaltyPoint: 0,
-                    isDepartureCandidate: false,
-                    riskStatus: 'normal',
-                  }),
-                );
+                setDirect(directSelectionFromStudent(student));
                 setSearchOpen(false);
                 setForm({
                   reasonId: String(item.reasonId),
@@ -555,6 +560,7 @@ export function PointAwardPage() {
 
   const directValidation = validateDirectStudentSelection(direct);
   const directReady = Boolean(direct.grade && direct.classNo && direct.number && !directValidation);
+  const directNotFound = directMutation.isSuccess && directMutation.data?.items.length !== 1;
 
   return (
     <div className="admin-stack point-award-page">
@@ -572,12 +578,11 @@ export function PointAwardPage() {
                   autoComplete="off"
                   onFocus={(event) => {
                     setSearchOpen(true);
-                    if (selectedStudent) event.currentTarget.select();
+                    if (search) event.currentTarget.select();
                   }}
                   onBlur={() => setSearchOpen(false)}
                   onChange={(event) => {
                     setSearch(event.target.value);
-                    setSelectedStudent(null);
                     setDirect(emptyDirectStudentSelection);
                     directMutation.reset();
                     setSearchOpen(true);
@@ -591,13 +596,14 @@ export function PointAwardPage() {
                         key={student.id}
                         type="button"
                         role="option"
+                        disabled={selectedStudentIds.has(student.id)}
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => selectStudent(student)}
                       >
                         <span>
                           <strong>{student.studentNo}</strong> {student.name}
                         </span>
-                        <span>선택</span>
+                        <span>{selectedStudentIds.has(student.id) ? '추가됨' : '추가'}</span>
                       </button>
                     ))}
                     {!searchQuery.isLoading && searchQuery.data?.items.length === 0 ? (
@@ -617,7 +623,6 @@ export function PointAwardPage() {
                   value={direct.grade}
                   onChange={(event) => {
                     setDirect((current) => ({ ...current, grade: event.target.value }));
-                    setSelectedStudent(null);
                     setSearch('');
                     setSearchOpen(false);
                     directMutation.reset();
@@ -633,7 +638,6 @@ export function PointAwardPage() {
                   value={direct.classNo}
                   onChange={(event) => {
                     setDirect((current) => ({ ...current, classNo: event.target.value }));
-                    setSelectedStudent(null);
                     setSearch('');
                     setSearchOpen(false);
                     directMutation.reset();
@@ -649,7 +653,6 @@ export function PointAwardPage() {
                   value={direct.number}
                   onChange={(event) => {
                     setDirect((current) => ({ ...current, number: event.target.value }));
-                    setSelectedStudent(null);
                     setSearch('');
                     setSearchOpen(false);
                     directMutation.reset();
@@ -662,21 +665,34 @@ export function PointAwardPage() {
                 loading={directMutation.isPending}
                 onClick={() => directMutation.mutate()}
               >
-                선택
+                추가
               </Button>
             </div>
-            {!selectedStudent && directValidation ? (
+            {directValidation ? (
               <p className="form-error point-award-error">{directValidation}</p>
-            ) : selectedStudent ? (
-              <div className="point-selected-student">
-                <strong>
-                  {selectedStudent.studentNo} {selectedStudent.name}
-                </strong>
-              </div>
-            ) : directMutation.isSuccess ? (
+            ) : directNotFound ? (
               <p className="form-error point-award-error">
                 입력한 학년·반·번호에 해당하는 학생이 없습니다.
               </p>
+            ) : null}
+            {selectedStudents.length ? (
+              <div className="point-selected-student">
+                <strong>선택 학생 {selectedStudents.length}명</strong>
+                <div className="point-selected-student-list">
+                  {selectedStudents.map((student) => (
+                    <span className="point-selected-student-chip" key={student.id}>
+                      {student.studentNo} {student.name}
+                      <button
+                        type="button"
+                        aria-label={`${student.studentNo} ${student.name} 선택 해제`}
+                        onClick={() => removeStudentSelection(student.id)}
+                      >
+                        <X size={13} aria-hidden="true" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
             ) : null}
           </div>
 
@@ -737,7 +753,11 @@ export function PointAwardPage() {
                 required
               />
             </FormField>
-            <Button type="submit" variant="primary" disabled={!selectedStudent || !selectedReason}>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={selectedStudents.length === 0 || !selectedReason}
+            >
               {editKey ? '저장' : '추가'}
             </Button>
           </div>

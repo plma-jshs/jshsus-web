@@ -4,13 +4,20 @@ import { describe, expect, it } from 'vitest';
 
 describe('content report dedupe migration', () => {
   const migration = readFileSync(
-    resolve(process.cwd(), 'packages/db/migrations/0018_content_report_dedupe.sql'),
+    resolve(process.cwd(), 'packages/db/migrations/0000_baseline.sql'),
     'utf8',
   );
 
-  it('uses an expand-only nullable key so legacy duplicate rows remain untouched', () => {
-    expect(migration).toContain('ADD COLUMN dedupe_key varchar(190) NULL');
-    expect(migration).toContain('CREATE UNIQUE INDEX reports_dedupe_key_idx');
-    expect(migration).not.toMatch(/DELETE|UPDATE/i);
+  it('keeps report deduplication nullable and unique in the baseline schema', () => {
+    const start = migration.indexOf('CREATE TABLE `reports`');
+    const end = migration.indexOf(';', start);
+    const tableDefinition = migration.slice(start, end);
+
+    expect(tableDefinition).toContain('`dedupe_key` varchar(190)');
+    expect(tableDefinition).not.toContain('`dedupe_key` varchar(190) NOT NULL');
+    expect(tableDefinition).toContain('CONSTRAINT `reports_dedupe_key_idx` UNIQUE(`dedupe_key`)');
+    expect(migration).toContain(
+      'CREATE INDEX `reports_target_idx` ON `reports` (`report_target`,`target_id`)',
+    );
   });
 });

@@ -199,6 +199,13 @@ const petitionDetailRoute = createRoute({
   ),
 });
 
+const thanksRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/thanks',
+  beforeLoad: ({ location }) => requireSession(location),
+  component: lazyRouteComponent(() => import('../features/thanks/ThanksPage'), 'ThanksPage'),
+});
+
 const jbsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/jbs',
@@ -370,6 +377,7 @@ const routeTree = rootRoute.addChildren([
   petitionsRoute,
   newPetitionRoute,
   petitionDetailRoute,
+  thanksRoute,
   jbsRoute,
   newJbsPostRoute,
   jbsPostDetailRoute,

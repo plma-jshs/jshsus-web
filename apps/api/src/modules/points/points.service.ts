@@ -385,7 +385,7 @@ export class PointsService {
         })
         .from(schema.pointReasons)
         .where(eq(schema.pointReasons.isActive, true))
-        .orderBy(schema.pointReasons.type, schema.pointReasons.comment);
+        .orderBy(asc(schema.pointReasons.id));
 
       return reasons;
     });

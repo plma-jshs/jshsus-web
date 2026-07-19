@@ -230,6 +230,21 @@ export const petitionAnswers = mysqlTable('petition_answers', {
   ...timestamps,
 });
 
+export const thanksMessages = mysqlTable(
+  'thanks_messages',
+  {
+    id,
+    schoolNumber: varchar('school_number', { length: 20 }).notNull(),
+    message: text('message').notNull(),
+    submittedAt: datetime('submitted_at', { mode: 'date', fsp: 3 }).notNull(),
+    ...timestamps,
+  },
+  (table) => ({
+    submittedIdx: index('thanks_messages_submitted_idx').on(table.submittedAt),
+    studentIdx: index('thanks_messages_student_idx').on(table.schoolNumber, table.submittedAt),
+  }),
+);
+
 export const lostItemTypeEnum = mysqlEnum('lost_item_type', ['lost', 'found']);
 export const lostItemStatusEnum = mysqlEnum('lost_item_status', [
   'open',

@@ -78,7 +78,7 @@ export function PetitionsPage() {
         </Link>
       }
     >
-      <section className="workflow-table-section petition-table-section" aria-label="청원 목록">
+      <section className="workflow-table-section petition-list-section" aria-label="청원 목록">
         <PageToolbar>
           <FilterChips
             value={filter}
@@ -150,72 +150,59 @@ export function PetitionsPage() {
         ) : null}
 
         {filtered.length ? (
-          <div className="workflow-table-viewport petition-table-viewport">
-            <table className="workflow-table petition-table">
-              <colgroup>
-                <col style={{ width: 112 }} />
-                <col />
-                <col style={{ width: 144 }} />
-                <col style={{ width: 170 }} />
-                <col style={{ width: 128 }} />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th scope="col">상태</th>
-                  <th scope="col">제목</th>
-                  <th scope="col">마감일</th>
-                  <th scope="col">참여</th>
-                  <th scope="col">달성률</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visiblePetitions.map((petition) => {
-                  const progress = getPetitionProgress(petition);
-                  return (
-                    <tr key={petition.id}>
-                      <td data-label="상태">
-                        <span className={`petition-status is-${petition.status}`}>
-                          {petitionStatusLabels[petition.status]}
-                        </span>
-                      </td>
-                      <td className="petition-table__title" data-label="제목">
-                        <Link
-                          to="/petitions/$petitionId"
-                          params={{ petitionId: String(petition.id) }}
-                        >
-                          <span className="content-title-line">
-                            <span className="content-title-line__text">{petition.title}</span>
-                            <ContentBadges createdAt={petition.startsAt} />
-                          </span>
-                        </Link>
-                      </td>
-                      <td className="petition-table__date" data-label="마감일">
-                        <time dateTime={petition.endsAt}>
-                          {dateFormatter.format(new Date(petition.endsAt))}
-                        </time>
-                      </td>
-                      <td className="petition-table__participants" data-label="참여">
-                        <strong>{petition.participantCount.toLocaleString('ko-KR')}</strong>
-                        <span> / {petition.threshold.toLocaleString('ko-KR')}명</span>
-                      </td>
-                      <td className="petition-table__progress" data-label="달성률">
-                        <div
-                          className="petition-progress"
-                          role="progressbar"
-                          aria-label={`${petition.title} 참여 달성률`}
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                          aria-valuenow={progress}
-                        >
-                          <span style={{ width: `${progress}%` }} />
-                        </div>
-                        <small>{progress}%</small>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="petition-card-list">
+            {visiblePetitions.map((petition) => {
+              const progress = getPetitionProgress(petition);
+              return (
+                <article className="petition-card" key={petition.id}>
+                  <div className="petition-card__main">
+                    <div className="petition-card__eyebrow">
+                      <span className={`petition-status is-${petition.status}`}>
+                        {petitionStatusLabels[petition.status]}
+                      </span>
+                      <span>{petition.authorName ?? '익명 제안'}</span>
+                    </div>
+                    <Link
+                      className="petition-card__title"
+                      to="/petitions/$petitionId"
+                      params={{ petitionId: String(petition.id) }}
+                    >
+                      <span className="content-title-line">
+                        <span className="content-title-line__text">{petition.title}</span>
+                        <ContentBadges createdAt={petition.startsAt} />
+                      </span>
+                    </Link>
+                    <p className="petition-card__excerpt">{petition.content}</p>
+                    <div className="petition-card__meta">
+                      <time dateTime={petition.startsAt}>
+                        등록 {dateFormatter.format(new Date(petition.startsAt))}
+                      </time>
+                      <time dateTime={petition.endsAt}>
+                        마감 {dateFormatter.format(new Date(petition.endsAt))}
+                      </time>
+                    </div>
+                  </div>
+                  <div className="petition-card__side">
+                    <span>참여</span>
+                    <strong>
+                      {petition.participantCount.toLocaleString('ko-KR')}
+                      <small> / {petition.threshold.toLocaleString('ko-KR')}명</small>
+                    </strong>
+                    <div
+                      className="petition-progress"
+                      role="progressbar"
+                      aria-label={`${petition.title} 참여 달성률`}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={progress}
+                    >
+                      <span style={{ width: `${progress}%` }} />
+                    </div>
+                    <b>{progress}%</b>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         ) : null}
         {filtered.length ? (

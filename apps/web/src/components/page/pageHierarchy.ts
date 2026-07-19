@@ -9,6 +9,7 @@ export type PortalPageKey =
   | 'lostItems'
   | 'board'
   | 'petitions'
+  | 'thanks'
   | 'jbs'
   | 'wakeSongs'
   | 'byteCalculator';
@@ -32,6 +33,7 @@ export const portalPageHierarchy: Record<PortalPageKey, PageHierarchy> = {
   lostItems: { section: '학교생활', feature: '분실물', to: '/lost-items' },
   board: { section: '커뮤니티', feature: '자유게시판', to: '/boards/free' },
   petitions: { section: '커뮤니티', feature: '청원·제안', to: '/petitions' },
+  thanks: { section: '커뮤니티', feature: '감사챌린지', to: '/thanks' },
   jbs: { section: '방송·도구', feature: 'JBS', to: '/jbs' },
   wakeSongs: { section: '방송·도구', feature: '기상곡 신청', to: '/wake-songs' },
   byteCalculator: {

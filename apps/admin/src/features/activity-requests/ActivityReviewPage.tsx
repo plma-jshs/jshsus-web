@@ -193,7 +193,7 @@ export function ActivityReviewPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'startsAt', desc: true }]);
   const sort = sorting[0];
   const requestsQuery = useActivityRequests({
     page,
@@ -202,7 +202,7 @@ export function ActivityReviewPage() {
     status: 'pending',
     assignedToMe: true,
     sortBy: (sort?.id as ActivityRequestAdminListQuery['sortBy']) ?? 'startsAt',
-    sortOrder: sort?.desc ? 'desc' : 'asc',
+    sortOrder: sort ? (sort.desc ? 'desc' : 'asc') : 'desc',
   });
   const refreshActivityRequests = useRefreshActivityRequests();
   const [rejectForm, setRejectForm] = useState({ id: 0, reason: '' });

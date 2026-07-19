@@ -19,6 +19,7 @@ import { PetitionsModule } from './petitions/petitions.module';
 import { PointsModule } from './points/points.module';
 import { RedisModule } from './redis/redis.module';
 import { ReportsModule } from './reports/reports.module';
+import { ThanksModule } from './thanks/thanks.module';
 import { WakeSongsModule } from './wake-songs/wake-songs.module';
 import { RateLimitGuard } from '../shared/security/rate-limit.guard';
 
@@ -41,6 +42,7 @@ import { RateLimitGuard } from '../shared/security/rate-limit.guard';
     DormModule,
     ActivityRequestsModule,
     PetitionsModule,
+    ThanksModule,
     WakeSongsModule,
     AdminModule,
   ],
