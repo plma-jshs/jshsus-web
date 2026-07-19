@@ -4,12 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { safeInternalReturnTo } from '../../shared/lib/route';
-import {
-  completeNewPassword,
-  getAuthErrorCode,
-  getAuthErrorMessage,
-  login,
-} from './api';
+import { completeNewPassword, getAuthErrorCode, getAuthErrorMessage, login } from './api';
 import '../../styles/auth.css';
 
 type AuthMode = 'login' | 'new-password';
@@ -148,8 +143,7 @@ export function LoginPage() {
     newPasswordMutation.mutate({ flowId, newPassword });
   };
 
-  const title =
-    mode === 'login' ? '전남과학고 통합로그인' : '새 비밀번호 설정';
+  const title = mode === 'login' ? '전남과학고 통합로그인' : '새 비밀번호 설정';
 
   const activeError =
     validationError ??
@@ -262,7 +256,6 @@ export function LoginPage() {
             </button>
           </form>
         ) : null}
-
       </section>
     </section>
   );

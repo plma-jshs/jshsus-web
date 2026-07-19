@@ -3,11 +3,7 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import {
-  confirmPasswordReset,
-  getAuthErrorMessage,
-  requestPasswordReset,
-} from './api';
+import { confirmPasswordReset, getAuthErrorMessage, requestPasswordReset } from './api';
 import '../../styles/auth.css';
 
 type ResetStep = 'request' | 'confirm' | 'done';
