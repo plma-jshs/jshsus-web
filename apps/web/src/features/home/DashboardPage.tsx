@@ -18,6 +18,7 @@ import type {
   SchoolMealType,
 } from '@jshsus/types';
 import { ContentBadges } from '../../components/page/ContentBadges';
+import { PageState } from '../../components/page/PageScaffold';
 import { toKoreanDateKey } from '../../shared/lib/date';
 import { getHomeDashboard, getSchoolCalendar, getSchoolMeals } from './api';
 import {
@@ -640,7 +641,7 @@ export function DashboardPage() {
               })}
             </ul>
           ) : (
-            <p className="home-card-empty">진행 중인 청원이 없습니다.</p>
+            <PageState kind="empty" variant="section" title="진행 중인 청원이 없습니다." />
           )}
         </section>
       </div>

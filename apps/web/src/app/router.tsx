@@ -148,6 +148,7 @@ const calendarRoute = createRoute({
 const boardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/boards/free',
+  beforeLoad: ({ location }) => requireSession(location),
   validateSearch: validateTableSearch,
   component: lazyRouteComponent(() => import('../features/boards/BoardPage'), 'BoardPage'),
 });
@@ -165,6 +166,7 @@ const newBoardPostRoute = createRoute({
 const boardPostDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/boards/free/$postId',
+  beforeLoad: ({ location }) => requireSession(location),
   component: lazyRouteComponent(
     () => import('../features/boards/BoardPostDetailPage'),
     'BoardPostDetailPage',
@@ -174,6 +176,7 @@ const boardPostDetailRoute = createRoute({
 const petitionsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/petitions',
+  beforeLoad: ({ location }) => requireSession(location),
   component: lazyRouteComponent(
     () => import('../features/petitions/PetitionsPage'),
     'PetitionsPage',
@@ -193,6 +196,7 @@ const newPetitionRoute = createRoute({
 const petitionDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/petitions/$petitionId',
+  beforeLoad: ({ location }) => requireSession(location),
   component: lazyRouteComponent(
     () => import('../features/petitions/PetitionDetailPage'),
     'PetitionDetailPage',
@@ -365,6 +369,18 @@ const loginRoute = createRoute({
   component: lazyRouteComponent(() => import('../features/auth/LoginPage'), 'LoginPage'),
 });
 
+const forgotPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/forgot-password',
+  validateSearch: (search: Record<string, unknown>) => ({
+    username: typeof search.username === 'string' ? search.username : undefined,
+  }),
+  component: lazyRouteComponent(
+    () => import('../features/auth/PasswordResetPage'),
+    'PasswordResetPage',
+  ),
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   noticesRoute,
@@ -397,6 +413,7 @@ const routeTree = rootRoute.addChildren([
   aboutRoute,
   privacyRoute,
   loginRoute,
+  forgotPasswordRoute,
 ]);
 
 export const router = createRouter({ routeTree });

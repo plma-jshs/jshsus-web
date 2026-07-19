@@ -484,6 +484,7 @@ function PortalShell() {
 
 export function AppShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const isAuthPage = pathname === '/login' || pathname === '/forgot-password';
   const isNotFound = useRouterState({
     select: (state) =>
       state.statusCode === 404 || state.matches.some((match) => match.status === 'notFound'),
@@ -494,6 +495,8 @@ export function AppShell() {
       document.title = '페이지를 찾을 수 없습니다 | 과구리';
     } else if (pathname === '/login') {
       document.title = '전남과학고 통합로그인 | 과구리';
+    } else if (pathname === '/forgot-password') {
+      document.title = '비밀번호 찾기 | 과구리';
     }
   }, [isNotFound, pathname]);
 
@@ -505,7 +508,7 @@ export function AppShell() {
     );
   }
 
-  if (pathname === '/login') {
+  if (isAuthPage) {
     return (
       <main id="main-content" className="auth-shell">
         <Outlet />

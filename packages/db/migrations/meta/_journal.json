@@ -15,6 +15,13 @@
       "when": 1784485000000,
       "tag": "0001_existing_v26_school_year_repair",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1784649600000,
+      "tag": "0002_existing_v26_thanks_messages_repair",
+      "breakpoints": true
     }
   ]
 }

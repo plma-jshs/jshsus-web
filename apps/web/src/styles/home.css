@@ -123,6 +123,11 @@
   font-size: var(--j-text-xs);
 }
 
+.home-card .page-state {
+  min-height: 220px;
+  padding: var(--j-space-5) var(--j-space-2);
+}
+
 .home-inline-error {
   display: flex;
   min-height: 96px;

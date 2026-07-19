@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useState } from 'react';
 
 export type DataTableSearchField = 'title_content' | 'title' | 'author';
@@ -87,28 +87,27 @@ export function DataTableToolbar({
   );
 }
 
-type PaginationItem = number | 'start-ellipsis' | 'end-ellipsis';
+type PaginationItem = number | 'ellipsis-left' | 'ellipsis-right';
 
 function getPaginationItems(page: number, totalPages: number): PaginationItem[] {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, index) => index + 1);
   }
 
-  const pages = new Set([1, totalPages, page - 1, page, page + 1]);
-  const visible = [...pages]
-    .filter((item) => item >= 1 && item <= totalPages)
-    .sort((a, b) => a - b);
-  const items: PaginationItem[] = [];
+  if (page <= 4) return [1, 2, 3, 4, 5, 'ellipsis-right', totalPages];
+  if (page >= totalPages - 3) {
+    return [
+      1,
+      'ellipsis-left',
+      totalPages - 4,
+      totalPages - 3,
+      totalPages - 2,
+      totalPages - 1,
+      totalPages,
+    ];
+  }
 
-  visible.forEach((item, index) => {
-    const previous = visible[index - 1];
-    if (previous && item - previous > 1) {
-      items.push(previous === 1 ? 'start-ellipsis' : 'end-ellipsis');
-    }
-    items.push(item);
-  });
-
-  return items;
+  return [1, 'ellipsis-left', page - 1, page, page + 1, 'ellipsis-right', totalPages];
 }
 
 export function DataTablePagination({
@@ -126,6 +125,14 @@ export function DataTablePagination({
 
   return (
     <nav className="data-table-pagination" aria-label="목록 페이지">
+      <button
+        type="button"
+        aria-label="첫 페이지"
+        disabled={safePage === 1}
+        onClick={() => onChange(1)}
+      >
+        <ChevronsLeft size={18} aria-hidden="true" />
+      </button>
       <button
         type="button"
         aria-label="이전 페이지"
@@ -158,6 +165,14 @@ export function DataTablePagination({
         onClick={() => onChange(safePage + 1)}
       >
         <ChevronRight size={18} aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        aria-label="마지막 페이지"
+        disabled={safePage === totalPages}
+        onClick={() => onChange(totalPages)}
+      >
+        <ChevronsRight size={18} aria-hidden="true" />
       </button>
     </nav>
   );

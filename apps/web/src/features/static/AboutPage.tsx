@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { PageScaffold } from '../../components/page/PageScaffold';
 import '../../styles/static-pages.css';
 
@@ -65,6 +65,43 @@ function DeveloperProfile({
         </>
       ) : null}
     </div>
+  );
+}
+
+function EagleCheer() {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isFlying, setIsFlying] = useState(false);
+
+  const launchEagle = () => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.volume = 0.08;
+      audio.currentTime = 0;
+      void audio.play().catch(() => undefined);
+    }
+
+    setIsFlying(false);
+    window.requestAnimationFrame(() => {
+      setIsFlying(true);
+      window.setTimeout(() => setIsFlying(false), 2100);
+    });
+  };
+
+  return (
+    <>
+      <button className="about-eagle-cheer" type="button" onClick={launchEagle}>
+        나주붉은매 화이팅
+      </button>
+      <audio ref={audioRef} src="/audio/eagle-cry.mp3" preload="auto" />
+      {isFlying ? (
+        <img
+          className="about-flying-eagle"
+          src="/images/about-eagle.png"
+          alt=""
+          aria-hidden="true"
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -395,20 +432,20 @@ function DeveloperIntroduce() {
       </h3>
       <div className="about-dev-row">
         <DeveloperProfile
-          imageSrc="/images/introduce/kim_seong_chan.jpg"
-          name="김성찬"
-          role="Developer"
-          contribution={<>- 2025 과구리 개발</>}
-        >
-          나주붉은매 화이팅
-        </DeveloperProfile>
-
-        <DeveloperProfile
           imageSrc="/images/introduce/kang_jae_hwan.png"
           name="강재환"
           role="Developer"
           contribution={<>- 2025 과구리 개발</>}
         />
+
+        <DeveloperProfile
+          imageSrc="/images/introduce/kim_seong_chan.jpg"
+          name="김성찬"
+          role="Developer"
+          contribution={<>- 2025 과구리 개발</>}
+        >
+          <EagleCheer />
+        </DeveloperProfile>
       </div>
     </section>
   );

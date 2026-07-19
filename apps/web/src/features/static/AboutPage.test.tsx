@@ -40,9 +40,12 @@ describe('AboutPage', () => {
     expect(screen.getByText('김찬혁')).toBeInTheDocument();
     expect(screen.getByText('최익준')).toBeInTheDocument();
     expect(screen.getByText('강선우')).toBeInTheDocument();
-    expect(screen.getByText('김성찬')).toBeInTheDocument();
-    expect(screen.getByText('강재환')).toBeInTheDocument();
-    expect(screen.getByText('나주붉은매 화이팅')).toBeInTheDocument();
+    const kang = screen.getByText('강재환');
+    const kim = screen.getByText('김성찬');
+    expect(kang).toBeInTheDocument();
+    expect(kim).toBeInTheDocument();
+    expect(kang.compareDocumentPosition(kim) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole('button', { name: '나주붉은매 화이팅' })).toBeInTheDocument();
     expect(screen.getAllByText('- 2025 과구리 개발')).toHaveLength(2);
   });
 });

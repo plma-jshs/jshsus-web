@@ -277,6 +277,51 @@
   text-align: left;
 }
 
+.about-eagle-cheer {
+  padding: 0;
+  border: 0;
+  color: #c1121f;
+  background: transparent;
+  font-family: 'Gungsuh', '궁서', serif;
+  font-size: 10px;
+  font-style: italic;
+  font-weight: 800;
+  line-height: 1.2;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.about-eagle-cheer:hover,
+.about-eagle-cheer:focus-visible {
+  color: #8f0f19;
+}
+
+.about-flying-eagle {
+  position: fixed;
+  z-index: 120;
+  top: 22vh;
+  left: -220px;
+  width: min(24vw, 180px);
+  height: auto;
+  pointer-events: none;
+  animation: about-eagle-fly 2s linear forwards;
+}
+
+@keyframes about-eagle-fly {
+  0% {
+    transform: translateX(-12vw) translateY(18px) rotate(-5deg);
+  }
+
+  50% {
+    transform: translateX(56vw) translateY(-28px) rotate(4deg);
+  }
+
+  100% {
+    transform: translateX(118vw) translateY(10px) rotate(-3deg);
+  }
+}
+
 .privacy-document__notice {
   padding: 15px 17px;
   border-left: 3px solid var(--j-color-info);
@@ -318,6 +363,10 @@
 
   .lead {
     font-size: 14px !important;
+  }
+
+  .about-flying-eagle {
+    width: 150px;
   }
 
   .about-tab-list {
