@@ -135,7 +135,15 @@ function studentNumberParts(value: FormDataEntryValue | null, allowTestAccount =
 }
 
 function contactText(email?: string, phone?: string) {
-  return [email, phone].filter(Boolean).join(' · ') || '-';
+  const normalizedPhone = normalizeDisplayPhone(phone);
+  return [email, normalizedPhone].filter(Boolean).join(' · ') || '-';
+}
+
+function normalizeDisplayPhone(value?: string) {
+  const digits = String(value ?? '').replace(/\D/g, '');
+  if (digits.length === 10 && digits.startsWith('10')) return `0${digits}`;
+  if (digits.length === 11 && digits.startsWith('010')) return digits;
+  return value || undefined;
 }
 
 function activeSchoolYear(years?: AdminSchoolYearSummary[]) {
@@ -427,7 +435,7 @@ export function UsersPage() {
       header: '역할',
       enableSorting: false,
       cell: ({ row }) => roleLabel(row.original.roles, roleLabels),
-      meta: { minWidth: 220, maxWidth: 360, truncate: true },
+      meta: { align: 'center', minWidth: 220, maxWidth: 360, truncate: true },
     },
     {
       id: 'contact',
@@ -494,7 +502,7 @@ export function UsersPage() {
       header: '역할',
       enableSorting: false,
       cell: ({ row }) => roleLabel(row.original.roles, roleLabels),
-      meta: { minWidth: 200, maxWidth: 320, truncate: true },
+      meta: { align: 'center', minWidth: 200, maxWidth: 320, truncate: true },
     },
     {
       id: 'lastLoginAt',

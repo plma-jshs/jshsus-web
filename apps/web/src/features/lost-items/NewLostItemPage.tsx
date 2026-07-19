@@ -254,9 +254,6 @@ export function NewLostItemPage() {
             {mutation.isPending ? '등록 중' : '등록하기'}
           </button>
         </div>
-        <p className="lost-item-form__privacy">
-          등록한 물건 정보와 사진은 과구리 이용자에게 공개됩니다.
-        </p>
       </form>
     </PageScaffold>
   );

@@ -17,9 +17,14 @@ export const RICH_TEXT_FONT_SIZE_OPTIONS: ReadonlyArray<{
   value: RichTextFontSize;
   label: string;
 }> = [
-  { value: 'small', label: '작게' },
-  { value: 'large', label: '크게' },
-  { value: 'xlarge', label: '아주 크게' },
+  { value: '12px', label: '12px' },
+  { value: '14px', label: '14px' },
+  { value: '16px', label: '16px' },
+  { value: '18px', label: '18px' },
+  { value: '20px', label: '20px' },
+  { value: '24px', label: '24px' },
+  { value: '28px', label: '28px' },
+  { value: '32px', label: '32px' },
 ];
 
 export const RICH_TEXT_HIGHLIGHT_OPTIONS: ReadonlyArray<{
@@ -42,6 +47,14 @@ export const RICH_TEXT_COLOR_STYLES: Record<RichTextColor, string> = {
 };
 
 export const RICH_TEXT_FONT_SIZE_STYLES: Record<RichTextFontSize, string> = {
+  '12px': '12px',
+  '14px': '14px',
+  '16px': '16px',
+  '18px': '18px',
+  '20px': '20px',
+  '24px': '24px',
+  '28px': '28px',
+  '32px': '32px',
   small: '0.875em',
   large: '1.25em',
   xlarge: '1.5em',

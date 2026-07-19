@@ -172,7 +172,18 @@ export type ContentLikeState = {
 };
 
 export type RichTextColor = 'gray' | 'red' | 'orange' | 'green' | 'blue' | 'purple';
-export type RichTextFontSize = 'small' | 'large' | 'xlarge';
+export type RichTextFontSize =
+  | '12px'
+  | '14px'
+  | '16px'
+  | '18px'
+  | '20px'
+  | '24px'
+  | '28px'
+  | '32px'
+  | 'small'
+  | 'large'
+  | 'xlarge';
 export type RichTextHighlight = 'yellow' | 'green' | 'blue' | 'pink';
 
 export type RichTextMark =

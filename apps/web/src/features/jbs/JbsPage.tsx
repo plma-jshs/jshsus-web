@@ -48,7 +48,7 @@ export function JbsPage() {
     <PageScaffold
       breadcrumbs={listBreadcrumbs('jbs')}
       title="JBS"
-      description="방송부가 등록한 영상을 확인하세요."
+      description="방송부 페이지입니다."
       width="wide"
       action={
         canPublish ? (

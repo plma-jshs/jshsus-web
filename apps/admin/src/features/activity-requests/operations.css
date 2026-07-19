@@ -316,7 +316,7 @@
 }
 
 .activity-create-form__grid--details {
-  grid-template-columns: minmax(170px, 0.65fr) minmax(260px, 1.35fr);
+  grid-template-columns: 1fr;
   align-items: start;
 }
 

@@ -15,8 +15,6 @@ import {
   Bold,
   ChevronDown,
   Eraser,
-  Heading2,
-  Heading3,
   Highlighter,
   ImagePlus,
   Italic,
@@ -39,6 +37,7 @@ import {
   RICH_TEXT_COLOR_STYLES,
   RICH_TEXT_COLOR_OPTIONS,
   RICH_TEXT_FONT_SIZE_OPTIONS,
+  RICH_TEXT_FONT_SIZE_STYLES,
   RICH_TEXT_HIGHLIGHT_STYLES,
   RICH_TEXT_HIGHLIGHT_OPTIONS,
   TextColorMark,
@@ -194,36 +193,116 @@ function ToolbarButton({
 }
 
 function ToolbarSelect({
-  children,
-  icon,
-  indicator,
   label,
   onChange,
   value,
 }: {
-  children: ReactNode;
-  icon: ReactNode;
-  indicator?: ReactNode;
   label: string;
   onChange: (value: string) => void;
   value: string;
 }) {
+  const currentLabel =
+    RICH_TEXT_FONT_SIZE_OPTIONS.find((option) => option.value === value)?.label ?? '기본';
+
   return (
-    <label className={`rich-text-toolbar-select${value ? ' is-active' : ''}`} title={label}>
+    <label className={`rich-text-toolbar-select${value ? ' is-active' : ''}`}>
       <span className="sr-only">{label}</span>
       <span className="rich-text-toolbar-select__icon" aria-hidden="true">
-        {icon}
+        <Type size={16} />
       </span>
-      {indicator ? (
-        <span className="rich-text-toolbar-select__indicator" aria-hidden="true">
-          {indicator}
-        </span>
-      ) : null}
+      <span className="rich-text-toolbar-select__value" aria-hidden="true">
+        {currentLabel}
+      </span>
       <ChevronDown className="rich-text-toolbar-select__chevron" size={12} aria-hidden="true" />
       <select aria-label={label} onChange={(event) => onChange(event.target.value)} value={value}>
-        {children}
+        <option value="">기본</option>
+        {RICH_TEXT_FONT_SIZE_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
       </select>
     </label>
+  );
+}
+
+function ToolbarPalette({
+  icon,
+  label,
+  onChange,
+  options,
+  styles,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  onChange: (value: string) => void;
+  options: ReadonlyArray<{ value: string; label: string }>;
+  styles: Readonly<Partial<Record<string, string>>>;
+  value: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const activeColor = styles[value];
+
+  return (
+    <div
+      className={`rich-text-toolbar-palette${value ? ' is-active' : ''}`}
+      onBlur={(event) => {
+        const nextTarget = event.relatedTarget;
+        if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
+          setOpen(false);
+        }
+      }}
+    >
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-label={label}
+        title={label}
+        onClick={() => setOpen((current) => !current)}
+      >
+        {icon}
+        <span
+          className="rich-text-toolbar-palette__current"
+          style={{ backgroundColor: activeColor ?? 'transparent' }}
+          aria-hidden="true"
+        />
+        <ChevronDown className="rich-text-toolbar-palette__chevron" size={12} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="rich-text-toolbar-palette__menu" role="menu" aria-label={label}>
+          <button
+            className="rich-text-toolbar-palette__clear"
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onChange('');
+              setOpen(false);
+            }}
+          >
+            기본
+          </button>
+          <div className="rich-text-toolbar-palette__grid">
+            {options.map((option) => (
+              <button
+                type="button"
+                role="menuitem"
+                className={value === option.value ? 'is-selected' : undefined}
+                key={option.value}
+                title={option.label}
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+              >
+                <span style={{ backgroundColor: styles[option.value] }} aria-hidden="true" />
+                <span className="sr-only">{option.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -292,8 +371,6 @@ export function RichTextEditor({
       canRedo: currentEditor?.can().chain().focus().redo().run() ?? false,
       canUndo: currentEditor?.can().chain().focus().undo().run() ?? false,
       characterCount: currentEditor?.getText().length ?? 0,
-      heading2: currentEditor?.isActive('heading', { level: 2 }) ?? false,
-      heading3: currentEditor?.isActive('heading', { level: 3 }) ?? false,
       highlight: (currentEditor?.getAttributes('highlight').color as string | undefined) ?? '',
       italic: currentEditor?.isActive('italic') ?? false,
       fontSize: (currentEditor?.getAttributes('fontSize').size as string | undefined) ?? '',
@@ -374,36 +451,9 @@ export function RichTextEditor({
     chain.setMark(mark, { [attribute]: value }).run();
   };
 
-  const textColorStyle = (RICH_TEXT_COLOR_STYLES as Record<string, string>)[toolbar.textColor];
-  const highlightStyle = (RICH_TEXT_HIGHLIGHT_STYLES as Record<string, string>)[toolbar.highlight];
-  const fontSizeBadge =
-    toolbar.fontSize === 'small'
-      ? 'S'
-      : toolbar.fontSize === 'large'
-        ? 'L'
-        : toolbar.fontSize === 'xlarge'
-          ? 'XL'
-          : '';
-
   return (
     <div className="rich-text-editor">
       <div aria-label="본문 서식" className="rich-text-toolbar" role="group">
-        <div className="rich-text-toolbar__group">
-          <ToolbarButton
-            active={toolbar.heading2}
-            label="제목 2"
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          >
-            <Heading2 size={18} />
-          </ToolbarButton>
-          <ToolbarButton
-            active={toolbar.heading3}
-            label="제목 3"
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          >
-            <Heading3 size={18} />
-          </ToolbarButton>
-        </div>
         <div className="rich-text-toolbar__group">
           <ToolbarButton
             active={toolbar.bold}
@@ -436,61 +486,26 @@ export function RichTextEditor({
         </div>
         <div className="rich-text-toolbar__group rich-text-toolbar__style-controls">
           <ToolbarSelect
-            icon={<Type size={17} />}
-            indicator={fontSizeBadge ? <span>{fontSizeBadge}</span> : undefined}
             label="글자 크기"
             onChange={(value) => setStyleMark('fontSize', value)}
             value={toolbar.fontSize}
-          >
-            <option value="">기본 크기</option>
-            {RICH_TEXT_FONT_SIZE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </ToolbarSelect>
-          <ToolbarSelect
+          />
+          <ToolbarPalette
             icon={<Palette size={17} />}
-            indicator={
-              textColorStyle ? (
-                <span
-                  className="rich-text-toolbar-select__swatch"
-                  style={{ backgroundColor: textColorStyle }}
-                />
-              ) : undefined
-            }
             label="글자색"
             onChange={(value) => setStyleMark('textColor', value)}
+            options={RICH_TEXT_COLOR_OPTIONS}
+            styles={RICH_TEXT_COLOR_STYLES}
             value={toolbar.textColor}
-          >
-            <option value="">기본 글자색</option>
-            {RICH_TEXT_COLOR_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </ToolbarSelect>
-          <ToolbarSelect
+          />
+          <ToolbarPalette
             icon={<Highlighter size={17} />}
-            indicator={
-              highlightStyle ? (
-                <span
-                  className="rich-text-toolbar-select__swatch"
-                  style={{ backgroundColor: highlightStyle }}
-                />
-              ) : undefined
-            }
-            label="배경 강조색"
+            label="배경색"
             onChange={(value) => setStyleMark('highlight', value)}
+            options={RICH_TEXT_HIGHLIGHT_OPTIONS}
+            styles={RICH_TEXT_HIGHLIGHT_STYLES}
             value={toolbar.highlight}
-          >
-            <option value="">강조 없음</option>
-            {RICH_TEXT_HIGHLIGHT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </ToolbarSelect>
+          />
         </div>
         <div className="rich-text-toolbar__group">
           <ToolbarButton
@@ -640,7 +655,7 @@ function normalizeMarks(marks: JSONContent[] | undefined): PersistedRichTextMark
     if (
       mark.type === 'fontSize' &&
       typeof size === 'string' &&
-      RICH_TEXT_FONT_SIZE_OPTIONS.some((option) => option.value === size)
+      Object.prototype.hasOwnProperty.call(RICH_TEXT_FONT_SIZE_STYLES, size)
     ) {
       return [{ type: 'fontSize', attrs: { size: size as RichTextFontSize } }];
     }

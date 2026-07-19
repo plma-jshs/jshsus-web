@@ -138,13 +138,13 @@ export function CalendarPage() {
             <button type="button" onClick={() => moveMonth(1)} aria-label="다음 달">
               <ChevronRight size={19} aria-hidden="true" />
             </button>
-            <button
+            {/* <button
               className="calendar-today-button"
               type="button"
               onClick={() => selectDate(new Date())}
             >
               오늘
-            </button>
+            </button> */}
           </div>
           <FilterChips
             value={filter}
