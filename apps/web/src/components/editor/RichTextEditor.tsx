@@ -2,6 +2,7 @@ import type { JSONContent } from '@tiptap/react';
 import type {
   RichTextColor,
   RichTextDocument as PersistedRichTextDocument,
+  RichTextFontFamily,
   RichTextFontSize,
   RichTextHighlight,
   RichTextMark as PersistedRichTextMark,
@@ -14,6 +15,8 @@ import StarterKit from '@tiptap/starter-kit';
 import {
   Bold,
   ChevronDown,
+  Code2,
+  Ellipsis,
   Eraser,
   Highlighter,
   ImagePlus,
@@ -25,23 +28,31 @@ import {
   Quote,
   Redo2,
   Strikethrough,
-  Type,
+  Subscript,
+  Superscript,
   Underline,
   Undo2,
   Unlink,
+  X,
 } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import {
   FontSizeMark,
+  FontFamilyMark,
   RICH_TEXT_COLOR_STYLES,
   RICH_TEXT_COLOR_OPTIONS,
+  RICH_TEXT_FONT_FAMILY_OPTIONS,
   RICH_TEXT_FONT_SIZE_OPTIONS,
-  RICH_TEXT_FONT_SIZE_STYLES,
   RICH_TEXT_HIGHLIGHT_STYLES,
   RICH_TEXT_HIGHLIGHT_OPTIONS,
+  SubscriptMark,
+  SuperscriptMark,
   TextColorMark,
   TextHighlightMark,
+  normalizeRichTextColor,
+  normalizeRichTextFontFamily,
+  normalizeRichTextFontSize,
 } from './richTextMarks';
 
 export type RichTextDocument = JSONContent;
@@ -97,9 +108,14 @@ function editorExtensions(
   return [
     TextColorMark,
     FontSizeMark,
+    FontFamilyMark,
     TextHighlightMark,
+    SuperscriptMark,
+    SubscriptMark,
     StarterKit.configure({
-      code: false,
+      code: {
+        HTMLAttributes: { class: 'rich-text-inline-code' },
+      },
       codeBlock: false,
       heading: { levels: [2, 3] },
       horizontalRule: false,
@@ -192,31 +208,38 @@ function ToolbarButton({
   );
 }
 
-function ToolbarSelect({
+function ToolbarDropdown({
+  className,
+  defaultLabel,
   label,
   onChange,
+  options,
   value,
 }: {
+  className?: string;
+  defaultLabel: string;
   label: string;
   onChange: (value: string) => void;
+  options: ReadonlyArray<{ value: string; label: string }>;
   value: string;
 }) {
   const currentLabel =
-    RICH_TEXT_FONT_SIZE_OPTIONS.find((option) => option.value === value)?.label ?? '기본';
+    options.find((option) => option.value === value)?.label ?? (value ? value : defaultLabel);
 
   return (
-    <label className={`rich-text-toolbar-select${value ? ' is-active' : ''}`}>
+    <label
+      className={`rich-text-toolbar-select${className ? ` ${className}` : ''}${
+        value ? ' is-active' : ''
+      }`}
+    >
       <span className="sr-only">{label}</span>
-      <span className="rich-text-toolbar-select__icon" aria-hidden="true">
-        <Type size={16} />
-      </span>
       <span className="rich-text-toolbar-select__value" aria-hidden="true">
         {currentLabel}
       </span>
       <ChevronDown className="rich-text-toolbar-select__chevron" size={12} aria-hidden="true" />
       <select aria-label={label} onChange={(event) => onChange(event.target.value)} value={value}>
-        <option value="">기본</option>
-        {RICH_TEXT_FONT_SIZE_OPTIONS.map((option) => (
+        <option value="">{defaultLabel}</option>
+        {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
@@ -242,7 +265,9 @@ function ToolbarPalette({
   value: string;
 }) {
   const [open, setOpen] = useState(false);
-  const activeColor = styles[value];
+  const [hexValue, setHexValue] = useState('');
+  const activeColor = normalizeRichTextColor(value) ?? styles[value];
+  const normalizedHexValue = normalizeRichTextColor(hexValue);
 
   return (
     <div
@@ -259,7 +284,11 @@ function ToolbarPalette({
         aria-expanded={open}
         aria-label={label}
         title={label}
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          const nextOpen = !open;
+          if (nextOpen) setHexValue(activeColor ?? '');
+          setOpen(nextOpen);
+        }}
       >
         {icon}
         <span
@@ -277,6 +306,7 @@ function ToolbarPalette({
             role="menuitem"
             onClick={() => {
               onChange('');
+              setHexValue('');
               setOpen(false);
             }}
           >
@@ -291,15 +321,101 @@ function ToolbarPalette({
                 key={option.value}
                 title={option.label}
                 onClick={() => {
-                  onChange(option.value);
+                  onChange(normalizeRichTextColor(option.value) ?? option.value);
                   setOpen(false);
                 }}
               >
-                <span style={{ backgroundColor: styles[option.value] }} aria-hidden="true" />
+                <span
+                  style={{
+                    backgroundColor: normalizeRichTextColor(option.value) ?? styles[option.value],
+                  }}
+                  aria-hidden="true"
+                />
                 <span className="sr-only">{option.label}</span>
               </button>
             ))}
           </div>
+          <form
+            className="rich-text-toolbar-palette__hex"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!normalizedHexValue) return;
+              onChange(normalizedHexValue);
+              setOpen(false);
+            }}
+          >
+            <label>
+              <span className="sr-only">{label} HEX 코드</span>
+              <input
+                inputMode="text"
+                maxLength={7}
+                onChange={(event) => setHexValue(event.target.value)}
+                placeholder="#000000"
+                spellCheck={false}
+                value={hexValue}
+              />
+            </label>
+            <button disabled={!normalizedHexValue} type="submit">
+              적용
+            </button>
+          </form>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ToolbarMore({
+  actions,
+  active = false,
+}: {
+  actions: ReadonlyArray<{
+    active?: boolean;
+    icon: ReactNode;
+    label: string;
+    onClick: () => void;
+  }>;
+  active?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className={`rich-text-toolbar-more${active ? ' is-active' : ''}`}
+      onBlur={(event) => {
+        const nextTarget = event.relatedTarget;
+        if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
+          setOpen(false);
+        }
+      }}
+    >
+      <button
+        aria-expanded={open}
+        aria-label="더보기"
+        className={active ? 'is-active' : undefined}
+        onClick={() => setOpen((current) => !current)}
+        title="더보기"
+        type="button"
+      >
+        <Ellipsis size={18} />
+      </button>
+      {open ? (
+        <div className="rich-text-toolbar-more__menu" role="menu" aria-label="추가 서식">
+          {actions.map((action) => (
+            <button
+              className={action.active ? 'is-active' : undefined}
+              key={action.label}
+              onClick={() => {
+                action.onClick();
+                setOpen(false);
+              }}
+              role="menuitem"
+              type="button"
+            >
+              {action.icon}
+              <span>{action.label}</span>
+            </button>
+          ))}
         </div>
       ) : null}
     </div>
@@ -371,12 +487,16 @@ export function RichTextEditor({
       canRedo: currentEditor?.can().chain().focus().redo().run() ?? false,
       canUndo: currentEditor?.can().chain().focus().undo().run() ?? false,
       characterCount: currentEditor?.getText().length ?? 0,
+      code: currentEditor?.isActive('code') ?? false,
+      fontFamily: (currentEditor?.getAttributes('fontFamily').family as string | undefined) ?? '',
       highlight: (currentEditor?.getAttributes('highlight').color as string | undefined) ?? '',
       italic: currentEditor?.isActive('italic') ?? false,
       fontSize: (currentEditor?.getAttributes('fontSize').size as string | undefined) ?? '',
       link: currentEditor?.isActive('link') ?? false,
       orderedList: currentEditor?.isActive('orderedList') ?? false,
       strike: currentEditor?.isActive('strike') ?? false,
+      subscript: currentEditor?.isActive('subscript') ?? false,
+      superscript: currentEditor?.isActive('superscript') ?? false,
       textColor: (currentEditor?.getAttributes('textColor').color as string | undefined) ?? '',
       underline: currentEditor?.isActive('underline') ?? false,
     }),
@@ -441,19 +561,73 @@ export function RichTextEditor({
     setLinkOpen(false);
   };
 
-  const setStyleMark = (mark: 'textColor' | 'fontSize' | 'highlight', value: string) => {
+  const setStyleMark = (
+    mark: 'textColor' | 'fontSize' | 'fontFamily' | 'highlight',
+    value: string,
+  ) => {
     const chain = editor.chain().focus();
     if (!value) {
       chain.unsetMark(mark).run();
       return;
     }
-    const attribute = mark === 'fontSize' ? 'size' : 'color';
+    const attribute = mark === 'fontSize' ? 'size' : mark === 'fontFamily' ? 'family' : 'color';
     chain.setMark(mark, { [attribute]: value }).run();
   };
+
+  const moreActions = [
+    {
+      active: toolbar.strike,
+      icon: <Strikethrough size={16} />,
+      label: '취소선',
+      onClick: () => editor.chain().focus().toggleStrike().run(),
+    },
+    {
+      active: toolbar.code,
+      icon: <Code2 size={16} />,
+      label: '코드',
+      onClick: () => editor.chain().focus().toggleCode().run(),
+    },
+    {
+      active: toolbar.superscript,
+      icon: <Superscript size={16} />,
+      label: '위첨자',
+      onClick: () => editor.chain().focus().toggleMark('superscript').run(),
+    },
+    {
+      active: toolbar.subscript,
+      icon: <Subscript size={16} />,
+      label: '아래첨자',
+      onClick: () => editor.chain().focus().toggleMark('subscript').run(),
+    },
+    {
+      icon: <Eraser size={16} />,
+      label: '서식 지우기',
+      onClick: () => editor.chain().focus().unsetAllMarks().clearNodes().run(),
+    },
+  ];
+  const moreActive = moreActions.some((action) => action.active);
 
   return (
     <div className="rich-text-editor">
       <div aria-label="본문 서식" className="rich-text-toolbar" role="group">
+        <div className="rich-text-toolbar__group rich-text-toolbar__style-controls">
+          <ToolbarDropdown
+            className="rich-text-toolbar-select--family"
+            defaultLabel="기본 서체"
+            label="폰트 종류"
+            onChange={(value) => setStyleMark('fontFamily', value)}
+            options={RICH_TEXT_FONT_FAMILY_OPTIONS}
+            value={toolbar.fontFamily}
+          />
+          <ToolbarDropdown
+            className="rich-text-toolbar-select--size"
+            defaultLabel="12"
+            label="글자 크기"
+            onChange={(value) => setStyleMark('fontSize', value)}
+            options={RICH_TEXT_FONT_SIZE_OPTIONS}
+            value={toolbar.fontSize}
+          />
+        </div>
         <div className="rich-text-toolbar__group">
           <ToolbarButton
             active={toolbar.bold}
@@ -477,19 +651,15 @@ export function RichTextEditor({
             <Underline size={17} />
           </ToolbarButton>
           <ToolbarButton
-            active={toolbar.strike}
-            label="취소선"
-            onClick={() => editor.chain().focus().toggleStrike().run()}
+            active={toolbar.blockquote}
+            label="인용"
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
           >
-            <Strikethrough size={17} />
+            <Quote size={17} />
           </ToolbarButton>
+          <ToolbarMore actions={moreActions} active={moreActive} />
         </div>
-        <div className="rich-text-toolbar__group rich-text-toolbar__style-controls">
-          <ToolbarSelect
-            label="글자 크기"
-            onChange={(value) => setStyleMark('fontSize', value)}
-            value={toolbar.fontSize}
-          />
+        <div className="rich-text-toolbar__group rich-text-toolbar__color-controls">
           <ToolbarPalette
             icon={<Palette size={17} />}
             label="글자색"
@@ -521,19 +691,6 @@ export function RichTextEditor({
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
           >
             <ListOrdered size={18} />
-          </ToolbarButton>
-          <ToolbarButton
-            active={toolbar.blockquote}
-            label="인용"
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          >
-            <Quote size={17} />
-          </ToolbarButton>
-          <ToolbarButton
-            label="서식 지우기"
-            onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
-          >
-            <Eraser size={17} />
           </ToolbarButton>
         </div>
         <div className="rich-text-toolbar__group">
@@ -576,31 +733,57 @@ export function RichTextEditor({
         </div>
       </div>
       {linkOpen ? (
-        <form className="rich-text-link-editor" onSubmit={applyLink}>
-          <label>
-            <span className="sr-only">링크 주소</span>
-            <input
-              autoFocus
-              inputMode="url"
-              onChange={(event) => setLinkValue(event.target.value)}
-              placeholder="https://example.com"
-              type="text"
-              value={linkValue}
-            />
-          </label>
-          <button type="submit">적용</button>
-          {toolbar.link ? (
-            <button onClick={removeLink} title="링크 제거" type="button">
-              <Unlink size={16} />
-              <span className="sr-only">링크 제거</span>
-            </button>
-          ) : null}
-          <button onClick={() => setLinkOpen(false)} type="button">
-            취소
-          </button>
-        </form>
+        <div
+          className="rich-text-link-modal"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setLinkOpen(false);
+          }}
+        >
+          <form
+            aria-label="링크 삽입"
+            aria-modal="true"
+            className="rich-text-link-modal__dialog"
+            onSubmit={applyLink}
+            role="dialog"
+          >
+            <header>
+              <strong>링크</strong>
+              <button
+                aria-label="닫기"
+                onClick={() => setLinkOpen(false)}
+                title="닫기"
+                type="button"
+              >
+                <X size={16} />
+              </button>
+            </header>
+            <label>
+              <span>주소</span>
+              <input
+                autoFocus
+                inputMode="url"
+                onChange={(event) => setLinkValue(event.target.value)}
+                placeholder="https://example.com"
+                type="text"
+                value={linkValue}
+              />
+            </label>
+            {linkError ? <p className="rich-text-editor__error">{linkError}</p> : null}
+            <div className="rich-text-link-modal__actions">
+              {toolbar.link ? (
+                <button onClick={removeLink} title="링크 제거" type="button">
+                  <Unlink size={16} />
+                  링크 제거
+                </button>
+              ) : null}
+              <button onClick={() => setLinkOpen(false)} type="button">
+                취소
+              </button>
+              <button type="submit">적용</button>
+            </div>
+          </form>
+        </div>
       ) : null}
-      {linkError ? <p className="rich-text-editor__error">{linkError}</p> : null}
       <EditorContent editor={editor} />
       <footer className="rich-text-editor__footer">
         {imageError ? <span className="rich-text-editor__error">{imageError}</span> : <span />}
@@ -631,33 +814,35 @@ export function RichTextContent({ contentDoc, plainText }: RichTextContentProps)
 
 function normalizeMarks(marks: JSONContent[] | undefined): PersistedRichTextMark[] | undefined {
   const normalized = marks?.flatMap((mark): PersistedRichTextMark[] => {
-    if (['bold', 'italic', 'underline', 'strike'].includes(mark.type ?? '')) {
-      return [{ type: mark.type as 'bold' | 'italic' | 'underline' | 'strike' }];
+    if (
+      ['bold', 'italic', 'underline', 'strike', 'code', 'superscript', 'subscript'].includes(
+        mark.type ?? '',
+      )
+    ) {
+      return [
+        {
+          type: mark.type as
+            'bold' | 'italic' | 'underline' | 'strike' | 'code' | 'superscript' | 'subscript',
+        },
+      ];
     }
 
-    const color = mark.attrs?.color;
-    if (
-      mark.type === 'textColor' &&
-      typeof color === 'string' &&
-      RICH_TEXT_COLOR_OPTIONS.some((option) => option.value === color)
-    ) {
+    const color = normalizeRichTextColor(mark.attrs?.color);
+    if (mark.type === 'textColor' && color) {
       return [{ type: 'textColor', attrs: { color: color as RichTextColor } }];
     }
-    if (
-      mark.type === 'highlight' &&
-      typeof color === 'string' &&
-      RICH_TEXT_HIGHLIGHT_OPTIONS.some((option) => option.value === color)
-    ) {
+    if (mark.type === 'highlight' && color) {
       return [{ type: 'highlight', attrs: { color: color as RichTextHighlight } }];
     }
 
-    const size = mark.attrs?.size;
-    if (
-      mark.type === 'fontSize' &&
-      typeof size === 'string' &&
-      Object.prototype.hasOwnProperty.call(RICH_TEXT_FONT_SIZE_STYLES, size)
-    ) {
+    const size = normalizeRichTextFontSize(mark.attrs?.size);
+    if (mark.type === 'fontSize' && size) {
       return [{ type: 'fontSize', attrs: { size: size as RichTextFontSize } }];
+    }
+
+    const family = normalizeRichTextFontFamily(mark.attrs?.family);
+    if (mark.type === 'fontFamily' && family) {
+      return [{ type: 'fontFamily', attrs: { family: family as RichTextFontFamily } }];
     }
 
     if (mark.type !== 'link' || typeof mark.attrs?.href !== 'string') return [];

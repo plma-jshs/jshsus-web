@@ -171,25 +171,16 @@ export type ContentLikeState = {
   likeCount: number;
 };
 
-export type RichTextColor = 'gray' | 'red' | 'orange' | 'green' | 'blue' | 'purple';
-export type RichTextFontSize =
-  | '12px'
-  | '14px'
-  | '16px'
-  | '18px'
-  | '20px'
-  | '24px'
-  | '28px'
-  | '32px'
-  | 'small'
-  | 'large'
-  | 'xlarge';
-export type RichTextHighlight = 'yellow' | 'green' | 'blue' | 'pink';
+export type RichTextColor = string;
+export type RichTextFontSize = string;
+export type RichTextFontFamily = string;
+export type RichTextHighlight = string;
 
 export type RichTextMark =
-  | { type: 'bold' | 'italic' | 'underline' | 'strike' }
+  | { type: 'bold' | 'italic' | 'underline' | 'strike' | 'code' | 'superscript' | 'subscript' }
   | { type: 'textColor'; attrs: { color: RichTextColor } }
   | { type: 'fontSize'; attrs: { size: RichTextFontSize } }
+  | { type: 'fontFamily'; attrs: { family: RichTextFontFamily } }
   | { type: 'highlight'; attrs: { color: RichTextHighlight } }
   | {
       type: 'link';

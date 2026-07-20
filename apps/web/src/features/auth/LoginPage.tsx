@@ -144,6 +144,10 @@ export function LoginPage() {
   };
 
   const title = mode === 'login' ? '전남과학고 통합로그인' : '새 비밀번호 설정';
+  const normalizedUsername = username.trim();
+  const forgotPasswordHref = normalizedUsername
+    ? `/forgot-password?username=${encodeURIComponent(normalizedUsername)}`
+    : '/forgot-password';
 
   const activeError =
     validationError ??
@@ -207,13 +211,9 @@ export function LoginPage() {
                 />
                 <span>로그인 기억하기</span>
               </label>
-              <Link
-                className="auth-link-button"
-                to="/forgot-password"
-                search={{ username: username.trim() || undefined }}
-              >
+              <a className="auth-link-button" href={forgotPasswordHref}>
                 비밀번호를 잊으셨나요?
-              </Link>
+              </a>
             </div>
 
             <button className="auth-submit" type="submit" disabled={loginMutation.isPending}>

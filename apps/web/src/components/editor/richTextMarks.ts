@@ -1,91 +1,205 @@
-import { Mark } from '@tiptap/core';
-import type { RichTextColor, RichTextFontSize, RichTextHighlight } from '@jshsus/types';
+import { Mark, mergeAttributes } from '@tiptap/core';
+import type {
+  RichTextColor,
+  RichTextFontFamily,
+  RichTextFontSize,
+  RichTextHighlight,
+} from '@jshsus/types';
 
-export const RICH_TEXT_COLOR_OPTIONS: ReadonlyArray<{
-  value: RichTextColor;
+type MarkStyleConfig = {
+  name: string;
+  attribute: string;
+  cssProperty: 'color' | 'font-size' | 'background-color' | 'font-family';
+  normalize: (value: unknown) => string | null;
+  styleForValue: (value: string) => string | null;
+};
+
+export const RICH_TEXT_FONT_FAMILY_OPTIONS: ReadonlyArray<{
+  value: RichTextFontFamily;
   label: string;
 }> = [
-  { value: 'gray', label: '회색' },
-  { value: 'red', label: '빨강' },
-  { value: 'orange', label: '주황' },
-  { value: 'green', label: '초록' },
-  { value: 'blue', label: '파랑' },
-  { value: 'purple', label: '보라' },
+  { value: 'pretendard', label: 'Pretendard' },
+  { value: 'gothic', label: '고딕' },
+  { value: 'serif', label: '명조' },
+  { value: 'monospace', label: '고정폭' },
 ];
+
+export const RICH_TEXT_FONT_FAMILY_STYLES: Record<string, string> = {
+  pretendard: 'Pretendard, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  gothic: '"Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+  serif: 'Georgia, "Times New Roman", serif',
+  monospace: '"SFMono-Regular", Consolas, "Liberation Mono", monospace',
+};
 
 export const RICH_TEXT_FONT_SIZE_OPTIONS: ReadonlyArray<{
   value: RichTextFontSize;
   label: string;
 }> = [
-  { value: '12px', label: '12px' },
-  { value: '14px', label: '14px' },
-  { value: '16px', label: '16px' },
-  { value: '18px', label: '18px' },
-  { value: '20px', label: '20px' },
-  { value: '24px', label: '24px' },
-  { value: '28px', label: '28px' },
-  { value: '32px', label: '32px' },
+  { value: '8px', label: '8' },
+  { value: '9px', label: '9' },
+  { value: '10px', label: '10' },
+  { value: '11px', label: '11' },
+  { value: '12px', label: '12' },
+  { value: '14px', label: '14' },
+  { value: '16px', label: '16' },
+  { value: '18px', label: '18' },
+  { value: '20px', label: '20' },
+  { value: '22px', label: '22' },
+  { value: '24px', label: '24' },
+  { value: '28px', label: '28' },
+  { value: '30px', label: '30' },
+  { value: '36px', label: '36' },
+  { value: '50px', label: '50' },
+  { value: '72px', label: '72' },
+  { value: '96px', label: '96' },
 ];
+
+export const RICH_TEXT_FONT_SIZE_STYLES: Record<string, string> = {
+  ...Object.fromEntries(RICH_TEXT_FONT_SIZE_OPTIONS.map((option) => [option.value, option.value])),
+  small: '14px',
+  large: '20px',
+  xlarge: '24px',
+};
+
+export const RICH_TEXT_COLOR_OPTIONS: ReadonlyArray<{
+  value: RichTextColor;
+  label: string;
+}> = [
+  { value: '#111827', label: '검정' },
+  { value: '#ef4444', label: '빨강' },
+  { value: '#f97316', label: '주황' },
+  { value: '#facc15', label: '노랑' },
+  { value: '#22c55e', label: '초록' },
+  { value: '#06b6d4', label: '청록' },
+  { value: '#2563eb', label: '파랑' },
+  { value: '#9333ea', label: '보라' },
+  { value: '#64748b', label: '회색' },
+  { value: '#fca5a5', label: '연빨강' },
+  { value: '#fdba74', label: '연주황' },
+  { value: '#fde68a', label: '연노랑' },
+  { value: '#bbf7d0', label: '연초록' },
+  { value: '#a5f3fc', label: '연청록' },
+  { value: '#bfdbfe', label: '연파랑' },
+  { value: '#e9d5ff', label: '연보라' },
+];
+
+export const RICH_TEXT_COLOR_STYLES: Record<string, string> = Object.fromEntries(
+  RICH_TEXT_COLOR_OPTIONS.map((option) => [option.value, option.value]),
+);
 
 export const RICH_TEXT_HIGHLIGHT_OPTIONS: ReadonlyArray<{
   value: RichTextHighlight;
   label: string;
 }> = [
-  { value: 'yellow', label: '노랑' },
-  { value: 'green', label: '연두' },
-  { value: 'blue', label: '하늘' },
-  { value: 'pink', label: '분홍' },
+  { value: '#ffffff', label: '흰색' },
+  { value: '#fee2e2', label: '분홍' },
+  { value: '#ffedd5', label: '살구' },
+  { value: '#fef3c7', label: '노랑' },
+  { value: '#dcfce7', label: '연두' },
+  { value: '#ccfbf1', label: '민트' },
+  { value: '#dbeafe', label: '하늘' },
+  { value: '#ede9fe', label: '라벤더' },
+  { value: '#e5e7eb', label: '회색' },
+  { value: '#fecaca', label: '연빨강' },
+  { value: '#fed7aa', label: '연주황' },
+  { value: '#fde68a', label: '연노랑' },
+  { value: '#bbf7d0', label: '연초록' },
+  { value: '#a7f3d0', label: '연민트' },
+  { value: '#bfdbfe', label: '연파랑' },
+  { value: '#f5d0fe', label: '연보라' },
 ];
 
-export const RICH_TEXT_COLOR_STYLES: Record<RichTextColor, string> = {
+export const RICH_TEXT_HIGHLIGHT_STYLES: Record<string, string> = Object.fromEntries(
+  RICH_TEXT_HIGHLIGHT_OPTIONS.map((option) => [option.value, option.value]),
+);
+
+const colorAliases: Record<string, string> = {
   gray: '#64748b',
-  red: '#dc2626',
-  orange: '#c2410c',
-  green: '#047857',
-  blue: '#1d4ed8',
-  purple: '#7e22ce',
+  red: '#ef4444',
+  orange: '#f97316',
+  green: '#22c55e',
+  blue: '#2563eb',
+  purple: '#9333ea',
+  yellow: '#fef3c7',
+  pink: '#fee2e2',
 };
 
-export const RICH_TEXT_FONT_SIZE_STYLES: Record<RichTextFontSize, string> = {
-  '12px': '12px',
-  '14px': '14px',
-  '16px': '16px',
-  '18px': '18px',
-  '20px': '20px',
-  '24px': '24px',
-  '28px': '28px',
-  '32px': '32px',
-  small: '0.875em',
-  large: '1.25em',
-  xlarge: '1.5em',
+const fontSizeAliases: Record<string, string> = {
+  small: '14px',
+  large: '20px',
+  xlarge: '24px',
 };
 
-export const RICH_TEXT_HIGHLIGHT_STYLES: Record<RichTextHighlight, string> = {
-  yellow: '#fef08a',
-  green: '#bbf7d0',
-  blue: '#bfdbfe',
-  pink: '#fbcfe8',
-};
+function expandShortHex(value: string) {
+  return `#${value
+    .slice(1)
+    .split('')
+    .map((character) => `${character}${character}`)
+    .join('')}`;
+}
 
-function styleMark<T extends string>({
-  name,
-  attribute,
-  cssProperty,
-  styles,
-}: {
-  name: string;
-  attribute: string;
-  cssProperty: 'color' | 'font-size' | 'background-color';
-  styles: Record<T, string>;
-}) {
-  const allowedTokens = new Set(Object.keys(styles));
-  const tokenForStyle = new Map(
-    (Object.entries(styles) as Array<[T, string]>).flatMap(([token, style]) => [
-      [style.toLowerCase(), token],
-      [token.toLowerCase(), token],
-    ]),
+function toHexChannel(value: number) {
+  return value.toString(16).padStart(2, '0');
+}
+
+export function normalizeRichTextColor(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) return null;
+
+  const alias = colorAliases[trimmed];
+  if (alias) return alias;
+  if (/^#[0-9a-f]{3}$/i.test(trimmed)) return expandShortHex(trimmed);
+  if (/^#[0-9a-f]{6}$/i.test(trimmed)) return trimmed;
+
+  const rgb = trimmed.match(
+    /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\)$/,
   );
+  if (!rgb) return null;
 
+  const channels = rgb.slice(1, 4).map(Number);
+  if (channels.some((channel) => channel < 0 || channel > 255)) return null;
+  return `#${channels.map(toHexChannel).join('')}`;
+}
+
+export function normalizeRichTextFontSize(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) return null;
+
+  const aliased = fontSizeAliases[trimmed] ?? trimmed;
+  const px = aliased.match(/^(\d{1,3})(?:px)?$/);
+  if (!px) return null;
+
+  const size = Number(px[1]);
+  if (!Number.isInteger(size) || size < 8 || size > 96) return null;
+  return `${size}px`;
+}
+
+function normalizeFamilyStyle(value: string) {
+  return value
+    .toLowerCase()
+    .replaceAll('"', '')
+    .replaceAll("'", '')
+    .replace(/\s*,\s*/g, ',')
+    .trim();
+}
+
+const fontFamilyLookup = new Map<string, string>(
+  Object.entries(RICH_TEXT_FONT_FAMILY_STYLES).flatMap(([token, style]) => [
+    [token, token],
+    [normalizeFamilyStyle(style), token],
+  ]),
+);
+
+export function normalizeRichTextFontFamily(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return fontFamilyLookup.get(normalizeFamilyStyle(trimmed)) ?? null;
+}
+
+function styleMark({ name, attribute, cssProperty, normalize, styleForValue }: MarkStyleConfig) {
   return Mark.create({
     name,
     excludes: '',
@@ -105,38 +219,76 @@ function styleMark<T extends string>({
           tag: 'span',
           getAttrs: (node) => {
             if (!(node instanceof HTMLElement)) return false;
-            const token = tokenForStyle.get(node.style.getPropertyValue(cssProperty).toLowerCase());
-            return token ? { [attribute]: token } : false;
+            const value = normalize(node.style.getPropertyValue(cssProperty));
+            return value ? { [attribute]: value } : false;
           },
         },
       ];
     },
 
     renderHTML({ HTMLAttributes }) {
-      const token = HTMLAttributes[attribute];
-      if (typeof token !== 'string' || !allowedTokens.has(token)) return ['span', {}, 0];
-      return ['span', { style: `${cssProperty}: ${styles[token as T]}` }, 0];
+      const value = normalize(HTMLAttributes[attribute]);
+      const style = value ? styleForValue(value) : null;
+      if (!style) return ['span', {}, 0];
+      return ['span', { style: `${cssProperty}: ${style}` }, 0];
     },
   });
 }
 
-export const TextColorMark = styleMark<RichTextColor>({
+export const TextColorMark = styleMark({
   name: 'textColor',
   attribute: 'color',
   cssProperty: 'color',
-  styles: RICH_TEXT_COLOR_STYLES,
+  normalize: normalizeRichTextColor,
+  styleForValue: (value) => value,
 });
 
-export const FontSizeMark = styleMark<RichTextFontSize>({
+export const FontSizeMark = styleMark({
   name: 'fontSize',
   attribute: 'size',
   cssProperty: 'font-size',
-  styles: RICH_TEXT_FONT_SIZE_STYLES,
+  normalize: normalizeRichTextFontSize,
+  styleForValue: (value) => value,
 });
 
-export const TextHighlightMark = styleMark<RichTextHighlight>({
+export const FontFamilyMark = styleMark({
+  name: 'fontFamily',
+  attribute: 'family',
+  cssProperty: 'font-family',
+  normalize: normalizeRichTextFontFamily,
+  styleForValue: (value) => RICH_TEXT_FONT_FAMILY_STYLES[value] ?? null,
+});
+
+export const TextHighlightMark = styleMark({
   name: 'highlight',
   attribute: 'color',
   cssProperty: 'background-color',
-  styles: RICH_TEXT_HIGHLIGHT_STYLES,
+  normalize: normalizeRichTextColor,
+  styleForValue: (value) => value,
+});
+
+export const SuperscriptMark = Mark.create({
+  name: 'superscript',
+  excludes: 'subscript',
+
+  parseHTML() {
+    return [{ tag: 'sup' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['sup', mergeAttributes(HTMLAttributes), 0];
+  },
+});
+
+export const SubscriptMark = Mark.create({
+  name: 'subscript',
+  excludes: 'superscript',
+
+  parseHTML() {
+    return [{ tag: 'sub' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['sub', mergeAttributes(HTMLAttributes), 0];
+  },
 });

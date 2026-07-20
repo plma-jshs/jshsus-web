@@ -430,6 +430,10 @@ export class ActivityRequestsService {
           name: schema.staffProfiles.name,
         })
         .from(schema.staffProfiles)
+        .innerJoin(schema.users, eq(schema.staffProfiles.userId, schema.users.id))
+        .innerJoin(schema.userRoles, eq(schema.users.id, schema.userRoles.userId))
+        .innerJoin(schema.roles, eq(schema.userRoles.roleId, schema.roles.id))
+        .where(and(eq(schema.users.status, 'active'), eq(schema.roles.name, 'teacher')))
         .orderBy(asc(schema.staffProfiles.name), asc(schema.staffProfiles.staffNo))
         .limit(500),
     );

@@ -54,7 +54,15 @@ function FormMessage({ children, success = false }: { children: ReactNode; succe
 
 function initialUsername() {
   if (typeof window === 'undefined') return '';
-  return new URLSearchParams(window.location.search).get('username')?.trim() ?? '';
+  const value = new URLSearchParams(window.location.search).get('username')?.trim() ?? '';
+  if (!/^".*"$/.test(value)) return value;
+
+  try {
+    const parsed = JSON.parse(value);
+    return typeof parsed === 'string' ? parsed.trim() : value;
+  } catch {
+    return value.slice(1, -1).trim();
+  }
 }
 
 export function PasswordResetPage() {

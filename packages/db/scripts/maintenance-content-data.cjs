@@ -4,6 +4,7 @@ const mysql = require('mysql2/promise');
 const { seedConnectionOptions } = require('./seed-connection.cjs');
 
 const ROOT_DIR = resolve(__dirname, '../../..');
+const TEACHER_CLEANUP_NAMES = ['legacy import', '강재환'];
 
 function loadEnv() {
   const envPath = resolve(ROOT_DIR, '.env');
@@ -68,6 +69,7 @@ async function summary(connection) {
        LEFT JOIN users ON users.id = students.user_id
       WHERE students.student_no = 2202`,
   );
+  const teacherCleanupTargets = await findTeacherCleanupTargets(connection);
 
   console.log(
     JSON.stringify(
@@ -77,11 +79,44 @@ async function summary(connection) {
         wakeSongRequestEvents: Number(wakeEvents.count),
         tenDigitPhones: Number(phones.count),
         student2202: studentRows,
+        teacherCleanupTargets,
       },
       null,
       2,
     ),
   );
+}
+
+async function findTeacherCleanupTargets(connection) {
+  const normalizedNames = TEACHER_CLEANUP_NAMES.map((name) => name.toLowerCase());
+  const placeholders = normalizedNames.map(() => '?').join(', ');
+  const [rows] = await connection.execute(
+    `SELECT users.id AS userId,
+            users.student_no AS username,
+            users.name AS userName,
+            staff_profiles.id AS staffProfileId,
+            staff_profiles.staff_no AS staffNo,
+            staff_profiles.name AS staffProfileName,
+            GROUP_CONCAT(roles.name ORDER BY roles.name) AS roles
+       FROM users
+       LEFT JOIN staff_profiles ON staff_profiles.user_id = users.id
+       LEFT JOIN user_roles ON user_roles.user_id = users.id
+       LEFT JOIN roles ON roles.id = user_roles.role_id
+      WHERE (
+              LOWER(COALESCE(users.name, '')) IN (${placeholders})
+           OR LOWER(COALESCE(staff_profiles.name, '')) IN (${placeholders})
+            )
+        AND (staff_profiles.id IS NOT NULL OR roles.name = 'teacher')
+      GROUP BY users.id,
+               users.student_no,
+               users.name,
+               staff_profiles.id,
+               staff_profiles.staff_no,
+               staff_profiles.name
+      ORDER BY users.id`,
+    [...normalizedNames, ...normalizedNames],
+  );
+  return rows;
 }
 
 function readThanksFile(path) {
@@ -175,6 +210,47 @@ async function cleanupContentData(connection) {
   }
 }
 
+async function cleanupTeacherOptions(connection) {
+  const targets = await findTeacherCleanupTargets(connection);
+  const targetIds = targets.map((row) => Number(row.userId)).filter(Number.isFinite);
+  if (targetIds.length === 0) {
+    console.log(JSON.stringify({ removedTeacherRoles: 0, removedStaffProfiles: 0 }, null, 2));
+    return;
+  }
+
+  const placeholders = targetIds.map(() => '?').join(', ');
+  await connection.beginTransaction();
+  try {
+    const [teacherRoles] = await connection.execute(
+      `DELETE user_roles
+         FROM user_roles
+         INNER JOIN roles ON roles.id = user_roles.role_id
+        WHERE user_roles.user_id IN (${placeholders})
+          AND roles.name = 'teacher'`,
+      targetIds,
+    );
+    const [staffProfiles] = await connection.execute(
+      `DELETE FROM staff_profiles WHERE user_id IN (${placeholders})`,
+      targetIds,
+    );
+    await connection.commit();
+    console.log(
+      JSON.stringify(
+        {
+          targets,
+          removedTeacherRoles: teacherRoles.affectedRows,
+          removedStaffProfiles: staffProfiles.affectedRows,
+        },
+        null,
+        2,
+      ),
+    );
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  }
+}
+
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const command = options._[0];
@@ -186,9 +262,13 @@ async function main() {
       await replaceThanksMessages(connection, requireOption(options, 'file'));
     } else if (command === 'cleanup') {
       await cleanupContentData(connection);
+    } else if (command === 'teacher-summary') {
+      console.log(JSON.stringify(await findTeacherCleanupTargets(connection), null, 2));
+    } else if (command === 'cleanup-teachers') {
+      await cleanupTeacherOptions(connection);
     } else {
       throw new Error(
-        'Usage: node scripts/maintenance-content-data.cjs <summary|replace-thanks|cleanup>',
+        'Usage: node scripts/maintenance-content-data.cjs <summary|replace-thanks|cleanup|teacher-summary|cleanup-teachers>',
       );
     }
   } finally {
