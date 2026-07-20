@@ -111,6 +111,39 @@ async function downloadImportTemplate(reasons: PointReason[]) {
     { header: '사유', key: 'reasonText', width: 40 },
   ];
   worksheet.getColumn('baseDate').numFmt = 'yyyy-mm-dd';
+  worksheet.addRow({
+    studentNo: '예시 - 업로드 전 삭제',
+    baseDate: today,
+    reasonId: reasons[0]?.id ?? 1,
+    point: reasons[0]?.point ?? 1,
+    reasonText: '예시입니다. 실제 업로드 전 이 행을 삭제하세요.',
+  });
+  worksheet.getRow(2).font = { color: { argb: 'FF64748B' }, italic: true };
+  worksheet.getRow(2).fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFF8FAFC' },
+  };
+  worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+  const example = workbook.addWorksheet('작성 예시');
+  example.columns = worksheet.columns;
+  example.addRow({
+    studentNo: '예시는 참고용입니다. 업로드할 때는 상벌점 시트의 예시 행을 삭제하세요.',
+    baseDate: '',
+    reasonId: '',
+    point: '',
+    reasonText: '',
+  });
+  example.addRow({
+    studentNo: 1101,
+    baseDate: today,
+    reasonId: reasons[0]?.id ?? 1,
+    point: reasons[0]?.point ?? 1,
+    reasonText: reasons[0]?.comment ?? '학교생활 우수',
+  });
+  example.getRow(2).font = { bold: true };
+
   const reference = workbook.addWorksheet('사유코드');
   reference.columns = [
     { header: '사유코드', key: 'id', width: 12 },
@@ -480,7 +513,20 @@ export function PointAwardPage() {
         accessorKey: 'point',
         header: '점수',
         enableSorting: false,
-        cell: ({ row }) => `${row.original.point > 0 ? '+' : ''}${row.original.point}`,
+        cell: ({ row }) => (
+          <strong
+            className={
+              row.original.point > 0
+                ? 'point-value--positive'
+                : row.original.point < 0
+                  ? 'point-value--danger'
+                  : undefined
+            }
+          >
+            {row.original.point > 0 ? '+' : ''}
+            {row.original.point}
+          </strong>
+        ),
         meta: { align: 'center', width: 80 },
       },
       {
@@ -677,7 +723,6 @@ export function PointAwardPage() {
             ) : null}
             {selectedStudents.length ? (
               <div className="point-selected-student">
-                <strong>선택 학생 {selectedStudents.length}명</strong>
                 <div className="point-selected-student-list">
                   {selectedStudents.map((student) => (
                     <span className="point-selected-student-chip" key={student.id}>

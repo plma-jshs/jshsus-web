@@ -16,6 +16,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   verify:
     name: Verify
@@ -295,10 +298,20 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          printf '%s' "$GHCR_TOKEN" | \
-            ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
-              "$DEPLOY_USER@$DEPLOY_HOST" \
-              "install -d -m 700 '$DEPLOY_PATH/.docker-auth' && docker --config '$DEPLOY_PATH/.docker-auth' login ghcr.io --username '${{ github.actor }}' --password-stdin"
+          ghcr_auth="$(printf '%s:%s' '${{ github.actor }}' "$GHCR_TOKEN" | base64 | tr -d '\n')"
+          ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "bash -s -- '$DEPLOY_PATH'" <<REMOTE_GHCR_AUTH
+          set -euo pipefail
+          deploy_path="\$1"
+          install -d -m 700 "\$deploy_path"
+          auth_dir="\$(mktemp -d "\$deploy_path/.docker-auth.XXXXXX")"
+          chmod 700 "\$auth_dir"
+          printf '{"auths":{"ghcr.io":{"auth":"%s"}}}\n' "$ghcr_auth" > "\$auth_dir/config.json"
+          chmod 600 "\$auth_dir/config.json"
+          printf '%s\n' "\$auth_dir" > "\$deploy_path/.docker-auth-path"
+          chmod 600 "\$deploy_path/.docker-auth-path"
+          REMOTE_GHCR_AUTH
 
       - name: Upload release manifest
         shell: bash
@@ -323,7 +336,7 @@ jobs:
           set -euo pipefail
           ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
             "$DEPLOY_USER@$DEPLOY_HOST" \
-            "'$DEPLOY_PATH/deploy.sh' '${{ github.sha }}' '${{ github.repository_owner }}'"
+            "DOCKER_CONFIG=\"\$(cat '$DEPLOY_PATH/.docker-auth-path')\" '$DEPLOY_PATH/deploy.sh' '${{ github.sha }}' '${{ github.repository_owner }}'"
 
       - name: Verify staging content or Cloudflare edge reachability
         id: public_smoke
@@ -416,7 +429,7 @@ jobs:
           if [[ -s "$HOME/.ssh/deploy_key" ]]; then
             ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
               "$DEPLOY_USER@$DEPLOY_HOST" \
-              "docker --config '$DEPLOY_PATH/.docker-auth' logout ghcr.io >/dev/null 2>&1 || true" || true
+              "if [[ -f '$DEPLOY_PATH/.docker-auth-path' ]]; then auth_dir=\"\$(cat '$DEPLOY_PATH/.docker-auth-path')\"; rm -rf -- \"\$auth_dir\" '$DEPLOY_PATH/.docker-auth-path'; fi; rm -rf -- '$DEPLOY_PATH/.docker-auth'" || true
           fi
 
       - name: Remove local secret files

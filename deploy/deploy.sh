@@ -19,7 +19,7 @@ readonly RELEASE_MANIFEST_DIR="$DEPLOY_DIR/.release-manifests"
 
 cd "$DEPLOY_DIR"
 umask 077
-export DOCKER_CONFIG="$DEPLOY_DIR/.docker-auth"
+export DOCKER_CONFIG="${DOCKER_CONFIG:-$DEPLOY_DIR/.docker-auth}"
 install -d -m 700 "$DOCKER_CONFIG" "$RELEASE_ENV_DIR" "$RELEASE_MANIFEST_DIR"
 exec 9>"$DEPLOY_DIR/.deploy.lock"
 if ! flock -n 9; then

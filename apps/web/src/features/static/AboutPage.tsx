@@ -72,6 +72,13 @@ function EagleCheer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isFlying, setIsFlying] = useState(false);
 
+  const primeAudio = () => {
+    const audio = audioRef.current;
+    if (audio && audio.networkState === HTMLMediaElement.NETWORK_EMPTY) {
+      audio.load();
+    }
+  };
+
   const launchEagle = () => {
     const audio = audioRef.current;
     if (audio) {
@@ -89,7 +96,13 @@ function EagleCheer() {
 
   return (
     <>
-      <button className="about-eagle-cheer" type="button" onClick={launchEagle}>
+      <button
+        className="about-eagle-cheer"
+        type="button"
+        onClick={launchEagle}
+        onFocus={primeAudio}
+        onPointerEnter={primeAudio}
+      >
         나주붉은매 화이팅
       </button>
       <audio ref={audioRef} src="/audio/eagle-cry.mp3" preload="auto" />
@@ -436,15 +449,23 @@ function DeveloperIntroduce() {
           name="강재환"
           role="Developer"
           contribution={<>- 2025 과구리 개발</>}
-        />
+        >
+          안녕하세요, <b>32기 IT부 강재환</b>입니다. 과구리 개발에 참여했습니다.
+        </DeveloperProfile>
 
         <DeveloperProfile
           imageSrc="/images/introduce/kim_seong_chan.jpg"
           name="김성찬"
           role="Developer"
-          contribution={<>- 2025 과구리 개발</>}
+          contribution={
+            <>
+              - 2025 과구리 개발
+              <br />
+              <EagleCheer />
+            </>
+          }
         >
-          <EagleCheer />
+          안녕하세요, <b>32기 IT부 김성찬</b>입니다. 과구리 개발에 참여했습니다.
         </DeveloperProfile>
       </div>
     </section>

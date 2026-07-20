@@ -1,5 +1,5 @@
 import type { AcademicEvent } from '@jshsus/types';
-import type { KeyboardEvent } from 'react';
+import type { CSSProperties, KeyboardEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -11,6 +11,22 @@ import '../../styles/calendar.css';
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 type CalendarFilter = 'all' | 'school' | 'holiday';
+type CalendarCell = {
+  date: Date;
+  dateKey: string;
+  day: number;
+  inCurrentMonth: boolean;
+};
+
+const eventPalette = [
+  { color: '#0f8c86', background: '#dff7f4' },
+  { color: '#2563eb', background: '#dbeafe' },
+  { color: '#b45309', background: '#fef3c7' },
+  { color: '#be123c', background: '#ffe4e6' },
+  { color: '#7c3aed', background: '#ede9fe' },
+  { color: '#15803d', background: '#dcfce7' },
+  { color: '#c2410c', background: '#ffedd5' },
+] as const;
 
 function toDateKey(date: Date) {
   const year = date.getFullYear();
@@ -24,17 +40,93 @@ function fromDateKey(dateKey: string) {
   return new Date(year, month - 1, day);
 }
 
-function monthRange(date: Date) {
+function monthGrid(date: Date): CalendarCell[] {
   const year = date.getFullYear();
   const month = date.getMonth();
-  return {
-    from: toDateKey(new Date(year, month, 1)),
-    to: toDateKey(new Date(year, month + 1, 0)),
-  };
+  const firstDay = new Date(year, month, 1);
+  const start = new Date(year, month, 1 - firstDay.getDay());
+  return Array.from({ length: 42 }, (_, index) => {
+    const cellDate = new Date(start);
+    cellDate.setDate(start.getDate() + index);
+    return {
+      date: cellDate,
+      dateKey: toDateKey(cellDate),
+      day: cellDate.getDate(),
+      inCurrentMonth: cellDate.getMonth() === month,
+    };
+  });
+}
+
+function calendarWeeks(cells: CalendarCell[]) {
+  return Array.from({ length: 6 }, (_, index) => cells.slice(index * 7, index * 7 + 7));
 }
 
 function eventTouchesDate(event: AcademicEvent, dateKey: string) {
   return toKoreanDateKey(event.startsAt) <= dateKey && toKoreanDateKey(event.endsAt) >= dateKey;
+}
+
+function eventColor(event: AcademicEvent) {
+  if (event.isHoliday) return { color: '#dc2626', background: '#fee2e2' };
+  const hash = [...event.id].reduce((value, character) => value + character.charCodeAt(0), 0);
+  return eventPalette[hash % eventPalette.length];
+}
+
+function eventRange(event: AcademicEvent) {
+  return {
+    startsAt: toKoreanDateKey(event.startsAt),
+    endsAt: toKoreanDateKey(event.endsAt),
+  };
+}
+
+function styleForEvent(event: AcademicEvent): CSSProperties {
+  const { color, background } = eventColor(event);
+  return {
+    '--event-bg': background,
+    '--event-color': color,
+  } as CSSProperties;
+}
+
+function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridStartKey: string) {
+  const weekStartKey = week[0].dateKey;
+  const weekEndKey = week[6].dateKey;
+  const lanes: Array<Array<{ end: number; start: number }>> = [];
+  return [...events]
+    .sort((left, right) => {
+      const leftRange = eventRange(left);
+      const rightRange = eventRange(right);
+      return (
+        leftRange.startsAt.localeCompare(rightRange.startsAt) ||
+        leftRange.endsAt.localeCompare(rightRange.endsAt) ||
+        left.title.localeCompare(right.title, 'ko-KR')
+      );
+    })
+    .flatMap((event) => {
+      const range = eventRange(event);
+      if (range.startsAt > weekEndKey || range.endsAt < weekStartKey) return [];
+
+      const segmentStartKey = range.startsAt < weekStartKey ? weekStartKey : range.startsAt;
+      const segmentEndKey = range.endsAt > weekEndKey ? weekEndKey : range.endsAt;
+      const start = week.findIndex((cell) => cell.dateKey === segmentStartKey);
+      const end = week.findIndex((cell) => cell.dateKey === segmentEndKey);
+      if (start < 0 || end < 0) return [];
+
+      const laneIndex = lanes.findIndex((lane) =>
+        lane.every((occupied) => end < occupied.start || start > occupied.end),
+      );
+      const lane = laneIndex >= 0 ? laneIndex : lanes.length;
+      lanes[lane] = [...(lanes[lane] ?? []), { end, start }];
+      const firstVisibleStartKey = range.startsAt < gridStartKey ? gridStartKey : range.startsAt;
+
+      return [
+        {
+          endColumn: end + 1,
+          event,
+          lane,
+          showLabel: segmentStartKey === firstVisibleStartKey,
+          startColumn: start + 1,
+        },
+      ];
+    });
 }
 
 const fullDateFormatter = createKoreanDateFormatter({
@@ -43,6 +135,15 @@ const fullDateFormatter = createKoreanDateFormatter({
   day: 'numeric',
   weekday: 'short',
 });
+const shortDateFormatter = createKoreanDateFormatter({ month: 'numeric', day: 'numeric' });
+
+function formatEventRange(event: AcademicEvent) {
+  const startsAt = fromDateKey(toKoreanDateKey(event.startsAt));
+  const endsAt = fromDateKey(toKoreanDateKey(event.endsAt));
+  const startLabel = shortDateFormatter.format(startsAt);
+  const endLabel = shortDateFormatter.format(endsAt);
+  return startLabel === endLabel ? startLabel : `${startLabel} - ${endLabel}`;
+}
 
 export function CalendarPage() {
   const todayKey = toDateKey(new Date());
@@ -52,7 +153,9 @@ export function CalendarPage() {
   });
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [filter, setFilter] = useState<CalendarFilter>('all');
-  const range = monthRange(visibleMonth);
+  const cells = useMemo(() => monthGrid(visibleMonth), [visibleMonth]);
+  const weeks = useMemo(() => calendarWeeks(cells), [cells]);
+  const range = { from: cells[0].dateKey, to: cells[cells.length - 1].dateKey };
   const calendarQuery = useQuery({
     queryKey: ['school-calendar', range.from, range.to],
     queryFn: () => getCalendar(range.from, range.to),
@@ -68,16 +171,6 @@ export function CalendarPage() {
     [allEvents, filter],
   );
   const selectedEvents = events.filter((event) => eventTouchesDate(event, selectedDate));
-  const firstWeekday = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1).getDay();
-  const daysInMonth = new Date(
-    visibleMonth.getFullYear(),
-    visibleMonth.getMonth() + 1,
-    0,
-  ).getDate();
-  const cells = Array.from({ length: 42 }, (_, index) => {
-    const day = index - firstWeekday + 1;
-    return day >= 1 && day <= daysInMonth ? day : null;
-  });
 
   const focusDate = (dateKey: string) => {
     requestAnimationFrame(() => {
@@ -188,58 +281,66 @@ export function CalendarPage() {
                 ))}
               </div>
               <div className="full-calendar__grid">
-                {cells.map((day, index) => {
-                  if (day === null) {
-                    return (
-                      <span
-                        className="full-calendar__blank"
-                        aria-hidden="true"
-                        key={`blank-${index}`}
-                      />
-                    );
-                  }
-                  const date = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), day);
-                  const dateKey = toDateKey(date);
-                  const dayEvents = events.filter((event) => eventTouchesDate(event, dateKey));
-                  const hiddenEventCount = Math.max(0, dayEvents.length - 2);
-                  const eventSummary = dayEvents.length
-                    ? `, 일정 ${dayEvents.length}개: ${dayEvents
-                        .slice(0, 2)
-                        .map((event) => event.title)
-                        .join(', ')}${hiddenEventCount ? ` 외 ${hiddenEventCount}개` : ''}`
-                    : ', 일정 없음';
-                  return (
-                    <button
-                      type="button"
-                      data-calendar-date={dateKey}
-                      className={`${dateKey === selectedDate ? 'is-selected ' : ''}${dateKey === todayKey ? 'is-today' : ''}`.trim()}
-                      onClick={() => selectDate(date)}
-                      onKeyDown={(event) => handleDateKeyDown(event, dateKey)}
-                      tabIndex={dateKey === selectedDate ? 0 : -1}
-                      aria-label={`${fullDateFormatter.format(date)}${eventSummary}`}
-                      aria-pressed={dateKey === selectedDate}
-                      aria-current={dateKey === todayKey ? 'date' : undefined}
-                      key={dateKey}
-                    >
-                      <span className="full-calendar__date">{day}</span>
-                      <span
-                        className="full-calendar__events"
-                        data-count={dayEvents.length}
-                        aria-hidden="true"
-                      >
-                        {dayEvents.slice(0, 2).map((event) => (
-                          <span
-                            className={event.isHoliday ? 'is-holiday' : undefined}
-                            key={event.id}
+                {weeks.map((week) => (
+                  <div className="full-calendar__week" key={week[0].dateKey}>
+                    <div className="full-calendar__week-days">
+                      {week.map((cell) => {
+                        const dateKey = cell.dateKey;
+                        const date = cell.date;
+                        const dayEvents = events.filter((event) =>
+                          eventTouchesDate(event, dateKey),
+                        );
+                        const hiddenEventCount = Math.max(0, dayEvents.length - 2);
+                        const eventSummary = dayEvents.length
+                          ? `, 일정 ${dayEvents.length}개: ${dayEvents
+                              .slice(0, 2)
+                              .map((event) => event.title)
+                              .join(', ')}${hiddenEventCount ? ` 외 ${hiddenEventCount}개` : ''}`
+                          : ', 일정 없음';
+                        return (
+                          <button
+                            type="button"
+                            data-calendar-date={dateKey}
+                            className={[
+                              dateKey === selectedDate ? 'is-selected' : '',
+                              dateKey === todayKey ? 'is-today' : '',
+                              cell.inCurrentMonth ? '' : 'is-outside-month',
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
+                            onClick={() => selectDate(date)}
+                            onKeyDown={(event) => handleDateKeyDown(event, dateKey)}
+                            tabIndex={dateKey === selectedDate ? 0 : -1}
+                            aria-label={`${fullDateFormatter.format(date)}${eventSummary}`}
+                            aria-pressed={dateKey === selectedDate}
+                            aria-current={dateKey === todayKey ? 'date' : undefined}
+                            key={dateKey}
                           >
-                            {event.title}
-                          </span>
-                        ))}
-                        {hiddenEventCount ? <small>+{hiddenEventCount}</small> : null}
-                      </span>
-                    </button>
-                  );
-                })}
+                            <span className="full-calendar__date">{cell.day}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="full-calendar__bars" aria-hidden="true">
+                      {weekEventSegments(week, events, cells[0].dateKey).map((segment) => (
+                        <span
+                          className={`full-calendar__event-bar${
+                            segment.event.isHoliday ? ' is-holiday' : ''
+                          }${segment.showLabel ? '' : ' is-continuation'}`}
+                          key={`${segment.event.id}-${week[0].dateKey}`}
+                          style={{
+                            ...styleForEvent(segment.event),
+                            gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
+                            gridRow: segment.lane + 1,
+                          }}
+                          title={segment.event.title}
+                        >
+                          {segment.showLabel ? segment.event.title : null}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -256,10 +357,15 @@ export function CalendarPage() {
               ) : (
                 <div className="calendar-agenda__list">
                   {selectedEvents.map((event) => (
-                    <article key={event.id}>
-                      {event.isHoliday ? <span className="is-holiday">휴일</span> : null}
-                      <h4>{event.title}</h4>
-                      {event.description ? <p>{event.description}</p> : null}
+                    <article key={event.id} style={styleForEvent(event)}>
+                      <span className="calendar-agenda__color" aria-hidden="true" />
+                      <div>
+                        <span className={event.isHoliday ? 'is-holiday' : undefined}>
+                          {event.isHoliday ? '휴일' : '학사'} · {formatEventRange(event)}
+                        </span>
+                        <h4>{event.title}</h4>
+                        {event.description ? <p>{event.description}</p> : null}
+                      </div>
                     </article>
                   ))}
                 </div>

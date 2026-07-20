@@ -5,6 +5,7 @@ import type {
   ActivityRequestPrintBatch,
   ActivityRequestStudentOption,
   ActivityRequestTeacherOption,
+  ActivityTimeSlotId,
   AdminAuditLog,
   AdminAuditLogListQuery,
   AdminDashboard,
@@ -495,6 +496,7 @@ export const api = {
     representativeStudentNo: number;
     participantStudentNos: number[];
     location: string;
+    activitySlotIds: ActivityTimeSlotId[];
     startsAt: string;
     endsAt: string;
     purpose: string;

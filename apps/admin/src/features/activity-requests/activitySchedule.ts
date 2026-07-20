@@ -28,12 +28,25 @@ export function availableActivityTimeSlots(date: string) {
 }
 
 export function activitySlotDateTimes(date: string, slotId: ActivityTimeSlotId) {
-  const slot = activityTimeSlots.find((candidate) => candidate.id === slotId);
-  if (!slot || !availableActivityTimeSlots(date).some((candidate) => candidate.id === slotId)) {
+  return activitySlotsDateTimes(date, [slotId]);
+}
+
+export function activitySlotsDateTimes(date: string, slotIds: ActivityTimeSlotId[]) {
+  const uniqueSlotIds = slotIds.filter((slotId, index) => slotIds.indexOf(slotId) === index);
+  const availableSlotIds = new Set(
+    availableActivityTimeSlots(date).map((candidate) => candidate.id),
+  );
+  const selectedSlots = activityTimeSlots.filter(
+    (slot) => uniqueSlotIds.includes(slot.id) && availableSlotIds.has(slot.id),
+  );
+  if (selectedSlots.length === 0 || selectedSlots.length !== uniqueSlotIds.length) {
     return null;
   }
+  const [firstSlot] = selectedSlots;
+  const lastSlot = selectedSlots[selectedSlots.length - 1];
   return {
-    startsAt: new Date(`${date}T${slot.startsAt}:00+09:00`).toISOString(),
-    endsAt: new Date(`${date}T${slot.endsAt}:00+09:00`).toISOString(),
+    activitySlotIds: selectedSlots.map((selectedSlot) => selectedSlot.id),
+    startsAt: new Date(`${date}T${firstSlot.startsAt}:00+09:00`).toISOString(),
+    endsAt: new Date(`${date}T${lastSlot.endsAt}:00+09:00`).toISOString(),
   };
 }

@@ -115,6 +115,57 @@
   font-size: 13px;
 }
 
+.activity-slot-picker {
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.activity-slot-picker legend {
+  margin-bottom: 6px;
+  color: #334241;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.activity-slot-pill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.activity-slot-pill-list label {
+  display: inline-flex;
+  min-height: 42px;
+  padding: 7px 11px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: white;
+  color: #334241;
+  cursor: pointer;
+}
+
+.activity-slot-pill-list label.is-selected {
+  border-color: #8dcfca;
+  color: var(--primary-dark);
+  background: #edf9f7;
+}
+
+.activity-slot-pill-list input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--primary);
+}
+
+.activity-slot-pill-list small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .operation-toolbar {
   display: grid;
   grid-template-columns: minmax(150px, 190px) minmax(260px, 1fr) auto;

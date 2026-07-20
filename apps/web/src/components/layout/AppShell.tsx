@@ -471,9 +471,9 @@ function PortalShell() {
           <Link className="portal-footer__brand" to="/about">
             과구리
           </Link>
-          <a href="https://jshsus.kr/contents/login/login_policy.html">
+          <span>
             호스팅서비스사업자: 아이디비아이 | 사업자 등록번호: 332-44-01176 | 사업자 대표: 강재환
-          </a>
+          </span>
           <Link to="/privacy">개인정보처리방침</Link>
           <span>Copyright © 2026 IT부 All Rights Reserved.</span>
         </div>

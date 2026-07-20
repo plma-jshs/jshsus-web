@@ -578,18 +578,11 @@
   color: var(--j-color-brand-strong);
 }
 
-.editor-file-button:focus-visible {
-  outline: var(--j-focus-ring);
-  outline-offset: var(--j-focus-offset);
-}
-
-.editor-file-button:focus-within {
-  outline: 0;
-}
-
+.editor-file-button:focus-visible,
 .editor-file-button:has(input:focus-visible) {
-  outline: var(--j-focus-ring);
-  outline-offset: 2px;
+  border-color: var(--j-color-brand-subtle-strong);
+  box-shadow: 0 0 0 3px rgb(11 132 126 / 14%);
+  outline: 0;
 }
 
 .editor-file-button input {

@@ -30,6 +30,10 @@
   color: var(--danger);
 }
 
+.point-value--positive {
+  color: #1d4ed8;
+}
+
 .point-status {
   display: inline-flex;
   min-height: 26px;
@@ -200,7 +204,7 @@
   margin-top: 14px;
   padding: 10px 14px;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 16px;
   border: 1px solid #cbe4df;
   border-radius: 9px;
@@ -232,7 +236,7 @@
   display: flex;
   flex: 1 1 auto;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 6px;
 }
 

@@ -27,7 +27,7 @@ import {
   useRefreshActivityRequests,
 } from './activityRequests';
 import {
-  activitySlotDateTimes,
+  activitySlotsDateTimes,
   availableActivityTimeSlots,
   koreaDateInput,
   type ActivityTimeSlotId,
@@ -39,7 +39,7 @@ type CreateActivityForm = {
   participantStudentNos: number[];
   location: string;
   activityDate: string;
-  activitySlotId: ActivityTimeSlotId;
+  activitySlotIds: ActivityTimeSlotId[];
   purpose: string;
 };
 
@@ -51,7 +51,7 @@ function createInitialActivityForm(): CreateActivityForm {
     participantStudentNos: [],
     location: '',
     activityDate,
-    activitySlotId: firstSlot?.id ?? 'evening-1',
+    activitySlotIds: firstSlot ? [firstSlot.id] : ['evening-1'],
     purpose: '',
   };
 }
@@ -283,15 +283,17 @@ export function ActivityReviewPage() {
       if (!form.representativeStudentNo) {
         throw new Error('대표 학생을 선택해 주세요.');
       }
-      const activityTimes = activitySlotDateTimes(form.activityDate, form.activitySlotId);
+      const activityTimes = activitySlotsDateTimes(form.activityDate, form.activitySlotIds);
       if (!activityTimes) {
-        throw new Error('선택한 날짜에 이용 가능한 면학 시간을 선택해 주세요.');
+        throw new Error('선택한 날짜에 이용 가능한 면학 시간을 하나 이상 선택해 주세요.');
       }
       return api.createActivityRequest({
         representativeStudentNo: form.representativeStudentNo,
         participantStudentNos: form.participantStudentNos,
         location: form.location.trim(),
-        ...activityTimes,
+        activitySlotIds: activityTimes.activitySlotIds,
+        startsAt: activityTimes.startsAt,
+        endsAt: activityTimes.endsAt,
         purpose: form.purpose.trim(),
       });
     },
@@ -326,6 +328,18 @@ export function ActivityReviewPage() {
       ...form,
       participantStudentNos: [...form.participantStudentNos, student.studentNo],
     }));
+  };
+
+  const toggleCreateActivitySlot = (slotId: ActivityTimeSlotId) => {
+    setCreateForm((form) => {
+      const selected = form.activitySlotIds.includes(slotId)
+        ? form.activitySlotIds.filter((id) => id !== slotId)
+        : [...form.activitySlotIds, slotId];
+      return {
+        ...form,
+        activitySlotIds: selected.length > 0 ? selected : form.activitySlotIds,
+      };
+    });
   };
 
   const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
@@ -645,36 +659,46 @@ export function ActivityReviewPage() {
                   value={createForm.activityDate}
                   onChange={(event) => {
                     const nextSlots = availableActivityTimeSlots(event.target.value);
-                    setCreateForm((form) => ({
-                      ...form,
-                      activityDate: event.target.value,
-                      activitySlotId: nextSlots.some((slot) => slot.id === form.activitySlotId)
-                        ? form.activitySlotId
-                        : (nextSlots[0]?.id ?? 'evening-1'),
-                    }));
+                    const nextSlotIds = new Set(nextSlots.map((slot) => slot.id));
+                    setCreateForm((form) => {
+                      const selectedSlotIds = form.activitySlotIds.filter((slotId) =>
+                        nextSlotIds.has(slotId),
+                      );
+                      return {
+                        ...form,
+                        activityDate: event.target.value,
+                        activitySlotIds: selectedSlotIds.length
+                          ? selectedSlotIds
+                          : nextSlots[0]
+                            ? [nextSlots[0].id]
+                            : ['evening-1'],
+                      };
+                    });
                   }}
                   required
                 />
               </label>
-              <label>
-                <span>면학 시간</span>
-                <select
-                  value={createForm.activitySlotId}
-                  onChange={(event) =>
-                    setCreateForm((form) => ({
-                      ...form,
-                      activitySlotId: event.target.value as ActivityTimeSlotId,
-                    }))
-                  }
-                  required
-                >
-                  {availableSlots.map((slot) => (
-                    <option key={slot.id} value={slot.id}>
-                      {slot.label} · {slot.startsAt}~{slot.endsAt}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <fieldset className="activity-slot-picker">
+                <legend>면학 시간</legend>
+                <div className="activity-slot-pill-list">
+                  {availableSlots.map((slot) => {
+                    const checked = createForm.activitySlotIds.includes(slot.id);
+                    return (
+                      <label className={checked ? 'is-selected' : undefined} key={slot.id}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleCreateActivitySlot(slot.id)}
+                        />
+                        <span>{slot.label}</span>
+                        <small>
+                          {slot.startsAt}~{slot.endsAt}
+                        </small>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
             </div>
           </section>
           <section className="activity-create-section activity-create-details">
