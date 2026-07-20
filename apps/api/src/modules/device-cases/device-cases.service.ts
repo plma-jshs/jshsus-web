@@ -6,7 +6,7 @@ import type {
   DeviceCaseCommandResult,
   DeviceCaseControlCommand,
 } from '@jshsus/types';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, inArray } from 'drizzle-orm';
 import { DatabaseService } from '../database/database.service';
 
 const commandTargetState: Record<DeviceCaseControlCommand, boolean> = {
@@ -130,11 +130,9 @@ export class DeviceCasesService {
         })
         .from(schema.deviceCases)
         .orderBy(schema.deviceCases.id);
-      const connectedCases = rows.filter((deviceCase) => deviceCase.isConnected);
-
-      if (connectedCases.length > 0) {
+      if (rows.length > 0) {
         await tx.insert(schema.deviceCaseCommands).values(
-          connectedCases.map((deviceCase) => ({
+          rows.map((deviceCase) => ({
             actorId,
             command,
             completedAt: now,
@@ -146,7 +144,12 @@ export class DeviceCasesService {
         await tx
           .update(schema.deviceCases)
           .set({ isOpen: targetIsOpen, updatedAt: now })
-          .where(eq(schema.deviceCases.isConnected, true));
+          .where(
+            inArray(
+              schema.deviceCases.id,
+              rows.map((deviceCase) => deviceCase.id),
+            ),
+          );
       }
 
       await tx.insert(schema.auditLogs).values({
@@ -161,8 +164,8 @@ export class DeviceCasesService {
         command,
         targetIsOpen,
         totalCases: rows.length,
-        updatedCount: connectedCases.length,
-        excludedDisconnectedCount: rows.length - connectedCases.length,
+        updatedCount: rows.length,
+        excludedDisconnectedCount: 0,
       };
     });
   }

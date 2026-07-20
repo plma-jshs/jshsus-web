@@ -88,7 +88,7 @@ export function DeviceCasesPage() {
   const runBulkCommand = useCallback(
     (command: DeviceCaseControlCommand) => {
       const label = command === 'open' ? '열기' : '닫기';
-      if (!window.confirm(`연결된 휴대폰 보관함을 모두 ${label} 처리할까요?`)) return;
+      if (!window.confirm(`전체 휴대폰 보관함을 ${label} 처리할까요?`)) return;
       bulkCommandMutation.mutate(command);
     },
     [bulkCommandMutation],
