@@ -235,6 +235,21 @@ export class CognitoAuthService {
     });
   }
 
+  async setPermanentPassword(username: string, password: string): Promise<void> {
+    await this.getAdminClient()
+      .send(
+        new AdminSetUserPasswordCommand({
+          Password: password,
+          Permanent: true,
+          Username: username.trim(),
+          UserPoolId: env.COGNITO_USER_POOL_ID,
+        }),
+      )
+      .catch((error) => {
+        throw this.mapAdminProviderError(error, 'AdminSetUserPassword');
+      });
+  }
+
   async findUserSubject(username: string): Promise<string | null> {
     const user = await this.getAdminUser(username.trim());
     if (!user) return null;

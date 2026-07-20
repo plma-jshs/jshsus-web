@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import * as schema from '@jshsus/db';
 import type { Request } from 'express';
-import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
 import type { UserRole } from '@jshsus/types';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -17,6 +17,7 @@ import { DatabaseService } from '../database/database.service';
 import { RedisService } from '../redis/redis.service';
 import { env } from '../../shared/config/env';
 import { CognitoAuthError, CognitoAuthService, type CognitoSurface } from './cognito-auth.service';
+import { SendonPasswordResetService } from './sendon-password-reset.service';
 
 const legacySessionSchema = z.object({
   iamId: z.number(),
@@ -60,6 +61,14 @@ const cognitoChallengeFlowSchema = z.object({
 });
 type CognitoChallengeFlow = z.infer<typeof cognitoChallengeFlowSchema>;
 
+const passwordResetFlowSchema = z.object({
+  username: z.string().min(1),
+  userId: z.number().int().positive(),
+  codeHash: z.string().length(64),
+  attemptCount: z.number().int().min(0).max(5),
+});
+type PasswordResetFlow = z.infer<typeof passwordResetFlowSchema>;
+
 type SessionAccountRecord = {
   userId: number;
   authAccountId: number;
@@ -69,6 +78,22 @@ type SessionAccountRecord = {
   name: string;
   status: string;
 };
+
+type PasswordResetTarget = {
+  userId: number;
+  username: string;
+  phone: string | null;
+  status: string;
+  cognitoSubject: string | null;
+};
+
+function safeCompareHex(expected: string, actual: string): boolean {
+  try {
+    return timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(actual, 'hex'));
+  } catch {
+    return false;
+  }
+}
 
 export function resolveSessionIdentity(input: {
   studentNo?: number | null;
@@ -98,6 +123,7 @@ export class AuthService {
     private readonly redis: RedisService,
     private readonly database: DatabaseService,
     private readonly cognito: CognitoAuthService,
+    private readonly sendonPasswordReset?: SendonPasswordResetService,
   ) {}
 
   extractToken(request: Request): string | null {
@@ -346,19 +372,47 @@ export class AuthService {
   }
 
   async requestPasswordReset(username: string, surface: CognitoSurface): Promise<{ ok: true }> {
-    await this.assertAccountRateLimit('forgot', username, 5, 900);
-    try {
-      await this.cognito.forgotPassword(username.trim(), surface);
-    } catch (error) {
-      // Unknown accounts intentionally receive the same response as existing
-      // accounts so this endpoint cannot be used to enumerate school IDs.
-      if (error instanceof CognitoAuthError && error.code === 'AUTH_INVALID_CREDENTIALS') {
-        return { ok: true };
-      }
+    const normalizedUsername = username.trim();
+    await this.assertAccountRateLimit('forgot', normalizedUsername, 5, 900);
 
-      this.throwMappedCognitoError(error);
+    const target = await this.findPasswordResetTarget(normalizedUsername);
+    if (
+      !target ||
+      target.status !== 'active' ||
+      !target.cognitoSubject ||
+      !target.phone ||
+      !this.sendonPasswordReset
+    ) {
+      // Unknown or unrecoverable accounts intentionally receive the same
+      // response as existing accounts so this endpoint cannot enumerate IDs.
+      return { ok: true };
     }
 
+    const code = String(randomInt(100_000, 1_000_000));
+    const flow: PasswordResetFlow = {
+      username: target.username,
+      userId: target.userId,
+      codeHash: this.hashPasswordResetCode(target.username, code),
+      attemptCount: 0,
+    };
+    const flowKey = this.passwordResetFlowKey(target.username);
+    await this.redis.setJson(flowKey, flow, env.PASSWORD_RESET_CODE_TTL_SECONDS);
+
+    try {
+      await this.sendonPasswordReset.sendPasswordResetCode({ phone: target.phone, code });
+    } catch (error) {
+      await this.redis.delete(flowKey);
+      throw error;
+    }
+
+    await this.database.writeAudit({
+      actorId: target.userId,
+      action: 'auth.password_reset.request',
+      targetType: 'users',
+      targetId: target.userId,
+    });
+
+    void surface;
     return { ok: true };
   }
 
@@ -368,25 +422,68 @@ export class AuthService {
     newPassword: string;
     surface: CognitoSurface;
   }): Promise<{ ok: true }> {
-    await this.assertAccountRateLimit('confirm', input.username, 10, 900);
-    try {
-      await this.cognito.confirmForgotPassword({
-        username: input.username.trim(),
-        code: input.code.trim(),
-        newPassword: input.newPassword,
-        surface: input.surface,
-      });
-    } catch (error) {
-      if (error instanceof CognitoAuthError && error.code === 'AUTH_INVALID_CREDENTIALS') {
-        throw new BadRequestException({
-          code: 'AUTH_CODE_MISMATCH',
-          message: '인증 코드 또는 계정 정보를 확인해 주세요.',
-        });
-      }
+    const normalizedUsername = input.username.trim();
+    await this.assertAccountRateLimit('confirm', normalizedUsername, 10, 900);
+    const flowKey = this.passwordResetFlowKey(normalizedUsername);
+    const rawFlow = await this.redis.get(flowKey);
 
+    if (!rawFlow) {
+      throw new BadRequestException({
+        code: 'AUTH_CODE_EXPIRED',
+        message: '인증 코드가 만료되었습니다. 다시 요청해 주세요.',
+      });
+    }
+
+    let decodedFlow: unknown;
+    try {
+      decodedFlow = JSON.parse(rawFlow);
+    } catch {
+      decodedFlow = null;
+    }
+
+    const parsedFlow = passwordResetFlowSchema.safeParse(decodedFlow);
+    if (!parsedFlow.success || parsedFlow.data.username !== normalizedUsername) {
+      await this.redis.delete(flowKey);
+      throw new BadRequestException({
+        code: 'AUTH_CODE_EXPIRED',
+        message: '비밀번호 재설정 절차를 다시 시작해 주세요.',
+      });
+    }
+
+    const expectedHash = this.hashPasswordResetCode(parsedFlow.data.username, input.code.trim());
+    if (!safeCompareHex(parsedFlow.data.codeHash, expectedHash)) {
+      const nextAttemptCount = parsedFlow.data.attemptCount + 1;
+      if (nextAttemptCount >= 5) {
+        await this.redis.delete(flowKey);
+      } else {
+        await this.redis.setJson(
+          flowKey,
+          { ...parsedFlow.data, attemptCount: nextAttemptCount },
+          env.PASSWORD_RESET_CODE_TTL_SECONDS,
+        );
+      }
+      throw new BadRequestException({
+        code: 'AUTH_CODE_MISMATCH',
+        message: '인증 코드 또는 계정 정보를 확인해 주세요.',
+      });
+    }
+
+    try {
+      await this.cognito.setPermanentPassword(parsedFlow.data.username, input.newPassword);
+    } catch (error) {
       this.throwMappedCognitoError(error);
     }
 
+    await this.redis.delete(flowKey);
+    await this.invalidateUserSessions(parsedFlow.data.userId);
+    await this.database.writeAudit({
+      actorId: parsedFlow.data.userId,
+      action: 'auth.password_reset.confirm',
+      targetType: 'users',
+      targetId: parsedFlow.data.userId,
+    });
+
+    void input.surface;
     return { ok: true };
   }
 
@@ -446,6 +543,19 @@ export class AuthService {
     return `auth:cognito:challenge:${digest}`;
   }
 
+  private passwordResetFlowKey(username: string): string {
+    const digest = createHash('sha256')
+      .update(username.trim().toLocaleLowerCase('en-US'))
+      .digest('hex');
+    return `auth:password-reset:${digest}`;
+  }
+
+  private hashPasswordResetCode(username: string, code: string): string {
+    return createHmac('sha256', env.CSRF_SECRET)
+      .update(`password-reset:${username.trim().toLocaleLowerCase('en-US')}:${code.trim()}`)
+      .digest('hex');
+  }
+
   private async assertAccountRateLimit(
     action: string,
     identifier: string,
@@ -498,6 +608,69 @@ export class AuthService {
       default:
         throw new ServiceUnavailableException(payload);
     }
+  }
+
+  private async findPasswordResetTarget(username: string): Promise<PasswordResetTarget | null> {
+    const normalized = username.trim();
+    const identityNumber = Number(normalized);
+    if (!Number.isSafeInteger(identityNumber) || identityNumber <= 0) return null;
+
+    const [student] = await this.database.db
+      .select({
+        userId: schema.users.id,
+        phone: schema.users.phone,
+        status: schema.users.status,
+        cognitoSubject: schema.authAccounts.providerAccountId,
+      })
+      .from(schema.students)
+      .innerJoin(schema.users, eq(schema.students.userId, schema.users.id))
+      .leftJoin(
+        schema.authAccounts,
+        and(
+          eq(schema.authAccounts.userId, schema.users.id),
+          eq(schema.authAccounts.provider, 'cognito'),
+        ),
+      )
+      .where(eq(schema.students.studentNo, identityNumber))
+      .limit(1);
+
+    if (student) {
+      return {
+        userId: student.userId,
+        username: String(identityNumber),
+        phone: student.phone,
+        status: student.status,
+        cognitoSubject: student.cognitoSubject,
+      };
+    }
+
+    const [staff] = await this.database.db
+      .select({
+        userId: schema.users.id,
+        phone: schema.users.phone,
+        status: schema.users.status,
+        cognitoSubject: schema.authAccounts.providerAccountId,
+      })
+      .from(schema.staffProfiles)
+      .innerJoin(schema.users, eq(schema.staffProfiles.userId, schema.users.id))
+      .leftJoin(
+        schema.authAccounts,
+        and(
+          eq(schema.authAccounts.userId, schema.users.id),
+          eq(schema.authAccounts.provider, 'cognito'),
+        ),
+      )
+      .where(eq(schema.staffProfiles.staffNo, identityNumber))
+      .limit(1);
+
+    if (!staff) return null;
+    return {
+      userId: staff.userId,
+      username: String(identityNumber),
+      phone: staff.phone,
+      status: staff.status,
+      cognitoSubject: staff.cognitoSubject,
+    };
   }
 
   private async findCognitoLinkForUser(userId: number) {

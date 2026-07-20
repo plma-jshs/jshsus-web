@@ -82,7 +82,7 @@ export function PasswordResetPage() {
       setNewPassword('');
       setNewPasswordConfirm('');
       setValidationError(null);
-      setNotice('계정에 등록된 이메일로 인증 코드를 보냈습니다.');
+      setNotice('계정에 등록된 휴대폰 번호로 인증 코드를 보냈습니다.');
     },
   });
 
@@ -142,7 +142,7 @@ export function PasswordResetPage() {
           <p>
             {step === 'done'
               ? '새 비밀번호로 다시 로그인하면 됩니다.'
-              : '계정에 등록된 이메일로 본인 확인 코드를 전송합니다.'}
+              : '계정에 등록된 휴대폰 번호로 본인 확인 코드를 전송합니다.'}
           </p>
         </header>
 
@@ -181,7 +181,7 @@ export function PasswordResetPage() {
                 onChange={(event) => setConfirmationCode(event.target.value.replace(/\s/g, ''))}
                 autoComplete="one-time-code"
                 inputMode="numeric"
-                placeholder="이메일로 받은 코드를 입력하세요"
+                placeholder="휴대폰으로 받은 코드를 입력하세요"
                 autoFocus
                 required
               />

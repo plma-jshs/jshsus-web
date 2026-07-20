@@ -48,6 +48,10 @@ export function getAuthErrorMessage(error: unknown, fallback: string): string {
     return '이 계정의 비밀번호 재설정은 학교 담당자에게 문의해 주세요.';
   }
 
+  if (code === 'AUTH_RECOVERY_DELIVERY_FAILED') {
+    return '인증 코드 발송에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+  }
+
   if (!error.payload || typeof error.payload !== 'object') {
     return fallback;
   }

@@ -42,6 +42,14 @@ const envSchema = z
     COGNITO_ADMIN_CLIENT_SECRET: z.string().default(''),
     COGNITO_FLOW_TTL_SECONDS: z.coerce.number().int().min(120).max(900).default(300),
     COGNITO_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(15_000).default(5_000),
+    PASSWORD_RESET_CODE_TTL_SECONDS: z.coerce.number().int().min(120).max(900).default(300),
+    SENDON_API_BASE_URL: z.string().url().default('https://api.sendon.io'),
+    SENDON_ACCOUNT_ID: z.string().trim().default(''),
+    SENDON_API_KEY: z.string().trim().default(''),
+    SENDON_KAKAO_SEND_PROFILE_ID: z.string().trim().default(''),
+    SENDON_PASSWORD_RESET_TEMPLATE_ID: z.string().trim().default(''),
+    SENDON_SMS_SENDER_NUMBER: z.string().trim().default(''),
+    SENDON_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(15_000).default(5_000),
     LEGACY_SYSTEM_ADMIN_STUIDS: z
       .string()
       .default('')

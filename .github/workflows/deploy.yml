@@ -250,6 +250,11 @@ jobs:
           COGNITO_WEB_CLIENT_SECRET: ${{ secrets.COGNITO_WEB_CLIENT_SECRET }}
           COGNITO_ADMIN_CLIENT_ID: ${{ secrets.COGNITO_ADMIN_CLIENT_ID }}
           COGNITO_ADMIN_CLIENT_SECRET: ${{ secrets.COGNITO_ADMIN_CLIENT_SECRET }}
+          SENDON_API_KEY: ${{ secrets.SENDON_API_KEY }}
+          SENDON_ACCOUNT_ID: ${{ secrets.SENDON_ACCOUNT_ID }}
+          SENDON_KAKAO_SEND_PROFILE_ID: ${{ secrets.SENDON_KAKAO_SEND_PROFILE_ID }}
+          SENDON_PASSWORD_RESET_TEMPLATE_ID: ${{ secrets.SENDON_PASSWORD_RESET_TEMPLATE_ID }}
+          SENDON_SMS_SENDER_NUMBER: ${{ secrets.SENDON_SMS_SENDER_NUMBER }}
         run: |
           set -euo pipefail
           umask 077
@@ -265,6 +270,19 @@ jobs:
               printf '::error::Required production secret %s must be a single line.\n' "$name" >&2
               return 1
             fi
+          }
+
+          set_optional_env_value() {
+            local key="$1"
+            local value="${!key}"
+            if [[ -z "$value" ]]; then
+              return 0
+            fi
+            if [[ "$value" == *$'\n'* || "$value" == *$'\r'* ]]; then
+              printf '::error::Production secret %s must be a single line.\n' "$key" >&2
+              return 1
+            fi
+            set_env_value "$key" "$value"
           }
 
           set_env_value() {
@@ -295,7 +313,8 @@ jobs:
             COGNITO_WEB_CLIENT_ID \
             COGNITO_WEB_CLIENT_SECRET \
             COGNITO_ADMIN_CLIENT_ID \
-            COGNITO_ADMIN_CLIENT_SECRET; do
+            COGNITO_ADMIN_CLIENT_SECRET \
+            SENDON_API_KEY; do
             require_scalar_secret "$secret_name"
           done
 
@@ -313,6 +332,11 @@ jobs:
           set_env_value COGNITO_WEB_CLIENT_SECRET "$COGNITO_WEB_CLIENT_SECRET"
           set_env_value COGNITO_ADMIN_CLIENT_ID "$COGNITO_ADMIN_CLIENT_ID"
           set_env_value COGNITO_ADMIN_CLIENT_SECRET "$COGNITO_ADMIN_CLIENT_SECRET"
+          set_env_value SENDON_API_KEY "$SENDON_API_KEY"
+          set_optional_env_value SENDON_ACCOUNT_ID
+          set_optional_env_value SENDON_KAKAO_SEND_PROFILE_ID
+          set_optional_env_value SENDON_PASSWORD_RESET_TEMPLATE_ID
+          set_optional_env_value SENDON_SMS_SENDER_NUMBER
 
       - name: Authenticate the server to GHCR
         shell: bash

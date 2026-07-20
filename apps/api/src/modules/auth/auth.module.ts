@@ -8,6 +8,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { AccountActivationService } from './account-activation.service';
 import { CognitoAuthService } from './cognito-auth.service';
+import { SendonPasswordResetService } from './sendon-password-reset.service';
 
 @Global()
 @Module({
@@ -16,6 +17,7 @@ import { CognitoAuthService } from './cognito-auth.service';
     AuthService,
     AccountActivationService,
     CognitoAuthService,
+    SendonPasswordResetService,
     SessionGuard,
     OptionalSessionGuard,
     RolesGuard,
@@ -25,6 +27,7 @@ import { CognitoAuthService } from './cognito-auth.service';
   exports: [
     AuthService,
     AccountActivationService,
+    SendonPasswordResetService,
     SessionGuard,
     OptionalSessionGuard,
     RolesGuard,
