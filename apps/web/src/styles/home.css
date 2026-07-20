@@ -111,6 +111,23 @@
   text-underline-offset: 3px;
 }
 
+.meal-card__header,
+.schedule-card__header {
+  position: relative;
+  justify-content: center;
+}
+
+.meal-card__header h2,
+.schedule-card__header h2 {
+  position: absolute;
+  left: 0;
+}
+
+.schedule-card__header .home-card__meta {
+  min-width: 72px;
+  text-align: center;
+}
+
 .home-card__meta {
   color: var(--j-color-text-secondary);
   font-size: var(--j-text-sm);

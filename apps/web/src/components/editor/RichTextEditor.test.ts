@@ -69,9 +69,9 @@ describe('rich-text document persistence', () => {
     ];
 
     expect(stripPendingImages(styled).content[0]?.content?.[0]?.marks).toEqual([
-      { type: 'textColor', attrs: { color: 'blue' } },
-      { type: 'fontSize', attrs: { size: 'large' } },
-      { type: 'highlight', attrs: { color: 'yellow' } },
+      { type: 'textColor', attrs: { color: '#2563eb' } },
+      { type: 'fontSize', attrs: { size: '20px' } },
+      { type: 'highlight', attrs: { color: '#fef3c7' } },
     ]);
   });
 

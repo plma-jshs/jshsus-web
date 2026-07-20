@@ -34,6 +34,12 @@ export class AdminController {
     return this.adminService.dashboard();
   }
 
+  @Get('system-status')
+  @RequireRoles('system_admin')
+  systemStatus() {
+    return this.adminService.systemStatus();
+  }
+
   @Get('audit-logs')
   @RequirePermissions('audit.read')
   auditLogs(@Query() query: Record<string, unknown>) {

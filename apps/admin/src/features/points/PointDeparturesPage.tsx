@@ -130,9 +130,9 @@ export function PointDeparturesPage() {
       return pointsApi.approveDeparture(selected.id, { memo, baseDate });
     },
     onSuccess: async () => {
-      const description = `${selected?.studentNo ?? ''} 퇴사를 승인하고 상벌점을 0점으로 초기화했습니다.`;
+      const description = `${selected?.studentNo ?? ''} 퇴사 처리를 완료하고 상벌점을 0점으로 초기화했습니다.`;
       setFeedback(description);
-      showToast({ title: '퇴사 승인 완료', description, tone: 'success' });
+      showToast({ title: '퇴사 처리 완료', description, tone: 'success' });
       setSelected(null);
       setMemo('');
       await Promise.all([
@@ -144,7 +144,7 @@ export function PointDeparturesPage() {
     },
     onError: (error) => {
       showToast({
-        title: '퇴사 승인을 완료하지 못했습니다.',
+        title: '퇴사 처리를 완료하지 못했습니다.',
         description: error.message,
         tone: 'danger',
       });
@@ -249,10 +249,10 @@ export function PointDeparturesPage() {
               }}
             >
               <LogOut size={15} aria-hidden="true" />
-              퇴사 승인
+              퇴사 처리
             </Button>
           ) : (
-            <span className="point-system-label">-20점부터 승인 가능</span>
+            <span className="point-system-label">-20점부터 퇴사 가능</span>
           ),
         meta: { align: 'center', width: 180 },
       },
@@ -334,7 +334,7 @@ export function PointDeparturesPage() {
         <div className="admin-stack">
           <AdminListPanel
             className="point-panel"
-            title="처리 대상"
+            title=""
             toolbar={
               <TableToolbar
                 summary={candidatesQuery.data ? `총 ${candidatesQuery.data.total}명` : undefined}
@@ -555,7 +555,7 @@ export function PointDeparturesPage() {
       <Dialog
         open={Boolean(selected)}
         onClose={() => setSelected(null)}
-        title="퇴사 승인"
+        title="퇴사 처리"
         description={
           selected
             ? `${selected.studentNo} ${selected.name} · ${selected.currentPoint}점`
@@ -573,7 +573,7 @@ export function PointDeparturesPage() {
               loading={approveMutation.isPending}
               onClick={() => approveMutation.mutate()}
             >
-              퇴사 승인
+              퇴사 처리
             </Button>
           </>
         }

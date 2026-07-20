@@ -8,6 +8,7 @@ import type {
   AdminSchoolYearSummary,
   AdminStaffSummary,
   AdminStudentSummary,
+  AdminSystemStatus,
   AdminUserStatus,
   PaginatedResponse,
   RosterImportAction,
@@ -206,6 +207,26 @@ function hasOwnField(row: object, key: PropertyKey) {
   return Object.prototype.hasOwnProperty.call(row, key);
 }
 
+function koreanDayRange(value = new Date()) {
+  const dateKey = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(value);
+
+  return {
+    startsAt: new Date(`${dateKey}T00:00:00.000+09:00`),
+    endsAt: new Date(`${dateKey}T23:59:59.999+09:00`),
+  };
+}
+
+function optionalIsoDate(value?: Date | string | null) {
+  if (!value) return undefined;
+  if (value instanceof Date) return value.toISOString();
+  return value;
+}
+
 @Injectable()
 export class AdminService {
   constructor(
@@ -217,13 +238,35 @@ export class AdminService {
   ) {}
 
   async dashboard(): Promise<AdminDashboard> {
-    const [pointSummary, deviceCases, activityRequests] = await Promise.all([
+    const todayRange = koreanDayRange();
+    const [pointSummary, deviceCases, activityRequests, todayApprovedRows] = await Promise.all([
       this.pointsService.getSummary(),
       this.deviceCasesService.list(),
       this.activityRequestsService.adminList({ page: 1, pageSize: 20, status: 'pending' }),
+      this.database.query('admin.dashboard.today-activity-requests', async (db) =>
+        db
+          .select({ total: sql<number>`cast(count(*) as unsigned)`.mapWith(Number) })
+          .from(schema.activityRequests)
+          .where(
+            and(
+              inArray(schema.activityRequests.status, ['approved', 'completed']),
+              lte(schema.activityRequests.startsAt, todayRange.endsAt),
+              gte(schema.activityRequests.endsAt, todayRange.startsAt),
+            ),
+          ),
+      ),
     ]);
+    const connectedDeviceCases = deviceCases.filter((deviceCase) => deviceCase.isConnected).length;
+    const disconnectedDeviceCases = deviceCases.length - connectedDeviceCases;
 
     return {
+      today: {
+        approvedActivityRequests: todayApprovedRows[0]?.total ?? 0,
+        pendingActivityRequests: activityRequests.total,
+        connectedDeviceCases,
+        disconnectedDeviceCases,
+        totalDeviceCases: deviceCases.length,
+      },
       pointSummary: {
         totalStudents: pointSummary.totalStudents,
         totalMeritPoints: pointSummary.totalMeritPoints,
@@ -232,6 +275,88 @@ export class AdminService {
       },
       deviceCases,
       pendingActivityRequests: activityRequests.items,
+    };
+  }
+
+  async systemStatus(): Promise<AdminSystemStatus> {
+    const checkedAt = new Date();
+    await this.database.ping();
+    const [deviceCases, auditRows, dataOperationRows] = await Promise.all([
+      this.deviceCasesService.list(),
+      this.database.query('admin.system-status.latest-audit', async (db) =>
+        db
+          .select({
+            action: schema.auditLogs.action,
+            actorName: schema.users.name,
+            createdAt: schema.auditLogs.createdAt,
+          })
+          .from(schema.auditLogs)
+          .leftJoin(schema.users, eq(schema.auditLogs.actorId, schema.users.id))
+          .orderBy(desc(schema.auditLogs.createdAt), desc(schema.auditLogs.id))
+          .limit(1),
+      ),
+      this.database.query('admin.system-status.latest-data-operation', async (db) =>
+        db
+          .select({
+            action: schema.auditLogs.action,
+            actorName: schema.users.name,
+            createdAt: schema.auditLogs.createdAt,
+          })
+          .from(schema.auditLogs)
+          .leftJoin(schema.users, eq(schema.auditLogs.actorId, schema.users.id))
+          .where(
+            or(
+              inArray(schema.auditLogs.targetType, [
+                'roster_import_batches',
+                'point_records',
+                'wake_song_requests',
+                'thanks_messages',
+              ]),
+              like(schema.auditLogs.action, '%import%'),
+              like(schema.auditLogs.action, '%migration%'),
+            ),
+          )
+          .orderBy(desc(schema.auditLogs.createdAt), desc(schema.auditLogs.id))
+          .limit(1),
+      ),
+    ]);
+    const connectedDeviceCases = deviceCases.filter((deviceCase) => deviceCase.isConnected).length;
+    const disconnectedDeviceCases = deviceCases.length - connectedDeviceCases;
+    const latestDeviceSeenAt = deviceCases
+      .map((deviceCase) => deviceCase.lastSeenAt)
+      .filter(Boolean)
+      .sort()
+      .at(-1);
+    const latestAudit = auditRows[0];
+    const latestDataOperation = dataOperationRows[0];
+
+    return {
+      checkedAt: checkedAt.toISOString(),
+      api: {
+        status: 'ok',
+        service: 'jshsus-api',
+      },
+      database: {
+        status: 'ok',
+        checkedAt: new Date().toISOString(),
+      },
+      deviceCases: {
+        status: disconnectedDeviceCases > 0 ? 'warning' : 'ok',
+        total: deviceCases.length,
+        connected: connectedDeviceCases,
+        disconnected: disconnectedDeviceCases,
+        lastSeenAt: latestDeviceSeenAt,
+      },
+      audit: {
+        latestAction: latestAudit?.action,
+        latestAt: optionalIsoDate(latestAudit?.createdAt),
+        latestActorName: latestAudit?.actorName ?? undefined,
+      },
+      dataOperations: {
+        latestAction: latestDataOperation?.action,
+        latestAt: optionalIsoDate(latestDataOperation?.createdAt),
+        latestActorName: latestDataOperation?.actorName ?? undefined,
+      },
     };
   }
 

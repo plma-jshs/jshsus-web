@@ -2,6 +2,11 @@
   max-width: 920px;
 }
 
+.system-status-stack {
+  display: grid;
+  gap: 16px;
+}
+
 .system-status-heading {
   padding-bottom: 16px;
   border-bottom: 1px solid var(--line);
@@ -44,8 +49,29 @@
   color: #23714a;
 }
 
+.system-health-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.system-health-grid .metric-card.is-warning {
+  border-color: #f2d28a;
+  background: #fffaf0;
+}
+
 .system-status-loading {
   min-height: 48px;
   margin: 0;
   color: var(--muted);
+}
+
+@media (max-width: 960px) {
+  .system-health-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .system-health-grid {
+    grid-template-columns: 1fr;
+  }
 }

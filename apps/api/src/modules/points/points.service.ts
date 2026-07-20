@@ -1421,7 +1421,7 @@ export class PointsService {
           .for('update');
         if (!student) throw new NotFoundException('학생을 찾을 수 없습니다.');
         if (student.currentPoint > DEPARTURE_POINT_THRESHOLD) {
-          throw new ConflictException('순합계가 -20점 이하인 학생만 퇴사 승인할 수 있습니다.');
+          throw new ConflictException('순합계가 -20점 이하인 학생만 퇴사 처리할 수 있습니다.');
         }
 
         const [existing] = await tx

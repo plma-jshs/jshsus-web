@@ -380,8 +380,8 @@ function CalendarCard({
       )
       .sort((left, right) => left.startsAt.localeCompare(right.startsAt));
   }, [events, range.from, range.to, today.key]);
-  const visibleUpcoming = upcoming.slice(0, upcoming.length >= 3 ? 2 : 3);
-  const hiddenUpcomingCount = upcoming.length >= 3 ? upcoming.length - 2 : 0;
+  const visibleUpcoming = upcoming.slice(0, 3);
+  const hiddenUpcomingCount = Math.max(0, upcoming.length - 3);
 
   const moveMonth = (amount: number) => {
     setVisibleMonth((current) => shiftMonth(current.year, current.month, amount));
@@ -393,7 +393,7 @@ function CalendarCard({
       id="academic-schedule"
       aria-busy={cardState === 'loading' || calendarQuery.isFetching}
     >
-      <header className="home-card__header">
+      <header className="home-card__header schedule-card__header">
         <h2>학사일정</h2>
         <span className="home-card__meta">{visibleMonth.year}년</span>
       </header>

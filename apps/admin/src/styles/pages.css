@@ -351,6 +351,12 @@
   font-size: 28px;
 }
 
+.metric-card small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .admin-panel {
   padding: 20px;
 }
@@ -407,10 +413,15 @@
   grid-template-columns: 110px minmax(0, 1fr);
   min-height: 46px;
   border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
-.system-detail-list div:last-child {
+.system-detail-list div:nth-child(2n) {
   border-right: 0;
+}
+
+.system-detail-list div:nth-last-child(-n + 2) {
+  border-bottom: 0;
 }
 
 .system-detail-list dt,

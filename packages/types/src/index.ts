@@ -783,10 +783,46 @@ export type ActivityRequestPrintBatch = {
 };
 
 export type AdminDashboard = {
+  today: {
+    approvedActivityRequests: number;
+    pendingActivityRequests: number;
+    connectedDeviceCases: number;
+    disconnectedDeviceCases: number;
+    totalDeviceCases: number;
+  };
   pointSummary: Pick<
     PointSummary,
     'totalStudents' | 'totalMeritPoints' | 'totalPenaltyPoints' | 'watchListCount'
   >;
   deviceCases: DeviceCase[];
   pendingActivityRequests: ActivityRequestAdminSummary[];
+};
+
+export type AdminSystemStatus = {
+  checkedAt: string;
+  api: {
+    status: 'ok';
+    service: string;
+  };
+  database: {
+    status: 'ok';
+    checkedAt: string;
+  };
+  deviceCases: {
+    status: 'ok' | 'warning';
+    total: number;
+    connected: number;
+    disconnected: number;
+    lastSeenAt?: string;
+  };
+  audit: {
+    latestAction?: string;
+    latestAt?: string;
+    latestActorName?: string;
+  };
+  dataOperations: {
+    latestAction?: string;
+    latestAt?: string;
+    latestActorName?: string;
+  };
 };

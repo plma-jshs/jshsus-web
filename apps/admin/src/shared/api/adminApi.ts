@@ -15,6 +15,7 @@ import type {
   AdminSchoolYearSummary,
   AdminStaffSummary,
   AdminStudentSummary,
+  AdminSystemStatus,
   BoardCommentSummary,
   BoardPostSummary,
   ContentReportSummary,
@@ -230,6 +231,7 @@ export const api = {
       return result;
     }),
   dashboard: () => request<AdminDashboard>('/api/admin/dashboard'),
+  systemStatus: () => request<AdminSystemStatus>('/api/admin/system-status'),
   auditLogs: (query: AdminAuditLogListQuery = {}) =>
     request<PaginatedResponse<AdminAuditLog>>(withQuery('/api/admin/audit-logs', { ...query })),
   adminStudents: (query: AdminIdentityListQuery = {}) =>

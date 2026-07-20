@@ -176,7 +176,7 @@ export function NewActivityRequestPage() {
             <span>1</span>
             <div>
               <h2 id="activity-purpose-title">활동 정보</h2>
-              <p>활동 내용과 면학실 밖에서 진행해야 하는 이유를 작성해 주세요.</p>
+              {/* <p>활동 내용을 작성해 주세요.</p> */}
             </div>
           </div>
           <div className="activity-form-field">
@@ -211,7 +211,7 @@ export function NewActivityRequestPage() {
             <span>2</span>
             <div>
               <h2 id="activity-participant-title">참여 학생</h2>
-              <p>신청자는 대표 학생으로 자동 포함됩니다. 함께 활동하는 학생을 추가해 주세요.</p>
+              {/* <p>신청자는 대표 학생으로 자동 포함됩니다. 함께 활동하는 학생을 추가해 주세요.</p> */}
             </div>
           </div>
           <div className="activity-participant-picker">
@@ -290,8 +290,8 @@ export function NewActivityRequestPage() {
           <div className="activity-form-section__heading">
             <span>3</span>
             <div>
-              <h2 id="activity-schedule-title">시간과 장소</h2>
-              <p>이동 시간을 포함해 실제 활동이 이루어지는 기간을 선택해 주세요.</p>
+              <h2 id="activity-schedule-title">시간 / 장소</h2>
+              {/* <p>이동 시간을 포함해 실제 활동이 이루어지는 기간을 선택해 주세요.</p> */}
             </div>
           </div>
           <div className="activity-form-field">
@@ -396,8 +396,7 @@ export function NewActivityRequestPage() {
         </section>
 
         <p className="activity-form-notice">
-          제출 즉시 담당 교사의 검토가 시작됩니다. 승인 전에는 활동 장소와 시간을 다시 확인해
-          주세요.
+          제출 즉시 담당 교사의 검토가 시작됩니다. 제출 전 활동 장소와 시간을 다시 확인해 주세요.
         </p>
 
         {mutation.isError ? (
@@ -413,7 +412,7 @@ export function NewActivityRequestPage() {
           </Link>
           <button className="detail-primary-button" type="submit" disabled={mutation.isPending}>
             <Send size={16} aria-hidden="true" />
-            {mutation.isPending ? '제출 중' : '신청서 제출'}
+            {mutation.isPending ? '제출 중' : '제출'}
           </button>
         </div>
       </form>

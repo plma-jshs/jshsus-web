@@ -1,5 +1,9 @@
 const mysql = require('mysql2/promise');
+const { existsSync, readFileSync } = require('node:fs');
+const { resolve } = require('node:path');
 const { seedConnectionOptions } = require('./seed-connection.cjs');
+
+const ROOT_DIR = resolve(__dirname, '../../..');
 
 const CORE_ROLES = [
   ['system_admin', '시스템 관리자'],
@@ -58,6 +62,71 @@ const CORE_BOARDS = [
   ['jbs', 'JBS', '방송부가 전하는 학교 영상과 소식', 'public', 0],
 ];
 
+const LEGACY_JBS_VIDEOS = [
+  {
+    title: '32기 조기졸업 헌정영상',
+    description: '미완성',
+    youtubeVideoId: 'V7micHND5hs',
+    createdAt: '2025-01-10 00:00:00.000',
+  },
+  {
+    title: '2024 송죽제',
+    description: '',
+    youtubeVideoId: 'CqlEnZC5VFs',
+    createdAt: '2025-01-09 00:00:00.000',
+  },
+  {
+    title: '2024 체육대회 축구결승',
+    description: '',
+    youtubeVideoId: 'Y-mno5SRWGA',
+    createdAt: '2025-01-08 00:00:00.000',
+  },
+  {
+    title: '2024 과학의 날',
+    description: '2024 과학의 날 공연입니다.',
+    youtubeVideoId: '0rkc9Qky6bI',
+    createdAt: '2025-01-07 00:00:00.000',
+  },
+  {
+    title: '2024 체육대회 전야제',
+    description: '2024 체육대회 전야제입니다.',
+    youtubeVideoId: '2zsz47Q7094',
+    createdAt: '2025-01-06 00:00:00.000',
+  },
+  {
+    title: '2023 송죽제',
+    description: '2023 송죽제입니다.',
+    youtubeVideoId: 'WFfKmiElggY',
+    createdAt: '2025-01-05 00:00:00.000',
+  },
+  {
+    title: '2023 과학의 날',
+    description: '',
+    youtubeVideoId: 'LPeWeKNkiqo',
+    createdAt: '2025-01-04 00:00:00.000',
+  },
+  {
+    title: '2023 체육대회 전야제',
+    description: '',
+    youtubeVideoId: 'k4wZR7XzMKM',
+    createdAt: '2025-01-03 00:00:00.000',
+  },
+  {
+    title: '1학기 멜팅포인트 - 2',
+    description:
+      '촬영날짜 : 2022년 7월 28일\n7월 28일에 진행한 멜팅포인트 영상입니다.\n김도율, BMW, TW 등',
+    youtubeVideoId: 'EE3uxPMPoec',
+    createdAt: '2025-01-02 00:00:00.000',
+  },
+  {
+    title: '1학기 멜팅포인트 - 1',
+    description:
+      '촬영날짜 : 2022년 7월 27일\n7월 27일에 진행한 멜팅포인트 영상입니다.\n서명우, BMW, TW, 에프론테, 김수진선생님, 이내건선생님 등',
+    youtubeVideoId: 'gYZou71V9yM',
+    createdAt: '2025-01-01 00:00:00.000',
+  },
+];
+
 function resolveActiveSchoolYear(environment = process.env, now = new Date()) {
   const configured = environment.ACTIVE_SCHOOL_YEAR;
   if (configured !== undefined && configured !== '') {
@@ -70,6 +139,23 @@ function resolveActiveSchoolYear(environment = process.env, now = new Date()) {
 
 function placeholders(values) {
   return values.map(() => '?').join(', ');
+}
+
+function loadLocalEnv() {
+  const envPath = resolve(ROOT_DIR, '.env');
+  if (!existsSync(envPath)) return;
+  for (const line of readFileSync(envPath, 'utf8').split(/\r?\n/)) {
+    const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+    if (!match || process.env[match[1]] !== undefined) continue;
+    let value = match[2].trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    process.env[match[1]] = value;
+  }
 }
 
 async function upsertRoles(connection) {
@@ -136,6 +222,66 @@ async function upsertBoards(connection) {
   );
 }
 
+function richTextDocumentFromPlainText(value) {
+  const lines = String(value || '').split(/\r?\n/);
+  return {
+    type: 'doc',
+    content: lines.map((line) => ({
+      type: 'paragraph',
+      content: line ? [{ type: 'text', text: line }] : undefined,
+    })),
+  };
+}
+
+async function upsertLegacyJbsVideos(connection) {
+  const [[board]] = await connection.execute("SELECT id FROM boards WHERE slug = 'jbs' LIMIT 1");
+  if (!board) throw new Error('JBS board must exist before legacy videos are seeded.');
+
+  for (const video of LEGACY_JBS_VIDEOS) {
+    const canonicalUrl = `https://www.youtube.com/watch?v=${video.youtubeVideoId}`;
+    const contentJson = JSON.stringify(richTextDocumentFromPlainText(video.description));
+    const [[existing]] = await connection.execute(
+      `SELECT jbs_videos.post_id
+       FROM jbs_videos
+       INNER JOIN posts ON posts.id = jbs_videos.post_id
+       WHERE jbs_videos.youtube_video_id = ?
+       LIMIT 1`,
+      [video.youtubeVideoId],
+    );
+
+    if (existing) {
+      await connection.execute(
+        `UPDATE posts
+         SET board_id = ?, title = ?, content = ?, content_json = CAST(? AS JSON),
+             post_status = 'published', is_anonymous = 0, is_hidden = 0, updated_at = now(3)
+         WHERE id = ?`,
+        [board.id, video.title, video.description, contentJson, existing.post_id],
+      );
+      await connection.execute(
+        `UPDATE jbs_videos
+         SET canonical_url = ?, updated_at = now(3)
+         WHERE post_id = ?`,
+        [canonicalUrl, existing.post_id],
+      );
+      continue;
+    }
+
+    const [result] = await connection.execute(
+      `INSERT INTO posts
+        (board_id, author_id, title, content, content_json, post_status, is_anonymous,
+         is_hidden, view_count, created_at, updated_at)
+       VALUES (?, NULL, ?, ?, CAST(? AS JSON), 'published', 0, 0, 0, ?, ?)`,
+      [board.id, video.title, video.description, contentJson, video.createdAt, video.createdAt],
+    );
+    await connection.execute(
+      `INSERT INTO jbs_videos
+        (post_id, youtube_video_id, canonical_url, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      [result.insertId, video.youtubeVideoId, canonicalUrl, video.createdAt, video.createdAt],
+    );
+  }
+}
+
 async function upsertActiveSchoolYear(connection, schoolYear) {
   await connection.execute(
     `UPDATE school_years
@@ -161,6 +307,7 @@ async function bootstrapCoreData(connection, options = {}) {
     await upsertPermissions(connection);
     await rebuildBuiltInRolePermissions(connection);
     await upsertBoards(connection);
+    await upsertLegacyJbsVideos(connection);
     await upsertActiveSchoolYear(connection, schoolYear);
     await connection.commit();
     return { schoolYear };
@@ -171,6 +318,7 @@ async function bootstrapCoreData(connection, options = {}) {
 }
 
 async function main() {
+  loadLocalEnv();
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error('DATABASE_URL is required.');
 
@@ -196,6 +344,8 @@ module.exports = {
   CORE_PERMISSIONS,
   CORE_ROLES,
   CORE_ROLE_PERMISSION_NAMES,
+  LEGACY_JBS_VIDEOS,
   bootstrapCoreData,
+  loadLocalEnv,
   resolveActiveSchoolYear,
 };
