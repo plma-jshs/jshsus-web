@@ -8,6 +8,7 @@ import { getRichTextImageSources, RichTextContent } from '../../components/edito
 import { useToast } from '../../components/feedback/Toast';
 import { ContentDetailHeader } from '../../components/page/ContentDetailHeader';
 import { ContentLikeButton } from '../../components/page/ContentLikeButton';
+import { ContentMoreMenu } from '../../components/page/ContentMoreMenu';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { detailBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createContentReport } from '../../shared/api/reports';
@@ -17,6 +18,7 @@ import { authActionRequiresLogin } from '../auth/action-access';
 import { getSession } from '../auth/api';
 import {
   createBoardComment,
+  deleteBoardPost,
   getBoardComments,
   getBoardPost,
   toggleBoardCommentLike,
@@ -128,6 +130,23 @@ export function BoardPostDetailPage() {
       showToast({ title: '댓글 좋아요를 반영하지 못했습니다.', tone: 'danger' });
     },
   });
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteBoardPost('free', numericId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['board-posts', 'free'] }),
+        queryClient.invalidateQueries({ queryKey: ['home-dashboard'] }),
+      ]);
+      await navigate({ to: '/boards/free' });
+      showToast({ title: '게시글을 삭제했습니다.', tone: 'success' });
+    },
+    onError: () =>
+      showToast({
+        title: '게시글을 삭제하지 못했습니다.',
+        description: '권한과 네트워크 상태를 확인한 뒤 다시 시도해 주세요.',
+        tone: 'danger',
+      }),
+  });
   const submitComment = (event: FormEvent) => {
     event.preventDefault();
     if (comment.trim() && sessionQuery.data?.isLogined) commentMutation.mutate();
@@ -197,6 +216,22 @@ export function BoardPostDetailPage() {
           title={post.title}
           author={post.isAnonymous ? '익명' : (post.authorName ?? '작성자')}
           createdAt={post.createdAt}
+          actions={
+            post.canEdit ? (
+              <ContentMoreMenu
+                deleteDisabled={deleteMutation.isPending}
+                onDelete={() => {
+                  if (window.confirm('이 게시글을 삭제할까요?')) deleteMutation.mutate();
+                }}
+                onEdit={() =>
+                  void navigate({
+                    to: '/boards/free/$postId/edit',
+                    params: { postId: String(post.id) },
+                  })
+                }
+              />
+            ) : undefined
+          }
         >
           <span>
             <Eye size={14} aria-hidden="true" />

@@ -129,6 +129,7 @@ export class BoardsService {
           title: schema.posts.title,
           content: schema.posts.content,
           contentJson: schema.posts.contentJson,
+          authorId: schema.posts.authorId,
           authorName: schema.users.name,
           authorNickname: schema.users.nickname,
           isAnonymous: schema.posts.isAnonymous,
@@ -248,6 +249,7 @@ export class BoardsService {
           title: schema.posts.title,
           content: schema.posts.content,
           contentJson: schema.posts.contentJson,
+          authorId: schema.posts.authorId,
           authorName: schema.users.name,
           authorNickname: schema.users.nickname,
           isAnonymous: schema.posts.isAnonymous,
@@ -301,6 +303,7 @@ export class BoardsService {
         commentCount: row.commentCount,
         likeCount: Number(row.likeCount ?? 0),
         likedByMe: Boolean(row.likedByMe),
+        canEdit: Boolean(actorId && actorId > 0 && row.authorId === actorId),
         createdAt: row.createdAt.toISOString(),
         attachments,
       };
@@ -393,6 +396,7 @@ export class BoardsService {
 
   async deleteDraft(slug: string, id: number, session?: AuthSession | null) {
     return this.database.query('boards.posts.deleteDraft', async (db) => {
+      let shouldCleanupFiles = false;
       await db.transaction(async (transaction) => {
         const target = await this.findOwnedPost(
           transaction as unknown as AppDatabase,
@@ -401,27 +405,32 @@ export class BoardsService {
           session,
           true,
         );
-        if (target.status !== 'draft') {
-          throw new BadRequestException('Only draft posts can be deleted from this endpoint.');
+        const targetStatus = target.status ?? 'published';
+        if (targetStatus === 'draft') {
+          shouldCleanupFiles = true;
+          await this.filesService.enqueueForTarget(
+            'post',
+            id,
+            'draft_delete',
+            transaction as unknown as AppDatabase,
+          );
+          await transaction.delete(schema.posts).where(eq(schema.posts.id, id));
+        } else {
+          await transaction
+            .update(schema.posts)
+            .set({ isHidden: true, updatedAt: new Date() })
+            .where(eq(schema.posts.id, id));
         }
-        await this.filesService.enqueueForTarget(
-          'post',
-          id,
-          'draft_delete',
-          transaction as unknown as AppDatabase,
-        );
-        await transaction.delete(schema.posts).where(eq(schema.posts.id, id));
         await transaction.insert(schema.auditLogs).values({
           actorId: session?.userId,
-          action: 'board.post.draft.delete',
+          action: targetStatus === 'draft' ? 'board.post.draft.delete' : 'board.post.delete',
           targetType: 'posts',
           targetId: String(id),
         });
       });
 
-      // The durable cleanup intent committed with the parent deletion and audit.
-      // External object deletion is now an immediate best-effort pass; failures
-      // remain queued for the background worker.
+      if (!shouldCleanupFiles) return { ok: true, id, cleanupPending: false };
+
       const cleanup = await this.filesService.deleteForTarget('post', id);
       return { ok: true, id, cleanupPending: cleanup.failed > 0 };
     });

@@ -207,6 +207,7 @@
 }
 
 .petition-document {
+  position: relative;
   color: var(--j-color-text-secondary);
 }
 

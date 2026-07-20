@@ -15,6 +15,15 @@ const createPetitionSchema = z
   })
   .strict();
 
+const updatePetitionSchema = z
+  .object({
+    title: z.string().trim().min(1).max(255).optional(),
+    content: z.string().max(MAX_PLAIN_CONTENT_LENGTH).optional(),
+    contentDoc: z.unknown().optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, 'At least one field is required.');
+
 function containsImage(document: RichTextDocument): boolean {
   const stack: RichTextNode[] = [...document.content];
   while (stack.length > 0) {
@@ -32,6 +41,12 @@ export type NormalizedPetitionCreate = {
   contentDoc?: RichTextDocument;
   startsAt: Date;
   endsAt: Date;
+};
+
+export type NormalizedPetitionUpdate = {
+  title?: string;
+  content?: string;
+  contentDoc?: RichTextDocument;
 };
 
 export function parsePetitionCreate(body: unknown): NormalizedPetitionCreate {
@@ -61,5 +76,39 @@ export function parsePetitionCreate(body: unknown): NormalizedPetitionCreate {
     contentDoc,
     startsAt: parsed.data.startsAt,
     endsAt: parsed.data.endsAt,
+  };
+}
+
+export function parsePetitionUpdate(body: unknown): NormalizedPetitionUpdate {
+  const parsed = updatePetitionSchema.safeParse(body);
+  if (!parsed.success) {
+    throw new BadRequestException(parsed.error.flatten().fieldErrors);
+  }
+
+  if (parsed.data.contentDoc === undefined) {
+    const content = parsed.data.content === undefined ? undefined : parsed.data.content.trim();
+    if (content !== undefined && !content) {
+      throw new BadRequestException('Petitions need content.');
+    }
+    return {
+      title: parsed.data.title,
+      content,
+    };
+  }
+
+  const contentDoc = parseRichTextDocument(parsed.data.contentDoc);
+  if (containsImage(contentDoc)) {
+    throw new BadRequestException('Petition content does not support inline images.');
+  }
+
+  const content = projectDocumentToPlainText(contentDoc);
+  if (!content) {
+    throw new BadRequestException('Petitions need content.');
+  }
+
+  return {
+    title: parsed.data.title,
+    content,
+    contentDoc,
   };
 }

@@ -130,6 +130,16 @@ const newNoticeRoute = createRoute({
   component: lazyRouteComponent(() => import('../features/notices/NewNoticePage'), 'NewNoticePage'),
 });
 
+const editNoticeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/notices/$noticeId/edit',
+  beforeLoad: ({ location }) => requirePermission(location, 'notices.manage'),
+  component: lazyRouteComponent(
+    () => import('../features/notices/EditNoticePage'),
+    'EditNoticePage',
+  ),
+});
+
 const noticeDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/notices/$noticeId',
@@ -163,6 +173,16 @@ const newBoardPostRoute = createRoute({
   ),
 });
 
+const editBoardPostRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/boards/free/$postId/edit',
+  beforeLoad: ({ location }) => requireSession(location),
+  component: lazyRouteComponent(
+    () => import('../features/boards/EditBoardPostPage'),
+    'EditBoardPostPage',
+  ),
+});
+
 const boardPostDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/boards/free/$postId',
@@ -190,6 +210,16 @@ const newPetitionRoute = createRoute({
   component: lazyRouteComponent(
     () => import('../features/petitions/NewPetitionPage'),
     'NewPetitionPage',
+  ),
+});
+
+const editPetitionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/petitions/$petitionId/edit',
+  beforeLoad: ({ location }) => requireSession(location),
+  component: lazyRouteComponent(
+    () => import('../features/petitions/EditPetitionPage'),
+    'EditPetitionPage',
   ),
 });
 
@@ -222,6 +252,13 @@ const newJbsPostRoute = createRoute({
   path: '/jbs/new',
   beforeLoad: ({ location }) => requireSession(location),
   component: lazyRouteComponent(() => import('../features/jbs/NewJbsPostPage'), 'NewJbsPostPage'),
+});
+
+const editJbsPostRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/jbs/$postId/edit',
+  beforeLoad: ({ location }) => requireSession(location),
+  component: lazyRouteComponent(() => import('../features/jbs/EditJbsPostPage'), 'EditJbsPostPage'),
 });
 
 const jbsPostDetailRoute = createRoute({
@@ -394,17 +431,21 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   noticesRoute,
   newNoticeRoute,
+  editNoticeRoute,
   noticeDetailRoute,
   calendarRoute,
   boardRoute,
   newBoardPostRoute,
+  editBoardPostRoute,
   boardPostDetailRoute,
   petitionsRoute,
   newPetitionRoute,
+  editPetitionRoute,
   petitionDetailRoute,
   thanksRoute,
   jbsRoute,
   newJbsPostRoute,
+  editJbsPostRoute,
   jbsPostDetailRoute,
   wakeSongsRoute,
   byteCalculatorRoute,

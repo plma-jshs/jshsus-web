@@ -8,6 +8,7 @@ import * as schema from '@jshsus/db';
 import { and, count, desc, eq, isNull, like, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { type ContentListQuery, toContainsPattern } from '../../shared/content-list-query';
+import type { AuthSession } from '../auth/auth.service';
 import { BoardsService } from '../boards/boards.service';
 import { DatabaseService, type AppDatabase } from '../database/database.service';
 import { YouTubeDataApiService } from '../youtube/youtube-data-api.service';
@@ -19,6 +20,9 @@ const createJbsPostSchema = z.object({
   description: z.string().trim().min(1).max(5000),
   youtubeUrl: z.string().trim().min(1).max(500),
 });
+const updateJbsPostSchema = createJbsPostSchema
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, 'At least one field is required.');
 
 export type JbsPostListItem = {
   id: number;
@@ -33,6 +37,7 @@ export type JbsPostListItem = {
   commentCount: number;
   likeCount: number;
   likedByMe: boolean;
+  canEdit?: boolean;
   createdAt: string;
 };
 
@@ -89,6 +94,7 @@ export class JbsService {
           id: schema.posts.id,
           title: schema.posts.title,
           description: schema.posts.content,
+          authorId: schema.posts.authorId,
           youtubeVideoId: schema.jbsVideos.youtubeVideoId,
           canonicalUrl: schema.jbsVideos.canonicalUrl,
           authorName: schema.users.name,
@@ -132,6 +138,7 @@ export class JbsService {
           id: schema.posts.id,
           title: schema.posts.title,
           description: schema.posts.content,
+          authorId: schema.posts.authorId,
           youtubeVideoId: schema.jbsVideos.youtubeVideoId,
           canonicalUrl: schema.jbsVideos.canonicalUrl,
           authorName: schema.users.name,
@@ -173,7 +180,10 @@ export class JbsService {
         .set({ viewCount: sql`${schema.posts.viewCount} + 1` })
         .where(eq(schema.posts.id, id));
 
-      return this.toPost({ ...row, viewCount: row.viewCount + 1 });
+      return {
+        ...this.toPost({ ...row, viewCount: row.viewCount + 1 }),
+        canEdit: Boolean(actorId && actorId > 0 && row.authorId === actorId),
+      };
     });
   }
 
@@ -238,6 +248,78 @@ export class JbsService {
     });
   }
 
+  async updatePost(id: number, body: unknown, session?: AuthSession | null) {
+    this.assertPostId(id);
+    this.assertActor(session);
+
+    const parsed = updateJbsPostSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+
+    const youtube = parsed.data.youtubeUrl
+      ? await this.youtube.inspect(parsed.data.youtubeUrl)
+      : undefined;
+
+    return this.database.query('jbs.posts.update', async (db) =>
+      db.transaction(async (transaction) => {
+        const tx = transaction as unknown as AppDatabase;
+        await this.findEditablePost(tx, id, session, true);
+
+        await tx
+          .update(schema.posts)
+          .set({
+            ...(parsed.data.title !== undefined ? { title: parsed.data.title } : {}),
+            ...(parsed.data.description !== undefined ? { content: parsed.data.description } : {}),
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.posts.id, id));
+
+        if (youtube) {
+          await tx
+            .update(schema.jbsVideos)
+            .set({
+              youtubeVideoId: youtube.videoId,
+              canonicalUrl: youtube.canonicalUrl,
+              updatedAt: new Date(),
+            })
+            .where(eq(schema.jbsVideos.postId, id));
+        }
+
+        await tx.insert(schema.auditLogs).values({
+          actorId: session?.userId,
+          action: 'jbs.post.update',
+          targetType: 'posts',
+          targetId: String(id),
+        });
+
+        return { ok: true as const, id };
+      }),
+    );
+  }
+
+  async deletePost(id: number, session?: AuthSession | null) {
+    this.assertPostId(id);
+    this.assertActor(session);
+
+    return this.database.query('jbs.posts.delete', async (db) =>
+      db.transaction(async (transaction) => {
+        const tx = transaction as unknown as AppDatabase;
+        await this.findEditablePost(tx, id, session, true);
+        await tx
+          .update(schema.posts)
+          .set({ isHidden: true, updatedAt: new Date() })
+          .where(eq(schema.posts.id, id));
+        await tx.insert(schema.auditLogs).values({
+          actorId: session?.userId,
+          action: 'jbs.post.delete',
+          targetType: 'posts',
+          targetId: String(id),
+        });
+
+        return { ok: true as const, id };
+      }),
+    );
+  }
+
   listComments(postId: number, actorId?: number | null) {
     return this.boardsService.listComments(JBS_BOARD_SLUG, postId, false, actorId);
   }
@@ -261,6 +343,46 @@ export class JbsService {
     if (!Number.isInteger(id) || id <= 0) {
       throw new BadRequestException('Invalid JBS post id.');
     }
+  }
+
+  private assertActor(session?: AuthSession | null): asserts session is AuthSession {
+    if (!session?.userId || session.userId <= 0) {
+      throw new ForbiddenException('A persisted account is required.');
+    }
+  }
+
+  private async findEditablePost(
+    db: AppDatabase,
+    id: number,
+    session: AuthSession,
+    forUpdate = false,
+  ) {
+    const query = db
+      .select({
+        id: schema.posts.id,
+        authorId: schema.posts.authorId,
+      })
+      .from(schema.posts)
+      .innerJoin(schema.boards, eq(schema.posts.boardId, schema.boards.id))
+      .innerJoin(schema.jbsVideos, eq(schema.jbsVideos.postId, schema.posts.id))
+      .where(
+        and(
+          eq(schema.posts.id, id),
+          eq(schema.boards.slug, JBS_BOARD_SLUG),
+          eq(schema.boards.visibility, 'public'),
+          or(eq(schema.posts.status, 'published'), isNull(schema.posts.status)),
+          eq(schema.posts.isHidden, false),
+        ),
+      )
+      .limit(1);
+    const [post] = forUpdate ? await query.for('update') : await query;
+    if (!post) throw new NotFoundException('JBS video was not found.');
+
+    const canManage = session.roles?.includes('system_admin');
+    if (!canManage && post.authorId !== session.userId) {
+      throw new ForbiddenException('You cannot modify this JBS post.');
+    }
+    return post;
   }
 
   private toPost(row: {

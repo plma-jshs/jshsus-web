@@ -106,6 +106,12 @@ export function deleteBoardPostDraft(slug: string, postId: number) {
   });
 }
 
+export function deleteBoardPost(slug: string, postId: number) {
+  return request<{ ok: true; id: number }>(`/api/boards/${slug}/posts/${postId}`, {
+    method: 'DELETE',
+  });
+}
+
 export function createBoardComment(input: {
   slug?: string;
   postId: number;

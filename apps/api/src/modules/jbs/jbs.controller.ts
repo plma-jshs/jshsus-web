@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { RequirePermissions } from '../../shared/auth/auth.decorators';
 import { CsrfGuard } from '../../shared/auth/csrf.guard';
 import { OptionalSessionGuard } from '../../shared/auth/optional-session.guard';
@@ -37,6 +48,20 @@ export class JbsController {
   @RequirePermissions('jbs.publish')
   createPost(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
     return this.jbsService.createPost(body, request.authSession?.userId);
+  }
+
+  @Put('posts/:id')
+  @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
+  @RequirePermissions('jbs.publish')
+  updatePost(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthenticatedRequest) {
+    return this.jbsService.updatePost(Number(id), body, request.authSession);
+  }
+
+  @Delete('posts/:id')
+  @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
+  @RequirePermissions('jbs.publish')
+  deletePost(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
+    return this.jbsService.deletePost(Number(id), request.authSession);
   }
 
   @Get('posts/:id/comments')

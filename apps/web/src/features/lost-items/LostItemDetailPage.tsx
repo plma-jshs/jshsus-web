@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { ArrowLeft, Flag, ImageOff, MapPin, Paperclip, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Flag, ImageOff, MapPin, Paperclip } from 'lucide-react';
+import { ContentMoreMenu } from '../../components/page/ContentMoreMenu';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { detailBreadcrumbs } from '../../components/page/pageHierarchy';
 import { ApiError } from '../../shared/api/http';
@@ -139,6 +140,17 @@ export function LostItemDetailPage() {
       variant="document"
     >
       <article className="lost-item-detail">
+        {item.canEdit ? (
+          <div className="content-card-action-anchor">
+            <ContentMoreMenu
+              deleteDisabled={deleteMutation.isPending}
+              onDelete={() => {
+                if (window.confirm('이 분실물 게시물을 삭제할까요?')) deleteMutation.mutate();
+              }}
+              onEdit={() => setIsEditing(true)}
+            />
+          </div>
+        ) : null}
         <div className="lost-item-detail__overview">
           <div className="lost-item-detail__visual">
             {image ? (
@@ -202,22 +214,6 @@ export function LostItemDetailPage() {
                 <option value="RETURNED">반환 완료</option>
               </select>
             </label>
-            <div className="lost-item-owner__actions">
-              <button type="button" onClick={() => setIsEditing((value) => !value)}>
-                <Pencil size={15} aria-hidden="true" /> 수정
-              </button>
-              <button
-                className="is-danger"
-                type="button"
-                disabled={deleteMutation.isPending}
-                onClick={() => {
-                  if (window.confirm('이 분실물 게시물을 삭제할까요?')) deleteMutation.mutate();
-                }}
-              >
-                <Trash2 size={15} aria-hidden="true" />
-                {deleteMutation.isPending ? '삭제 중' : '삭제'}
-              </button>
-            </div>
           </section>
         ) : null}
 

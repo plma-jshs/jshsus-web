@@ -613,7 +613,7 @@ export function RichTextEditor({
         <div className="rich-text-toolbar__group rich-text-toolbar__style-controls">
           <ToolbarDropdown
             className="rich-text-toolbar-select--family"
-            defaultLabel="기본 서체"
+            defaultLabel="Pretendard"
             label="폰트 종류"
             onChange={(value) => setStyleMark('fontFamily', value)}
             options={RICH_TEXT_FONT_FAMILY_OPTIONS}

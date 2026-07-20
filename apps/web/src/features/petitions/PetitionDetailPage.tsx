@@ -1,8 +1,10 @@
 import type { PetitionDetail } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from '@tanstack/react-router';
+import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import { ArrowLeft, CheckCircle2, Users } from 'lucide-react';
 import { RichTextContent } from '../../components/editor/RichTextEditor';
+import { useToast } from '../../components/feedback/Toast';
+import { ContentMoreMenu } from '../../components/page/ContentMoreMenu';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { detailBreadcrumbs } from '../../components/page/pageHierarchy';
 import { ApiError } from '../../shared/api/http';
@@ -10,7 +12,7 @@ import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { authActionRequiresLogin } from '../auth/action-access';
 import { getSession } from '../auth/api';
 import { parsePositiveRouteId } from '../../shared/lib/route';
-import { getPetition, participatePetition } from './api';
+import { deletePetition, getPetition, participatePetition } from './api';
 import { getPetitionProgress, petitionStatusLabels } from './presentation';
 import '../../styles/petitions.css';
 
@@ -66,6 +68,8 @@ export function PetitionDetailPage() {
   const parsedId = parsePositiveRouteId(petitionId);
   const id = parsedId ?? 0;
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
   const petitionQuery = useQuery({
     queryKey: ['petitions', 'detail', id],
     queryFn: () => getPetition(id),
@@ -81,6 +85,23 @@ export function PetitionDetailPage() {
         queryClient.invalidateQueries({ queryKey: ['petitions', 'detail', id] }),
       ]);
     },
+  });
+  const deleteMutation = useMutation({
+    mutationFn: () => deletePetition(id),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['petitions'] }),
+        queryClient.invalidateQueries({ queryKey: ['home-dashboard'] }),
+      ]);
+      await navigate({ to: '/petitions' });
+      showToast({ title: '청원·제안을 삭제했습니다.', tone: 'success' });
+    },
+    onError: () =>
+      showToast({
+        title: '청원·제안을 삭제하지 못했습니다.',
+        description: '권한과 네트워크 상태를 확인한 뒤 다시 시도해 주세요.',
+        tone: 'danger',
+      }),
   });
 
   if (parsedId === null) {
@@ -147,6 +168,22 @@ export function PetitionDetailPage() {
       }
     >
       <article className="petition-document">
+        {petition.canEdit ? (
+          <div className="content-card-action-anchor">
+            <ContentMoreMenu
+              deleteDisabled={deleteMutation.isPending}
+              onDelete={() => {
+                if (window.confirm('이 청원·제안을 삭제할까요?')) deleteMutation.mutate();
+              }}
+              onEdit={() =>
+                void navigate({
+                  to: '/petitions/$petitionId/edit',
+                  params: { petitionId: String(petition.id) },
+                })
+              }
+            />
+          </div>
+        ) : null}
         <section className="petition-detail-progress" aria-labelledby="petition-progress-title">
           <div className="petition-detail-progress__summary">
             <div>

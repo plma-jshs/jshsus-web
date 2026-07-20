@@ -1,14 +1,14 @@
-import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from '@tanstack/react-router';
-import { ArrowLeft, Ban, Pencil } from 'lucide-react';
+import { Link, useNavigate, useParams } from '@tanstack/react-router';
+import { ArrowLeft } from 'lucide-react';
+import { ContentMoreMenu } from '../../components/page/ContentMoreMenu';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { detailBreadcrumbs } from '../../components/page/pageHierarchy';
 import { ApiError } from '../../shared/api/http';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { parsePositiveRouteId } from '../../shared/lib/route';
 import { getSession } from '../auth/api';
-import { cancelActivityRequest, getActivityRequest } from './api';
+import { deleteActivityRequest, getActivityRequest } from './api';
 import { activityStatusLabels, getActivityDurationLabel } from './presentation';
 import '../../styles/activity-requests.css';
 
@@ -79,21 +79,21 @@ export function ActivityRequestDetailPage() {
   const parsedId = parsePositiveRouteId(requestId);
   const id = parsedId ?? 0;
   const queryClient = useQueryClient();
-  const [confirmCancel, setConfirmCancel] = useState(false);
+  const navigate = useNavigate();
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
   const requestQuery = useQuery({
     queryKey: ['activity-requests', 'detail', id],
     queryFn: () => getActivityRequest(id),
     enabled: parsedId !== null,
   });
-  const cancelMutation = useMutation({
-    mutationFn: () => cancelActivityRequest(id),
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteActivityRequest(id),
     onSuccess: async () => {
-      setConfirmCancel(false);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['activity-requests', 'me'] }),
         queryClient.invalidateQueries({ queryKey: ['activity-requests', 'detail', id] }),
       ]);
+      await navigate({ to: '/activity-requests' });
     },
   });
 
@@ -152,17 +152,6 @@ export function ActivityRequestDetailPage() {
       title={request.purpose}
       width="reading"
       variant="document"
-      action={
-        request.status === 'submitted' && canEdit ? (
-          <Link
-            className="detail-primary-button"
-            to="/activity-requests/$requestId/edit"
-            params={{ requestId: String(request.id) }}
-          >
-            <Pencil size={16} aria-hidden="true" /> 신청 수정
-          </Link>
-        ) : undefined
-      }
       meta={
         <>
           <span className={`activity-status is-${request.status}`}>
@@ -173,6 +162,23 @@ export function ActivityRequestDetailPage() {
       }
     >
       <article className="activity-document">
+        {request.status === 'submitted' && canEdit ? (
+          <div className="content-card-action-anchor">
+            <ContentMoreMenu
+              deleteDisabled={deleteMutation.isPending}
+              deleteLabel={deleteMutation.isPending ? '삭제 중' : '삭제'}
+              onDelete={() => {
+                if (window.confirm('이 탐구활동서 신청을 삭제할까요?')) deleteMutation.mutate();
+              }}
+              onEdit={() =>
+                void navigate({
+                  to: '/activity-requests/$requestId/edit',
+                  params: { requestId: String(request.id) },
+                })
+              }
+            />
+          </div>
+        ) : null}
         <section aria-labelledby="activity-information-title">
           <div className="activity-document__heading">
             <h2 id="activity-information-title">신청 정보</h2>
@@ -234,53 +240,9 @@ export function ActivityRequestDetailPage() {
           </section>
         ) : null}
 
-        {request.status === 'submitted' && canEdit ? (
-          <section className="activity-cancel-section" aria-label="신청 취소">
-            {confirmCancel ? (
-              <div className="activity-cancel-confirm" role="group" aria-label="신청 취소 확인">
-                <div>
-                  <strong>이 신청을 취소할까요?</strong>
-                  <span>취소한 신청은 다시 승인받을 수 없습니다.</span>
-                </div>
-                <div>
-                  <button
-                    className="detail-secondary-button"
-                    type="button"
-                    onClick={() => setConfirmCancel(false)}
-                    disabled={cancelMutation.isPending}
-                  >
-                    계속 유지
-                  </button>
-                  <button
-                    className="activity-danger-button"
-                    type="button"
-                    onClick={() => cancelMutation.mutate()}
-                    disabled={cancelMutation.isPending}
-                  >
-                    {cancelMutation.isPending ? '취소 처리 중' : '신청 취소'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                className="activity-text-danger"
-                type="button"
-                onClick={() => setConfirmCancel(true)}
-              >
-                <Ban size={15} aria-hidden="true" /> 신청 취소
-              </button>
-            )}
-            {cancelMutation.isError ? (
-              <p className="activity-mutation-error" role="alert">
-                신청을 취소하지 못했습니다. 잠시 후 다시 시도해 주세요.
-              </p>
-            ) : null}
-          </section>
-        ) : null}
-
-        {cancelMutation.isSuccess ? (
-          <p className="activity-mutation-success" role="status">
-            신청이 취소되었습니다.
+        {deleteMutation.isError ? (
+          <p className="activity-mutation-error" role="alert">
+            신청을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.
           </p>
         ) : null}
       </article>

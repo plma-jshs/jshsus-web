@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,7 +10,7 @@ import type { PetitionDetail, PetitionSummary, RichTextDocument } from '@jshsus/
 import { and, desc, eq, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { DatabaseService } from '../database/database.service';
-import { parsePetitionCreate } from './petition-content';
+import { parsePetitionCreate, parsePetitionUpdate } from './petition-content';
 
 const PETITION_THRESHOLD = 50;
 
@@ -22,6 +23,7 @@ type PetitionRow = {
   title: string;
   content: string;
   contentJson: unknown;
+  authorId: number | null;
   authorName: string | null;
   participantCount: number;
   startsAt: Date;
@@ -72,6 +74,7 @@ export class PetitionsService {
             title: schema.petitions.title,
             content: schema.petitions.content,
             contentJson: schema.petitions.contentJson,
+            authorId: schema.petitions.authorId,
             authorName: schema.users.name,
             participantCount: schema.petitions.participantCount,
             startsAt: schema.petitions.startsAt,
@@ -108,7 +111,7 @@ export class PetitionsService {
     });
   }
 
-  async getById(id: number): Promise<PetitionDetail> {
+  async getById(id: number, actorId?: number | null): Promise<PetitionDetail> {
     if (!Number.isInteger(id) || id <= 0) {
       throw new BadRequestException('Petition id must be a positive integer.');
     }
@@ -120,6 +123,7 @@ export class PetitionsService {
           title: schema.petitions.title,
           content: schema.petitions.content,
           contentJson: schema.petitions.contentJson,
+          authorId: schema.petitions.authorId,
           authorName: schema.users.name,
           participantCount: schema.petitions.participantCount,
           startsAt: schema.petitions.startsAt,
@@ -149,7 +153,11 @@ export class PetitionsService {
         .orderBy(desc(schema.petitionAnswers.answeredAt))
         .limit(1);
 
-      return toPetitionSummary(petition, answer);
+      const summary = toPetitionSummary(petition, answer);
+      return {
+        ...summary,
+        canEdit: Boolean(actorId && actorId > 0 && petition.authorId === actorId),
+      };
     });
   }
 
@@ -258,6 +266,90 @@ export class PetitionsService {
     });
   }
 
+  async update(id: number, body: unknown, actorId?: number | null) {
+    const parsed = parsePetitionUpdate(body);
+    this.assertActor(actorId);
+
+    return this.database.query('petitions.update', async (db) =>
+      db.transaction(async (tx) => {
+        const [petition] = await tx
+          .select({
+            id: schema.petitions.id,
+            authorId: schema.petitions.authorId,
+            status: schema.petitions.status,
+            participantCount: schema.petitions.participantCount,
+          })
+          .from(schema.petitions)
+          .where(and(eq(schema.petitions.id, id), ne(schema.petitions.status, 'hidden')))
+          .limit(1)
+          .for('update');
+
+        if (!petition) throw new NotFoundException('Petition does not exist.');
+        if (petition.authorId !== actorId) {
+          throw new ForbiddenException('You cannot modify this petition.');
+        }
+        if (petition.status !== 'open' || petition.participantCount > 0) {
+          throw new ConflictException('Petitions can only be edited before participation starts.');
+        }
+
+        await tx
+          .update(schema.petitions)
+          .set({
+            ...(parsed.title !== undefined ? { title: parsed.title } : {}),
+            ...(parsed.content !== undefined ? { content: parsed.content } : {}),
+            ...(parsed.contentDoc !== undefined ? { contentJson: parsed.contentDoc } : {}),
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.petitions.id, id));
+        await tx.insert(schema.auditLogs).values({
+          actorId,
+          action: 'petition.update',
+          targetType: 'petitions',
+          targetId: String(id),
+        });
+
+        return { ok: true as const, id };
+      }),
+    );
+  }
+
+  async delete(id: number, actorId?: number | null) {
+    this.assertActor(actorId);
+
+    return this.database.query('petitions.delete', async (db) =>
+      db.transaction(async (tx) => {
+        const [petition] = await tx
+          .select({
+            id: schema.petitions.id,
+            authorId: schema.petitions.authorId,
+            status: schema.petitions.status,
+          })
+          .from(schema.petitions)
+          .where(and(eq(schema.petitions.id, id), ne(schema.petitions.status, 'hidden')))
+          .limit(1)
+          .for('update');
+
+        if (!petition) throw new NotFoundException('Petition does not exist.');
+        if (petition.authorId !== actorId) {
+          throw new ForbiddenException('You cannot modify this petition.');
+        }
+
+        await tx
+          .update(schema.petitions)
+          .set({ status: 'hidden', updatedAt: new Date() })
+          .where(eq(schema.petitions.id, id));
+        await tx.insert(schema.auditLogs).values({
+          actorId,
+          action: 'petition.delete',
+          targetType: 'petitions',
+          targetId: String(id),
+        });
+
+        return { ok: true as const, id };
+      }),
+    );
+  }
+
   async answer(id: number, body: unknown, actorId?: number | null) {
     const parsed = answerSchema.safeParse(body);
 
@@ -304,5 +396,11 @@ export class PetitionsService {
         return { ok: true, id, answer: { id: answer.id, ...parsed.data } };
       });
     });
+  }
+
+  private assertActor(actorId?: number | null): asserts actorId is number {
+    if (!actorId || actorId <= 0) {
+      throw new ForbiddenException('A persisted account is required.');
+    }
   }
 }

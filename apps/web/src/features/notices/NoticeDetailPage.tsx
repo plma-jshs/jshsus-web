@@ -1,23 +1,51 @@
-import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from '@tanstack/react-router';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import { ArrowLeft, Download, Eye, Paperclip } from 'lucide-react';
 import { getRichTextImageSources, RichTextContent } from '../../components/editor/RichTextEditor';
+import { useToast } from '../../components/feedback/Toast';
 import { ContentDetailHeader } from '../../components/page/ContentDetailHeader';
+import { ContentMoreMenu } from '../../components/page/ContentMoreMenu';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { detailBreadcrumbs } from '../../components/page/pageHierarchy';
 import { ApiError } from '../../shared/api/http';
-import { getNotice } from './api';
+import { getSession } from '../auth/api';
+import { deleteNotice, getNotice } from './api';
 import { parseRichNoticeContent } from './richNoticeContent';
 
 export function NoticeDetailPage() {
   const { noticeId } = useParams({ from: '/notices/$noticeId' });
   const numericId = Number(noticeId);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const noticeQuery = useQuery({
     queryKey: ['notice', numericId],
     queryFn: () => getNotice(numericId),
     enabled: Number.isInteger(numericId) && numericId > 0,
   });
+  const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
   const notice = noticeQuery.data;
+  const canManage =
+    sessionQuery.data?.isLogined &&
+    (sessionQuery.data.roles?.includes('system_admin') ||
+      sessionQuery.data.permissions.includes('notices.manage'));
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteNotice(numericId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['notices'] }),
+        queryClient.invalidateQueries({ queryKey: ['home-dashboard'] }),
+      ]);
+      await navigate({ to: '/notices' });
+      showToast({ title: '공지를 삭제했습니다.', tone: 'success' });
+    },
+    onError: () =>
+      showToast({
+        title: '공지를 삭제하지 못했습니다.',
+        description: '권한과 네트워크 상태를 확인한 뒤 다시 시도해 주세요.',
+        tone: 'danger',
+      }),
+  });
 
   if (noticeQuery.isLoading) {
     return <PageState kind="loading" title="공지를 불러오는 중입니다." />;
@@ -92,6 +120,22 @@ export function NoticeDetailPage() {
           title={notice.title}
           author={notice.department}
           createdAt={notice.publishedAt}
+          actions={
+            canManage ? (
+              <ContentMoreMenu
+                deleteDisabled={deleteMutation.isPending}
+                onDelete={() => {
+                  if (window.confirm('이 공지를 삭제할까요?')) deleteMutation.mutate();
+                }}
+                onEdit={() =>
+                  void navigate({
+                    to: '/notices/$noticeId/edit',
+                    params: { noticeId: String(notice.id) },
+                  })
+                }
+              />
+            ) : undefined
+          }
         >
           <span>
             <Eye size={14} aria-hidden="true" />

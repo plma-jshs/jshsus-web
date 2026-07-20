@@ -86,7 +86,9 @@ export type PetitionSummary = DashboardPetition & {
   answer?: PetitionAnswerSummary;
 };
 
-export type PetitionDetail = PetitionSummary;
+export type PetitionDetail = PetitionSummary & {
+  canEdit: boolean;
+};
 
 export type ThanksChallengeMessage = {
   id: number;
@@ -164,6 +166,7 @@ export type BoardPostDetail = BoardPostListItem & {
   attachments: UploadedFileSummary[];
   likeCount: number;
   likedByMe: boolean;
+  canEdit: boolean;
 };
 
 export type ContentLikeState = {

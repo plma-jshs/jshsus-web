@@ -44,11 +44,52 @@ const linkMarkSchema = z
   })
   .strict();
 
+const legacyTextColorValues = new Set(['gray', 'red', 'orange', 'green', 'blue', 'purple']);
+const legacyHighlightValues = new Set(['yellow', 'green', 'blue', 'pink']);
+const legacyFontSizeValues = new Set(['small', 'large', 'xlarge']);
+const fontFamilyValues = new Set([
+  'pretendard',
+  'malgun-gothic',
+  'gulim',
+  'batang',
+  'dotum',
+  'gungsuh',
+  'arial',
+  'arial-black',
+  'calibri',
+  'cambria',
+  'comic-sans-ms',
+  'courier-new',
+  'impact',
+  'times-new-roman',
+  'noto-sans-kr',
+  'noto-serif-kr',
+  'nanum-gothic',
+  'nanum-myeongjo',
+  'gothic',
+  'serif',
+  'monospace',
+]);
+
+function isHexColor(value: string) {
+  return /^#[0-9a-f]{6}$/i.test(value);
+}
+
+function isFontSizeToken(value: string) {
+  if (legacyFontSizeValues.has(value)) return true;
+  const match = value.match(/^(\d{1,3})px$/);
+  if (!match) return false;
+  const size = Number(match[1]);
+  return Number.isInteger(size) && size >= 8 && size <= 96;
+}
+
 const textColorMarkSchema = z
   .object({
     type: z.literal('textColor'),
     attrs: z
-      .object({ color: z.enum(['gray', 'red', 'orange', 'green', 'blue', 'purple']) })
+      .object({
+        color: z.string().refine((value) => legacyTextColorValues.has(value) || isHexColor(value)),
+      })
       .strict(),
   })
   .strict();
@@ -56,14 +97,25 @@ const textColorMarkSchema = z
 const fontSizeMarkSchema = z
   .object({
     type: z.literal('fontSize'),
-    attrs: z.object({ size: z.enum(['small', 'large', 'xlarge']) }).strict(),
+    attrs: z.object({ size: z.string().refine(isFontSizeToken) }).strict(),
+  })
+  .strict();
+
+const fontFamilyMarkSchema = z
+  .object({
+    type: z.literal('fontFamily'),
+    attrs: z.object({ family: z.string().refine((value) => fontFamilyValues.has(value)) }).strict(),
   })
   .strict();
 
 const highlightMarkSchema = z
   .object({
     type: z.literal('highlight'),
-    attrs: z.object({ color: z.enum(['yellow', 'green', 'blue', 'pink']) }).strict(),
+    attrs: z
+      .object({
+        color: z.string().refine((value) => legacyHighlightValues.has(value) || isHexColor(value)),
+      })
+      .strict(),
   })
   .strict();
 
@@ -72,8 +124,12 @@ const markSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('italic') }).strict(),
   z.object({ type: z.literal('underline') }).strict(),
   z.object({ type: z.literal('strike') }).strict(),
+  z.object({ type: z.literal('code') }).strict(),
+  z.object({ type: z.literal('superscript') }).strict(),
+  z.object({ type: z.literal('subscript') }).strict(),
   textColorMarkSchema,
   fontSizeMarkSchema,
+  fontFamilyMarkSchema,
   highlightMarkSchema,
   linkMarkSchema,
 ]);

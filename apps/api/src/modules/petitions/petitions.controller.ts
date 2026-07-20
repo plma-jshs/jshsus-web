@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { CsrfGuard } from '../../shared/auth/csrf.guard';
 import { RequirePermissions, RequireRoles } from '../../shared/auth/auth.decorators';
+import { OptionalSessionGuard } from '../../shared/auth/optional-session.guard';
 import type { AuthenticatedRequest } from '../../shared/auth/request-auth';
 import { PermissionsGuard } from '../../shared/auth/permissions.guard';
 import { RolesGuard } from '../../shared/auth/roles.guard';
@@ -17,8 +18,9 @@ export class PetitionsController {
   }
 
   @Get('petitions/:id')
-  detail(@Param('id') id: string) {
-    return this.petitionsService.getById(Number(id));
+  @UseGuards(OptionalSessionGuard)
+  detail(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
+    return this.petitionsService.getById(Number(id), request.authSession?.userId);
   }
 
   @Post('petitions')
@@ -26,6 +28,20 @@ export class PetitionsController {
   @RequireRoles('student')
   create(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
     return this.petitionsService.create(body, request.authSession?.userId);
+  }
+
+  @Put('petitions/:id')
+  @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
+  @RequireRoles('student')
+  update(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthenticatedRequest) {
+    return this.petitionsService.update(Number(id), body, request.authSession?.userId);
+  }
+
+  @Delete('petitions/:id')
+  @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
+  @RequireRoles('student')
+  delete(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
+    return this.petitionsService.delete(Number(id), request.authSession?.userId);
   }
 
   @Post('petitions/:id/participate')

@@ -14,6 +14,7 @@ export type JbsPost = {
   commentCount: number;
   likeCount: number;
   likedByMe: boolean;
+  canEdit?: boolean;
   createdAt: string;
 };
 
@@ -77,6 +78,22 @@ export function createJbsPost(input: { title: string; description: string; youtu
   }>('/api/jbs/posts', {
     method: 'POST',
     body: input,
+  });
+}
+
+export function updateJbsPost(
+  postId: number,
+  input: { title?: string; description?: string; youtubeUrl?: string },
+) {
+  return request<{ ok: true; id: number }>(`/api/jbs/posts/${postId}`, {
+    method: 'PUT',
+    body: input,
+  });
+}
+
+export function deleteJbsPost(postId: number) {
+  return request<{ ok: true; id: number }>(`/api/jbs/posts/${postId}`, {
+    method: 'DELETE',
   });
 }
 

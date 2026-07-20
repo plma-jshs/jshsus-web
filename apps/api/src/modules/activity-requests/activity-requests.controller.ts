@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { CsrfGuard } from '../../shared/auth/csrf.guard';
 import { RequirePermissions, RequireRoles } from '../../shared/auth/auth.decorators';
 import type { AuthenticatedRequest } from '../../shared/auth/request-auth';
@@ -58,6 +69,13 @@ export class ActivityRequestsController {
   @RequireRoles('student')
   cancel(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
     return this.activityRequestsService.cancel(Number(id), request.authSession);
+  }
+
+  @Delete('activity-requests/:id')
+  @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
+  @RequireRoles('student')
+  delete(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
+    return this.activityRequestsService.delete(Number(id), request.authSession);
   }
 
   @Get('admin/activity-requests')

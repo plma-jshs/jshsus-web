@@ -21,6 +21,26 @@ export function createPetition(input: {
   });
 }
 
+export function updatePetition(
+  id: number,
+  input: {
+    title?: string;
+    content?: string;
+    contentDoc?: RichTextDocument;
+  },
+) {
+  return request<{ ok: true; id: number }>(`/api/petitions/${id}`, {
+    method: 'PUT',
+    body: input,
+  });
+}
+
+export function deletePetition(id: number) {
+  return request<{ ok: true; id: number }>(`/api/petitions/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 export function participatePetition(id: number) {
   return request<{ ok: true; id: number; participated: boolean; participantCount?: number }>(
     `/api/petitions/${id}/participate`,

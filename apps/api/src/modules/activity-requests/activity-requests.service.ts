@@ -747,6 +747,47 @@ export class ActivityRequestsService {
     );
   }
 
+  async delete(id: number, session?: AuthSession) {
+    this.assertId(id);
+    return this.database.query('activity-requests.delete', async (db) =>
+      db.transaction(async (tx) => {
+        const studentId = await this.resolveStudentId(session, tx);
+        const [request] = await tx
+          .select({
+            id: schema.activityRequests.id,
+            status: schema.activityRequests.status,
+            representativeStudentId: schema.activityRequests.representativeStudentId,
+          })
+          .from(schema.activityRequests)
+          .where(eq(schema.activityRequests.id, id))
+          .limit(1)
+          .for('update');
+
+        if (!request || request.representativeStudentId !== studentId) {
+          throw new NotFoundException('Activity request does not exist.');
+        }
+        if (request.status !== 'submitted') {
+          throw new BadRequestException('Only submitted activity requests can be deleted.');
+        }
+
+        await tx
+          .delete(schema.activityRequestEvents)
+          .where(eq(schema.activityRequestEvents.activityRequestId, id));
+        await tx
+          .delete(schema.activityRequestParticipants)
+          .where(eq(schema.activityRequestParticipants.activityRequestId, id));
+        await tx.delete(schema.activityRequests).where(eq(schema.activityRequests.id, id));
+        await tx.insert(schema.auditLogs).values({
+          actorId: session?.userId && session.userId > 0 ? session.userId : null,
+          action: 'activity_request.delete',
+          targetType: 'activity_requests',
+          targetId: String(id),
+        });
+        return { ok: true, id };
+      }),
+    );
+  }
+
   async approve(id: number, actorId?: number | null) {
     this.assertId(id);
     const issuedNumber = issueNumber(id);

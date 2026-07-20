@@ -49,6 +49,10 @@ export function cancelActivityRequest(id: number) {
   );
 }
 
+export function deleteActivityRequest(id: number) {
+  return request<{ ok: true; id: number }>(`/api/activity-requests/${id}`, { method: 'DELETE' });
+}
+
 export function updateActivityRequest(
   id: number,
   input: {
