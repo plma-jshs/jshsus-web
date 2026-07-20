@@ -1,4 +1,9 @@
-import type { SessionUser } from '@jshsus/types';
+import type {
+  AccountActivationCompleteResult,
+  AccountActivationIdentityType,
+  SessionUser,
+  StudentGender,
+} from '@jshsus/types';
 import { ApiError, clearCsrfToken, request } from '../../shared/api/http';
 
 export type AuthenticatedLoginResult = {
@@ -91,6 +96,23 @@ export function confirmPasswordReset(input: {
   newPassword: string;
 }) {
   return request<{ ok: true }>('/api/auth/password/confirm', {
+    method: 'POST',
+    body: input,
+    csrf: false,
+  });
+}
+
+export function completeAccountActivation(input: {
+  identityType: AccountActivationIdentityType;
+  identityNumber: number;
+  activationCode: string;
+  name: string;
+  gender: StudentGender;
+  email: string;
+  phone: string;
+  password: string;
+}) {
+  return request<AccountActivationCompleteResult>('/api/auth/account-activation/complete', {
     method: 'POST',
     body: input,
     csrf: false,

@@ -13,6 +13,7 @@ import {
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { AuthService } from './auth.service';
+import { AccountActivationService } from './account-activation.service';
 import { env } from '../../shared/config/env';
 import { SessionGuard } from '../../shared/auth/session.guard';
 import type { AuthenticatedRequest } from '../../shared/auth/request-auth';
@@ -143,7 +144,10 @@ const cookieBaseOptions = (request: Request) => {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly accountActivationService: AccountActivationService,
+  ) {}
 
   @Get('session')
   async session(@Req() request: Request) {
@@ -233,6 +237,13 @@ export class AuthController {
       ...input,
       surface: inferCognitoSurface(request),
     });
+  }
+
+  @Post('account-activation/complete')
+  @RateLimit({ max: 5, windowSeconds: 900 })
+  completeAccountActivation(@Body() body: unknown, @Req() request: Request) {
+    assertTrustedCredentialRequest(request);
+    return this.accountActivationService.complete(body, inferCognitoSurface(request));
   }
 
   private setSessionCookies(

@@ -1,4 +1,6 @@
 import type {
+  AccountActivationIdentityType,
+  AccountActivationIssueResult,
   AcademicEvent,
   ActivityRequestAdminListQuery,
   ActivityRequestAdminSummary,
@@ -294,6 +296,14 @@ export const api = {
       phone: string;
     }>,
   ) => request<{ ok: true; id: number }>(`/api/admin/staff/${id}`, { method: 'PUT', body: input }),
+  issueAccountActivation: (input: {
+    identityType: AccountActivationIdentityType;
+    identityNumber: number;
+  }) =>
+    request<AccountActivationIssueResult>('/api/admin/account-activations', {
+      method: 'POST',
+      body: input,
+    }),
   iamRoles: () => request<AdminRoleSummary[]>('/api/admin/iam/roles'),
   createRole: (input: { name: string; label: string }) =>
     request<{ ok: true; role: AdminRoleSummary }>('/api/admin/iam/roles', {

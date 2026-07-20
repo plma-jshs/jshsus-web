@@ -78,6 +78,7 @@
 }
 
 .auth-form > label > input,
+.auth-form > label > select,
 .auth-password-field > input {
   width: 100%;
   height: 46px;
@@ -92,12 +93,59 @@
 }
 
 .auth-form > label > input:hover,
+.auth-form > label > select:hover,
 .auth-password-field > input:hover {
   border-color: #7c898a;
 }
 
 .auth-form > label > input:focus,
+.auth-form > label > select:focus,
 .auth-password-field > input:focus {
+  border-color: var(--j-color-brand);
+  box-shadow: var(--j-shadow-focus);
+}
+
+.auth-form-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-form-grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.auth-form-grid > label {
+  display: grid;
+  gap: 7px;
+}
+
+.auth-form-grid > label > span {
+  color: var(--j-color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.auth-form-grid input,
+.auth-form-grid select {
+  width: 100%;
+  height: 46px;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--j-color-border-strong);
+  border-radius: 8px;
+  outline: 0;
+  background: #fff;
+  color: var(--j-color-text);
+  font: inherit;
+}
+
+.auth-form-grid input:hover,
+.auth-form-grid select:hover {
+  border-color: #7c898a;
+}
+
+.auth-form-grid input:focus,
+.auth-form-grid select:focus {
   border-color: var(--j-color-brand);
   box-shadow: var(--j-shadow-focus);
 }
@@ -296,5 +344,9 @@
 
   .auth-panel {
     padding-top: 4px;
+  }
+
+  .auth-form-grid.two {
+    grid-template-columns: 1fr;
   }
 }

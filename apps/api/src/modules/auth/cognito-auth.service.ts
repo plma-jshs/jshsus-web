@@ -1,4 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import {
+  AdminCreateUserCommand,
+  AdminGetUserCommand,
+  AdminSetUserPasswordCommand,
+  AdminUpdateUserAttributesCommand,
+  CognitoIdentityProviderClient,
+} from '@aws-sdk/client-cognito-identity-provider';
 import { createHmac } from 'node:crypto';
 import { env } from '../../shared/config/env';
 
@@ -97,6 +104,7 @@ function challengeResponseAttributeName(attribute: string): string {
 @Injectable()
 export class CognitoAuthService {
   private readonly endpoint = `https://cognito-idp.${env.COGNITO_REGION}.amazonaws.com/`;
+  private adminClient?: CognitoIdentityProviderClient;
 
   async authenticate(
     username: string,
@@ -227,6 +235,88 @@ export class CognitoAuthService {
     });
   }
 
+  async findUserSubject(username: string): Promise<string | null> {
+    const user = await this.getAdminUser(username.trim());
+    if (!user) return null;
+    return this.subjectFromUser(user, username);
+  }
+
+  async createOrUpdatePermanentPasswordUser(input: {
+    username: string;
+    password: string;
+    email: string;
+    name: string;
+  }): Promise<{ subject: string; username: string; created: boolean }> {
+    const username = input.username.trim();
+    const client = this.getAdminClient();
+    const attributes = [
+      { Name: 'preferred_username', Value: username },
+      { Name: 'name', Value: input.name },
+      { Name: 'email', Value: input.email },
+      { Name: 'email_verified', Value: 'true' },
+    ];
+    let user = await this.getAdminUser(username);
+    let created = false;
+
+    if (!user) {
+      try {
+        await client.send(
+          new AdminCreateUserCommand({
+            MessageAction: 'SUPPRESS',
+            TemporaryPassword: input.password,
+            UserAttributes: attributes,
+            Username: username,
+            UserPoolId: env.COGNITO_USER_POOL_ID,
+          }),
+        );
+        created = true;
+      } catch (error) {
+        if (this.safeProviderErrorName(error) !== 'UsernameExistsException') {
+          throw this.mapAdminProviderError(error, 'AdminCreateUser');
+        }
+      }
+
+      user = await this.getAdminUser(username);
+      if (!user) {
+        throw new CognitoAuthError(
+          'AUTH_PROVIDER_UNAVAILABLE',
+          '통합로그인 계정 생성을 확인하지 못했습니다.',
+        );
+      }
+    } else {
+      await client
+        .send(
+          new AdminUpdateUserAttributesCommand({
+            UserAttributes: attributes,
+            Username: username,
+            UserPoolId: env.COGNITO_USER_POOL_ID,
+          }),
+        )
+        .catch((error) => {
+          throw this.mapAdminProviderError(error, 'AdminUpdateUserAttributes');
+        });
+    }
+
+    await client
+      .send(
+        new AdminSetUserPasswordCommand({
+          Password: input.password,
+          Permanent: true,
+          Username: username,
+          UserPoolId: env.COGNITO_USER_POOL_ID,
+        }),
+      )
+      .catch((error) => {
+        throw this.mapAdminProviderError(error, 'AdminSetUserPassword');
+      });
+
+    return {
+      subject: this.subjectFromUser(user, username),
+      username: user.Username ?? username,
+      created,
+    };
+  }
+
   private async resolveAuthenticatedUser(
     response: CognitoAuthenticationResponse,
     fallbackUsername: string,
@@ -300,6 +390,57 @@ export class CognitoAuthService {
     }
 
     return payload as T;
+  }
+
+  private getAdminClient(): CognitoIdentityProviderClient {
+    if (!env.COGNITO_USER_POOL_ID) {
+      throw new CognitoAuthError(
+        'AUTH_PROVIDER_UNAVAILABLE',
+        '통합로그인 사용자 풀이 설정되어 있지 않습니다.',
+      );
+    }
+
+    this.adminClient ??= new CognitoIdentityProviderClient({ region: env.COGNITO_REGION });
+    return this.adminClient;
+  }
+
+  private async getAdminUser(username: string): Promise<CognitoUserResponse | null> {
+    const client = this.getAdminClient();
+
+    try {
+      return await client.send(
+        new AdminGetUserCommand({
+          Username: username,
+          UserPoolId: env.COGNITO_USER_POOL_ID,
+        }),
+      );
+    } catch (error) {
+      if (this.safeProviderErrorName(error) === 'UserNotFoundException') return null;
+      throw this.mapAdminProviderError(error, 'AdminGetUser');
+    }
+  }
+
+  private subjectFromUser(user: CognitoUserResponse, fallbackUsername: string): string {
+    const subject = user.UserAttributes?.find((attribute) => attribute.Name === 'sub')?.Value;
+    if (!subject) {
+      throw new CognitoAuthError(
+        'AUTH_PROVIDER_UNAVAILABLE',
+        `${user.Username ?? fallbackUsername} 통합로그인 식별자를 확인하지 못했습니다.`,
+      );
+    }
+    return subject;
+  }
+
+  private safeProviderErrorName(error: unknown): string {
+    if (error && typeof error === 'object' && 'name' in error && typeof error.name === 'string') {
+      return error.name;
+    }
+    return 'UnknownError';
+  }
+
+  private mapAdminProviderError(error: unknown, operation: string): CognitoAuthError {
+    const causeName = this.safeProviderErrorName(error);
+    return this.mapProviderError(causeName, operation);
   }
 
   private mapProviderError(causeName: string, operation: string): CognitoAuthError {

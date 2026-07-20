@@ -6,6 +6,7 @@ import { PermissionsGuard } from '../../shared/auth/permissions.guard';
 import { OptionalSessionGuard } from '../../shared/auth/optional-session.guard';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { AccountActivationService } from './account-activation.service';
 import { CognitoAuthService } from './cognito-auth.service';
 
 @Global()
@@ -13,6 +14,7 @@ import { CognitoAuthService } from './cognito-auth.service';
   controllers: [AuthController],
   providers: [
     AuthService,
+    AccountActivationService,
     CognitoAuthService,
     SessionGuard,
     OptionalSessionGuard,
@@ -22,6 +24,7 @@ import { CognitoAuthService } from './cognito-auth.service';
   ],
   exports: [
     AuthService,
+    AccountActivationService,
     SessionGuard,
     OptionalSessionGuard,
     RolesGuard,

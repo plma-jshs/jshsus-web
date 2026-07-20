@@ -219,6 +219,9 @@ export function LoginPage() {
             <button className="auth-submit" type="submit" disabled={loginMutation.isPending}>
               {loginMutation.isPending ? '로그인 중' : '로그인'}
             </button>
+            <p className="auth-signup">
+              통합로그인 계정이 없나요? <Link to="/account-activation">통합로그인 계정 만들기</Link>
+            </p>
           </form>
         ) : null}
 

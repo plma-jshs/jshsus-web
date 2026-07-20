@@ -2,6 +2,7 @@ import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'reac
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type {
+  AccountActivationIssueResult,
   AdminIdentityListQuery,
   AdminSchoolYearSummary,
   AdminStaffSummary,
@@ -11,7 +12,7 @@ import type {
   RosterImportRowInput,
   StudentGender,
 } from '@jshsus/types';
-import { Download, FileSpreadsheet, Pencil, Plus, ShieldCheck } from 'lucide-react';
+import { Download, FileSpreadsheet, KeyRound, Pencil, Plus, ShieldCheck } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   Dialog,
@@ -33,6 +34,7 @@ type DialogState =
   | { type: 'create-staff' }
   | { type: 'roster' }
   | { type: 'edit'; identity: Identity }
+  | { type: 'activation'; identity: Identity }
   | { type: 'roles'; identity: Identity }
   | null;
 
@@ -98,6 +100,10 @@ function displayIdentity(identity: Identity) {
   const identifier =
     identity.kind === 'student' ? identity.value.studentNo : identity.value.staffNo;
   return `${identifier} ${identity.value.name}`;
+}
+
+function identityNumber(identity: Identity) {
+  return identity.kind === 'student' ? identity.value.studentNo : identity.value.staffNo;
 }
 
 function roleLabel(roles: string[], labels: ReadonlyMap<string, string>) {
@@ -284,6 +290,9 @@ export function UsersPage() {
   const [rosterFileName, setRosterFileName] = useState('');
   const [rosterPreview, setRosterPreview] = useState<RosterImportPreview | null>(null);
   const [rosterYear, setRosterYear] = useState<number | ''>('');
+  const [issuedActivation, setIssuedActivation] = useState<AccountActivationIssueResult | null>(
+    null,
+  );
   const sessionQuery = useQuery({
     queryKey: ['admin-session'],
     queryFn: api.session,
@@ -382,6 +391,14 @@ export function UsersPage() {
     },
     onError: () => showToast({ title: '사용자 역할을 저장하지 못했습니다.', tone: 'danger' }),
   });
+  const issueActivation = useMutation({
+    mutationFn: api.issueAccountActivation,
+    onSuccess: (result) => {
+      setIssuedActivation(result);
+      showToast({ title: '인증코드를 발급했습니다.', tone: 'success' });
+    },
+    onError: () => showToast({ title: '인증코드를 발급하지 못했습니다.', tone: 'danger' }),
+  });
   const previewRoster = useMutation({
     mutationFn: api.previewStudentRoster,
     onSuccess: (preview) => {
@@ -460,6 +477,11 @@ export function UsersPage() {
           identity={{ kind: 'student', value: row.original }}
           canManageRoles={canManageRoles}
           onOpen={setDialog}
+          onOpenActivation={(identity) => {
+            issueActivation.reset();
+            setIssuedActivation(null);
+            setDialog({ type: 'activation', identity });
+          }}
         />
       ),
       meta: { align: 'center', width: 132 },
@@ -520,6 +542,11 @@ export function UsersPage() {
           identity={{ kind: 'staff', value: row.original }}
           canManageRoles={canManageRoles}
           onOpen={setDialog}
+          onOpenActivation={(identity) => {
+            issueActivation.reset();
+            setIssuedActivation(null);
+            setDialog({ type: 'activation', identity });
+          }}
         />
       ),
       meta: { align: 'center', width: 132 },
@@ -1062,6 +1089,53 @@ export function UsersPage() {
           </form>
         </IdentityDialog>
       ) : null}
+
+      {dialog?.type === 'activation' ? (
+        <IdentityDialog
+          title={`${displayIdentity(dialog.identity)} 인증코드 발급`}
+          onClose={() => setDialog(null)}
+        >
+          <div className="identity-dialog-form">
+            <p className="identity-field-note">
+              발급된 코드는 한 번만 표시됩니다. 학생 또는 교직원에게 직접 전달한 뒤 계정 만들기
+              화면에서 사용하게 해 주세요.
+            </p>
+            {issuedActivation ? (
+              <div className="identity-activation-code" role="status">
+                <span>인증코드</span>
+                <strong>{issuedActivation.code}</strong>
+              </div>
+            ) : null}
+            {issueActivation.isError ? (
+              <p className="identity-form-error">
+                인증코드를 발급하지 못했습니다. 번호 형식과 권한을 확인해 주세요.
+              </p>
+            ) : null}
+            <footer className="identity-dialog-actions">
+              <button
+                className="identity-secondary-button"
+                type="button"
+                onClick={() => setDialog(null)}
+              >
+                닫기
+              </button>
+              <button
+                className="identity-primary-button"
+                type="button"
+                disabled={issueActivation.isPending}
+                onClick={() =>
+                  issueActivation.mutate({
+                    identityType: dialog.identity.kind,
+                    identityNumber: identityNumber(dialog.identity),
+                  })
+                }
+              >
+                {issueActivation.isPending ? '발급 중' : issuedActivation ? '재발급' : '발급'}
+              </button>
+            </footer>
+          </div>
+        </IdentityDialog>
+      ) : null}
     </div>
   );
 }
@@ -1070,10 +1144,12 @@ function IdentityActions({
   identity,
   canManageRoles,
   onOpen,
+  onOpenActivation,
 }: {
   identity: Identity;
   canManageRoles: boolean;
   onOpen: (state: DialogState) => void;
+  onOpenActivation: (identity: Identity) => void;
 }) {
   const disabled = !identity.value.userId;
   return (
@@ -1084,6 +1160,9 @@ function IdentityActions({
         onClick={() => onOpen({ type: 'edit', identity })}
       >
         <Pencil aria-hidden="true" />
+      </IconButton>
+      <IconButton label="인증코드 발급" onClick={() => onOpenActivation(identity)}>
+        <KeyRound aria-hidden="true" />
       </IconButton>
       {canManageRoles ? (
         <IconButton

@@ -461,6 +461,22 @@ export type AdminIdentityListQuery = {
   sortOrder?: 'asc' | 'desc';
 };
 
+export type AccountActivationIdentityType = 'student' | 'staff';
+
+export type AccountActivationIssueResult = {
+  ok: true;
+  identityType: AccountActivationIdentityType;
+  identityNumber: number;
+  code: string;
+};
+
+export type AccountActivationCompleteResult = {
+  ok: true;
+  userId: number;
+  identityType: AccountActivationIdentityType;
+  identityNumber: number;
+};
+
 export type StudentEnrollmentStatus = 'active' | 'graduated' | 'transferred' | 'withdrawn';
 
 export type AdminSchoolYearSummary = {

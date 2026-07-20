@@ -17,6 +17,7 @@ import { PermissionsGuard } from '../../shared/auth/permissions.guard';
 import type { AuthenticatedRequest } from '../../shared/auth/request-auth';
 import { RolesGuard } from '../../shared/auth/roles.guard';
 import { SessionGuard } from '../../shared/auth/session.guard';
+import { AccountActivationService } from '../auth/account-activation.service';
 import { SchoolDataService } from '../school-data/school-data.service';
 import { AdminService } from './admin.service';
 
@@ -26,6 +27,7 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly schoolDataService: SchoolDataService,
+    private readonly accountActivationService: AccountActivationService,
   ) {}
 
   @Get('dashboard')
@@ -150,6 +152,12 @@ export class AdminController {
     @Req() request: AuthenticatedRequest,
   ) {
     return this.adminService.updateUserStatus(id, body, request.authSession?.userId);
+  }
+
+  @Post('account-activations')
+  @RequirePermissions('users.manage')
+  issueAccountActivation(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
+    return this.accountActivationService.issue(body, request.authSession?.userId);
   }
 
   @Get('iam/roles')

@@ -381,6 +381,15 @@ const forgotPasswordRoute = createRoute({
   ),
 });
 
+const accountActivationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/account-activation',
+  component: lazyRouteComponent(
+    () => import('../features/auth/AccountActivationPage'),
+    'AccountActivationPage',
+  ),
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   noticesRoute,
@@ -414,6 +423,7 @@ const routeTree = rootRoute.addChildren([
   privacyRoute,
   loginRoute,
   forgotPasswordRoute,
+  accountActivationRoute,
 ]);
 
 export const router = createRouter({ routeTree });

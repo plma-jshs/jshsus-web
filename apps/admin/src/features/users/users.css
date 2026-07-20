@@ -222,6 +222,25 @@
   display: grid;
   gap: 12px;
 }
+.identity-activation-code {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid #b8ddd7;
+  border-radius: 10px;
+  background: #f2fbf8;
+}
+.identity-activation-code span {
+  color: #57716c;
+  font-size: 12px;
+  font-weight: 700;
+}
+.identity-activation-code strong {
+  color: #073d3b;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
 .identity-roster-summary {
   display: flex;
   flex-wrap: wrap;
