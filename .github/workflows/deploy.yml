@@ -75,8 +75,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    env:
-      DOCKER_CONFIG: ${{ runner.temp }}/docker-auth
     strategy:
       fail-fast: false
       matrix:
@@ -92,6 +90,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Set Docker config directory
+        shell: bash
+        run: echo "DOCKER_CONFIG=$RUNNER_TEMP/docker-auth" >> "$GITHUB_ENV"
 
       - name: Set up Docker Buildx
         shell: bash
@@ -150,9 +152,11 @@ jobs:
     permissions:
       contents: read
       packages: write
-    env:
-      DOCKER_CONFIG: ${{ runner.temp }}/docker-auth
     steps:
+      - name: Set Docker config directory
+        shell: bash
+        run: echo "DOCKER_CONFIG=$RUNNER_TEMP/docker-auth" >> "$GITHUB_ENV"
+
       - name: Set up Docker Buildx
         shell: bash
         run: |
