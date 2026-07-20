@@ -6,8 +6,10 @@ import {
   Param,
   Post,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { z } from 'zod';
 import { CsrfGuard } from '../../shared/auth/csrf.guard';
 import { RequirePermissions } from '../../shared/auth/auth.decorators';
@@ -19,6 +21,14 @@ import { DeviceCasesService } from './device-cases.service';
 const deviceCaseCommandBodySchema = z.object({
   command: z.enum(['open', 'close']),
 });
+const remoteCaseIdBodySchema = z.object({
+  id: z.coerce.number().int().min(1),
+});
+const remoteCaseStatusBodySchema = z
+  .object({
+    id: z.coerce.number().int().min(1).optional(),
+  })
+  .optional();
 
 function requireActorId(request: AuthenticatedRequest) {
   const actorId = request.authSession?.userId;
@@ -62,5 +72,37 @@ export class DeviceCasesController {
   commandOne(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthenticatedRequest) {
     const parsed = parseCommandBody(body);
     return this.deviceCasesService.commandOne(Number(id), requireActorId(request), parsed.command);
+  }
+}
+
+@Controller('remote')
+export class DeviceCaseRemoteController {
+  constructor(private readonly deviceCasesService: DeviceCasesService) {}
+
+  @Get('case')
+  cases() {
+    return this.deviceCasesService.remoteCases();
+  }
+
+  @Post('case2/status')
+  async status(@Body() body: unknown) {
+    const parsed = remoteCaseStatusBodySchema.safeParse(body);
+    const id = parsed.success ? parsed.data?.id : undefined;
+    return this.deviceCasesService.markRemoteStatus(id);
+  }
+
+  @Post('case2/request')
+  async request(@Body() body: unknown, @Res({ passthrough: true }) response: Response) {
+    const parsed = remoteCaseIdBodySchema.safeParse(body);
+    if (!parsed.success) {
+      response.status(422);
+      return { success: false, error: 'Invalid case id' };
+    }
+
+    const result = await this.deviceCasesService.remoteCaseRequest(parsed.data.id);
+    if (!result.success) {
+      response.status(403);
+    }
+    return result;
   }
 }

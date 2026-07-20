@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { DeviceCasesController } from './device-cases.controller';
+import { DeviceCaseRemoteController, DeviceCasesController } from './device-cases.controller';
 import { DeviceCasesService } from './device-cases.service';
 
 @Module({
-  controllers: [DeviceCasesController],
+  controllers: [DeviceCasesController, DeviceCaseRemoteController],
   providers: [DeviceCasesService],
   exports: [DeviceCasesService],
 })

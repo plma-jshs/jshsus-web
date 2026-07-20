@@ -18,6 +18,10 @@ function commandResultMessage(command: DeviceCaseControlCommand) {
   return command === 'open' ? '관리자가 보관함을 열었습니다.' : '관리자가 보관함을 닫았습니다.';
 }
 
+function legacyCaseName(id: number) {
+  return `${id}번 보관함`;
+}
+
 @Injectable()
 export class DeviceCasesService {
   constructor(private readonly database: DatabaseService) {}
@@ -161,5 +165,57 @@ export class DeviceCasesService {
         excludedDisconnectedCount: rows.length - connectedCases.length,
       };
     });
+  }
+
+  async remoteCases() {
+    return this.database.query('device-cases.remote-list', async (db) => {
+      const rows = await db
+        .select({
+          id: schema.deviceCases.id,
+          isOpen: schema.deviceCases.isOpen,
+          lastSeenAt: schema.deviceCases.lastSeenAt,
+        })
+        .from(schema.deviceCases)
+        .orderBy(schema.deviceCases.id);
+
+      return rows.map((row) => ({
+        id: row.id,
+        name: legacyCaseName(row.id),
+        status: row.isOpen ? 1 : 0,
+        updatedAt: row.lastSeenAt.toISOString(),
+        updatedBy: null,
+      }));
+    });
+  }
+
+  async markRemoteStatus(deviceCaseId?: number) {
+    if (deviceCaseId !== undefined) {
+      const now = new Date();
+      await this.database.db
+        .update(schema.deviceCases)
+        .set({ isConnected: true, lastSeenAt: now, updatedAt: now })
+        .where(eq(schema.deviceCases.id, deviceCaseId));
+    }
+    return { success: true };
+  }
+
+  async remoteCaseRequest(deviceCaseId: number) {
+    const now = new Date();
+    const [deviceCase] = await this.database.db
+      .select({ id: schema.deviceCases.id, isOpen: schema.deviceCases.isOpen })
+      .from(schema.deviceCases)
+      .where(eq(schema.deviceCases.id, deviceCaseId))
+      .limit(1);
+
+    if (!deviceCase) {
+      throw new NotFoundException('Case not found.');
+    }
+
+    await this.database.db
+      .update(schema.deviceCases)
+      .set({ isConnected: true, lastSeenAt: now, updatedAt: now })
+      .where(eq(schema.deviceCases.id, deviceCaseId));
+
+    return { success: deviceCase.isOpen };
   }
 }
