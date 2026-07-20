@@ -126,9 +126,14 @@
     font: inherit;
   }
 
-  :where(a, button, summary, input, select, textarea, [tabindex]):focus-visible {
+  :where(input, select, textarea):focus-visible {
     outline: var(--j-focus-ring);
     outline-offset: var(--j-focus-offset);
+  }
+
+  :where([tabindex='-1']):focus {
+    outline: none;
+    box-shadow: none;
   }
 
   :where(button, a) {

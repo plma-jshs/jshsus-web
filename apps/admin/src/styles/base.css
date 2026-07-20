@@ -68,3 +68,8 @@ button:disabled {
   cursor: not-allowed;
   opacity: 0.65;
 }
+
+[tabindex='-1']:focus {
+  outline: none;
+  box-shadow: none;
+}

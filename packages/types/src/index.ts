@@ -576,6 +576,17 @@ export type DeviceCaseCommand = {
   createdAt: string;
 };
 
+export type DeviceCaseControlCommand = Extract<DeviceCaseCommand['command'], 'open' | 'close'>;
+
+export type DeviceCaseCommandResult = {
+  ok: true;
+  command: DeviceCaseControlCommand;
+  targetIsOpen: boolean;
+  totalCases: number;
+  updatedCount: number;
+  excludedDisconnectedCount: number;
+};
+
 export type DormRoom = {
   id: number;
   name: string;

@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
-import type { DeviceCase, DeviceCaseCommand } from '@jshsus/types';
-import { useQuery } from '@tanstack/react-query';
+import { useCallback, useMemo, useState } from 'react';
+import type { DeviceCase, DeviceCaseCommand, DeviceCaseControlCommand } from '@jshsus/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
+import { Lock, LockOpen } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import { PageSizeSelect, TableToolbar } from '../../components/ui';
 import { api, describeAdminApiError } from '../../shared/api/adminApi';
@@ -35,6 +36,8 @@ function formatDateTime(value: string) {
 export function DeviceCasesPage() {
   const [selectedCaseId, setSelectedCaseId] = useState<number | null>(null);
   const [commandPageSize, setCommandPageSize] = useState(20);
+  const [commandError, setCommandError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const casesQuery = useQuery({ queryKey: ['device-cases'], queryFn: api.deviceCases });
   const cases = useMemo(() => casesQuery.data ?? [], [casesQuery.data]);
   const activeCaseId = selectedCaseId ?? cases[0]?.id ?? null;
@@ -47,6 +50,49 @@ export function DeviceCasesPage() {
     queryFn: () => api.deviceCaseCommands(activeCase!.id),
     enabled: Boolean(activeCase?.id),
   });
+  const refreshDeviceCases = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['device-cases'] }),
+      queryClient.invalidateQueries({ queryKey: ['device-case-commands'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin-system-status'] }),
+    ]);
+  }, [queryClient]);
+  const commandMutation = useMutation({
+    mutationFn: (input: { command: DeviceCaseControlCommand; id: number }) =>
+      api.deviceCaseCommand(input.id, input.command),
+    onError: (error) => setCommandError(describeAdminApiError(error, '보관함 명령')),
+    onSuccess: async () => {
+      setCommandError(null);
+      await refreshDeviceCases();
+    },
+  });
+  const bulkCommandMutation = useMutation({
+    mutationFn: api.deviceCaseBulkCommand,
+    onError: (error) => setCommandError(describeAdminApiError(error, '보관함 명령')),
+    onSuccess: async () => {
+      setCommandError(null);
+      await refreshDeviceCases();
+    },
+  });
+  const isCommandPending = commandMutation.isPending || bulkCommandMutation.isPending;
+  const runCaseCommand = useCallback(
+    (deviceCase: DeviceCase, command: DeviceCaseControlCommand) => {
+      const label = command === 'open' ? '열기' : '닫기';
+      if (!window.confirm(`${deviceCase.id}번 보관함을 ${label} 처리할까요?`)) return;
+      setSelectedCaseId(deviceCase.id);
+      commandMutation.mutate({ command, id: deviceCase.id });
+    },
+    [commandMutation],
+  );
+  const runBulkCommand = useCallback(
+    (command: DeviceCaseControlCommand) => {
+      const label = command === 'open' ? '열기' : '닫기';
+      if (!window.confirm(`연결된 휴대폰 보관함을 모두 ${label} 처리할까요?`)) return;
+      bulkCommandMutation.mutate(command);
+    },
+    [bulkCommandMutation],
+  );
 
   const caseColumns = useMemo<ColumnDef<DeviceCase>[]>(
     () => [
@@ -85,18 +131,33 @@ export function DeviceCasesPage() {
         header: '작업',
         enableSorting: false,
         cell: ({ row }) => (
-          <button
-            className={row.original.id === activeCaseId ? 'table-action active' : 'table-action'}
-            type="button"
-            onClick={() => setSelectedCaseId(row.original.id)}
-          >
-            기록 보기
-          </button>
+          <div className="device-case-actions">
+            <button
+              className="table-action device-command-button"
+              type="button"
+              onClick={() => runCaseCommand(row.original, row.original.isOpen ? 'close' : 'open')}
+              disabled={isCommandPending}
+            >
+              {row.original.isOpen ? (
+                <Lock size={14} aria-hidden="true" />
+              ) : (
+                <LockOpen size={14} aria-hidden="true" />
+              )}
+              {row.original.isOpen ? '닫기' : '열기'}
+            </button>
+            <button
+              className={row.original.id === activeCaseId ? 'table-action active' : 'table-action'}
+              type="button"
+              onClick={() => setSelectedCaseId(row.original.id)}
+            >
+              기록 보기
+            </button>
+          </div>
         ),
-        meta: { align: 'center', widthPreset: 'action' },
+        meta: { align: 'center', minWidth: 180 },
       },
     ],
-    [activeCaseId],
+    [activeCaseId, isCommandPending, runCaseCommand],
   );
 
   const commandColumns: ColumnDef<DeviceCaseCommand>[] = [
@@ -135,11 +196,32 @@ export function DeviceCasesPage() {
       <section className="admin-panel">
         <div className="panel-title">
           <h2>휴대폰 보관함</h2>
-          <span className="device-list-count">{cases.length.toLocaleString('ko-KR')}대</span>
+          <div className="device-control-actions">
+            <span className="device-list-count">{cases.length.toLocaleString('ko-KR')}대</span>
+            <button
+              className="quiet-button"
+              type="button"
+              onClick={() => runBulkCommand('open')}
+              disabled={isCommandPending || cases.length === 0}
+            >
+              <LockOpen size={15} aria-hidden="true" />
+              전체 열기
+            </button>
+            <button
+              className="quiet-button"
+              type="button"
+              onClick={() => runBulkCommand('close')}
+              disabled={isCommandPending || cases.length === 0}
+            >
+              <Lock size={15} aria-hidden="true" />
+              전체 닫기
+            </button>
+          </div>
         </div>
         {casesQuery.isError ? (
           <p className="form-error">{describeAdminApiError(casesQuery.error, '휴대폰 보관함')}</p>
         ) : null}
+        {commandError ? <p className="form-error">{commandError}</p> : null}
         <DataTable
           columns={caseColumns}
           data={cases}

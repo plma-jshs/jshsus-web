@@ -119,6 +119,8 @@ function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridSt
 
       return [
         {
+          continuesAfter: range.endsAt > segmentEndKey,
+          continuesBefore: range.startsAt < segmentStartKey,
           endColumn: end + 1,
           event,
           lane,
@@ -326,7 +328,9 @@ export function CalendarPage() {
                         <span
                           className={`full-calendar__event-bar${
                             segment.event.isHoliday ? ' is-holiday' : ''
-                          }${segment.showLabel ? '' : ' is-continuation'}`}
+                          }${segment.showLabel ? '' : ' is-continuation'}${
+                            segment.continuesBefore ? ' starts-before' : ''
+                          }${segment.continuesAfter ? ' ends-after' : ''}`}
                           key={`${segment.event.id}-${week[0].dateKey}`}
                           style={{
                             ...styleForEvent(segment.event),
@@ -357,10 +361,9 @@ export function CalendarPage() {
               ) : (
                 <div className="calendar-agenda__list">
                   {selectedEvents.map((event) => (
-                    <article key={event.id} style={styleForEvent(event)}>
-                      <span className="calendar-agenda__color" aria-hidden="true" />
+                    <article key={event.id}>
                       <div>
-                        <span className={event.isHoliday ? 'is-holiday' : undefined}>
+                        <span className="calendar-agenda__meta">
                           {event.isHoliday ? '휴일' : '학사'} · {formatEventRange(event)}
                         </span>
                         <h4>{event.title}</h4>

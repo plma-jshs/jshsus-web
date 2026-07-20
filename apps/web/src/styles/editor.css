@@ -580,8 +580,8 @@
 
 .editor-file-button:focus-visible,
 .editor-file-button:has(input:focus-visible) {
-  border-color: var(--j-color-brand-subtle-strong);
-  box-shadow: 0 0 0 3px rgb(11 132 126 / 14%);
+  border-color: var(--j-color-border-strong);
+  box-shadow: none;
   outline: 0;
 }
 

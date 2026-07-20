@@ -23,6 +23,8 @@ import type {
   ContentReportSummary,
   DeviceCase,
   DeviceCaseCommand,
+  DeviceCaseCommandResult,
+  DeviceCaseControlCommand,
   DormAssignment,
   DormDrawPreview,
   DormReport,
@@ -429,6 +431,16 @@ export const api = {
   deviceCases: () => request<DeviceCase[]>('/api/admin/device-cases'),
   deviceCaseCommands: (id: number) =>
     request<DeviceCaseCommand[]>(`/api/admin/device-cases/${id}/commands`),
+  deviceCaseCommand: (id: number, command: DeviceCaseControlCommand) =>
+    request<DeviceCaseCommandResult>(`/api/admin/device-cases/${id}/commands`, {
+      method: 'POST',
+      body: { command },
+    }),
+  deviceCaseBulkCommand: (command: DeviceCaseControlCommand) =>
+    request<DeviceCaseCommandResult>('/api/admin/device-cases/commands', {
+      method: 'POST',
+      body: { command },
+    }),
   dormRooms: (query: {
     year: number;
     semester: number;

@@ -4,6 +4,27 @@
   font-weight: 750;
 }
 
+.device-control-actions,
+.device-case-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.device-control-actions {
+  flex-wrap: wrap;
+}
+
+.device-case-actions {
+  width: 100%;
+}
+
+.device-command-button svg,
+.device-control-actions .quiet-button svg {
+  flex: 0 0 auto;
+}
+
 .device-status {
   display: inline-flex;
   min-height: 26px;

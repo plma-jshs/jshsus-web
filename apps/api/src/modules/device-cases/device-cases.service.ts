@@ -1,8 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import * as schema from '@jshsus/db';
-import type { DeviceCase, DeviceCaseCommand } from '@jshsus/types';
+import type {
+  DeviceCase,
+  DeviceCaseCommand,
+  DeviceCaseCommandResult,
+  DeviceCaseControlCommand,
+} from '@jshsus/types';
 import { desc, eq } from 'drizzle-orm';
 import { DatabaseService } from '../database/database.service';
+
+const commandTargetState: Record<DeviceCaseControlCommand, boolean> = {
+  open: true,
+  close: false,
+};
+
+function commandResultMessage(command: DeviceCaseControlCommand) {
+  return command === 'open' ? '관리자가 보관함을 열었습니다.' : '관리자가 보관함을 닫았습니다.';
+}
 
 @Injectable()
 export class DeviceCasesService {
@@ -45,6 +59,107 @@ export class DeviceCasesService {
         ...row,
         createdAt: row.createdAt.toISOString(),
       }));
+    });
+  }
+
+  async commandOne(
+    deviceCaseId: number,
+    actorId: number,
+    command: DeviceCaseControlCommand,
+  ): Promise<DeviceCaseCommandResult> {
+    const targetIsOpen = commandTargetState[command];
+    const now = new Date();
+
+    return this.database.db.transaction(async (tx) => {
+      const [deviceCase] = await tx
+        .select({ id: schema.deviceCases.id })
+        .from(schema.deviceCases)
+        .where(eq(schema.deviceCases.id, deviceCaseId))
+        .limit(1);
+
+      if (!deviceCase) {
+        throw new NotFoundException('Device case not found.');
+      }
+
+      await tx.insert(schema.deviceCaseCommands).values({
+        actorId,
+        command,
+        completedAt: now,
+        deviceCaseId,
+        resultMessage: commandResultMessage(command),
+        status: 'succeeded',
+      });
+      await tx
+        .update(schema.deviceCases)
+        .set({ isOpen: targetIsOpen, updatedAt: now })
+        .where(eq(schema.deviceCases.id, deviceCaseId));
+      await tx.insert(schema.auditLogs).values({
+        actorId,
+        action: `device_case.${command}`,
+        targetId: String(deviceCaseId),
+        targetType: 'device_cases',
+      });
+
+      return {
+        ok: true,
+        command,
+        targetIsOpen,
+        totalCases: 1,
+        updatedCount: 1,
+        excludedDisconnectedCount: 0,
+      };
+    });
+  }
+
+  async commandAll(
+    actorId: number,
+    command: DeviceCaseControlCommand,
+  ): Promise<DeviceCaseCommandResult> {
+    const targetIsOpen = commandTargetState[command];
+    const now = new Date();
+
+    return this.database.db.transaction(async (tx) => {
+      const rows = await tx
+        .select({
+          id: schema.deviceCases.id,
+          isConnected: schema.deviceCases.isConnected,
+        })
+        .from(schema.deviceCases)
+        .orderBy(schema.deviceCases.id);
+      const connectedCases = rows.filter((deviceCase) => deviceCase.isConnected);
+
+      if (connectedCases.length > 0) {
+        await tx.insert(schema.deviceCaseCommands).values(
+          connectedCases.map((deviceCase) => ({
+            actorId,
+            command,
+            completedAt: now,
+            deviceCaseId: deviceCase.id,
+            resultMessage: commandResultMessage(command),
+            status: 'succeeded' as const,
+          })),
+        );
+        await tx
+          .update(schema.deviceCases)
+          .set({ isOpen: targetIsOpen, updatedAt: now })
+          .where(eq(schema.deviceCases.isConnected, true));
+      }
+
+      await tx.insert(schema.auditLogs).values({
+        actorId,
+        action: `device_case.bulk-${command}`,
+        targetId: 'all-connected',
+        targetType: 'device_cases',
+      });
+
+      return {
+        ok: true,
+        command,
+        targetIsOpen,
+        totalCases: rows.length,
+        updatedCount: connectedCases.length,
+        excludedDisconnectedCount: rows.length - connectedCases.length,
+      };
     });
   }
 }

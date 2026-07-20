@@ -33,6 +33,11 @@ textarea {
   color: inherit;
 }
 
+[tabindex='-1']:focus {
+  outline: none;
+  box-shadow: none;
+}
+
 input:not([type='checkbox']):not([type='radio']):not([type='file']),
 select,
 textarea {
