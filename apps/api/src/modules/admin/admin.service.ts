@@ -1400,13 +1400,8 @@ export class AdminService {
             .from(schema.staffProfiles)
             .where(eq(schema.staffProfiles.staffNo, candidate))
             .limit(1);
-          const [legacyBridgeCollision] = await tx
-            .select({ id: schema.users.id })
-            .from(schema.users)
-            .where(eq(schema.users.studentNo, -candidate))
-            .limit(1);
 
-          if (!staffCollision && !legacyBridgeCollision) break;
+          if (!staffCollision) break;
           candidate += 1;
         }
 
@@ -1420,9 +1415,7 @@ export class AdminService {
       const [user] = await tx
         .insert(schema.users)
         .values({
-          // Forward-compatible bridge for the legacy NOT NULL users.student_no
-          // column. Authentication and display use staff_profiles.staff_no.
-          studentNo: -staffNo,
+          studentNo: null,
           name: parsed.data.name,
           email: parsed.data.email || null,
           phone: parsed.data.phone || null,

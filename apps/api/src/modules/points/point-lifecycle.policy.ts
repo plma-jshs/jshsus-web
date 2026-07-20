@@ -7,6 +7,7 @@ export const SYSTEM_POINT_REASON_PREFIX = '[시스템]';
 export const SYSTEM_DEPARTURE_REASON = '[시스템] 퇴사 처리 점수 초기화';
 export const SYSTEM_MERIT_HALF_REASON = '[시스템] 새 학기 상점 반감';
 export const SYSTEM_PENALTY_HALF_REASON = '[시스템] 새 학기 벌점 반감';
+// Legacy records may point at the old system actor row that used this compatibility number.
 export const SYSTEM_POINT_ACTOR_STUDENT_NO = -900_001;
 export const SYSTEM_POINT_ACTOR_NAME = '상벌점 시스템';
 

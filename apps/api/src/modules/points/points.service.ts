@@ -8,7 +8,7 @@ import * as schema from '@jshsus/db';
 import type { PointReason, PointRecord, PointSummary, StudentOption } from '@jshsus/types';
 import { and, asc, count, desc, eq, gt, inArray, isNull, like, lte, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { DatabaseService } from '../database/database.service';
+import { DatabaseService, type AppDatabase } from '../database/database.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
   calculateDepartureResetAdjustment,
@@ -23,7 +23,6 @@ import {
   SYSTEM_MERIT_HALF_REASON,
   SYSTEM_PENALTY_HALF_REASON,
   SYSTEM_POINT_ACTOR_NAME,
-  SYSTEM_POINT_ACTOR_STUDENT_NO,
   SYSTEM_POINT_REASON_PREFIX,
 } from './point-lifecycle.policy';
 import {
@@ -70,6 +69,10 @@ const pointReasonFields = {
   point: z.coerce.number().int().min(-100).max(100),
   comment: z.string().trim().min(1).max(255),
 };
+
+const SYSTEM_POINT_AUTH_PROVIDER = 'system';
+const SYSTEM_POINT_AUTH_ACCOUNT_ID = 'points';
+type AppTransaction = Parameters<Parameters<AppDatabase['transaction']>[0]>[0];
 
 const pointReasonInputSchema = z.object(pointReasonFields).superRefine((value, context) => {
   if (value.type === 'PLUS' && value.point <= 0) {
@@ -255,6 +258,59 @@ export class PointsService {
     });
     this.idempotencyInFlight.set(key, pending);
     return pending;
+  }
+
+  private async ensureSystemPointActor(tx: AppTransaction): Promise<{ id: number }> {
+    const [linkedActor] = await tx
+      .select({ id: schema.users.id })
+      .from(schema.authAccounts)
+      .innerJoin(schema.users, eq(schema.authAccounts.userId, schema.users.id))
+      .where(
+        and(
+          eq(schema.authAccounts.provider, SYSTEM_POINT_AUTH_PROVIDER),
+          eq(schema.authAccounts.providerAccountId, SYSTEM_POINT_AUTH_ACCOUNT_ID),
+        ),
+      )
+      .limit(1);
+
+    if (linkedActor) {
+      await tx
+        .update(schema.users)
+        .set({ studentNo: null, name: SYSTEM_POINT_ACTOR_NAME, status: 'active' })
+        .where(eq(schema.users.id, linkedActor.id));
+      return linkedActor;
+    }
+
+    const [createdActor] = await tx
+      .insert(schema.users)
+      .values({
+        studentNo: null,
+        name: SYSTEM_POINT_ACTOR_NAME,
+        status: 'active',
+      })
+      .$returningId();
+    await tx
+      .insert(schema.authAccounts)
+      .values({
+        userId: createdActor.id,
+        provider: SYSTEM_POINT_AUTH_PROVIDER,
+        providerAccountId: SYSTEM_POINT_AUTH_ACCOUNT_ID,
+      })
+      .onDuplicateKeyUpdate({
+        set: { updatedAt: new Date() },
+      });
+    const [linkedAfterInsert] = await tx
+      .select({ id: schema.users.id })
+      .from(schema.authAccounts)
+      .innerJoin(schema.users, eq(schema.authAccounts.userId, schema.users.id))
+      .where(
+        and(
+          eq(schema.authAccounts.provider, SYSTEM_POINT_AUTH_PROVIDER),
+          eq(schema.authAccounts.providerAccountId, SYSTEM_POINT_AUTH_ACCOUNT_ID),
+        ),
+      )
+      .limit(1);
+    return linkedAfterInsert ?? { id: createdActor.id };
   }
 
   async getStudents(): Promise<StudentOption[]> {
@@ -1327,20 +1383,7 @@ export class PointsService {
           throw new ConflictException('현재 순합계가 -20점보다 높아 퇴사 처리할 수 없습니다.');
         }
 
-        await tx
-          .insert(schema.users)
-          .values({
-            studentNo: SYSTEM_POINT_ACTOR_STUDENT_NO,
-            name: SYSTEM_POINT_ACTOR_NAME,
-            status: 'active',
-          })
-          .onDuplicateKeyUpdate({ set: { name: SYSTEM_POINT_ACTOR_NAME } });
-        const [systemActor] = await tx
-          .select({ id: schema.users.id })
-          .from(schema.users)
-          .where(eq(schema.users.studentNo, SYSTEM_POINT_ACTOR_STUDENT_NO))
-          .limit(1);
-        if (!systemActor) throw new ConflictException('시스템 작업 주체를 준비하지 못했습니다.');
+        const systemActor = await this.ensureSystemPointActor(tx);
 
         let [systemReason] = await tx
           .select({ id: schema.pointReasons.id })
@@ -1576,20 +1619,7 @@ export class PointsService {
           if (existing)
             return { ok: true, replayed: true, adjustedStudentCount: 0, recordCount: 0 };
 
-          await tx
-            .insert(schema.users)
-            .values({
-              studentNo: SYSTEM_POINT_ACTOR_STUDENT_NO,
-              name: SYSTEM_POINT_ACTOR_NAME,
-              status: 'active',
-            })
-            .onDuplicateKeyUpdate({ set: { name: SYSTEM_POINT_ACTOR_NAME } });
-          const [systemActor] = await tx
-            .select({ id: schema.users.id })
-            .from(schema.users)
-            .where(eq(schema.users.studentNo, SYSTEM_POINT_ACTOR_STUDENT_NO))
-            .limit(1);
-          if (!systemActor) throw new ConflictException('시스템 작업 주체를 준비하지 못했습니다.');
+          const systemActor = await this.ensureSystemPointActor(tx);
 
           const completedDepartures = await tx
             .select({ studentId: schema.pointAwardCases.studentId })

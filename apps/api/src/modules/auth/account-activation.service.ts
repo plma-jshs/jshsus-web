@@ -399,14 +399,9 @@ export class AccountActivationService {
       .from(schema.staffProfiles)
       .where(eq(schema.staffProfiles.staffNo, input.identityNumber))
       .limit(1);
-    const [existingUser] = await tx
-      .select({ id: schema.users.id })
-      .from(schema.users)
-      .where(eq(schema.users.studentNo, -input.identityNumber))
-      .limit(1);
-    let userId = staff?.userId ?? existingUser?.id;
+    let userId = staff?.userId;
     const userValues = {
-      studentNo: -input.identityNumber,
+      studentNo: null,
       name: input.name,
       gender: toStoredStudentGender(input.gender),
       email: input.email,

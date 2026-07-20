@@ -397,17 +397,11 @@ async function importLegacyPeople(target, legacy) {
       [staffNo],
     );
     if (!user) {
-      user = await selectOne(target, 'SELECT id FROM users WHERE student_no = ? LIMIT 1', [
-        -staffNo,
-      ]);
-    }
-    if (!user) {
       const [result] = await target.execute(
         `INSERT INTO users
           (student_no, name, email, phone, gender, user_status)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+         VALUES (NULL, ?, ?, ?, ?, ?)`,
         [
-          -staffNo,
           name,
           cleanText(iam?.email) || null,
           normalizePhone(iam?.phone),
@@ -419,10 +413,9 @@ async function importLegacyPeople(target, legacy) {
     } else {
       await target.execute(
         `UPDATE users
-         SET student_no = ?, name = ?, email = ?, phone = ?, gender = ?, user_status = ?, updated_at = now(3)
+         SET student_no = NULL, name = ?, email = ?, phone = ?, gender = ?, user_status = ?, updated_at = now(3)
          WHERE id = ?`,
         [
-          -staffNo,
           name,
           cleanText(iam?.email) || null,
           normalizePhone(iam?.phone),

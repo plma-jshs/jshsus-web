@@ -24,14 +24,14 @@ This means content authorship survives student number changes because posts, com
 
 ## Remaining Contract Debt
 
-`users.student_no`, `users.grade`, `users.class_no`, and `users.number` still duplicate student-profile data. They are not the old `legacy_*` columns, but they are a compatibility mirror from the first schema version. Staff accounts currently use negative `users.student_no` values because that column is still `NOT NULL`.
+`users.student_no`, `users.grade`, `users.class_no`, and `users.number` still duplicate student-profile data. They are not the old `legacy_*` columns, but they are a compatibility mirror from the first schema version. `users.student_no` is nullable, and staff or system accounts leave it empty.
 
 Do not build more features on that mirror. The next identity migration should:
 
 1. move every read path to `students` or `staff_profiles`;
 2. move yearly class placement to `student_enrollments`;
-3. update system point actors to use `users.id` / role metadata instead of negative student numbers;
-4. make `users.student_no` nullable, then drop `users.student_no`, `users.grade`, `users.class_no`, and `users.number` in a follow-up migration after deploy compatibility is confirmed.
+3. keep system point actors addressed through `users.id` and `auth_accounts` provider links;
+4. drop `users.student_no`, `users.grade`, `users.class_no`, and `users.number` in a follow-up migration after deploy compatibility is confirmed.
 
 ## Current School-Year Gap
 

@@ -29,6 +29,13 @@
       "when": 1784685600000,
       "tag": "0003_account_activation",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1784689200000,
+      "tag": "0004_users_student_no_nullable",
+      "breakpoints": true
     }
   ]
 }

@@ -22,10 +22,9 @@ export const users = mysqlTable(
   'users',
   {
     id,
-    // @deprecated Student identifiers belong to the student profile. Staff
-    // accounts receive a negative internal compatibility value until the
-    // forward-only contract migration can remove this legacy column.
-    studentNo: int('student_no').notNull(),
+    // @deprecated Student identifiers belong to the student profile.
+    // Staff and system accounts keep this compatibility mirror empty.
+    studentNo: int('student_no'),
     name: varchar('name', { length: 64 }).notNull(),
     nickname: varchar('nickname', { length: 16 }),
     grade: int('grade'),
