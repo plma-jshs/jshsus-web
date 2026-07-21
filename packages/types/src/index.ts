@@ -382,6 +382,7 @@ export type StudentSelfStatus = {
     bedPosition: number;
   };
   deviceCase?: DeviceCase;
+  deviceCases?: Array<DeviceCase & { label: string }>;
   latestActivityRequest?: ActivityRequestSummary;
 };
 

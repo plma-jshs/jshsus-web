@@ -361,6 +361,14 @@
   font-size: 13px;
 }
 
+.point-feedback--form {
+  margin: -4px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid #cbe4df;
+  border-radius: 8px;
+  background: #f3faf8;
+}
+
 .point-import-errors {
   display: grid;
   max-height: 150px;

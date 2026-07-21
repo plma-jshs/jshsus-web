@@ -326,6 +326,24 @@ export function MyStatusPage() {
 
   const status = statusQuery.data;
   const cropGeometry = cropDraft ? getCropGeometry(cropDraft) : null;
+  const deviceCases =
+    status.deviceCases ??
+    (status.deviceCase
+      ? [
+          {
+            ...status.deviceCase,
+            label: `${status.deviceCase.id}번`,
+          },
+        ]
+      : []);
+  const deviceCaseTitle = deviceCases.length
+    ? deviceCases.map((deviceCase) => deviceCase.label).join(' · ')
+    : '미연결';
+  const deviceCaseStatus = deviceCases.length
+    ? deviceCases
+        .map((deviceCase) => `${deviceCase.label} ${deviceCase.isOpen ? '열림' : '잠김'}`)
+        .join(' · ')
+    : '연결 정보 없음';
 
   return (
     <PageScaffold
@@ -488,12 +506,8 @@ export function MyStatusPage() {
             <Smartphone size={20} aria-hidden="true" />
             <div>
               <span>스마트폰 보관함</span>
-              <strong>{status.deviceCase ? `${status.deviceCase.id}번` : '미연결'}</strong>
-              <small>
-                {status.deviceCase
-                  ? `${status.deviceCase.isOpen ? '열림' : '닫힘'} · ${status.deviceCase.isConnected ? '연결 정상' : '연결 끊김'}`
-                  : '연결 정보 없음'}
-              </small>
+              <strong>{deviceCaseTitle}</strong>
+              <small>{deviceCaseStatus}</small>
             </div>
           </article>
         </div>

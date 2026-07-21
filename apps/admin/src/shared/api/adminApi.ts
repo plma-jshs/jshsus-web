@@ -436,10 +436,10 @@ export const api = {
       method: 'POST',
       body: { command },
     }),
-  deviceCaseBulkCommand: (command: DeviceCaseControlCommand) =>
+  deviceCaseBulkCommand: (input: { command: DeviceCaseControlCommand; ids?: number[] }) =>
     request<DeviceCaseCommandResult>('/api/admin/device-cases/commands', {
       method: 'POST',
-      body: { command },
+      body: input,
     }),
   dormRooms: (query: {
     year: number;

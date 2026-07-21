@@ -119,6 +119,53 @@
   background: #f5f8f7;
   color: #63706d;
 }
+
+.identity-file-picker {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  height: 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid #cedad7;
+  border-radius: 8px;
+  background: #fff;
+  color: #17221f;
+  cursor: pointer;
+}
+
+.identity-file-picker:focus-within {
+  border-color: #168e87;
+  box-shadow: 0 0 0 3px rgb(22 142 135 / 12%);
+}
+
+.identity-file-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.identity-file-picker span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.identity-file-picker small {
+  overflow: hidden;
+  color: #687672;
+  font-size: 13px;
+  font-weight: 450;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .identity-form-error {
   color: #bd342b !important;
 }

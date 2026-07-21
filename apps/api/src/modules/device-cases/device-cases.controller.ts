@@ -20,6 +20,7 @@ import { DeviceCasesService } from './device-cases.service';
 
 const deviceCaseCommandBodySchema = z.object({
   command: z.enum(['open', 'close']),
+  ids: z.array(z.coerce.number().int().min(1).max(24)).max(24).optional(),
 });
 const remoteCaseIdBodySchema = z.object({
   id: z.coerce.number().int().min(1),
@@ -65,7 +66,7 @@ export class DeviceCasesController {
   @Post('commands')
   commandAll(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
     const parsed = parseCommandBody(body);
-    return this.deviceCasesService.commandAll(requireActorId(request), parsed.command);
+    return this.deviceCasesService.commandAll(requireActorId(request), parsed.command, parsed.ids);
   }
 
   @Post(':id/commands')

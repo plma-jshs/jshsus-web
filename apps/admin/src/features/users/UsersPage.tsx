@@ -849,7 +849,14 @@ export function UsersPage() {
                 />
               </Field>
               <Field label="엑셀 파일">
-                <input type="file" accept=".xlsx,.xls" onChange={handleRosterFileChange} required />
+                <label className="identity-file-picker">
+                  <input type="file" accept=".xlsx,.xls" onChange={handleRosterFileChange} />
+                  <span>
+                    <FileSpreadsheet size={16} aria-hidden="true" />
+                    파일 선택
+                  </span>
+                  <small>{rosterFileName || '선택된 파일 없음'}</small>
+                </label>
               </Field>
               <div className="identity-roster-toolbox">
                 <button

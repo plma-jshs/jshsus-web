@@ -330,7 +330,7 @@ export function PointAwardPage() {
   });
   function addStudentSelection(student: PointStudentRow) {
     setSelectedStudents((current) => {
-      if (editKey) return [student];
+      if (editKey) return current;
       if (current.some((item) => item.id === student.id)) return current;
       return [...current, student].sort((left, right) => left.studentNo - right.studentNo);
     });
@@ -354,8 +354,24 @@ export function PointAwardPage() {
   };
 
   const removeStudentSelection = (studentId: number) => {
+    if (editKey) return;
     setSelectedStudents((current) => current.filter((student) => student.id !== studentId));
-    if (editKey) setEditKey(null);
+  };
+
+  const cancelEdit = () => {
+    setSelectedStudents([]);
+    setSearch('');
+    setSearchOpen(false);
+    setDirect(emptyDirectStudentSelection);
+    directMutation.reset();
+    setForm({
+      reasonId: '',
+      point: '',
+      reasonText: '',
+      baseDate: today,
+    });
+    setEditKey(null);
+    setFeedback('');
   };
 
   const addToQueue = (event: FormEvent) => {
@@ -608,6 +624,7 @@ export function PointAwardPage() {
   const directValidation = validateDirectStudentSelection(direct);
   const directReady = Boolean(direct.grade && direct.classNo && direct.number && !directValidation);
   const directNotFound = directMutation.isSuccess && directMutation.data?.items.length !== 1;
+  const isEditingQueueItem = Boolean(editKey);
 
   return (
     <div className="admin-stack point-award-page">
@@ -615,6 +632,7 @@ export function PointAwardPage() {
         <div className="point-section-heading">
           <h2>상벌점 부여</h2>
         </div>
+        {feedback ? <p className="point-feedback point-feedback--form">{feedback}</p> : null}
         <form className="point-award-combined" onSubmit={addToQueue}>
           <div className="point-student-picker-section">
             <FormField label="학생 검색" className="point-student-search">
@@ -623,6 +641,7 @@ export function PointAwardPage() {
                   value={search}
                   placeholder="학번 또는 이름"
                   autoComplete="off"
+                  disabled={isEditingQueueItem}
                   onFocus={(event) => {
                     setSearchOpen(true);
                     if (search) event.currentTarget.select();
@@ -635,7 +654,7 @@ export function PointAwardPage() {
                     setSearchOpen(true);
                   }}
                 />
-                {searchOpen ? (
+                {searchOpen && !isEditingQueueItem ? (
                   <div className="point-search-results" role="listbox" aria-label="학생 검색 결과">
                     {searchQuery.isLoading ? <p>불러오는 중입니다.</p> : null}
                     {searchQuery.data?.items.map((student) => (
@@ -668,6 +687,7 @@ export function PointAwardPage() {
                   max={3}
                   step={1}
                   value={direct.grade}
+                  disabled={isEditingQueueItem}
                   onChange={(event) => {
                     setDirect((current) => ({ ...current, grade: event.target.value }));
                     setSearch('');
@@ -683,6 +703,7 @@ export function PointAwardPage() {
                   max={4}
                   step={1}
                   value={direct.classNo}
+                  disabled={isEditingQueueItem}
                   onChange={(event) => {
                     setDirect((current) => ({ ...current, classNo: event.target.value }));
                     setSearch('');
@@ -698,6 +719,7 @@ export function PointAwardPage() {
                   max={20}
                   step={1}
                   value={direct.number}
+                  disabled={isEditingQueueItem}
                   onChange={(event) => {
                     setDirect((current) => ({ ...current, number: event.target.value }));
                     setSearch('');
@@ -708,7 +730,7 @@ export function PointAwardPage() {
               </FormField>
               <Button
                 variant="secondary"
-                disabled={!directReady}
+                disabled={isEditingQueueItem || !directReady}
                 loading={directMutation.isPending}
                 onClick={() => directMutation.mutate()}
               >
@@ -728,13 +750,15 @@ export function PointAwardPage() {
                   {selectedStudents.map((student) => (
                     <span className="point-selected-student-chip" key={student.id}>
                       {student.studentNo} {student.name}
-                      <button
-                        type="button"
-                        aria-label={`${student.studentNo} ${student.name} 선택 해제`}
-                        onClick={() => removeStudentSelection(student.id)}
-                      >
-                        <X size={13} aria-hidden="true" />
-                      </button>
+                      {!isEditingQueueItem ? (
+                        <button
+                          type="button"
+                          aria-label={`${student.studentNo} ${student.name} 선택 해제`}
+                          onClick={() => removeStudentSelection(student.id)}
+                        >
+                          <X size={13} aria-hidden="true" />
+                        </button>
+                      ) : null}
                     </span>
                   ))}
                 </div>
@@ -804,8 +828,13 @@ export function PointAwardPage() {
               variant="primary"
               disabled={selectedStudents.length === 0 || !selectedReason}
             >
-              {editKey ? '수정 반영' : '목록에 추가'}
+              {isEditingQueueItem ? '수정 반영' : '목록에 추가'}
             </Button>
+            {isEditingQueueItem ? (
+              <Button type="button" variant="secondary" onClick={cancelEdit}>
+                취소
+              </Button>
+            ) : null}
           </div>
         </form>
       </section>
@@ -864,7 +893,6 @@ export function PointAwardPage() {
         />
         <div className="point-panel-actions">
           <div>
-            {feedback ? <p className="point-feedback">{feedback}</p> : null}
             {submitMutation.isError ? (
               <p className="form-error">{submitMutation.error.message}</p>
             ) : null}

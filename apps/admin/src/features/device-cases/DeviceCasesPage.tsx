@@ -1,16 +1,16 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DeviceCase, DeviceCaseCommand, DeviceCaseControlCommand } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Lock, LockOpen } from 'lucide-react';
+import { History, Lock, LockOpen } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { PageSizeSelect, TableToolbar } from '../../components/ui';
+import { Button, Dialog, PageSizeSelect, TableToolbar } from '../../components/ui';
 import { api, describeAdminApiError } from '../../shared/api/adminApi';
 import './device-cases.css';
 
 const commandLabels: Record<DeviceCaseCommand['command'], string> = {
-  open: '열기',
-  close: '닫기',
+  open: '해제',
+  close: '잠금',
   sync: '동기화',
 };
 
@@ -33,23 +33,68 @@ function formatDateTime(value: string) {
     .replace(/\.$/, '');
 }
 
+function deviceCaseLabel(id: number) {
+  const pairIndex = Math.floor((id - 1) / 2);
+  const grade = Math.floor(pairIndex / 4) + 1;
+  const classNo = (pairIndex % 4) + 1;
+  return `${grade}-${classNo} (${id % 2 === 1 ? '상' : '하'})`;
+}
+
+function SelectionCheckbox({
+  checked,
+  indeterminate = false,
+  label,
+  onChange,
+}: {
+  checked: boolean;
+  indeterminate?: boolean;
+  label: string;
+  onChange: (checked: boolean) => void;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (ref.current) ref.current.indeterminate = indeterminate;
+  }, [indeterminate]);
+
+  return (
+    <input
+      ref={ref}
+      className="device-row-checkbox"
+      type="checkbox"
+      checked={checked}
+      aria-label={label}
+      onChange={(event) => onChange(event.currentTarget.checked)}
+    />
+  );
+}
+
 export function DeviceCasesPage() {
-  const [selectedCaseId, setSelectedCaseId] = useState<number | null>(null);
+  const [selectedCaseIds, setSelectedCaseIds] = useState<Set<number>>(() => new Set());
+  const [logCaseId, setLogCaseId] = useState<number | null>(null);
+  const [casePageSize, setCasePageSize] = useState(50);
   const [commandPageSize, setCommandPageSize] = useState(20);
   const [commandError, setCommandError] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const casesQuery = useQuery({ queryKey: ['device-cases'], queryFn: api.deviceCases });
   const cases = useMemo(() => casesQuery.data ?? [], [casesQuery.data]);
-  const activeCaseId = selectedCaseId ?? cases[0]?.id ?? null;
-  const activeCase = useMemo(
-    () => cases.find((deviceCase) => deviceCase.id === activeCaseId) ?? cases[0],
-    [activeCaseId, cases],
+  const logCase = useMemo(
+    () => cases.find((deviceCase) => deviceCase.id === logCaseId),
+    [cases, logCaseId],
   );
   const commandsQuery = useQuery({
-    queryKey: ['device-case-commands', activeCase?.id],
-    queryFn: () => api.deviceCaseCommands(activeCase!.id),
-    enabled: Boolean(activeCase?.id),
+    queryKey: ['device-case-commands', logCaseId],
+    queryFn: () => api.deviceCaseCommands(logCaseId!),
+    enabled: Boolean(logCaseId),
   });
+  const caseIdSet = useMemo(() => new Set(cases.map((deviceCase) => deviceCase.id)), [cases]);
+  const selectedCaseIdsInList = useMemo(
+    () => new Set([...selectedCaseIds].filter((id) => caseIdSet.has(id))),
+    [caseIdSet, selectedCaseIds],
+  );
+  const selectedCount = selectedCaseIdsInList.size;
+  const hasSelectedCases = selectedCount > 0;
+
   const refreshDeviceCases = useCallback(async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['device-cases'] }),
@@ -72,35 +117,86 @@ export function DeviceCasesPage() {
     onError: (error) => setCommandError(describeAdminApiError(error, '보관함 명령')),
     onSuccess: async () => {
       setCommandError(null);
+      setSelectedCaseIds(new Set());
       await refreshDeviceCases();
     },
   });
   const isCommandPending = commandMutation.isPending || bulkCommandMutation.isPending;
+
+  const toggleCaseSelection = useCallback((id: number, checked: boolean) => {
+    setSelectedCaseIds((current) => {
+      const next = new Set(current);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const toggleAllCases = useCallback(
+    (checked: boolean) => {
+      setSelectedCaseIds(checked ? new Set(cases.map((deviceCase) => deviceCase.id)) : new Set());
+    },
+    [cases],
+  );
+
   const runCaseCommand = useCallback(
     (deviceCase: DeviceCase, command: DeviceCaseControlCommand) => {
-      const label = command === 'open' ? '열기' : '닫기';
-      if (!window.confirm(`${deviceCase.id}번 보관함을 ${label} 처리할까요?`)) return;
-      setSelectedCaseId(deviceCase.id);
+      const label = commandLabels[command];
+      if (!window.confirm(`${deviceCaseLabel(deviceCase.id)} 보관함을 ${label} 처리할까요?`))
+        return;
       commandMutation.mutate({ command, id: deviceCase.id });
     },
     [commandMutation],
   );
   const runBulkCommand = useCallback(
     (command: DeviceCaseControlCommand) => {
-      const label = command === 'open' ? '열기' : '닫기';
-      if (!window.confirm(`전체 휴대폰 보관함을 ${label} 처리할까요?`)) return;
-      bulkCommandMutation.mutate(command);
+      const ids = hasSelectedCases
+        ? [...selectedCaseIdsInList].sort((left, right) => left - right)
+        : [];
+      const scope = hasSelectedCases ? `선택한 ${ids.length}개 보관함` : '전체 휴대폰 보관함';
+      const label = commandLabels[command];
+      if (!window.confirm(`${scope}을 ${label} 처리할까요?`)) return;
+      bulkCommandMutation.mutate({ command, ids: ids.length ? ids : undefined });
     },
-    [bulkCommandMutation],
+    [bulkCommandMutation, hasSelectedCases, selectedCaseIdsInList],
   );
 
   const caseColumns = useMemo<ColumnDef<DeviceCase>[]>(
     () => [
       {
+        id: 'selection',
+        header: () => (
+          <SelectionCheckbox
+            checked={cases.length > 0 && selectedCaseIdsInList.size === cases.length}
+            indeterminate={
+              selectedCaseIdsInList.size > 0 && selectedCaseIdsInList.size < cases.length
+            }
+            label="전체 보관함 선택"
+            onChange={toggleAllCases}
+          />
+        ),
+        enableSorting: false,
+        cell: ({ row }) => (
+          <SelectionCheckbox
+            checked={selectedCaseIdsInList.has(row.original.id)}
+            label={`${deviceCaseLabel(row.original.id)} 선택`}
+            onChange={(checked) => toggleCaseSelection(row.original.id, checked)}
+          />
+        ),
+        meta: { align: 'center', widthPreset: 'selection' },
+      },
+      {
         accessorKey: 'id',
-        header: '보관함',
-        cell: ({ getValue }) => `${getValue<number>()}번`,
-        meta: { align: 'center', width: 90 },
+        header: 'ID',
+        cell: ({ getValue }) => getValue<number>(),
+        meta: { align: 'center', width: 64 },
+      },
+      {
+        id: 'deviceName',
+        header: '디바이스명',
+        enableSorting: false,
+        cell: ({ row }) => deviceCaseLabel(row.original.id),
+        meta: { align: 'center', width: 110 },
       },
       {
         accessorKey: 'isConnected',
@@ -117,7 +213,7 @@ export function DeviceCasesPage() {
         accessorKey: 'isOpen',
         header: '문 상태',
         enableSorting: false,
-        cell: ({ getValue }) => (getValue<boolean>() ? '열림' : '닫힘'),
+        cell: ({ getValue }) => (getValue<boolean>() ? '열림' : '잠김'),
         meta: { align: 'center', width: 90 },
       },
       {
@@ -132,9 +228,11 @@ export function DeviceCasesPage() {
         enableSorting: false,
         cell: ({ row }) => (
           <div className="device-case-actions">
-            <button
-              className="table-action device-command-button"
+            <Button
+              className="device-command-button"
               type="button"
+              variant="primary"
+              size="sm"
               onClick={() => runCaseCommand(row.original, row.original.isOpen ? 'close' : 'open')}
               disabled={isCommandPending}
             >
@@ -143,21 +241,31 @@ export function DeviceCasesPage() {
               ) : (
                 <LockOpen size={14} aria-hidden="true" />
               )}
-              {row.original.isOpen ? '닫기' : '열기'}
-            </button>
-            <button
-              className={row.original.id === activeCaseId ? 'table-action active' : 'table-action'}
+              {row.original.isOpen ? '잠금' : '해제'}
+            </Button>
+            <Button
+              className="device-history-button"
               type="button"
-              onClick={() => setSelectedCaseId(row.original.id)}
+              variant="secondary"
+              size="sm"
+              onClick={() => setLogCaseId(row.original.id)}
             >
+              <History size={14} aria-hidden="true" />
               기록 보기
-            </button>
+            </Button>
           </div>
         ),
-        meta: { align: 'center', minWidth: 180 },
+        meta: { align: 'center', width: 156 },
       },
     ],
-    [activeCaseId, isCommandPending, runCaseCommand],
+    [
+      cases,
+      isCommandPending,
+      runCaseCommand,
+      selectedCaseIdsInList,
+      toggleAllCases,
+      toggleCaseSelection,
+    ],
   );
 
   const commandColumns: ColumnDef<DeviceCaseCommand>[] = [
@@ -198,44 +306,55 @@ export function DeviceCasesPage() {
           <h2>휴대폰 보관함</h2>
           <div className="device-control-actions">
             <span className="device-list-count">{cases.length.toLocaleString('ko-KR')}대</span>
-            <button
-              className="quiet-button"
-              type="button"
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => runBulkCommand('open')}
               disabled={isCommandPending || cases.length === 0}
             >
               <LockOpen size={15} aria-hidden="true" />
-              전체 열기
-            </button>
-            <button
-              className="quiet-button"
-              type="button"
+              {hasSelectedCases ? '선택 해제' : '전체 해제'}
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => runBulkCommand('close')}
               disabled={isCommandPending || cases.length === 0}
             >
               <Lock size={15} aria-hidden="true" />
-              전체 닫기
-            </button>
+              {hasSelectedCases ? '선택 잠금' : '전체 잠금'}
+            </Button>
           </div>
         </div>
         {casesQuery.isError ? (
           <p className="form-error">{describeAdminApiError(casesQuery.error, '휴대폰 보관함')}</p>
         ) : null}
         {commandError ? <p className="form-error">{commandError}</p> : null}
+        <TableToolbar
+          summary={`총 ${cases.length.toLocaleString('ko-KR')}대${
+            hasSelectedCases ? ` · 선택 ${selectedCount.toLocaleString('ko-KR')}대` : ''
+          }`}
+        >
+          <PageSizeSelect value={casePageSize} onChange={setCasePageSize} />
+        </TableToolbar>
         <DataTable
           columns={caseColumns}
           data={cases}
           loading={casesQuery.isPending}
           loadingText="보관함 상태를 불러오는 중입니다."
           emptyText="등록된 휴대폰 보관함이 없습니다."
+          pageSize={casePageSize}
+          alwaysShowPagination
           caption="휴대폰 보관함 상태 목록"
         />
       </section>
 
-      <section className="admin-panel">
-        <div className="panel-title">
-          <h2>{activeCase ? `${activeCase.id}번 보관함 명령 기록` : '명령 기록'}</h2>
-        </div>
+      <Dialog
+        open={Boolean(logCaseId)}
+        onClose={() => setLogCaseId(null)}
+        title={logCase ? `${deviceCaseLabel(logCase.id)} 명령 기록` : '명령 기록'}
+        size="lg"
+      >
         {commandsQuery.isError ? (
           <p className="form-error">
             {describeAdminApiError(commandsQuery.error, '보관함 명령 기록')}
@@ -247,14 +366,14 @@ export function DeviceCasesPage() {
         <DataTable
           columns={commandColumns}
           data={commandsQuery.data ?? []}
-          loading={commandsQuery.isPending && Boolean(activeCase)}
+          loading={commandsQuery.isPending && Boolean(logCaseId)}
           loadingText="명령 기록을 불러오는 중입니다."
-          emptyText={activeCase ? '명령 기록이 없습니다.' : '보관함을 선택해 주세요.'}
+          emptyText="명령 기록이 없습니다."
           pageSize={commandPageSize}
           alwaysShowPagination
           caption="휴대폰 보관함 명령 기록"
         />
-      </section>
+      </Dialog>
     </div>
   );
 }

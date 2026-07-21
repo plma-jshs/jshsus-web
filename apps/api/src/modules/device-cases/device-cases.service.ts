@@ -17,7 +17,7 @@ const commandTargetState: Record<DeviceCaseControlCommand, boolean> = {
 };
 
 function commandResultMessage(command: DeviceCaseControlCommand) {
-  return command === 'open' ? '관리자가 보관함을 열었습니다.' : '관리자가 보관함을 닫았습니다.';
+  return command === 'open' ? '관리자가 보관함을 해제했습니다.' : '관리자가 보관함을 잠갔습니다.';
 }
 
 function legacyCaseName(id: number) {
@@ -39,7 +39,7 @@ export class DeviceCasesService {
 
     await this.database.db
       .insert(schema.deviceCases)
-      .values(missingIds.map((id) => ({ id, isConnected: false, isOpen: false })))
+      .values(missingIds.map((id) => ({ id, isConnected: true, isOpen: false })))
       .onDuplicateKeyUpdate({
         set: { updatedAt: sql`${schema.deviceCases.updatedAt}` },
       });
@@ -139,19 +139,25 @@ export class DeviceCasesService {
   async commandAll(
     actorId: number,
     command: DeviceCaseControlCommand,
+    ids?: number[],
   ): Promise<DeviceCaseCommandResult> {
     await this.ensureDefaultCases();
     const targetIsOpen = commandTargetState[command];
     const now = new Date();
+    const uniqueIds = ids ? [...new Set(ids)] : undefined;
 
     return this.database.db.transaction(async (tx) => {
-      const rows = await tx
+      const query = tx
         .select({
           id: schema.deviceCases.id,
           isConnected: schema.deviceCases.isConnected,
         })
-        .from(schema.deviceCases)
-        .orderBy(schema.deviceCases.id);
+        .from(schema.deviceCases);
+      const rows = uniqueIds?.length
+        ? await query
+            .where(inArray(schema.deviceCases.id, uniqueIds))
+            .orderBy(schema.deviceCases.id)
+        : await query.orderBy(schema.deviceCases.id);
       if (rows.length > 0) {
         await tx.insert(schema.deviceCaseCommands).values(
           rows.map((deviceCase) => ({
@@ -177,7 +183,7 @@ export class DeviceCasesService {
       await tx.insert(schema.auditLogs).values({
         actorId,
         action: `device_case.bulk-${command}`,
-        targetId: 'all',
+        targetId: uniqueIds?.length ? uniqueIds.join(',') : 'all',
         targetType: 'device_cases',
       });
 
@@ -194,6 +200,11 @@ export class DeviceCasesService {
 
   async remoteCases() {
     await this.ensureDefaultCases();
+    const now = new Date();
+    await this.database.db
+      .update(schema.deviceCases)
+      .set({ isConnected: true, lastSeenAt: now, updatedAt: now })
+      .where(inArray(schema.deviceCases.id, DEFAULT_DEVICE_CASE_IDS));
     return this.database.query('device-cases.remote-list', async (db) => {
       const rows = await db
         .select({
@@ -215,15 +226,18 @@ export class DeviceCasesService {
   }
 
   async markRemoteStatus(deviceCaseId?: number) {
+    await this.ensureDefaultCases();
+    const now = new Date();
     if (deviceCaseId !== undefined) {
-      await this.ensureDefaultCases();
-    }
-    if (deviceCaseId !== undefined) {
-      const now = new Date();
       await this.database.db
         .update(schema.deviceCases)
         .set({ isConnected: true, lastSeenAt: now, updatedAt: now })
         .where(eq(schema.deviceCases.id, deviceCaseId));
+    } else {
+      await this.database.db
+        .update(schema.deviceCases)
+        .set({ isConnected: true, lastSeenAt: now, updatedAt: now })
+        .where(inArray(schema.deviceCases.id, DEFAULT_DEVICE_CASE_IDS));
     }
     return { success: true };
   }

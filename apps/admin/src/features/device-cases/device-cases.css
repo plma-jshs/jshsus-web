@@ -4,6 +4,10 @@
   font-weight: 750;
 }
 
+.device-cases-page .admin-table-toolbar {
+  margin-top: 12px;
+}
+
 .device-control-actions,
 .device-case-actions {
   display: inline-flex;
@@ -20,8 +24,22 @@
   width: 100%;
 }
 
+.device-row-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.device-command-button,
+.device-history-button {
+  min-width: 66px;
+}
+
 .device-command-button svg,
-.device-control-actions .quiet-button svg {
+.device-history-button svg,
+.device-control-actions .ui-button svg {
   flex: 0 0 auto;
 }
 
@@ -48,8 +66,9 @@
   color: #9b3d3d;
 }
 
-.device-cases-page .table-action.active {
-  border-color: #b8dcd7;
-  background: #edf8f6;
-  color: var(--primary-dark);
+@media (max-width: 720px) {
+  .device-control-actions,
+  .device-case-actions {
+    justify-content: flex-start;
+  }
 }

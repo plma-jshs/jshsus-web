@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import * as schema from '@jshsus/db';
 import type { ActivityRequestSummary, PointRecord, StudentSelfStatus } from '@jshsus/types';
-import { and, desc, eq, isNull, ne } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, ne } from 'drizzle-orm';
 import { z } from 'zod';
 import type { AuthSession } from '../auth/auth.service';
 import { DatabaseService } from '../database/database.service';
@@ -18,6 +18,19 @@ function toDateOnly(value: Date | string): string {
   }
 
   return String(value).slice(0, 10);
+}
+
+function deviceCaseIdsForClass(grade: number, classNo: number) {
+  if (grade < 1 || grade > 3 || classNo < 1 || classNo > 4) return [];
+  const firstId = ((grade - 1) * 4 + (classNo - 1)) * 2 + 1;
+  return [firstId, firstId + 1];
+}
+
+function deviceCaseLabel(id: number) {
+  const pairIndex = Math.floor((id - 1) / 2);
+  const grade = Math.floor(pairIndex / 4) + 1;
+  const classNo = (pairIndex % 4) + 1;
+  return `${grade}-${classNo} (${id % 2 === 1 ? '상' : '하'})`;
 }
 
 function toActivitySummary(row: {
@@ -88,6 +101,7 @@ export class MeService {
         throw new BadRequestException('Student profile is not linked to this session.');
       }
 
+      const classDeviceCaseIds = deviceCaseIdsForClass(student.grade, student.classNo);
       const [pointTotals, pointRows, dormRows, deviceRows, profileRows, activityRows] =
         await Promise.all([
           db
@@ -148,16 +162,18 @@ export class MeService {
                 .orderBy(desc(schema.dormAssignments.year), desc(schema.dormAssignments.semester))
                 .limit(1)
             : Promise.resolve([]),
-          db
-            .select({
-              id: schema.deviceCases.id,
-              isConnected: schema.deviceCases.isConnected,
-              isOpen: schema.deviceCases.isOpen,
-              lastSeenAt: schema.deviceCases.lastSeenAt,
-            })
-            .from(schema.deviceCases)
-            .where(eq(schema.deviceCases.id, student.number))
-            .limit(1),
+          classDeviceCaseIds.length
+            ? db
+                .select({
+                  id: schema.deviceCases.id,
+                  isConnected: schema.deviceCases.isConnected,
+                  isOpen: schema.deviceCases.isOpen,
+                  lastSeenAt: schema.deviceCases.lastSeenAt,
+                })
+                .from(schema.deviceCases)
+                .where(inArray(schema.deviceCases.id, classDeviceCaseIds))
+                .orderBy(schema.deviceCases.id)
+            : Promise.resolve([]),
           student.userId
             ? db
                 .select({ id: schema.files.id })
@@ -209,6 +225,11 @@ export class MeService {
       }));
       const dorm = dormRows[0];
       const deviceCase = deviceRows[0];
+      const deviceCaseSummaries = deviceRows.map((row) => ({
+        ...row,
+        label: deviceCaseLabel(row.id),
+        lastSeenAt: row.lastSeenAt.toISOString(),
+      }));
 
       return {
         student: {
@@ -244,6 +265,7 @@ export class MeService {
               lastSeenAt: deviceCase.lastSeenAt.toISOString(),
             }
           : undefined,
+        deviceCases: deviceCaseSummaries,
         latestActivityRequest: activityRows[0] ? toActivitySummary(activityRows[0]) : undefined,
       };
     });

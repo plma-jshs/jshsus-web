@@ -18,16 +18,6 @@ type CalendarCell = {
   inCurrentMonth: boolean;
 };
 
-const eventPalette = [
-  { color: '#0f8c86', background: '#dff7f4' },
-  { color: '#2563eb', background: '#dbeafe' },
-  { color: '#b45309', background: '#fef3c7' },
-  { color: '#be123c', background: '#ffe4e6' },
-  { color: '#7c3aed', background: '#ede9fe' },
-  { color: '#15803d', background: '#dcfce7' },
-  { color: '#c2410c', background: '#ffedd5' },
-] as const;
-
 function toDateKey(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -67,8 +57,7 @@ function eventTouchesDate(event: AcademicEvent, dateKey: string) {
 
 function eventColor(event: AcademicEvent) {
   if (event.isHoliday) return { color: '#dc2626', background: '#fee2e2' };
-  const hash = [...event.id].reduce((value, character) => value + character.charCodeAt(0), 0);
-  return eventPalette[hash % eventPalette.length];
+  return { color: '#0f766e', background: '#d9f4f1' };
 }
 
 function eventRange(event: AcademicEvent) {
@@ -84,6 +73,70 @@ function styleForEvent(event: AcademicEvent): CSSProperties {
     '--event-bg': background,
     '--event-color': color,
   } as CSSProperties;
+}
+
+function eventMergeKey(event: AcademicEvent) {
+  return [
+    event.title.trim(),
+    event.isHoliday ? 'holiday' : 'school',
+    event.category,
+    event.source,
+    event.description ?? '',
+  ].join('\u001f');
+}
+
+function nextDateKey(dateKey: string) {
+  const date = fromDateKey(dateKey);
+  date.setDate(date.getDate() + 1);
+  return toDateKey(date);
+}
+
+function mergeAdjacentEvents(sourceEvents: AcademicEvent[]) {
+  const groups = new Map<string, AcademicEvent[]>();
+  for (const event of sourceEvents) {
+    const key = eventMergeKey(event);
+    groups.set(key, [...(groups.get(key) ?? []), event]);
+  }
+  const mergedEvents: AcademicEvent[] = [];
+
+  for (const group of groups.values()) {
+    const sortedGroup = [...group].sort((left, right) => {
+      const leftRange = eventRange(left);
+      const rightRange = eventRange(right);
+      return (
+        leftRange.startsAt.localeCompare(rightRange.startsAt) ||
+        leftRange.endsAt.localeCompare(rightRange.endsAt)
+      );
+    });
+
+    for (const event of sortedGroup) {
+      const range = eventRange(event);
+      const lastEvent = mergedEvents[mergedEvents.length - 1];
+      if (lastEvent && eventMergeKey(lastEvent) === eventMergeKey(event)) {
+        const lastRange = eventRange(lastEvent);
+        if (range.startsAt <= nextDateKey(lastRange.endsAt)) {
+          const endsAt = lastRange.endsAt >= range.endsAt ? lastEvent.endsAt : event.endsAt;
+          mergedEvents[mergedEvents.length - 1] = {
+            ...lastEvent,
+            endsAt,
+            id: `${lastEvent.id}__${event.id}`,
+          };
+          continue;
+        }
+      }
+      mergedEvents.push({ ...event });
+    }
+  }
+
+  return mergedEvents.sort((left, right) => {
+    const leftRange = eventRange(left);
+    const rightRange = eventRange(right);
+    return (
+      leftRange.startsAt.localeCompare(rightRange.startsAt) ||
+      leftRange.endsAt.localeCompare(rightRange.endsAt) ||
+      left.title.localeCompare(right.title, 'ko-KR')
+    );
+  });
 }
 
 function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridStartKey: string) {
@@ -162,7 +215,10 @@ export function CalendarPage() {
     queryKey: ['school-calendar', range.from, range.to],
     queryFn: () => getCalendar(range.from, range.to),
   });
-  const allEvents = useMemo(() => calendarQuery.data?.events ?? [], [calendarQuery.data?.events]);
+  const allEvents = useMemo(
+    () => mergeAdjacentEvents(calendarQuery.data?.events ?? []),
+    [calendarQuery.data?.events],
+  );
   const events = useMemo(
     () =>
       allEvents.filter((event) => {
