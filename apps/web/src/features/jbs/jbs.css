@@ -12,9 +12,21 @@
 .jbs-card {
   min-width: 0;
   overflow: hidden;
-  border: 1px solid var(--j-color-border);
+  border: 1px solid color-mix(in srgb, var(--j-color-border) 86%, var(--j-color-text));
   border-radius: var(--j-radius-lg);
   background: var(--j-color-surface);
+  box-shadow: 0 12px 28px rgb(23 32 51 / 6%);
+  transition:
+    transform var(--j-motion-base),
+    border-color var(--j-motion-fast),
+    box-shadow var(--j-motion-base);
+}
+
+.jbs-card:hover,
+.jbs-card:focus-within {
+  border-color: color-mix(in srgb, var(--j-color-brand) 28%, var(--j-color-border));
+  box-shadow: 0 18px 38px rgb(23 32 51 / 11%);
+  transform: translateY(-3px);
 }
 
 .jbs-card__thumbnail {
@@ -29,6 +41,12 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform var(--j-motion-base);
+}
+
+.jbs-card:hover .jbs-card__thumbnail img,
+.jbs-card:focus-within .jbs-card__thumbnail img {
+  transform: scale(1.025);
 }
 
 .jbs-card__play {

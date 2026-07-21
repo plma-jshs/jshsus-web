@@ -37,7 +37,10 @@ import { z } from 'zod';
 import type { AuthSession } from '../auth/auth.service';
 import { DatabaseService, type AppDatabase } from '../database/database.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { assertAllowedActivityTimes } from './activity-time.policy';
+import {
+  assertActivityDateIsTodayOrFuture,
+  assertAllowedActivityTimes,
+} from './activity-time.policy';
 
 const activitySlotIdSchema = z.enum([
   'morning-1',
@@ -463,6 +466,7 @@ export class ActivityRequestsService {
     if (!parsed.success) {
       throw new BadRequestException(parsed.error.flatten().fieldErrors);
     }
+    assertActivityDateIsTodayOrFuture(parsed.data.startsAt);
     const activitySlotIds = assertAllowedActivityTimes(
       parsed.data.startsAt,
       parsed.data.endsAt,
@@ -485,11 +489,10 @@ export class ActivityRequestsService {
           ...parsed.data.participantStudentNos,
         ];
         const participantIds = await this.resolveParticipantIds(participantStudentNos, tx);
-        const advisorTeacherId = parsed.data.advisorTeacherId ?? parsed.data.teacherId;
-        if (!advisorTeacherId) {
-          throw new BadRequestException('담당 교사를 선택해 주세요.');
-        }
-        await this.assertStaffAccount(advisorTeacherId, tx);
+        const advisorTeacherId = await this.resolveAdvisorTeacherId(
+          parsed.data.advisorTeacherId ?? parsed.data.teacherId,
+          tx,
+        );
 
         const [result] = await tx
           .insert(schema.activityRequests)
@@ -548,6 +551,7 @@ export class ActivityRequestsService {
     if (!parsed.success) {
       throw new BadRequestException(parsed.error.flatten().fieldErrors);
     }
+    assertActivityDateIsTodayOrFuture(parsed.data.startsAt);
     const activitySlotIds = assertAllowedActivityTimes(
       parsed.data.startsAt,
       parsed.data.endsAt,
@@ -584,11 +588,10 @@ export class ActivityRequestsService {
           [representative.studentNo, ...parsed.data.participantStudentNos],
           tx,
         );
-        const advisorTeacherId = parsed.data.advisorTeacherId ?? parsed.data.teacherId;
-        if (!advisorTeacherId) {
-          throw new BadRequestException('담당 교사를 선택해 주세요.');
-        }
-        await this.assertStaffAccount(advisorTeacherId, tx);
+        const advisorTeacherId = await this.resolveAdvisorTeacherId(
+          parsed.data.advisorTeacherId ?? parsed.data.teacherId,
+          tx,
+        );
 
         await tx
           .update(schema.activityRequests)
@@ -622,6 +625,7 @@ export class ActivityRequestsService {
     if (!actorId || actorId <= 0) {
       throw new BadRequestException('A persisted creator account is required.');
     }
+    assertActivityDateIsTodayOrFuture(parsed.data.startsAt);
     const activitySlotIds = assertAllowedActivityTimes(
       parsed.data.startsAt,
       parsed.data.endsAt,
@@ -1114,6 +1118,26 @@ export class ActivityRequestsService {
       throw new BadRequestException(`Student profiles were not found: ${missing.join(', ')}`);
     }
     return rows.map((row) => row.id);
+  }
+
+  private async resolveAdvisorTeacherId(candidateId: number | undefined, db: SelectDatabase) {
+    if (!candidateId) {
+      throw new BadRequestException('담당 교사를 선택해 주세요.');
+    }
+    const [staff] = await db
+      .select({ userId: schema.staffProfiles.userId })
+      .from(schema.staffProfiles)
+      .where(
+        or(
+          eq(schema.staffProfiles.userId, candidateId),
+          eq(schema.staffProfiles.staffNo, candidateId),
+        ),
+      )
+      .limit(1);
+    if (!staff) {
+      throw new BadRequestException('선택한 담당 교사 계정을 찾을 수 없습니다.');
+    }
+    return staff.userId;
   }
 
   private async assertStaffAccount(userId: number, db: SelectDatabase) {

@@ -107,6 +107,14 @@ export function assertAllowedActivityTimes(
   return [slot.id];
 }
 
+export function assertActivityDateIsTodayOrFuture(startsAt: Date) {
+  const activityDate = koreaDateTimeParts(startsAt).date;
+  const today = koreaDateTimeParts(new Date()).date;
+  if (activityDate < today) {
+    throw new BadRequestException('활동 날짜는 오늘 이후만 선택할 수 있습니다.');
+  }
+}
+
 export function assertAllowedActivityTime(startsAt: Date, endsAt: Date) {
   const [slotId] = assertAllowedActivityTimes(startsAt, endsAt);
   return ACTIVITY_TIME_SLOTS.find((slot) => slot.id === slotId)!;

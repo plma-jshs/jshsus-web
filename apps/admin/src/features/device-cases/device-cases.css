@@ -13,6 +13,12 @@
   flex-wrap: wrap;
 }
 
+.device-control-actions .ui-button--sm {
+  min-height: var(--control-height);
+  padding-inline: 16px;
+  font-size: 14px;
+}
+
 .device-status {
   display: inline-flex;
   min-height: 26px;

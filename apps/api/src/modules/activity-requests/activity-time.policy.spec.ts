@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  assertActivityDateIsTodayOrFuture,
   assertAllowedActivityTime,
   assertAllowedActivityTimes,
   resolveActivityTimeSlot,
@@ -50,4 +51,20 @@ describe('activity time policy', () => {
       ),
     ).toThrow(BadRequestException);
   });
+
+  it('rejects activity dates before today in Korea', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-21T00:30:00+09:00'));
+
+    expect(() => assertActivityDateIsTodayOrFuture(new Date('2026-07-20T19:10:00+09:00'))).toThrow(
+      BadRequestException,
+    );
+    expect(() =>
+      assertActivityDateIsTodayOrFuture(new Date('2026-07-21T19:10:00+09:00')),
+    ).not.toThrow();
+  });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });

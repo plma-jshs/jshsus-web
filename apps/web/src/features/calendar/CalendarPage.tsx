@@ -3,7 +3,7 @@ import type { CSSProperties, KeyboardEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
-import { FilterChips, PageScaffold, PageState } from '../../components/page/PageScaffold';
+import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter, toKoreanDateKey } from '../../shared/lib/date';
 import { getCalendar } from './api';
@@ -11,7 +11,6 @@ import '../../styles/calendar.css';
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 const maxVisibleEventBars = 3;
-type CalendarFilter = 'all' | 'school' | 'holiday';
 type CalendarCell = {
   date: Date;
   dateKey: string;
@@ -35,8 +34,10 @@ function monthGrid(date: Date): CalendarCell[] {
   const year = date.getFullYear();
   const month = date.getMonth();
   const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
   const start = new Date(year, month, 1 - firstDay.getDay());
-  return Array.from({ length: 42 }, (_, index) => {
+  const weekCount = Math.max(5, Math.ceil((firstDay.getDay() + lastDay.getDate()) / 7));
+  return Array.from({ length: weekCount * 7 }, (_, index) => {
     const cellDate = new Date(start);
     cellDate.setDate(start.getDate() + index);
     return {
@@ -49,7 +50,9 @@ function monthGrid(date: Date): CalendarCell[] {
 }
 
 function calendarWeeks(cells: CalendarCell[]) {
-  return Array.from({ length: 6 }, (_, index) => cells.slice(index * 7, index * 7 + 7));
+  return Array.from({ length: cells.length / 7 }, (_, index) =>
+    cells.slice(index * 7, index * 7 + 7),
+  );
 }
 
 function eventTouchesDate(event: AcademicEvent, dateKey: string) {
@@ -57,8 +60,8 @@ function eventTouchesDate(event: AcademicEvent, dateKey: string) {
 }
 
 function eventColor(event: AcademicEvent) {
-  if (event.isHoliday) return { color: '#ffffff', background: '#ef4444' };
-  return { color: '#12352f', background: '#d5f4ec' };
+  if (event.isHoliday) return { color: '#ffffff', background: '#ff0000' };
+  return { color: '#000000', background: '#d8f5e6' };
 }
 
 function eventRange(event: AcademicEvent) {
@@ -208,7 +211,6 @@ export function CalendarPage() {
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
   const [selectedDate, setSelectedDate] = useState(todayKey);
-  const [filter, setFilter] = useState<CalendarFilter>('all');
   const cells = useMemo(() => monthGrid(visibleMonth), [visibleMonth]);
   const weeks = useMemo(() => calendarWeeks(cells), [cells]);
   const range = { from: cells[0].dateKey, to: cells[cells.length - 1].dateKey };
@@ -220,15 +222,7 @@ export function CalendarPage() {
     () => mergeAdjacentEvents(calendarQuery.data?.events ?? []),
     [calendarQuery.data?.events],
   );
-  const events = useMemo(
-    () =>
-      allEvents.filter((event) => {
-        if (filter === 'holiday') return event.isHoliday;
-        if (filter === 'school') return !event.isHoliday;
-        return true;
-      }),
-    [allEvents, filter],
-  );
+  const events = allEvents;
   const selectedEvents = events.filter((event) => eventTouchesDate(event, selectedDate));
 
   const focusDate = (dateKey: string) => {
@@ -298,16 +292,6 @@ export function CalendarPage() {
               오늘
             </button> */}
           </div>
-          <FilterChips
-            value={filter}
-            onChange={setFilter}
-            label="일정 분류"
-            options={[
-              { value: 'all', label: '전체' },
-              { value: 'school', label: '학사' },
-              { value: 'holiday', label: '휴일' },
-            ]}
-          />
         </header>
 
         {calendarQuery.isLoading ? (
@@ -393,9 +377,11 @@ export function CalendarPage() {
                           <span
                             className={`full-calendar__event-bar${
                               segment.event.isHoliday ? ' is-holiday' : ''
-                            }${segment.showLabel ? '' : ' is-continuation'}${
-                              segment.continuesBefore ? ' starts-before' : ''
-                            }${segment.continuesAfter ? ' ends-after' : ''}`}
+                            }${segment.endColumn > segment.startColumn ? ' is-multi-day' : ''}${
+                              segment.showLabel ? '' : ' is-continuation'
+                            }${segment.continuesBefore ? ' starts-before' : ''}${
+                              segment.continuesAfter ? ' ends-after' : ''
+                            }`}
                             key={`${segment.event.id}-${week[0].dateKey}`}
                             style={{
                               ...styleForEvent(segment.event),

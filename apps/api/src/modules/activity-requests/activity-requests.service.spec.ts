@@ -1,5 +1,5 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthSession } from '../auth/auth.service';
 import type { DatabaseService } from '../database/database.service';
 import type { NotificationsService } from '../notifications/notifications.service';
@@ -93,6 +93,15 @@ const activityRow = {
   issuedAt: null,
   rejectionReason: null,
 };
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-07-10T00:00:00.000+09:00'));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('ActivityRequestsService participant contract', () => {
   it('allows every participant to read the complete request', async () => {

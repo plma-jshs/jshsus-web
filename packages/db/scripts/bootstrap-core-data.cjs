@@ -236,6 +236,10 @@ function richTextDocumentFromPlainText(value) {
 async function upsertLegacyJbsVideos(connection) {
   const [[board]] = await connection.execute("SELECT id FROM boards WHERE slug = 'jbs' LIMIT 1");
   if (!board) throw new Error('JBS board must exist before legacy videos are seeded.');
+  const [[legacyAuthor]] = await connection.execute(
+    'SELECT id FROM users WHERE student_no = 9999 LIMIT 1',
+  );
+  const legacyAuthorId = legacyAuthor?.id ?? null;
 
   for (const video of LEGACY_JBS_VIDEOS) {
     const canonicalUrl = `https://www.youtube.com/watch?v=${video.youtubeVideoId}`;
@@ -252,10 +256,11 @@ async function upsertLegacyJbsVideos(connection) {
     if (existing) {
       await connection.execute(
         `UPDATE posts
-         SET board_id = ?, title = ?, content = ?, content_json = CAST(? AS JSON),
+         SET board_id = ?, author_id = COALESCE(?, author_id),
+             title = ?, content = ?, content_json = CAST(? AS JSON),
              post_status = 'published', is_anonymous = 0, is_hidden = 0, updated_at = now(3)
          WHERE id = ?`,
-        [board.id, video.title, video.description, contentJson, existing.post_id],
+        [board.id, legacyAuthorId, video.title, video.description, contentJson, existing.post_id],
       );
       await connection.execute(
         `UPDATE jbs_videos
@@ -268,10 +273,18 @@ async function upsertLegacyJbsVideos(connection) {
 
     const [result] = await connection.execute(
       `INSERT INTO posts
-        (board_id, author_id, title, content, content_json, post_status, is_anonymous,
+       (board_id, author_id, title, content, content_json, post_status, is_anonymous,
          is_hidden, view_count, created_at, updated_at)
-       VALUES (?, NULL, ?, ?, CAST(? AS JSON), 'published', 0, 0, 0, ?, ?)`,
-      [board.id, video.title, video.description, contentJson, video.createdAt, video.createdAt],
+       VALUES (?, ?, ?, ?, CAST(? AS JSON), 'published', 0, 0, 0, ?, ?)`,
+      [
+        board.id,
+        legacyAuthorId,
+        video.title,
+        video.description,
+        contentJson,
+        video.createdAt,
+        video.createdAt,
+      ],
     );
     await connection.execute(
       `INSERT INTO jbs_videos

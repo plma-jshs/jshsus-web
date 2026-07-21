@@ -6,7 +6,7 @@ export function PrivacyPage() {
     <PageScaffold
       breadcrumbs={[{ label: '개인정보처리방침' }]}
       title="개인정보처리방침"
-      description="과구리 서비스의 개인정보 처리 기준을 확인하세요."
+      description=""
       width="reading"
       variant="document"
     >

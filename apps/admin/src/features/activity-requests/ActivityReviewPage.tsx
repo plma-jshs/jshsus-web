@@ -657,6 +657,7 @@ export function ActivityReviewPage() {
                 <input
                   type="date"
                   value={createForm.activityDate}
+                  min={koreaDateInput()}
                   onChange={(event) => {
                     const nextSlots = availableActivityTimeSlots(event.target.value);
                     const nextSlotIds = new Set(nextSlots.map((slot) => slot.id));

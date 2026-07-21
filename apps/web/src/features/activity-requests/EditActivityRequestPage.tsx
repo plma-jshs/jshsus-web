@@ -299,6 +299,7 @@ function EditForm({ request }: { request: EditableActivityRequestDetail }) {
               id="activity-edit-date"
               type="date"
               value={activityDate}
+              min={koreaDateInput()}
               onChange={(event) => {
                 const slots = availableActivityTimeSlots(event.target.value);
                 const nextIds = activitySlotIds.filter((id) =>

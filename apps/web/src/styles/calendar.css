@@ -8,11 +8,11 @@
 
 .calendar-toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  min-height: 62px;
+  grid-template-columns: 1fr auto 1fr;
+  min-height: 50px;
   align-items: center;
   gap: 18px;
-  padding: 10px 0;
+  padding: 6px 0;
   border-bottom: 1px solid var(--j-color-border);
 }
 
@@ -22,12 +22,6 @@
   align-items: center;
   justify-self: center;
   gap: 5px;
-}
-
-.calendar-toolbar .filter-chips {
-  grid-column: 3;
-  justify-self: end;
-  padding-right: 8px;
 }
 
 .calendar-month-control h2 {
@@ -41,8 +35,8 @@
 
 .calendar-month-control > button {
   display: grid;
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   padding: 0;
   border: 1px solid transparent;
   border-radius: 7px;
@@ -73,7 +67,7 @@
 
 .full-calendar {
   min-width: 0;
-  padding: 22px 24px 24px 0;
+  padding: 14px 0 16px 0;
 }
 
 .full-calendar__weekdays {
@@ -82,10 +76,10 @@
 }
 
 .full-calendar__weekdays span {
-  padding: 8px 8px 11px;
+  padding: 4px 8px 8px;
   color: var(--j-color-text-muted);
-  font-size: 14px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 650;
   text-align: center;
 }
 
@@ -106,21 +100,21 @@
 
 .full-calendar__week {
   position: relative;
-  min-height: 132px;
+  min-height: 106px;
 }
 
 .full-calendar__week-days {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   height: 100%;
-  min-height: 132px;
+  min-height: 106px;
 }
 
 .full-calendar__week-days > button {
   position: relative;
   min-width: 0;
-  min-height: 132px;
-  padding: 11px 10px;
+  min-height: 106px;
+  padding: 0;
   border: 0;
   border-right: 1px solid var(--j-color-border);
   border-bottom: 1px solid var(--j-color-border);
@@ -151,13 +145,17 @@
 }
 
 .full-calendar__date {
+  position: absolute;
+  z-index: 3;
+  top: 8px;
+  left: 9px;
   display: inline-grid;
   width: auto;
   min-width: 24px;
   height: 24px;
   color: var(--j-color-text-secondary);
-  font-size: 15px;
-  font-weight: 750;
+  font-size: 14px;
+  font-weight: 650;
   place-items: center;
 }
 
@@ -181,7 +179,7 @@
 .full-calendar__bars {
   position: absolute;
   z-index: 2;
-  top: 43px;
+  top: 42px;
   right: 0;
   left: 0;
   display: grid;
@@ -194,21 +192,26 @@
 
 .full-calendar__event-bar {
   display: flex;
-  height: 21px;
+  height: 19px;
   min-width: 0;
   overflow: hidden;
   align-items: center;
-  margin-inline: 4px;
+  margin-inline: 6px;
   padding: 0 7px;
   border-radius: 4px;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--event-color) 14%, transparent);
-  color: color-mix(in srgb, var(--event-color) 72%, #172033);
+  box-shadow: none;
+  color: var(--event-color);
   background: var(--event-bg);
   font-size: 11px;
   font-weight: 650;
   line-height: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.full-calendar__event-bar.is-multi-day {
+  justify-content: center;
+  text-align: center;
 }
 
 .full-calendar__event-bar.is-continuation {
@@ -242,8 +245,8 @@
 
 .calendar-agenda {
   min-width: 0;
-  min-height: 620px;
-  padding: 28px 24px;
+  min-height: 540px;
+  padding: 22px 24px;
   border-left: 1px solid var(--j-color-border);
   background: var(--j-color-surface);
 }
@@ -348,12 +351,6 @@
     flex: 1;
   }
 
-  .calendar-toolbar .filter-chips {
-    grid-column: 1;
-    justify-self: stretch;
-    flex-wrap: nowrap;
-  }
-
   .full-calendar {
     padding: 12px 0 18px;
   }
@@ -361,7 +358,7 @@
   .full-calendar__week,
   .full-calendar__week-days,
   .full-calendar__week-days > button {
-    min-height: 108px;
+    min-height: 94px;
   }
 
   .full-calendar__week-days > button {
@@ -369,7 +366,7 @@
   }
 
   .full-calendar__bars {
-    top: 31px;
+    top: 37px;
     grid-auto-rows: 18px;
     gap: 3px 0;
   }
@@ -399,8 +396,9 @@
   }
 
   .full-calendar__date {
-    width: 23px;
-    height: 23px;
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
   }
 }
 
@@ -408,7 +406,7 @@
   .full-calendar__week,
   .full-calendar__week-days,
   .full-calendar__week-days > button {
-    min-height: 56px;
+    min-height: 64px;
   }
 
   .full-calendar__bars {

@@ -36,14 +36,13 @@ type PageScaffoldProps = {
 export function PageScaffold({
   breadcrumbs,
   title,
-  description,
   action,
   meta,
   width = 'default',
   variant = 'list',
   children,
 }: PageScaffoldProps) {
-  const hasHeader = Boolean(title || description || action || meta);
+  const hasHeader = Boolean(title || action || meta);
 
   return (
     <div className={`detail-page detail-page--${width} detail-page--${variant}`}>
@@ -52,7 +51,6 @@ export function PageScaffold({
         <header className="detail-page-header">
           <div className="detail-page-header__copy">
             {title ? <h1>{title}</h1> : null}
-            {description ? <p>{description}</p> : null}
             {meta ? <div className="detail-page-header__meta">{meta}</div> : null}
           </div>
           {action ? <div className="detail-page-header__action">{action}</div> : null}
