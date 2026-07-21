@@ -197,17 +197,20 @@
   display: inline-flex;
   flex: none;
   align-items: center;
+  align-self: center;
+  line-height: 0;
   margin-left: 6px;
   vertical-align: middle;
 }
 
 .content-new-badge {
-  display: block;
+  display: inline-block;
   width: 6px;
   height: 6px;
   flex: none;
   border-radius: 999px;
   background: #ff3b30;
+  vertical-align: middle;
 }
 
 .content-more-menu {

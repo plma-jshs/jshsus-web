@@ -1,4 +1,4 @@
-import type { JSONContent } from '@tiptap/react';
+import type { Editor, JSONContent } from '@tiptap/react';
 import type {
   RichTextColor,
   RichTextDocument as PersistedRichTextDocument,
@@ -178,6 +178,10 @@ function normalizeLink(value: string) {
   } catch {
     return null;
   }
+}
+
+function getEditorFontFamily(editor: Editor) {
+  return (editor.getAttributes('fontFamily').family as string | undefined) ?? '';
 }
 
 function ToolbarButton({
@@ -437,6 +441,7 @@ export function RichTextEditor({
   const [linkError, setLinkError] = useState<string | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkValue, setLinkValue] = useState('');
+  const [fontFamilyValue, setFontFamilyValue] = useState('');
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -453,6 +458,7 @@ export function RichTextEditor({
       },
     },
     onCreate: ({ editor: currentEditor }) => {
+      setFontFamilyValue(getEditorFontFamily(currentEditor));
       onChangeRef.current({
         contentDoc: currentEditor.getJSON(),
         plainText: currentEditor.getText({ blockSeparator: '\n' }).trim(),
@@ -462,6 +468,7 @@ export function RichTextEditor({
     onUpdate: ({ editor: currentEditor }) => {
       const contentDoc = currentEditor.getJSON();
       const referencedIds = collectPendingIds(contentDoc);
+      setFontFamilyValue(getEditorFontFamily(currentEditor));
 
       pendingImagesRef.current.forEach((image, pendingId) => {
         if (!referencedIds.has(pendingId)) {
@@ -475,6 +482,9 @@ export function RichTextEditor({
         plainText: currentEditor.getText({ blockSeparator: '\n' }).trim(),
         pendingImages: [...pendingImagesRef.current.values()],
       });
+    },
+    onSelectionUpdate: ({ editor: currentEditor }) => {
+      setFontFamilyValue(getEditorFontFamily(currentEditor));
     },
   });
 
@@ -615,9 +625,12 @@ export function RichTextEditor({
             className="rich-text-toolbar-select--family"
             defaultLabel="Pretendard"
             label="폰트 종류"
-            onChange={(value) => setStyleMark('fontFamily', value)}
+            onChange={(value) => {
+              setFontFamilyValue(value);
+              setStyleMark('fontFamily', value);
+            }}
             options={RICH_TEXT_FONT_FAMILY_OPTIONS}
-            value={toolbar.fontFamily}
+            value={fontFamilyValue}
           />
           <ToolbarDropdown
             className="rich-text-toolbar-select--size"

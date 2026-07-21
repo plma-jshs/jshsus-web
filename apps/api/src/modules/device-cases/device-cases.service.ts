@@ -6,8 +6,10 @@ import type {
   DeviceCaseCommandResult,
   DeviceCaseControlCommand,
 } from '@jshsus/types';
-import { desc, eq, inArray } from 'drizzle-orm';
+import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { DatabaseService } from '../database/database.service';
+
+const DEFAULT_DEVICE_CASE_IDS = Array.from({ length: 24 }, (_, index) => index + 1);
 
 const commandTargetState: Record<DeviceCaseControlCommand, boolean> = {
   open: true,
@@ -26,7 +28,25 @@ function legacyCaseName(id: number) {
 export class DeviceCasesService {
   constructor(private readonly database: DatabaseService) {}
 
+  private async ensureDefaultCases() {
+    const existingRows = await this.database.db
+      .select({ id: schema.deviceCases.id })
+      .from(schema.deviceCases)
+      .where(inArray(schema.deviceCases.id, DEFAULT_DEVICE_CASE_IDS));
+    const existingIds = new Set(existingRows.map((row) => row.id));
+    const missingIds = DEFAULT_DEVICE_CASE_IDS.filter((id) => !existingIds.has(id));
+    if (missingIds.length === 0) return;
+
+    await this.database.db
+      .insert(schema.deviceCases)
+      .values(missingIds.map((id) => ({ id, isConnected: false, isOpen: false })))
+      .onDuplicateKeyUpdate({
+        set: { updatedAt: sql`${schema.deviceCases.updatedAt}` },
+      });
+  }
+
   async list(): Promise<DeviceCase[]> {
+    await this.ensureDefaultCases();
     return this.database.query('device-cases.list', async (db) => {
       const rows = await db
         .select({
@@ -71,6 +91,7 @@ export class DeviceCasesService {
     actorId: number,
     command: DeviceCaseControlCommand,
   ): Promise<DeviceCaseCommandResult> {
+    await this.ensureDefaultCases();
     const targetIsOpen = commandTargetState[command];
     const now = new Date();
 
@@ -119,6 +140,7 @@ export class DeviceCasesService {
     actorId: number,
     command: DeviceCaseControlCommand,
   ): Promise<DeviceCaseCommandResult> {
+    await this.ensureDefaultCases();
     const targetIsOpen = commandTargetState[command];
     const now = new Date();
 
@@ -155,7 +177,7 @@ export class DeviceCasesService {
       await tx.insert(schema.auditLogs).values({
         actorId,
         action: `device_case.bulk-${command}`,
-        targetId: 'all-connected',
+        targetId: 'all',
         targetType: 'device_cases',
       });
 
@@ -171,6 +193,7 @@ export class DeviceCasesService {
   }
 
   async remoteCases() {
+    await this.ensureDefaultCases();
     return this.database.query('device-cases.remote-list', async (db) => {
       const rows = await db
         .select({
@@ -193,6 +216,9 @@ export class DeviceCasesService {
 
   async markRemoteStatus(deviceCaseId?: number) {
     if (deviceCaseId !== undefined) {
+      await this.ensureDefaultCases();
+    }
+    if (deviceCaseId !== undefined) {
       const now = new Date();
       await this.database.db
         .update(schema.deviceCases)
@@ -203,6 +229,7 @@ export class DeviceCasesService {
   }
 
   async remoteCaseRequest(deviceCaseId: number) {
+    await this.ensureDefaultCases();
     const now = new Date();
     const [deviceCase] = await this.database.db
       .select({ id: schema.deviceCases.id, isOpen: schema.deviceCases.isOpen })
