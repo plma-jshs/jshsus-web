@@ -1,13 +1,14 @@
 import type { PointReason } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
-  Button,
   DateRangeField,
   PageSizeSelect,
+  SelectedRowsHeaderAction,
+  TableSelectionCheckbox,
   TableToolbar,
   useToast,
 } from '../../components/ui';
@@ -35,40 +36,6 @@ function formatCreatedAt(value: string) {
     .format(new Date(value))
     .replace(/\. /g, '. ')
     .replace(/\.$/, '');
-}
-
-type RecordSelectionCheckboxProps = {
-  checked: boolean;
-  label: string;
-  disabled?: boolean;
-  indeterminate?: boolean;
-  onChange: (checked: boolean) => void;
-};
-
-function RecordSelectionCheckbox({
-  checked,
-  label,
-  disabled = false,
-  indeterminate = false,
-  onChange,
-}: RecordSelectionCheckboxProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (inputRef.current) inputRef.current.indeterminate = indeterminate && !checked;
-  }, [checked, indeterminate]);
-
-  return (
-    <input
-      ref={inputRef}
-      className="point-record-checkbox"
-      type="checkbox"
-      aria-label={label}
-      checked={checked}
-      disabled={disabled}
-      onChange={(event) => onChange(event.target.checked)}
-    />
-  );
 }
 
 export function PointRecordsPage() {
@@ -144,7 +111,7 @@ export function PointRecordsPage() {
     });
   }, []);
 
-  const deleteSelectedRecords = () => {
+  const deleteSelectedRecords = useCallback(() => {
     const ids = visibleRecordIds.filter((id) => selectedRecordIds.has(id));
     if (ids.length === 0 || cancelSelectedMutation.isPending) return;
     const confirmed = window.confirm(
@@ -152,7 +119,7 @@ export function PointRecordsPage() {
     );
     if (!confirmed) return;
     cancelSelectedMutation.mutate(ids);
-  };
+  }, [cancelSelectedMutation, selectedRecordIds, visibleRecordIds]);
 
   const columns = useMemo<ColumnDef<PointRecordRow>[]>(
     () => [
@@ -160,7 +127,7 @@ export function PointRecordsPage() {
         id: 'selection',
         header: () => (
           <label className="point-record-selection-label">
-            <RecordSelectionCheckbox
+            <TableSelectionCheckbox
               label="현재 페이지 전체 선택"
               checked={allVisibleRecordsSelected}
               indeterminate={someVisibleRecordsSelected && !allVisibleRecordsSelected}
@@ -171,7 +138,7 @@ export function PointRecordsPage() {
           </label>
         ),
         cell: ({ row }) => (
-          <RecordSelectionCheckbox
+          <TableSelectionCheckbox
             label={`${row.original.studentName} 상벌점 기록 선택`}
             checked={selectedRecordIds.has(row.original.id)}
             disabled={cancelSelectedMutation.isPending}
@@ -183,7 +150,15 @@ export function PointRecordsPage() {
       },
       {
         accessorKey: 'baseDate',
-        header: '기준일',
+        header: () => (
+          <SelectedRowsHeaderAction
+            selectedCount={selectedCount}
+            defaultLabel="기준일"
+            loading={cancelSelectedMutation.isPending}
+            onDelete={deleteSelectedRecords}
+          />
+        ),
+        enableSorting: selectedCount === 0,
         meta: { align: 'center', width: 130 },
       },
       {
@@ -244,7 +219,9 @@ export function PointRecordsPage() {
     [
       allVisibleRecordsSelected,
       cancelSelectedMutation.isPending,
+      deleteSelectedRecords,
       selectedRecordIds,
+      selectedCount,
       someVisibleRecordsSelected,
       toggleRecord,
       toggleVisibleRecords,
@@ -266,17 +243,6 @@ export function PointRecordsPage() {
             recordsQuery.data ? (
               <div className="point-record-summary">
                 <span>총 {recordsQuery.data.total}건</span>
-                {selectedCount > 0 ? (
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    loading={cancelSelectedMutation.isPending}
-                    loadingLabel="삭제 중"
-                    onClick={deleteSelectedRecords}
-                  >
-                    선택 삭제 ({selectedCount})
-                  </Button>
-                ) : null}
               </div>
             ) : undefined
           }

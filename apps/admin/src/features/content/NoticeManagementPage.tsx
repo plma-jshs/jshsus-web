@@ -4,7 +4,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type { NoticeSummary } from '@jshsus/types';
 import { ExternalLink, Paperclip, Pin, PinOff, Search, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { IconButton, PageSizeSelect, useToast } from '../../components/ui';
+import { PageSizeSelect, RowActionButton, RowActions, useToast } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 import {
   ContentAdminPanel,
@@ -125,8 +125,11 @@ export function NoticeManagementPage() {
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <div className="table-action-row">
-            <IconButton
+          <RowActions>
+            <RowActionButton
+              icon={
+                row.original.pinned ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />
+              }
               label={row.original.pinned ? '공지 고정 해제' : '공지 고정'}
               variant="primary"
               disabled={updateNoticeMutation.isPending}
@@ -136,10 +139,9 @@ export function NoticeManagementPage() {
                   pinned: !row.original.pinned,
                 })
               }
-            >
-              {row.original.pinned ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />}
-            </IconButton>
-            <IconButton
+            />
+            <RowActionButton
+              icon={<Trash2 aria-hidden="true" />}
               label="공지 삭제"
               variant="danger"
               disabled={deleteNoticeMutation.isPending}
@@ -148,10 +150,8 @@ export function NoticeManagementPage() {
                   deleteNoticeMutation.mutate(row.original.id);
                 }
               }}
-            >
-              <Trash2 aria-hidden="true" />
-            </IconButton>
-          </div>
+            />
+          </RowActions>
         ),
         enableSorting: false,
         meta: { align: 'center', width: 92 },

@@ -8,5 +8,7 @@ export * from './FormField';
 export * from './IconButton';
 export * from './PageSizeSelect';
 export * from './SegmentedTabs';
+export * from './RowActions';
 export * from './TableToolbar';
+export * from './TableSelection';
 export * from './Toast';

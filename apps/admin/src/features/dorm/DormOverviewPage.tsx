@@ -3,7 +3,14 @@ import type { DormRoom } from '@jshsus/types';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { CircleAlert, DoorOpen, Eye } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { Drawer, EmptyState, IconButton, PageSizeSelect, TableToolbar } from '../../components/ui';
+import {
+  Drawer,
+  EmptyState,
+  PageSizeSelect,
+  RowActionButton,
+  RowActions,
+  TableToolbar,
+} from '../../components/ui';
 import { DormReportStatusBadge, useDormData } from './dormData';
 import './dorm.css';
 
@@ -77,16 +84,17 @@ export function DormOverviewPage() {
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <IconButton
-            label={`${row.original.dormName} ${row.original.name} 상세 보기`}
-            variant="primary"
-            onClick={() => setSelectedRoom(row.original)}
-          >
-            <Eye aria-hidden="true" />
-          </IconButton>
+          <RowActions>
+            <RowActionButton
+              icon={<Eye aria-hidden="true" />}
+              label={`${row.original.dormName} ${row.original.name} 상세 보기`}
+              variant="primary"
+              onClick={() => setSelectedRoom(row.original)}
+            />
+          </RowActions>
         ),
         enableSorting: false,
-        meta: { width: 84, align: 'center' },
+        meta: { width: 64, align: 'center' },
       },
     ],
     [],

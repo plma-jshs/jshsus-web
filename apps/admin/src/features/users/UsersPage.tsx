@@ -17,8 +17,9 @@ import { DataTable } from '../../components/DataTable';
 import {
   Dialog,
   type DialogSize,
-  IconButton,
   PageSizeSelect,
+  RowActionButton,
+  RowActions,
   SegmentedTabs,
   TableToolbar,
   useToast,
@@ -1160,27 +1161,27 @@ function IdentityActions({
 }) {
   const disabled = !identity.value.userId;
   return (
-    <div className="identity-row-actions">
-      <IconButton
+    <RowActions className="identity-row-actions">
+      <RowActionButton
+        icon={<Pencil aria-hidden="true" />}
         label="정보 수정"
         variant="primary"
         onClick={() => onOpen({ type: 'edit', identity })}
-      >
-        <Pencil aria-hidden="true" />
-      </IconButton>
-      <IconButton label="인증코드 발급" onClick={() => onOpenActivation(identity)}>
-        <KeyRound aria-hidden="true" />
-      </IconButton>
+      />
+      <RowActionButton
+        icon={<KeyRound aria-hidden="true" />}
+        label="인증코드 발급"
+        onClick={() => onOpenActivation(identity)}
+      />
       {canManageRoles ? (
-        <IconButton
+        <RowActionButton
+          icon={<ShieldCheck aria-hidden="true" />}
           label="역할 수정"
           disabled={disabled}
           onClick={() => onOpen({ type: 'roles', identity })}
-        >
-          <ShieldCheck aria-hidden="true" />
-        </IconButton>
+        />
       ) : null}
-    </div>
+    </RowActions>
   );
 }
 

@@ -2,7 +2,7 @@ import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react';
-import { Dialog, Drawer, IconButton, useToast } from '../../components/ui';
+import { Dialog, Drawer, RowActionButton, RowActions, useToast } from '../../components/ui';
 import {
   api,
   type AdminSchoolCalendarEvent,
@@ -446,14 +446,20 @@ export function SchoolEventsPage() {
         }
         footer={
           selectedEvent?.editable && selectedEvent.managedId ? (
-            <div className="button-row">
-              <IconButton
+            <RowActions className="button-row">
+              <RowActionButton
+                icon={<Pencil aria-hidden="true" />}
                 label={`${selectedEvent.title} 수정`}
                 onClick={() => openEdit(selectedEvent)}
-              >
-                <Pencil aria-hidden="true" />
-              </IconButton>
-              <IconButton
+              />
+              <RowActionButton
+                icon={
+                  selectedEvent.isPublic ? (
+                    <EyeOff aria-hidden="true" />
+                  ) : (
+                    <Eye aria-hidden="true" />
+                  )
+                }
                 label={selectedEvent.isPublic ? '비공개 전환' : '공개'}
                 variant="primary"
                 disabled={visibilityMutation.isPending}
@@ -463,24 +469,17 @@ export function SchoolEventsPage() {
                     isPublic: !selectedEvent.isPublic,
                   })
                 }
-              >
-                {selectedEvent.isPublic ? (
-                  <EyeOff aria-hidden="true" />
-                ) : (
-                  <Eye aria-hidden="true" />
-                )}
-              </IconButton>
-              <IconButton
+              />
+              <RowActionButton
+                icon={<Trash2 aria-hidden="true" />}
                 label={`${selectedEvent.title} 삭제`}
                 variant="danger"
                 onClick={() => {
                   setSelectedEventId(null);
                   setDeleteTarget(selectedEvent);
                 }}
-              >
-                <Trash2 aria-hidden="true" />
-              </IconButton>
-            </div>
+              />
+            </RowActions>
           ) : undefined
         }
       >

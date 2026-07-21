@@ -1,10 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { DeviceCase, DeviceCaseCommand, DeviceCaseControlCommand } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { History, Lock, LockOpen } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { Button, Dialog, PageSizeSelect, TableToolbar } from '../../components/ui';
+import {
+  Button,
+  Dialog,
+  PageSizeSelect,
+  RowActionButton,
+  RowActions,
+  TableSelectionCheckbox,
+  TableToolbar,
+} from '../../components/ui';
 import { api, describeAdminApiError } from '../../shared/api/adminApi';
 import './device-cases.css';
 
@@ -38,35 +46,6 @@ function deviceCaseLabel(id: number) {
   const grade = Math.floor(pairIndex / 4) + 1;
   const classNo = (pairIndex % 4) + 1;
   return `${grade}-${classNo} (${id % 2 === 1 ? '상' : '하'})`;
-}
-
-function SelectionCheckbox({
-  checked,
-  indeterminate = false,
-  label,
-  onChange,
-}: {
-  checked: boolean;
-  indeterminate?: boolean;
-  label: string;
-  onChange: (checked: boolean) => void;
-}) {
-  const ref = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (ref.current) ref.current.indeterminate = indeterminate;
-  }, [indeterminate]);
-
-  return (
-    <input
-      ref={ref}
-      className="device-row-checkbox"
-      type="checkbox"
-      checked={checked}
-      aria-label={label}
-      onChange={(event) => onChange(event.currentTarget.checked)}
-    />
-  );
 }
 
 export function DeviceCasesPage() {
@@ -166,7 +145,7 @@ export function DeviceCasesPage() {
       {
         id: 'selection',
         header: () => (
-          <SelectionCheckbox
+          <TableSelectionCheckbox
             checked={cases.length > 0 && selectedCaseIdsInList.size === cases.length}
             indeterminate={
               selectedCaseIdsInList.size > 0 && selectedCaseIdsInList.size < cases.length
@@ -177,7 +156,7 @@ export function DeviceCasesPage() {
         ),
         enableSorting: false,
         cell: ({ row }) => (
-          <SelectionCheckbox
+          <TableSelectionCheckbox
             checked={selectedCaseIdsInList.has(row.original.id)}
             label={`${deviceCaseLabel(row.original.id)} 선택`}
             onChange={(checked) => toggleCaseSelection(row.original.id, checked)}
@@ -227,35 +206,29 @@ export function DeviceCasesPage() {
         header: '작업',
         enableSorting: false,
         cell: ({ row }) => (
-          <div className="device-case-actions">
-            <Button
-              className="device-command-button"
-              type="button"
+          <RowActions>
+            <RowActionButton
+              icon={
+                row.original.isOpen ? (
+                  <Lock size={14} aria-hidden="true" />
+                ) : (
+                  <LockOpen size={14} aria-hidden="true" />
+                )
+              }
+              label={`${deviceCaseLabel(row.original.id)} ${row.original.isOpen ? '잠금' : '해제'}`}
               variant="primary"
-              size="sm"
               onClick={() => runCaseCommand(row.original, row.original.isOpen ? 'close' : 'open')}
               disabled={isCommandPending}
-            >
-              {row.original.isOpen ? (
-                <Lock size={14} aria-hidden="true" />
-              ) : (
-                <LockOpen size={14} aria-hidden="true" />
-              )}
-              {row.original.isOpen ? '잠금' : '해제'}
-            </Button>
-            <Button
-              className="device-history-button"
-              type="button"
+            />
+            <RowActionButton
+              icon={<History size={14} aria-hidden="true" />}
+              label={`${deviceCaseLabel(row.original.id)} 기록 보기`}
               variant="secondary"
-              size="sm"
               onClick={() => setLogCaseId(row.original.id)}
-            >
-              <History size={14} aria-hidden="true" />
-              기록 보기
-            </Button>
-          </div>
+            />
+          </RowActions>
         ),
-        meta: { align: 'center', width: 156 },
+        meta: { align: 'center', width: 92 },
       },
     ],
     [

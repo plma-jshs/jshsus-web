@@ -9,6 +9,8 @@ import {
   Dialog,
   FormField,
   PageSizeSelect,
+  RowActionButton,
+  RowActions,
   SegmentedTabs,
   TableToolbar,
   useToast,
@@ -239,22 +241,22 @@ export function PointDeparturesPage() {
         enableSorting: false,
         cell: ({ row }) =>
           row.original.currentPoint <= -20 ? (
-            <Button
-              size="sm"
-              variant="danger"
-              onClick={() => {
-                setSelected(row.original);
-                setMemo('');
-                setBaseDate(today);
-              }}
-            >
-              <LogOut size={15} aria-hidden="true" />
-              퇴사 처리
-            </Button>
+            <RowActions>
+              <RowActionButton
+                icon={<LogOut size={15} aria-hidden="true" />}
+                label={`${row.original.studentNo} ${row.original.name} 퇴사 처리`}
+                variant="danger"
+                onClick={() => {
+                  setSelected(row.original);
+                  setMemo('');
+                  setBaseDate(today);
+                }}
+              />
+            </RowActions>
           ) : (
-            <span className="point-system-label">-20점부터 퇴사 가능</span>
+            '—'
           ),
-        meta: { align: 'center', width: 180 },
+        meta: { align: 'center', width: 92 },
       },
     ],
     [],

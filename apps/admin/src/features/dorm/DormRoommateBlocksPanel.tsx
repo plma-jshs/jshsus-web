@@ -4,7 +4,14 @@ import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { Button, IconButton, PageSizeSelect, TableToolbar, useToast } from '../../components/ui';
+import {
+  Button,
+  PageSizeSelect,
+  RowActionButton,
+  RowActions,
+  TableToolbar,
+  useToast,
+} from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 
 type Props = {
@@ -111,18 +118,19 @@ export function DormRoommateBlocksPanel({
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <IconButton
-            label={`${row.original.studentName}·${row.original.blockedStudentName} 블랙리스트 삭제`}
-            variant="danger"
-            disabled={deleteMutation.isPending}
-            onClick={() => {
-              if (window.confirm('이 블랙리스트 항목을 삭제할까요?')) {
-                deleteMutation.mutate(row.original.id);
-              }
-            }}
-          >
-            <Trash2 aria-hidden="true" />
-          </IconButton>
+          <RowActions>
+            <RowActionButton
+              icon={<Trash2 aria-hidden="true" />}
+              label={`${row.original.studentName}·${row.original.blockedStudentName} 블랙리스트 삭제`}
+              variant="danger"
+              disabled={deleteMutation.isPending}
+              onClick={() => {
+                if (window.confirm('이 블랙리스트 항목을 삭제할까요?')) {
+                  deleteMutation.mutate(row.original.id);
+                }
+              }}
+            />
+          </RowActions>
         ),
         enableSorting: false,
         meta: { width: 64, align: 'center' },

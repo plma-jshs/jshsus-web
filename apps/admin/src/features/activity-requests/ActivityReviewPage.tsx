@@ -9,13 +9,15 @@ import type {
 } from '@jshsus/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { FilePlus2, Printer, X } from 'lucide-react';
+import { Check, FilePlus2, Printer, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
   Button,
   Drawer,
   PageSizeSelect,
+  RowActionButton,
+  RowActions,
   TableToolbar,
   useToast,
 } from '../../components/ui';
@@ -392,25 +394,23 @@ export function ActivityReviewPage() {
       header: '작업',
       enableSorting: false,
       cell: ({ row }) => (
-        <div className="table-action-row">
-          <button
-            className="table-action operation-action--approve"
-            type="button"
+        <RowActions>
+          <RowActionButton
+            icon={<Check size={14} aria-hidden="true" />}
+            label="탐구활동서 승인"
+            variant="primary"
             onClick={() => approveMutation.mutate(row.original.id)}
             disabled={approveMutation.isPending}
-          >
-            승인
-          </button>
-          <button
-            className="table-action danger"
-            type="button"
+          />
+          <RowActionButton
+            icon={<X size={14} aria-hidden="true" />}
+            label="탐구활동서 반려"
+            variant="danger"
             onClick={() => setRejectForm({ id: row.original.id, reason: '' })}
-          >
-            반려
-          </button>
-        </div>
+          />
+        </RowActions>
       ),
-      meta: { width: 125, align: 'center' },
+      meta: { width: 92, align: 'center' },
     },
   ];
 

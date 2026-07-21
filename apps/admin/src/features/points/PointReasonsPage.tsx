@@ -10,6 +10,8 @@ import {
   Dialog,
   FormField,
   PageSizeSelect,
+  RowActionButton,
+  RowActions,
   TableToolbar,
   useToast,
 } from '../../components/ui';
@@ -152,32 +154,22 @@ export function PointReasonsPage() {
           row.original.isSystem ? (
             <span className="point-system-label">시스템 기본값</span>
           ) : (
-            <div className="point-table-actions">
-              <Button
-                className="point-action point-action--edit"
-                size="sm"
-                variant="ghost"
-                title="수정"
-                aria-label={`${row.original.comment} 수정`}
+            <RowActions>
+              <RowActionButton
+                icon={<Pencil size={15} aria-hidden="true" />}
+                label={`${row.original.comment} 수정`}
+                variant="secondary"
                 onClick={() => openEdit(row.original)}
-              >
-                <Pencil size={15} aria-hidden="true" />
-                수정
-              </Button>
-              <Button
-                className="point-action point-action--delete"
-                size="sm"
-                variant="ghost"
-                title="삭제"
-                aria-label={`${row.original.comment} 삭제`}
+              />
+              <RowActionButton
+                icon={<Trash2 size={15} aria-hidden="true" />}
+                label={`${row.original.comment} 삭제`}
+                variant="danger"
                 onClick={() => setDeleteTarget(row.original)}
-              >
-                <Trash2 size={15} aria-hidden="true" />
-                삭제
-              </Button>
-            </div>
+              />
+            </RowActions>
           ),
-        meta: { align: 'center', width: 150 },
+        meta: { align: 'center', width: 92 },
       },
     ],
     [],

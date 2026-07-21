@@ -121,6 +121,53 @@
   animation: ui-spin 700ms linear infinite;
 }
 
+.admin-selection-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--action-primary);
+  cursor: pointer;
+}
+
+.admin-selection-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.admin-selected-header-action.ui-button {
+  min-height: 30px;
+  padding-inline: 9px;
+  gap: 5px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.admin-row-actions {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.admin-row-actions.button-row {
+  width: auto;
+  justify-content: flex-end;
+}
+
+.admin-row-action-button.ui-button {
+  width: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+}
+
+.admin-row-action-button svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+}
+
 .table-action {
   color: var(--j-color-text-secondary);
 }

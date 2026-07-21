@@ -8,8 +8,7 @@
   margin-top: 12px;
 }
 
-.device-control-actions,
-.device-case-actions {
+.device-control-actions {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
@@ -20,25 +19,6 @@
   flex-wrap: wrap;
 }
 
-.device-case-actions {
-  width: 100%;
-}
-
-.device-row-checkbox {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  accent-color: var(--primary);
-  cursor: pointer;
-}
-
-.device-command-button,
-.device-history-button {
-  min-width: 66px;
-}
-
-.device-command-button svg,
-.device-history-button svg,
 .device-control-actions .ui-button svg {
   flex: 0 0 auto;
 }
@@ -67,8 +47,7 @@
 }
 
 @media (max-width: 720px) {
-  .device-control-actions,
-  .device-case-actions {
+  .device-control-actions {
     justify-content: flex-start;
   }
 }

@@ -4,7 +4,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type { ContentReportSummary, LostItemSummary } from '@jshsus/types';
 import { PackageSearch, Search, Settings2, ShieldAlert, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { Drawer, IconButton, PageSizeSelect, useToast } from '../../components/ui';
+import { Drawer, PageSizeSelect, RowActionButton, RowActions, useToast } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 import {
   ContentAdminPanel,
@@ -175,15 +175,16 @@ export function LostItemsManagementPage() {
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <IconButton
-            label={`${row.original.itemName} 관리`}
-            onClick={() => {
-              setSelectedItemStatus(row.original.status);
-              setSelectedItemId(row.original.id);
-            }}
-          >
-            <Settings2 aria-hidden="true" />
-          </IconButton>
+          <RowActions>
+            <RowActionButton
+              icon={<Settings2 aria-hidden="true" />}
+              label={`${row.original.itemName} 관리`}
+              onClick={() => {
+                setSelectedItemStatus(row.original.status);
+                setSelectedItemId(row.original.id);
+              }}
+            />
+          </RowActions>
         ),
         enableSorting: false,
         meta: { align: 'center', width: 64 },
@@ -236,12 +237,13 @@ export function LostItemsManagementPage() {
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <IconButton
-            label={`분실물 #${row.original.targetId} 신고 관리`}
-            onClick={() => setSelectedReportId(row.original.id)}
-          >
-            <Settings2 aria-hidden="true" />
-          </IconButton>
+          <RowActions>
+            <RowActionButton
+              icon={<Settings2 aria-hidden="true" />}
+              label={`분실물 #${row.original.targetId} 신고 관리`}
+              onClick={() => setSelectedReportId(row.original.id)}
+            />
+          </RowActions>
         ),
         enableSorting: false,
         meta: { align: 'center', width: 64 },

@@ -2,8 +2,17 @@ import { useMemo, useState } from 'react';
 import type { DormReport, DormReportStatus } from '@jshsus/types';
 import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
+import { ClipboardCheck } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { Button, Drawer, PageSizeSelect, TableToolbar, useToast } from '../../components/ui';
+import {
+  Button,
+  Drawer,
+  PageSizeSelect,
+  RowActionButton,
+  RowActions,
+  TableToolbar,
+  useToast,
+} from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 import { DormReportStatusBadge, dormReportStatusOptions } from './dormData';
 
@@ -103,12 +112,17 @@ export function DormReportsPanel({
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <Button size="sm" onClick={() => openReport(row.original)}>
-            처리
-          </Button>
+          <RowActions>
+            <RowActionButton
+              icon={<ClipboardCheck aria-hidden="true" />}
+              label={`${row.original.studentName} 민원 처리`}
+              variant="primary"
+              onClick={() => openReport(row.original)}
+            />
+          </RowActions>
         ),
         enableSorting: false,
-        meta: { width: 80, align: 'center' },
+        meta: { width: 64, align: 'center' },
       },
     ],
     [],

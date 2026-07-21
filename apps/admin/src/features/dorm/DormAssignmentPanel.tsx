@@ -9,8 +9,17 @@ import type {
 } from '@jshsus/types';
 import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
+import { MoveRight, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { Button, Dialog, PageSizeSelect, TableToolbar, useToast } from '../../components/ui';
+import {
+  Button,
+  Dialog,
+  PageSizeSelect,
+  RowActionButton,
+  RowActions,
+  TableToolbar,
+  useToast,
+} from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 
 type Props = {
@@ -414,20 +423,20 @@ export function DormAssignmentPanel({
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() =>
-              setPlacements((current) =>
-                current.filter((placement) => placement.userId !== row.original.userId),
-              )
-            }
-          >
-            제외
-          </Button>
+          <RowActions>
+            <RowActionButton
+              icon={<X aria-hidden="true" />}
+              label={`${row.original.studentName} 제외`}
+              onClick={() =>
+                setPlacements((current) =>
+                  current.filter((placement) => placement.userId !== row.original.userId),
+                )
+              }
+            />
+          </RowActions>
         ),
         enableSorting: false,
-        meta: { width: 80, align: 'center' },
+        meta: { width: 64, align: 'center' },
       },
     ],
     [drawRooms, placements, preview, rooms, updatePlacementRoom],
@@ -534,24 +543,27 @@ export function DormAssignmentPanel({
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <div className="dorm-row-actions">
-            <Button
-              size="sm"
+          <RowActions className="dorm-row-actions">
+            <RowActionButton
+              icon={<MoveRight aria-hidden="true" />}
+              label={`${row.original.studentName} 이동`}
+              variant="primary"
               onClick={() => {
                 setMovingAssignment(row.original);
                 setMoveRoomId(String(row.original.roomId));
                 setMoveBed(String(row.original.bedPosition));
               }}
-            >
-              이동
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setCancelTarget(row.original)}>
-              취소
-            </Button>
-          </div>
+            />
+            <RowActionButton
+              icon={<X aria-hidden="true" />}
+              label={`${row.original.studentName} 배정 취소`}
+              variant="danger"
+              onClick={() => setCancelTarget(row.original)}
+            />
+          </RowActions>
         ),
         enableSorting: false,
-        meta: { width: 150, align: 'center' },
+        meta: { width: 92, align: 'center' },
       },
     ],
     [selectedAssignments],

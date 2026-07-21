@@ -2,8 +2,16 @@ import { useMemo, useState } from 'react';
 import type { DormRoom, DormRoomResident, PointReason } from '@jshsus/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
+import { X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { Button, PageSizeSelect, TableToolbar, useToast } from '../../components/ui';
+import {
+  Button,
+  PageSizeSelect,
+  RowActionButton,
+  RowActions,
+  TableToolbar,
+  useToast,
+} from '../../components/ui';
 import { pointsApi } from '../points/pointsApi';
 
 type QueueRow = DormRoomResident & {
@@ -157,18 +165,18 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() =>
-              setQueue((current) => current.filter((item) => item.userId !== row.original.userId))
-            }
-          >
-            제외
-          </Button>
+          <RowActions>
+            <RowActionButton
+              icon={<X aria-hidden="true" />}
+              label={`${row.original.studentName} 제외`}
+              onClick={() =>
+                setQueue((current) => current.filter((item) => item.userId !== row.original.userId))
+              }
+            />
+          </RowActions>
         ),
         enableSorting: false,
-        meta: { width: 80, align: 'center' },
+        meta: { width: 64, align: 'center' },
       },
     ],
     [],

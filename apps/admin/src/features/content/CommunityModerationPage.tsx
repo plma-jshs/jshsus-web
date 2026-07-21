@@ -4,7 +4,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type { BoardCommentSummary, BoardPostSummary, ContentReportSummary } from '@jshsus/types';
 import { Eye, EyeOff, Search, Settings2, ShieldAlert } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { Drawer, IconButton, PageSizeSelect, useToast } from '../../components/ui';
+import { Drawer, PageSizeSelect, RowActionButton, RowActions, useToast } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 import {
   ContentAdminPanel,
@@ -209,12 +209,13 @@ export function CommunityModerationPage({
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <IconButton
-            label={`${row.original.title} 관리`}
-            onClick={() => setSelectedPostId(row.original.id)}
-          >
-            <Settings2 aria-hidden="true" />
-          </IconButton>
+          <RowActions>
+            <RowActionButton
+              icon={<Settings2 aria-hidden="true" />}
+              label={`${row.original.title} 관리`}
+              onClick={() => setSelectedPostId(row.original.id)}
+            />
+          </RowActions>
         ),
         enableSorting: false,
         meta: { align: 'center', width: 64 },
@@ -269,12 +270,13 @@ export function CommunityModerationPage({
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <IconButton
-            label={`${reportTargetLabel[row.original.targetType]} 신고 관리`}
-            onClick={() => setSelectedReportId(row.original.id)}
-          >
-            <Settings2 aria-hidden="true" />
-          </IconButton>
+          <RowActions>
+            <RowActionButton
+              icon={<Settings2 aria-hidden="true" />}
+              label={`${reportTargetLabel[row.original.targetType]} 신고 관리`}
+              onClick={() => setSelectedReportId(row.original.id)}
+            />
+          </RowActions>
         ),
         enableSorting: false,
         meta: { align: 'center', width: 64 },
@@ -319,19 +321,22 @@ export function CommunityModerationPage({
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <IconButton
-            label={row.original.isHidden ? '댓글 공개' : '댓글 숨김'}
-            variant={row.original.isHidden ? 'primary' : 'danger'}
-            disabled={toggleCommentMutation.isPending}
-            onClick={() =>
-              toggleCommentMutation.mutate({
-                id: row.original.id,
-                isHidden: !row.original.isHidden,
-              })
-            }
-          >
-            {row.original.isHidden ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}
-          </IconButton>
+          <RowActions>
+            <RowActionButton
+              icon={
+                row.original.isHidden ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />
+              }
+              label={row.original.isHidden ? '댓글 공개' : '댓글 숨김'}
+              variant={row.original.isHidden ? 'primary' : 'danger'}
+              disabled={toggleCommentMutation.isPending}
+              onClick={() =>
+                toggleCommentMutation.mutate({
+                  id: row.original.id,
+                  isHidden: !row.original.isHidden,
+                })
+              }
+            />
+          </RowActions>
         ),
         enableSorting: false,
         meta: { align: 'center', width: 64 },

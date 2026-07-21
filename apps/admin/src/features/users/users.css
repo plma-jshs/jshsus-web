@@ -201,7 +201,7 @@
   display: inline-flex;
   gap: 4px;
 }
-.identity-row-actions .ui-icon-button {
+.identity-row-actions .admin-row-action-button {
   width: 32px;
   height: 32px;
   flex-basis: 32px;

@@ -4,7 +4,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { Check, ExternalLink, Music2, Search, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { Drawer, PageSizeSelect, SegmentedTabs, TableToolbar, useToast } from '../../components/ui';
+import {
+  Drawer,
+  PageSizeSelect,
+  RowActionButton,
+  RowActions,
+  SegmentedTabs,
+  TableToolbar,
+  useToast,
+} from '../../components/ui';
 import { YouTubeSegmentPlayer } from '../../components/youtube/YouTubeSegmentPlayer';
 import { wakeSongAdminApi } from './api';
 import type { WakeSongRequest, WakeSongRequestStatus } from './types';
@@ -163,35 +171,29 @@ export function WakeSongsPage() {
       enableSorting: false,
       cell: ({ row }) => {
         const request = row.original;
+        if (request.status !== 'PENDING') return '—';
         return (
-          <div className="table-action-row">
-            {request.status === 'PENDING' ? (
-              <>
-                <button
-                  className="table-action is-positive"
-                  type="button"
-                  onClick={() => approveMutation.mutate(request.id)}
-                  disabled={approveMutation.isPending}
-                >
-                  <Check size={14} aria-hidden="true" /> 승인
-                </button>
-                <button
-                  className="table-action danger"
-                  type="button"
-                  onClick={() => {
-                    setRejectingId(request.id);
-                    setRejectionReason('');
-                  }}
-                >
-                  <X size={14} aria-hidden="true" /> 반려
-                </button>
-              </>
-            ) : null}
-            {request.status !== 'PENDING' ? '—' : null}
-          </div>
+          <RowActions>
+            <RowActionButton
+              icon={<Check size={14} aria-hidden="true" />}
+              label="기상곡 승인"
+              variant="primary"
+              onClick={() => approveMutation.mutate(request.id)}
+              disabled={approveMutation.isPending}
+            />
+            <RowActionButton
+              icon={<X size={14} aria-hidden="true" />}
+              label="기상곡 반려"
+              variant="danger"
+              onClick={() => {
+                setRejectingId(request.id);
+                setRejectionReason('');
+              }}
+            />
+          </RowActions>
         );
       },
-      meta: { align: 'center', minWidth: 180 },
+      meta: { align: 'center', width: 92 },
     },
   ];
 

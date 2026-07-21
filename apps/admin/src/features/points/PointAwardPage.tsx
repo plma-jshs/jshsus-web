@@ -1,11 +1,20 @@
 import type { PointReason } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Check, Pencil, Trash2, X } from 'lucide-react';
+import { Check, Pencil, X } from 'lucide-react';
 import type { ChangeEvent, FormEvent } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
-import { Button, FormField, TableToolbar, useToast } from '../../components/ui';
+import {
+  Button,
+  FormField,
+  RowActionButton,
+  RowActions,
+  SelectedRowsHeaderAction,
+  TableSelectionCheckbox,
+  TableToolbar,
+  useToast,
+} from '../../components/ui';
 import { pointsApi, type PointStudentRow } from './pointsApi';
 import './points.css';
 
@@ -62,35 +71,6 @@ function directSelectionFromStudent(student: PointStudentRow): DirectStudentSele
     number: String(student.number),
   };
   return validateDirectStudentSelection(selection) ? emptyDirectStudentSelection : selection;
-}
-
-function SelectionCheckbox({
-  checked,
-  indeterminate = false,
-  label,
-  onChange,
-}: {
-  checked: boolean;
-  indeterminate?: boolean;
-  label: string;
-  onChange: (checked: boolean) => void;
-}) {
-  const ref = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (ref.current) ref.current.indeterminate = indeterminate;
-  }, [indeterminate]);
-
-  return (
-    <input
-      ref={ref}
-      className="point-row-checkbox"
-      type="checkbox"
-      checked={checked}
-      aria-label={label}
-      onChange={(event) => onChange(event.target.checked)}
-    />
-  );
 }
 
 const reasonTypeLabel: Record<PointReason['type'], string> = {
@@ -344,14 +324,14 @@ export function PointAwardPage() {
     addStudentSelection(student);
   };
 
-  const clearStudentSelection = () => {
+  const clearStudentSelection = useCallback(() => {
     setSelectedStudents([]);
     setSearch('');
     setSearchOpen(false);
     setDirect(emptyDirectStudentSelection);
     directMutation.reset();
     setEditKey(null);
-  };
+  }, [directMutation]);
 
   const removeStudentSelection = (studentId: number) => {
     if (editKey) return;
@@ -475,12 +455,25 @@ export function PointAwardPage() {
     }
   };
 
+  const deleteSelectedRows = useCallback(() => {
+    const deletedCount = selectedKeys.size;
+    if (deletedCount === 0) return;
+    setQueue((items) => items.filter((item) => !selectedKeys.has(item.key)));
+    if (editKey && selectedKeys.has(editKey)) clearStudentSelection();
+    setSelectedKeys(new Set());
+    showToast({
+      title: '선택 항목 삭제',
+      description: `${deletedCount}건을 적용 목록에서 삭제했습니다.`,
+      tone: 'success',
+    });
+  }, [clearStudentSelection, editKey, selectedKeys, showToast]);
+
   const queueColumns = useMemo<ColumnDef<QueuedRecord>[]>(
     () => [
       {
         id: 'selection',
         header: () => (
-          <SelectionCheckbox
+          <TableSelectionCheckbox
             checked={queue.length > 0 && selectedKeys.size === queue.length}
             indeterminate={selectedKeys.size > 0 && selectedKeys.size < queue.length}
             label="전체 선택"
@@ -491,7 +484,7 @@ export function PointAwardPage() {
         ),
         enableSorting: false,
         cell: ({ row }) => (
-          <SelectionCheckbox
+          <TableSelectionCheckbox
             checked={selectedKeys.has(row.original.key)}
             label={`${row.original.studentNo} ${row.original.studentName} 선택`}
             onChange={(checked) =>
@@ -508,7 +501,13 @@ export function PointAwardPage() {
       },
       {
         id: 'rowNumber',
-        header: '번호',
+        header: () => (
+          <SelectedRowsHeaderAction
+            selectedCount={selectedKeys.size}
+            defaultLabel="번호"
+            onDelete={deleteSelectedRows}
+          />
+        ),
         enableSorting: false,
         cell: ({ row }) => row.index + 1,
         meta: { align: 'center', width: 72 },
@@ -562,12 +561,11 @@ export function PointAwardPage() {
         header: '작업',
         enableSorting: false,
         cell: ({ row }) => (
-          <div className="point-table-actions">
-            <Button
-              className="point-action point-action--edit"
-              size="sm"
-              variant="ghost"
-              aria-label={`${row.original.studentNo} ${row.original.studentName} 수정`}
+          <RowActions>
+            <RowActionButton
+              icon={<Pencil size={15} aria-hidden="true" />}
+              label={`${row.original.studentNo} ${row.original.studentName} 수정`}
+              variant="secondary"
               onClick={() => {
                 const item = row.original;
                 const student = {
@@ -596,30 +594,14 @@ export function PointAwardPage() {
                 setEditKey(item.key);
                 setFeedback('선택한 기록을 위 입력란에서 수정한 뒤 수정 반영을 눌러 주세요.');
               }}
-            >
-              <Pencil size={15} aria-hidden="true" />
-              수정
-            </Button>
-          </div>
+            />
+          </RowActions>
         ),
         meta: { align: 'center', width: 96 },
       },
     ],
-    [queue, selectedKeys],
+    [deleteSelectedRows, queue, selectedKeys],
   );
-
-  const deleteSelectedRows = () => {
-    const deletedCount = selectedKeys.size;
-    if (deletedCount === 0) return;
-    setQueue((items) => items.filter((item) => !selectedKeys.has(item.key)));
-    if (editKey && selectedKeys.has(editKey)) clearStudentSelection();
-    setSelectedKeys(new Set());
-    showToast({
-      title: '선택 항목 삭제',
-      description: `${deletedCount}건을 적용 목록에서 삭제했습니다.`,
-      tone: 'success',
-    });
-  };
 
   const directValidation = validateDirectStudentSelection(direct);
   const directReady = Boolean(direct.grade && direct.classNo && direct.number && !directValidation);
@@ -844,18 +826,6 @@ export function PointAwardPage() {
           summary={
             <div className="point-record-summary">
               <span>{queue.length}건</span>
-              {selectedKeys.size > 0 ? (
-                <Button
-                  className="point-action"
-                  variant="danger"
-                  size="sm"
-                  disabled={submitMutation.isPending}
-                  onClick={deleteSelectedRows}
-                >
-                  <Trash2 size={15} aria-hidden="true" />
-                  선택 삭제 ({selectedKeys.size})
-                </Button>
-              ) : null}
             </div>
           }
         >
