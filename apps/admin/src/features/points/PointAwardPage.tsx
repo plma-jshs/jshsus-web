@@ -263,8 +263,8 @@ export function PointAwardPage() {
       }),
     onSuccess: async (result) => {
       showToast({
-        title: '상벌점 적용 완료',
-        description: `${result.recordIds.length}건을 적용했습니다.`,
+        title: '상벌점 부여 완료',
+        description: `${result.recordIds.length}건을 부여했습니다.`,
         tone: 'success',
       });
       setFeedback('');
@@ -279,7 +279,7 @@ export function PointAwardPage() {
     },
     onError: (error) => {
       showToast({
-        title: '상벌점을 적용하지 못했습니다.',
+        title: '상벌점을 부여하지 못했습니다.',
         description: error.message,
         tone: 'danger',
       });
@@ -578,6 +578,7 @@ export function PointAwardPage() {
                   baseDate: item.baseDate,
                 });
                 setEditKey(item.key);
+                setFeedback('선택한 기록을 위 입력란에서 수정한 뒤 수정 반영을 눌러 주세요.');
               }}
             >
               <Pencil size={15} aria-hidden="true" />
@@ -803,14 +804,32 @@ export function PointAwardPage() {
               variant="primary"
               disabled={selectedStudents.length === 0 || !selectedReason}
             >
-              {editKey ? '저장' : '추가'}
+              {editKey ? '수정 반영' : '목록에 추가'}
             </Button>
           </div>
         </form>
       </section>
 
       <section className="admin-panel point-panel">
-        <TableToolbar summary={`${queue.length}건`}>
+        <TableToolbar
+          summary={
+            <div className="point-record-summary">
+              <span>{queue.length}건</span>
+              {selectedKeys.size > 0 ? (
+                <Button
+                  className="point-action"
+                  variant="danger"
+                  size="sm"
+                  disabled={submitMutation.isPending}
+                  onClick={deleteSelectedRows}
+                >
+                  <Trash2 size={15} aria-hidden="true" />
+                  선택 삭제 ({selectedKeys.size})
+                </Button>
+              ) : null}
+            </div>
+          }
+        >
           <input
             ref={fileInputRef}
             className="sr-only"
@@ -853,22 +872,14 @@ export function PointAwardPage() {
           <div className="point-panel-action-buttons">
             <Button
               className="point-action"
-              variant="danger"
-              disabled={selectedKeys.size === 0 || submitMutation.isPending}
-              onClick={deleteSelectedRows}
-            >
-              <Trash2 size={16} aria-hidden="true" />
-              선택 삭제{selectedKeys.size > 0 ? ` (${selectedKeys.size})` : ''}
-            </Button>
-            <Button
-              className="point-action"
               variant="primary"
+              size="lg"
               disabled={queue.length === 0}
               loading={submitMutation.isPending}
               onClick={() => submitMutation.mutate()}
             >
               <Check size={17} aria-hidden="true" />
-              적용
+              상벌점 부여하기{queue.length > 0 ? ` (${queue.length}건)` : ''}
             </Button>
           </div>
         </div>

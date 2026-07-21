@@ -11,7 +11,9 @@ type StudentSort = 'studentNo' | 'name' | 'meritPoint' | 'penaltyPoint';
 export function PointsOverviewPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(
+    () => new URLSearchParams(window.location.search).get('search') ?? '',
+  );
   const [grade, setGrade] = useState('');
   const [classNo, setClassNo] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -35,6 +37,14 @@ export function PointsOverviewPage() {
       {
         accessorKey: 'studentNo',
         header: '학번',
+        cell: ({ row }) => (
+          <a
+            className="point-table-link"
+            href={`/points/records?search=${encodeURIComponent(String(row.original.studentNo))}`}
+          >
+            {row.original.studentNo}
+          </a>
+        ),
         meta: { align: 'center', width: 110 },
       },
       {

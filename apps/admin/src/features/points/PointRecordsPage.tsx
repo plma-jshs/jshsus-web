@@ -76,7 +76,9 @@ export function PointRecordsPage() {
   const { showToast } = useToast();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(
+    () => new URLSearchParams(window.location.search).get('search') ?? '',
+  );
   const [type, setType] = useState<PointReason['type'] | ''>('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -193,6 +195,14 @@ export function PointRecordsPage() {
       {
         accessorKey: 'studentNo',
         header: '학번',
+        cell: ({ row }) => (
+          <a
+            className="point-table-link"
+            href={`/points?search=${encodeURIComponent(String(row.original.studentNo))}`}
+          >
+            {row.original.studentNo}
+          </a>
+        ),
         meta: { align: 'center', width: 110 },
       },
       {
@@ -253,23 +263,24 @@ export function PointRecordsPage() {
       toolbar={
         <TableToolbar
           summary={
-            recordsQuery.data
-              ? selectedCount > 0
-                ? `총 ${recordsQuery.data.total}건 · 선택 ${selectedCount}건`
-                : `총 ${recordsQuery.data.total}건`
-              : undefined
+            recordsQuery.data ? (
+              <div className="point-record-summary">
+                <span>총 {recordsQuery.data.total}건</span>
+                {selectedCount > 0 ? (
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    loading={cancelSelectedMutation.isPending}
+                    loadingLabel="삭제 중"
+                    onClick={deleteSelectedRecords}
+                  >
+                    선택 삭제 ({selectedCount})
+                  </Button>
+                ) : null}
+              </div>
+            ) : undefined
           }
         >
-          <Button
-            variant="danger"
-            size="sm"
-            disabled={selectedCount === 0}
-            loading={cancelSelectedMutation.isPending}
-            loadingLabel="삭제 중"
-            onClick={deleteSelectedRecords}
-          >
-            선택 삭제
-          </Button>
           <label className="point-filter point-filter--search">
             <span>검색</span>
             <input

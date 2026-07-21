@@ -26,6 +26,29 @@
   width: 142px;
 }
 
+.point-record-summary {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 10px;
+}
+
+.point-table-link {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary-dark);
+  font: inherit;
+  font-weight: var(--j-weight-semibold);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.point-table-link:hover {
+  text-decoration: underline;
+}
+
 .point-record-selection-label {
   display: inline-flex;
   align-items: center;
