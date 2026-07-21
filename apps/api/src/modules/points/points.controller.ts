@@ -57,6 +57,11 @@ export class PointsController {
     return this.pointsService.previewRecordImport(body);
   }
 
+  @Post('records/cancel-batch')
+  cancelRecords(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
+    return this.pointsService.cancelRecords(body, request.authSession?.userId);
+  }
+
   @Post('records/:id/cancel')
   cancelRecord(
     @Param('id') id: string,

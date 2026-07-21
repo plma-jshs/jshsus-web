@@ -211,6 +211,14 @@ export const pointsApi = {
       method: 'POST',
       body: { reason },
     }),
+  cancelRecords: (ids: number[], reason = '관리자 일괄 삭제') =>
+    request<{ ok: true; canceled: number; ids: number[] }>(
+      '/api/admin/points/records/cancel-batch',
+      {
+        method: 'POST',
+        body: { ids, reason },
+      },
+    ),
   restoreRecord: (id: number, reason: string) =>
     request<{ ok: true }>(`/api/admin/points/records/${id}/restore`, {
       method: 'POST',

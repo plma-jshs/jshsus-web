@@ -1,9 +1,16 @@
 import type { PointReason } from '@jshsus/types';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
-import { AdminListPanel, DateRangeField, PageSizeSelect, TableToolbar } from '../../components/ui';
+import {
+  AdminListPanel,
+  Button,
+  DateRangeField,
+  PageSizeSelect,
+  TableToolbar,
+  useToast,
+} from '../../components/ui';
 import { pointsApi, type PointRecordRow } from './pointsApi';
 import './points.css';
 
@@ -30,13 +37,50 @@ function formatCreatedAt(value: string) {
     .replace(/\.$/, '');
 }
 
+type RecordSelectionCheckboxProps = {
+  checked: boolean;
+  label: string;
+  disabled?: boolean;
+  indeterminate?: boolean;
+  onChange: (checked: boolean) => void;
+};
+
+function RecordSelectionCheckbox({
+  checked,
+  label,
+  disabled = false,
+  indeterminate = false,
+  onChange,
+}: RecordSelectionCheckboxProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (inputRef.current) inputRef.current.indeterminate = indeterminate && !checked;
+  }, [checked, indeterminate]);
+
+  return (
+    <input
+      ref={inputRef}
+      className="point-record-checkbox"
+      type="checkbox"
+      aria-label={label}
+      checked={checked}
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.checked)}
+    />
+  );
+}
+
 export function PointRecordsPage() {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
   const [type, setType] = useState<PointReason['type'] | ''>('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [selectedRecordIds, setSelectedRecordIds] = useState<Set<number>>(() => new Set());
   const [sorting, setSorting] = useState<SortingState>([{ id: 'baseDate', desc: true }]);
   const sort = sorting[0];
   const recordsQuery = useQuery({
@@ -54,8 +98,87 @@ export function PointRecordsPage() {
       }),
   });
 
+  const visibleRecordIds = useMemo(
+    () => recordsQuery.data?.items.map((record) => record.id) ?? [],
+    [recordsQuery.data?.items],
+  );
+  const allVisibleRecordsSelected =
+    visibleRecordIds.length > 0 && visibleRecordIds.every((id) => selectedRecordIds.has(id));
+  const someVisibleRecordsSelected = visibleRecordIds.some((id) => selectedRecordIds.has(id));
+  const selectedCount = visibleRecordIds.filter((id) => selectedRecordIds.has(id)).length;
+
+  const cancelSelectedMutation = useMutation({
+    mutationFn: (ids: number[]) => pointsApi.cancelRecords(ids),
+    onSuccess: async (result) => {
+      setSelectedRecordIds(new Set());
+      await queryClient.invalidateQueries({ queryKey: ['point-record-page'] });
+      showToast({
+        title: `상벌점 기록 ${result.canceled}건을 삭제했습니다.`,
+        tone: 'success',
+      });
+    },
+    onError: (error) => {
+      showToast({
+        title: '선택한 상벌점 기록을 삭제하지 못했습니다.',
+        description: error instanceof Error ? error.message : undefined,
+        tone: 'danger',
+      });
+    },
+  });
+
+  const toggleVisibleRecords = useCallback(
+    (checked: boolean) => {
+      setSelectedRecordIds(checked ? new Set(visibleRecordIds) : new Set());
+    },
+    [visibleRecordIds],
+  );
+
+  const toggleRecord = useCallback((id: number, checked: boolean) => {
+    setSelectedRecordIds((current) => {
+      const next = new Set(current);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const deleteSelectedRecords = () => {
+    const ids = visibleRecordIds.filter((id) => selectedRecordIds.has(id));
+    if (ids.length === 0 || cancelSelectedMutation.isPending) return;
+    const confirmed = window.confirm(
+      `선택한 상벌점 기록 ${ids.length}건을 삭제할까요?\n삭제하면 학생 점수에서 제외되고 감사 로그에 남습니다.`,
+    );
+    if (!confirmed) return;
+    cancelSelectedMutation.mutate(ids);
+  };
+
   const columns = useMemo<ColumnDef<PointRecordRow>[]>(
     () => [
+      {
+        id: 'selection',
+        header: () => (
+          <label className="point-record-selection-label">
+            <RecordSelectionCheckbox
+              label="현재 페이지 전체 선택"
+              checked={allVisibleRecordsSelected}
+              indeterminate={someVisibleRecordsSelected && !allVisibleRecordsSelected}
+              disabled={visibleRecordIds.length === 0 || cancelSelectedMutation.isPending}
+              onChange={toggleVisibleRecords}
+            />
+            <span>전체</span>
+          </label>
+        ),
+        cell: ({ row }) => (
+          <RecordSelectionCheckbox
+            label={`${row.original.studentName} 상벌점 기록 선택`}
+            checked={selectedRecordIds.has(row.original.id)}
+            disabled={cancelSelectedMutation.isPending}
+            onChange={(checked) => toggleRecord(row.original.id, checked)}
+          />
+        ),
+        enableSorting: false,
+        meta: { align: 'center', width: 72 },
+      },
       {
         accessorKey: 'baseDate',
         header: '기준일',
@@ -108,16 +231,45 @@ export function PointRecordsPage() {
         meta: { align: 'center', width: 140 },
       },
     ],
-    [],
+    [
+      allVisibleRecordsSelected,
+      cancelSelectedMutation.isPending,
+      selectedRecordIds,
+      someVisibleRecordsSelected,
+      toggleRecord,
+      toggleVisibleRecords,
+      visibleRecordIds.length,
+    ],
   );
 
-  const resetPage = () => setPage(1);
+  const resetPage = () => {
+    setPage(1);
+    setSelectedRecordIds(new Set());
+  };
 
   return (
     <AdminListPanel
       className="point-panel"
       toolbar={
-        <TableToolbar summary={recordsQuery.data ? `총 ${recordsQuery.data.total}건` : undefined}>
+        <TableToolbar
+          summary={
+            recordsQuery.data
+              ? selectedCount > 0
+                ? `총 ${recordsQuery.data.total}건 · 선택 ${selectedCount}건`
+                : `총 ${recordsQuery.data.total}건`
+              : undefined
+          }
+        >
+          <Button
+            variant="danger"
+            size="sm"
+            disabled={selectedCount === 0}
+            loading={cancelSelectedMutation.isPending}
+            loadingLabel="삭제 중"
+            onClick={deleteSelectedRecords}
+          >
+            선택 삭제
+          </Button>
           <label className="point-filter point-filter--search">
             <span>검색</span>
             <input
@@ -183,7 +335,10 @@ export function PointRecordsPage() {
           pageSize,
           pageCount: recordsQuery.data?.totalPages ?? 1,
           totalCount: recordsQuery.data?.total,
-          onPageChange: (nextPage) => setPage(nextPage + 1),
+          onPageChange: (nextPage) => {
+            setPage(nextPage + 1);
+            setSelectedRecordIds(new Set());
+          },
         }}
         alwaysShowPagination
         getRowId={(row) => String(row.id)}

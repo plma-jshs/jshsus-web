@@ -92,6 +92,11 @@ const adjustmentSchema = z.object({
   reason: z.string().trim().min(1).max(255),
 });
 
+const bulkAdjustmentSchema = z.object({
+  ids: z.array(z.coerce.number().int().positive()).min(1).max(100),
+  reason: z.string().trim().min(1).max(255).default('관리자 일괄 삭제'),
+});
+
 const recordPageSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(20).max(100).default(20),
@@ -954,54 +959,79 @@ export class PointsService {
     );
   }
 
+  private async cancelRecordInTransaction(
+    tx: AppTransaction,
+    id: number,
+    reason: string,
+    actor: number,
+  ) {
+    const [record] = await tx
+      .select({
+        studentId: schema.pointRecords.studentId,
+        point: schema.pointRecords.point,
+        canceledAt: schema.pointRecords.canceledAt,
+        teacherStudentNo: schema.users.studentNo,
+        reason: sql<string>`coalesce(${schema.pointRecords.reasonText}, ${schema.pointReasons.comment})`,
+      })
+      .from(schema.pointRecords)
+      .leftJoin(schema.users, eq(schema.pointRecords.teacherId, schema.users.id))
+      .innerJoin(schema.pointReasons, eq(schema.pointRecords.reasonId, schema.pointReasons.id))
+      .where(eq(schema.pointRecords.id, id))
+      .limit(1)
+      .for('update');
+    if (!record) throw new NotFoundException('상벌점 기록을 찾을 수 없습니다.');
+    assertPointRecordCanBeAdjusted(record);
+    assertPointRecordCanBeCanceled(record.canceledAt);
+
+    await tx
+      .update(schema.pointRecords)
+      .set({ canceledAt: new Date(), restoredAt: null })
+      .where(eq(schema.pointRecords.id, id));
+    await tx
+      .update(schema.students)
+      .set({ currentPoint: sql`${schema.students.currentPoint} - ${record.point}` })
+      .where(eq(schema.students.id, record.studentId));
+    await tx.insert(schema.pointAdjustments).values({
+      pointRecordId: id,
+      actorId: actor,
+      action: 'cancel',
+      beforePoint: record.point,
+      afterPoint: 0,
+      reason,
+    });
+    await tx.insert(schema.auditLogs).values({
+      actorId: actor,
+      action: 'points.record.cancel',
+      targetType: 'point_records',
+      targetId: String(id),
+    });
+    return { ok: true, id, action: 'cancel' as const, reason };
+  }
+
   async cancelRecord(id: number, body: unknown, actorId?: number | null) {
     const parsed = adjustmentSchema.safeParse(body ?? {});
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
     const actor = requireActor(actorId);
 
     return this.database.query('points.records.cancel', async (db) =>
-      db.transaction(async (tx) => {
-        const [record] = await tx
-          .select({
-            studentId: schema.pointRecords.studentId,
-            point: schema.pointRecords.point,
-            canceledAt: schema.pointRecords.canceledAt,
-            teacherStudentNo: schema.users.studentNo,
-            reason: sql<string>`coalesce(${schema.pointRecords.reasonText}, ${schema.pointReasons.comment})`,
-          })
-          .from(schema.pointRecords)
-          .leftJoin(schema.users, eq(schema.pointRecords.teacherId, schema.users.id))
-          .innerJoin(schema.pointReasons, eq(schema.pointRecords.reasonId, schema.pointReasons.id))
-          .where(eq(schema.pointRecords.id, id))
-          .limit(1)
-          .for('update');
-        if (!record) throw new NotFoundException('상벌점 기록을 찾을 수 없습니다.');
-        assertPointRecordCanBeAdjusted(record);
-        assertPointRecordCanBeCanceled(record.canceledAt);
+      db.transaction((tx) => this.cancelRecordInTransaction(tx, id, parsed.data.reason, actor)),
+    );
+  }
 
-        await tx
-          .update(schema.pointRecords)
-          .set({ canceledAt: new Date(), restoredAt: null })
-          .where(eq(schema.pointRecords.id, id));
-        await tx
-          .update(schema.students)
-          .set({ currentPoint: sql`${schema.students.currentPoint} - ${record.point}` })
-          .where(eq(schema.students.id, record.studentId));
-        await tx.insert(schema.pointAdjustments).values({
-          pointRecordId: id,
-          actorId: actor,
-          action: 'cancel',
-          beforePoint: record.point,
-          afterPoint: 0,
-          reason: parsed.data.reason,
-        });
-        await tx.insert(schema.auditLogs).values({
-          actorId: actor,
-          action: 'points.record.cancel',
-          targetType: 'point_records',
-          targetId: String(id),
-        });
-        return { ok: true, id, action: 'cancel', reason: parsed.data.reason };
+  async cancelRecords(body: unknown, actorId?: number | null) {
+    const parsed = bulkAdjustmentSchema.safeParse(body ?? {});
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    const actor = requireActor(actorId);
+    const ids = [...new Set(parsed.data.ids)];
+
+    return this.database.query('points.records.cancel-batch', async (db) =>
+      db.transaction(async (tx) => {
+        const canceledIds: number[] = [];
+        for (const id of ids) {
+          const result = await this.cancelRecordInTransaction(tx, id, parsed.data.reason, actor);
+          canceledIds.push(result.id);
+        }
+        return { ok: true, canceled: canceledIds.length, ids: canceledIds };
       }),
     );
   }
