@@ -295,7 +295,7 @@ function decodeBasicEntities(value: string): string {
 function stripHtml(value: string): string {
   return decodeBasicEntities(value.replace(/<[^>]*>/g, ' '))
     .replace(/\s+/g, ' ')
-    .replace(/^·\s*/, '')
+    .replace(/^\s*·\s*/, '')
     .trim();
 }
 

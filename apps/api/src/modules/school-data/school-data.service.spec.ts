@@ -28,6 +28,10 @@ function htmlResponse(html: string): Response {
 
 const fixedNow = new Date('2026-07-12T03:00:00.000Z');
 
+function fetchUrls(fetchMock: ReturnType<typeof vi.fn>): string[] {
+  return fetchMock.mock.calls.map((call) => String(call[0]));
+}
+
 function scheduleRow(index: number) {
   return {
     AA_YMD: '20260720',
@@ -202,14 +206,16 @@ describe('SchoolDataService', () => {
     expect(result.schoolEventsAvailable).toBe(true);
     expect(result.events).toHaveLength(2);
     expect(result.events.map((event) => event.source)).toEqual(['neis', 'school']);
-    const requestedUrl = String(fetchMock.mock.calls[1]?.[0]);
+    const requestedUrls = fetchUrls(fetchMock);
+    const requestedUrl = requestedUrls.find((url) => url.includes('/hub/SchoolSchedule'));
     expect(requestedUrl).toContain('AA_FROM_YMD=20260601');
     expect(requestedUrl).toContain('AA_TO_YMD=20260831');
   });
 
   it('prefers the school homepage calendar and expands homepage range hints', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      htmlResponse(`
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        htmlResponse(`
         <input type="hidden" id="selectYearMonth" name="selectYearMonth" value="202607" />
         <table>
           <tbody>
@@ -226,6 +232,7 @@ describe('SchoolDataService', () => {
           </tbody>
         </table>
       `),
+      ),
     );
     vi.stubGlobal('fetch', fetchMock);
     const service = createService();
@@ -250,8 +257,9 @@ describe('SchoolDataService', () => {
         }),
       ]),
     );
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('schdulCalendarView.do');
+    expect(
+      fetchUrls(fetchMock).filter((url) => url.includes('schdulCalendarView.do')),
+    ).toHaveLength(3);
   });
 
   it('returns a unified admin calendar while keeping NEIS read-only and private school events visible', async () => {
@@ -330,8 +338,12 @@ describe('SchoolDataService', () => {
 
     expect(result.events).toHaveLength(101);
     expect(result.availability).toBe('available');
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(String(fetchMock.mock.calls[2]?.[0])).toContain('pIndex=2');
+    const requestedUrls = fetchUrls(fetchMock);
+    const homepageUrls = requestedUrls.filter((url) => url.includes('schdulCalendarView.do'));
+    const neisUrls = requestedUrls.filter((url) => url.includes('/hub/SchoolSchedule'));
+    expect(homepageUrls).toHaveLength(3);
+    expect(neisUrls).toHaveLength(2);
+    expect(neisUrls[1]).toContain('pIndex=2');
   });
 
   it('reports a partial result instead of silently truncating beyond the NEIS safety cap', async () => {
