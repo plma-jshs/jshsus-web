@@ -153,7 +153,7 @@ export function AccountActivationPage() {
                 onChange={(event) => setIdentityNumber(event.target.value.replace(/\D/g, ''))}
                 autoComplete="username"
                 inputMode="numeric"
-                placeholder={identityType === 'student' ? '예: 1101' : '6자리 교사번호'}
+                placeholder={identityType === 'student' ? '학번' : '교사번호'}
                 required
               />
             </label>
@@ -164,7 +164,7 @@ export function AccountActivationPage() {
                 value={activationCode}
                 onChange={(event) => setActivationCode(event.target.value)}
                 autoComplete="one-time-code"
-                placeholder="예: ABCD-EFGH-JKLM"
+                placeholder=""
                 required
               />
             </label>
@@ -203,7 +203,7 @@ export function AccountActivationPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 autoComplete="email"
-                placeholder="비밀번호 찾기에 사용할 이메일"
+                placeholder=""
                 required
               />
             </label>
@@ -215,7 +215,7 @@ export function AccountActivationPage() {
                 onChange={(event) => setPhone(event.target.value)}
                 autoComplete="tel"
                 inputMode="tel"
-                placeholder="01012345678"
+                placeholder=""
                 required
               />
             </label>
@@ -225,7 +225,7 @@ export function AccountActivationPage() {
               value={password}
               onChange={setPassword}
               autoComplete="new-password"
-              placeholder="8자 이상"
+              placeholder=""
             />
             <PasswordField
               id="activation-password-confirm"
@@ -233,7 +233,7 @@ export function AccountActivationPage() {
               value={passwordConfirm}
               onChange={setPasswordConfirm}
               autoComplete="new-password"
-              placeholder="비밀번호를 다시 입력하세요"
+              placeholder="비밀번호 확인"
             />
             {error ? <FormMessage>{error}</FormMessage> : null}
             <button className="auth-submit" type="submit" disabled={activationMutation.isPending}>

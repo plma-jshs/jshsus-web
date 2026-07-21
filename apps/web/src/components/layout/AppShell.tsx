@@ -484,7 +484,8 @@ function PortalShell() {
 
 export function AppShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const isAuthPage = pathname === '/login' || pathname === '/forgot-password';
+  const isAuthPage =
+    pathname === '/login' || pathname === '/forgot-password' || pathname === '/account-activation';
   const isNotFound = useRouterState({
     select: (state) =>
       state.statusCode === 404 || state.matches.some((match) => match.status === 'notFound'),
@@ -497,6 +498,8 @@ export function AppShell() {
       document.title = '전남과학고 통합로그인 | 과구리';
     } else if (pathname === '/forgot-password') {
       document.title = '비밀번호 찾기 | 과구리';
+    } else if (pathname === '/account-activation') {
+      document.title = '통합로그인 계정 만들기 | 과구리';
     }
   }, [isNotFound, pathname]);
 

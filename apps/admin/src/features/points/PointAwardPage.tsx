@@ -592,7 +592,7 @@ export function PointAwardPage() {
                   baseDate: item.baseDate,
                 });
                 setEditKey(item.key);
-                setFeedback('선택한 기록을 위 입력란에서 수정한 뒤 수정 반영을 눌러 주세요.');
+                setFeedback('선택한 기록을 위 입력란에서 수정한 뒤 수정 버튼을 눌러 주세요.');
               }}
             />
           </RowActions>
@@ -810,7 +810,7 @@ export function PointAwardPage() {
               variant="primary"
               disabled={selectedStudents.length === 0 || !selectedReason}
             >
-              {isEditingQueueItem ? '수정 반영' : '목록에 추가'}
+              {isEditingQueueItem ? '수정' : '목록에 추가'}
             </Button>
             {isEditingQueueItem ? (
               <Button type="button" variant="secondary" onClick={cancelEdit}>
