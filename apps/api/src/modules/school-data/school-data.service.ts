@@ -15,6 +15,8 @@ import { DatabaseService } from '../database/database.service';
 import { RedisService } from '../redis/redis.service';
 
 const NEIS_BASE_URL = 'https://open.neis.go.kr/hub';
+const SCHOOL_HOMEPAGE_CALENDAR_URL =
+  'https://jeonnam-sh.jge.hs.kr/chonnam-sh_hs/schl/sv/schdulView/schdulCalendarView.do';
 const KOREA_TIME_ZONE = 'Asia/Seoul';
 const MAX_MANAGED_RANGE_DAYS = 366;
 const MAX_PUBLIC_RANGE_DAYS = 93;
@@ -285,7 +287,53 @@ function decodeBasicEntities(value: string): string {
     .replaceAll('&lt;', '<')
     .replaceAll('&gt;', '>')
     .replaceAll('&quot;', '"')
-    .replaceAll('&#39;', "'");
+    .replaceAll('&#39;', "'")
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code: string) => String.fromCodePoint(parseInt(code, 16)));
+}
+
+function stripHtml(value: string): string {
+  return decodeBasicEntities(value.replace(/<[^>]*>/g, ' '))
+    .replace(/\s+/g, ' ')
+    .replace(/^·\s*/, '')
+    .trim();
+}
+
+function extractHtmlAttribute(value: string, name: string): string | undefined {
+  const match = new RegExp(`${name}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i').exec(value);
+  const raw = match?.[2] ?? match?.[3] ?? match?.[4];
+  return raw ? decodeBasicEntities(raw) : undefined;
+}
+
+function normalizeSchoolHomepageTitle(value: string): string {
+  return value.replace(/\s*[(（]\s*~\s*\d{1,2}\s*일\s*[)）]\s*$/, '').trim();
+}
+
+function inferSchoolHomepageEndDate(title: string, startsAt: string): string {
+  const rangeMatch = /[(（]\s*~\s*(\d{1,2})\s*일\s*[)）]/.exec(title);
+  if (!rangeMatch) return startsAt;
+  const [year, month, day] = startsAt.split('-').map(Number);
+  const endDay = Number(rangeMatch[1]);
+  const endMonthOffset = endDay < day ? 1 : 0;
+  const endDate = new Date(Date.UTC(year, month - 1 + endMonthOffset, endDay));
+  return endDate.toISOString().slice(0, 10);
+}
+
+function monthKeysBetween(from: string, to: string): string[] {
+  const [fromYear, fromMonth] = from.split('-').map(Number);
+  const [toYear, toMonth] = to.split('-').map(Number);
+  const current = new Date(Date.UTC(fromYear, fromMonth - 1, 1));
+  const end = new Date(Date.UTC(toYear, toMonth - 1, 1));
+  const keys: string[] = [];
+  while (current <= end) {
+    keys.push(
+      `${String(current.getUTCFullYear()).padStart(4, '0')}${String(
+        current.getUTCMonth() + 1,
+      ).padStart(2, '0')}`,
+    );
+    current.setUTCMonth(current.getUTCMonth() + 1);
+  }
+  return keys;
 }
 
 function parseDishes(value: string): string[] {
@@ -402,31 +450,40 @@ export class SchoolDataService {
     const { from, to } = parsed.data;
     assertPublicCalendarWindow(from, to, now);
     const cacheRange = adjacentMonthRange(from, to);
-    const [neis, custom] = await Promise.all([
+    const [homepage, custom] = await Promise.all([
       this.cachedLoad<AcademicEvent[]>(
-        `neis:calendar:${env.NEIS_ATPT_OFCDC_SC_CODE}:${env.NEIS_SD_SCHUL_CODE}:${cacheRange.from}:${cacheRange.to}`,
-        () => this.loadNeisCalendar(cacheRange.from, cacheRange.to),
+        `school-homepage:calendar:${cacheRange.from}:${cacheRange.to}`,
+        () => this.loadSchoolHomepageCalendar(cacheRange.from, cacheRange.to),
         (value): value is AcademicEvent[] => academicEventCacheSchema.safeParse(value).success,
         [],
       ),
       this.safeListManagedEvents(from, to, false),
     ]);
+    const neis = homepage.available
+      ? ({ value: [], available: false } satisfies LoadResult<AcademicEvent[]>)
+      : await this.cachedLoad<AcademicEvent[]>(
+          `neis:calendar:${env.NEIS_ATPT_OFCDC_SC_CODE}:${env.NEIS_SD_SCHUL_CODE}:${cacheRange.from}:${cacheRange.to}`,
+          () => this.loadNeisCalendar(cacheRange.from, cacheRange.to),
+          (value): value is AcademicEvent[] => academicEventCacheSchema.safeParse(value).success,
+          [],
+        );
+    const externalCalendar = homepage.available ? homepage : neis;
 
-    const visibleNeisEvents = neis.value.filter(
+    const visibleExternalEvents = externalCalendar.value.filter(
       (event) =>
         formatKoreanDate(new Date(event.startsAt)) <= to &&
         formatKoreanDate(new Date(event.endsAt)) >= from,
     );
-    const events = [...visibleNeisEvents, ...custom.value].sort((left, right) =>
+    const events = [...visibleExternalEvents, ...custom.value].sort((left, right) =>
       left.startsAt.localeCompare(right.startsAt),
     );
     return {
       from,
       to,
       events,
-      available: neis.available || custom.available,
-      availability: availability([neis.available, custom.available]),
-      neisAvailable: neis.available,
+      available: externalCalendar.available || custom.available,
+      availability: availability([externalCalendar.available, custom.available]),
+      neisAvailable: externalCalendar.available,
       schoolEventsAvailable: custom.available,
     };
   }
@@ -444,23 +501,32 @@ export class SchoolDataService {
 
     const { from, to } = parsed.data;
     const cacheRange = adjacentMonthRange(from, to);
-    const [neis, custom] = await Promise.all([
+    const [homepage, custom] = await Promise.all([
       this.cachedLoad<AcademicEvent[]>(
-        `neis:calendar:${env.NEIS_ATPT_OFCDC_SC_CODE}:${env.NEIS_SD_SCHUL_CODE}:${cacheRange.from}:${cacheRange.to}`,
-        () => this.loadNeisCalendar(cacheRange.from, cacheRange.to),
+        `school-homepage:calendar:${cacheRange.from}:${cacheRange.to}`,
+        () => this.loadSchoolHomepageCalendar(cacheRange.from, cacheRange.to),
         (value): value is AcademicEvent[] => academicEventCacheSchema.safeParse(value).success,
         [],
       ),
       this.safeListRawManagedEvents(from, to, true),
     ]);
+    const neis = homepage.available
+      ? ({ value: [], available: false } satisfies LoadResult<AcademicEvent[]>)
+      : await this.cachedLoad<AcademicEvent[]>(
+          `neis:calendar:${env.NEIS_ATPT_OFCDC_SC_CODE}:${env.NEIS_SD_SCHUL_CODE}:${cacheRange.from}:${cacheRange.to}`,
+          () => this.loadNeisCalendar(cacheRange.from, cacheRange.to),
+          (value): value is AcademicEvent[] => academicEventCacheSchema.safeParse(value).success,
+          [],
+        );
+    const externalCalendar = homepage.available ? homepage : neis;
 
-    const visibleNeisEvents = neis.value.filter(
+    const visibleExternalEvents = externalCalendar.value.filter(
       (event) =>
         formatKoreanDate(new Date(event.startsAt)) <= to &&
         formatKoreanDate(new Date(event.endsAt)) >= from,
     );
     const events: AdminSchoolCalendarEvent[] = [
-      ...visibleNeisEvents.map((event) => ({
+      ...visibleExternalEvents.map((event) => ({
         ...event,
         editable: false,
         isPublic: true,
@@ -489,8 +555,8 @@ export class SchoolDataService {
       from,
       to,
       events,
-      availability: availability([neis.available, custom.available]),
-      neisAvailable: neis.available,
+      availability: availability([externalCalendar.available, custom.available]),
+      neisAvailable: externalCalendar.available,
       schoolEventsAvailable: custom.available,
     };
   }
@@ -692,6 +758,109 @@ export class SchoolDataService {
         source: 'neis' as const,
       };
     });
+  }
+
+  private async loadSchoolHomepageCalendar(from: string, to: string): Promise<AcademicEvent[]> {
+    const htmlPages = await Promise.all(
+      monthKeysBetween(from, to).map((yearMonth) => this.requestSchoolHomepageCalendar(yearMonth)),
+    );
+    const eventsById = new Map<string, AcademicEvent>();
+    for (const html of htmlPages) {
+      for (const event of this.parseSchoolHomepageCalendar(html)) {
+        const startsAt = formatKoreanDate(new Date(event.startsAt));
+        const endsAt = formatKoreanDate(new Date(event.endsAt));
+        if (startsAt > to || endsAt < from) continue;
+        eventsById.set(event.id, event);
+      }
+    }
+    return [...eventsById.values()].sort((left, right) =>
+      left.startsAt === right.startsAt
+        ? left.title.localeCompare(right.title, 'ko-KR')
+        : left.startsAt.localeCompare(right.startsAt),
+    );
+  }
+
+  private async requestSchoolHomepageCalendar(yearMonth: string): Promise<string> {
+    const parameters = new URLSearchParams({
+      selectYearMonth: yearMonth,
+      selectType: 'haksa',
+      sysId: 'chonnam-sh_hs',
+    });
+    const response = await fetch(`${SCHOOL_HOMEPAGE_CALENDAR_URL}?${parameters.toString()}`, {
+      headers: {
+        Accept: 'text/html,application/xhtml+xml',
+      },
+      signal: AbortSignal.timeout(env.NEIS_REQUEST_TIMEOUT_MS),
+    });
+    if (!response.ok) throw new Error(`School homepage returned HTTP ${response.status}.`);
+    const contentType = response.headers.get('content-type') ?? '';
+    if (contentType && !contentType.toLowerCase().includes('text/html')) {
+      throw new Error(`School homepage returned ${contentType}.`);
+    }
+    const html = await response.text();
+    if (!html.includes('selectYearMonth') || !html.includes('calLink')) {
+      throw new Error('School homepage calendar markup was not found.');
+    }
+    return html;
+  }
+
+  private parseSchoolHomepageCalendar(html: string): AcademicEvent[] {
+    const groupedEvents = new Map<
+      string,
+      {
+        category: string;
+        endsAt: string;
+        id: string;
+        isHoliday: boolean;
+        startsAt: string;
+        title: string;
+      }
+    >();
+    const cellRegex = /<td\b([^>]*)>([\s\S]*?)<\/td>/gi;
+    let cellMatch: RegExpExecArray | null;
+    while ((cellMatch = cellRegex.exec(html))) {
+      const dateId = extractHtmlAttribute(cellMatch[1], 'id');
+      if (!dateId || !/^\d{8}$/.test(dateId)) continue;
+      const date = fromCompactDate(dateId);
+      const cellHtml = cellMatch[2];
+      const eventRegex = /<p\b([^>]*)>([\s\S]*?)<\/p>/gi;
+      let eventMatch: RegExpExecArray | null;
+      while ((eventMatch = eventRegex.exec(cellHtml))) {
+        const attributes = eventMatch[1];
+        const className = extractHtmlAttribute(attributes, 'class') ?? '';
+        if (!className.split(/\s+/).includes('calLink')) continue;
+        const rawTitle =
+          extractHtmlAttribute(attributes, 'data-schdulTitle') ?? stripHtml(eventMatch[2]);
+        const title = normalizeSchoolHomepageTitle(rawTitle);
+        if (!title) continue;
+        const seq = extractHtmlAttribute(attributes, 'data-seq');
+        const isHoliday = !className.split(/\s+/).includes('btnInfo');
+        const startDate = date;
+        const endDate = inferSchoolHomepageEndDate(rawTitle, date);
+        const key = seq ? `seq:${seq}:${title}` : `date:${date}:${title}`;
+        const previous = groupedEvents.get(key);
+        groupedEvents.set(key, {
+          category: isHoliday ? 'holiday' : 'academic',
+          endsAt: previous?.endsAt && previous.endsAt > endDate ? previous.endsAt : endDate,
+          id: seq ? `school-homepage:${seq}` : `school-homepage:${dateId}:${title}`,
+          isHoliday,
+          startsAt:
+            previous?.startsAt && previous.startsAt < startDate ? previous.startsAt : startDate,
+          title,
+        });
+      }
+    }
+
+    return [...groupedEvents.values()].map((event) => ({
+      id: event.id,
+      title: event.title,
+      startsAt: `${event.startsAt}T00:00:00.000+09:00`,
+      endsAt: `${event.endsAt}T23:59:59.999+09:00`,
+      allDay: true,
+      category: event.category,
+      isHoliday: event.isHoliday,
+      source: 'school' as const,
+    }));
   }
 
   private async requestNeis(

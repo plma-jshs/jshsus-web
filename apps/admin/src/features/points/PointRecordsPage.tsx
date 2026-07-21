@@ -134,7 +134,6 @@ export function PointRecordsPage() {
               disabled={visibleRecordIds.length === 0 || cancelSelectedMutation.isPending}
               onChange={toggleVisibleRecords}
             />
-            <span>전체</span>
           </label>
         ),
         cell: ({ row }) => (

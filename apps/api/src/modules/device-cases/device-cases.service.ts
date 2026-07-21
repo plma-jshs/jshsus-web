@@ -58,7 +58,13 @@ export class DeviceCasesService {
         .from(schema.deviceCases)
         .orderBy(schema.deviceCases.id);
 
-      return rows.map((row) => ({ ...row, lastSeenAt: row.lastSeenAt.toISOString() }));
+      return rows.map((row) => ({
+        ...row,
+        // The legacy controller treats every registered case as online; it
+        // does not maintain a heartbeat-backed disconnected state.
+        isConnected: true,
+        lastSeenAt: row.lastSeenAt.toISOString(),
+      }));
     });
   }
 

@@ -1,4 +1,3 @@
-import { Trash2 } from 'lucide-react';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Button } from './Button';
 
@@ -65,7 +64,6 @@ export function SelectedRowsHeaderAction({
       disabled={disabled}
       onClick={onDelete}
     >
-      <Trash2 size={14} aria-hidden="true" />
       {deleteLabel} ({selectedCount})
     </Button>
   );

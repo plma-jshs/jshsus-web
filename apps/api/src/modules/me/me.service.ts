@@ -227,6 +227,7 @@ export class MeService {
       const deviceCase = deviceRows[0];
       const deviceCaseSummaries = deviceRows.map((row) => ({
         ...row,
+        isConnected: true,
         label: deviceCaseLabel(row.id),
         lastSeenAt: row.lastSeenAt.toISOString(),
       }));
@@ -262,6 +263,7 @@ export class MeService {
         deviceCase: deviceCase
           ? {
               ...deviceCase,
+              isConnected: true,
               lastSeenAt: deviceCase.lastSeenAt.toISOString(),
             }
           : undefined,

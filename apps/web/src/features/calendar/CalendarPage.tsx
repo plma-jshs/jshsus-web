@@ -10,6 +10,7 @@ import { getCalendar } from './api';
 import '../../styles/calendar.css';
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+const maxVisibleEventBars = 3;
 type CalendarFilter = 'all' | 'school' | 'holiday';
 type CalendarCell = {
   date: Date;
@@ -56,8 +57,8 @@ function eventTouchesDate(event: AcademicEvent, dateKey: string) {
 }
 
 function eventColor(event: AcademicEvent) {
-  if (event.isHoliday) return { color: '#dc2626', background: '#fee2e2' };
-  return { color: '#0f766e', background: '#d9f4f1' };
+  if (event.isHoliday) return { color: '#ffffff', background: '#ef4444' };
+  return { color: '#12352f', background: '#d5f4ec' };
 }
 
 function eventRange(event: AcademicEvent) {
@@ -348,7 +349,10 @@ export function CalendarPage() {
                         const dayEvents = events.filter((event) =>
                           eventTouchesDate(event, dateKey),
                         );
-                        const hiddenEventCount = Math.max(0, dayEvents.length - 2);
+                        const hiddenEventCount = Math.max(
+                          0,
+                          dayEvents.length - maxVisibleEventBars,
+                        );
                         const eventSummary = dayEvents.length
                           ? `, 일정 ${dayEvents.length}개: ${dayEvents
                               .slice(0, 2)
@@ -375,29 +379,34 @@ export function CalendarPage() {
                             key={dateKey}
                           >
                             <span className="full-calendar__date">{cell.day}</span>
+                            {hiddenEventCount ? (
+                              <span className="full-calendar__more">+{hiddenEventCount}</span>
+                            ) : null}
                           </button>
                         );
                       })}
                     </div>
                     <div className="full-calendar__bars" aria-hidden="true">
-                      {weekEventSegments(week, events, cells[0].dateKey).map((segment) => (
-                        <span
-                          className={`full-calendar__event-bar${
-                            segment.event.isHoliday ? ' is-holiday' : ''
-                          }${segment.showLabel ? '' : ' is-continuation'}${
-                            segment.continuesBefore ? ' starts-before' : ''
-                          }${segment.continuesAfter ? ' ends-after' : ''}`}
-                          key={`${segment.event.id}-${week[0].dateKey}`}
-                          style={{
-                            ...styleForEvent(segment.event),
-                            gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
-                            gridRow: segment.lane + 1,
-                          }}
-                          title={segment.event.title}
-                        >
-                          {segment.showLabel ? segment.event.title : null}
-                        </span>
-                      ))}
+                      {weekEventSegments(week, events, cells[0].dateKey)
+                        .filter((segment) => segment.lane < maxVisibleEventBars)
+                        .map((segment) => (
+                          <span
+                            className={`full-calendar__event-bar${
+                              segment.event.isHoliday ? ' is-holiday' : ''
+                            }${segment.showLabel ? '' : ' is-continuation'}${
+                              segment.continuesBefore ? ' starts-before' : ''
+                            }${segment.continuesAfter ? ' ends-after' : ''}`}
+                            key={`${segment.event.id}-${week[0].dateKey}`}
+                            style={{
+                              ...styleForEvent(segment.event),
+                              gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
+                              gridRow: segment.lane + 1,
+                            }}
+                            title={segment.event.title}
+                          >
+                            {segment.showLabel ? segment.event.title : null}
+                          </span>
+                        ))}
                     </div>
                   </div>
                 ))}
@@ -419,9 +428,7 @@ export function CalendarPage() {
                   {selectedEvents.map((event) => (
                     <article key={event.id}>
                       <div>
-                        <span className="calendar-agenda__meta">
-                          {event.isHoliday ? '휴일' : '학사'} · {formatEventRange(event)}
-                        </span>
+                        <span className="calendar-agenda__meta">{formatEventRange(event)}</span>
                         <h4>{event.title}</h4>
                         {event.description ? <p>{event.description}</p> : null}
                       </div>

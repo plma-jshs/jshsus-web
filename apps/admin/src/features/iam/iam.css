@@ -47,9 +47,14 @@
   cursor: pointer;
 }
 .iam-primary {
-  border: 1px solid #087f79;
-  background: #087f79;
+  border: 1px solid var(--action-primary);
+  background: var(--action-primary);
   color: #fff;
+}
+
+.iam-primary:hover:not(:disabled) {
+  border-color: var(--action-primary-hover);
+  background: var(--action-primary-hover);
 }
 .iam-secondary {
   border: 1px solid #d5dfdd;

@@ -8,6 +8,11 @@ import './points.css';
 
 type StudentSort = 'studentNo' | 'name' | 'meritPoint' | 'penaltyPoint';
 
+function formatSignedPoint(value: number) {
+  if (value > 0) return `+${value}`;
+  return String(value);
+}
+
 export function PointsOverviewPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -68,6 +73,24 @@ export function PointsOverviewPage() {
           </strong>
         ),
         meta: { align: 'center', width: 120 },
+      },
+      {
+        accessorKey: 'currentPoint',
+        header: '총합계',
+        cell: ({ row }) => (
+          <strong
+            className={
+              row.original.currentPoint < 0
+                ? 'point-value--danger'
+                : row.original.currentPoint > 0
+                  ? 'point-value--positive'
+                  : undefined
+            }
+          >
+            {formatSignedPoint(row.original.currentPoint)}
+          </strong>
+        ),
+        meta: { align: 'center', width: 110 },
       },
     ],
     [],

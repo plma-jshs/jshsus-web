@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import type { ContentReportSummary, LostItemSummary } from '@jshsus/types';
-import { PackageSearch, Search, Settings2, ShieldAlert, Trash2 } from 'lucide-react';
+import type { LostItemSummary } from '@jshsus/types';
+import { Search, Settings2, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import { Drawer, PageSizeSelect, RowActionButton, RowActions, useToast } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
@@ -12,7 +12,6 @@ import {
   MutationMessage,
   formatAdminDate,
 } from './components/ContentAdminPanel';
-import { useContentReports } from './hooks/useContentReports';
 import { publicSiteHref } from './publicSiteHref';
 
 const lostItemStatusLabel: Record<LostItemSummary['status'], string> = {
@@ -20,38 +19,21 @@ const lostItemStatusLabel: Record<LostItemSummary['status'], string> = {
   RETURNED: '반환 완료',
 };
 
-const reportStatusLabel: Record<string, string> = {
-  open: '접수',
-  reviewing: '검토 중',
-  closed: '처리 완료',
-  rejected: '반려',
-};
-
-const LOST_ITEM_REPORT_TARGETS = ['lost_item'] as const;
-
 export function LostItemsManagementPage() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [reportStatusFilter, setReportStatusFilter] = useState('all');
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
-  const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [selectedItemStatus, setSelectedItemStatus] =
     useState<LostItemSummary['status']>('PROCESSING');
   const [itemPageSize, setItemPageSize] = useState(20);
-  const [reportPageSize, setReportPageSize] = useState(20);
 
   const lostItemsQuery = useQuery({
     queryKey: ['admin-lost-items'],
     queryFn: api.lostItems,
   });
-  const {
-    reports: lostItemReports,
-    reportsQuery,
-    updateReportMutation,
-  } = useContentReports(LOST_ITEM_REPORT_TARGETS);
 
   const updateLostStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: LostItemSummary['status'] }) =>
@@ -87,14 +69,6 @@ export function LostItemsManagementPage() {
   }, [lostItemsQuery.data, search, statusFilter, typeFilter]);
 
   const selectedItem = (lostItemsQuery.data ?? []).find((item) => item.id === selectedItemId);
-  const selectedReport = lostItemReports.find((report) => report.id === selectedReportId);
-  const filteredReports = useMemo(
-    () =>
-      lostItemReports.filter(
-        (report) => reportStatusFilter === 'all' || report.status === reportStatusFilter,
-      ),
-    [lostItemReports, reportStatusFilter],
-  );
 
   const itemColumns = useMemo<ColumnDef<LostItemSummary>[]>(
     () => [
@@ -193,65 +167,6 @@ export function LostItemsManagementPage() {
     [lostItemsQuery.data?.length],
   );
 
-  const reportColumns = useMemo<ColumnDef<ContentReportSummary>[]>(
-    () => [
-      {
-        accessorKey: 'targetId',
-        header: '분실물',
-        cell: ({ row }) => `#${row.original.targetId}`,
-        meta: { align: 'center', width: 88 },
-      },
-      {
-        accessorKey: 'reason',
-        header: '신고 사유',
-        cell: ({ row }) => <strong className="content-table-primary">{row.original.reason}</strong>,
-        enableSorting: false,
-      },
-      {
-        accessorKey: 'reporterName',
-        header: '신고자',
-        cell: ({ row }) => row.original.reporterName || '익명',
-        enableSorting: false,
-        meta: { align: 'center', width: 112 },
-      },
-      {
-        accessorKey: 'createdAt',
-        header: '접수일',
-        cell: ({ row }) => formatAdminDate(row.original.createdAt),
-        meta: { align: 'center', width: 128 },
-      },
-      {
-        accessorKey: 'status',
-        header: '상태',
-        cell: ({ row }) => (
-          <span
-            className={`status-chip ${row.original.status === 'closed' ? 'success' : 'warning'}`}
-          >
-            {reportStatusLabel[row.original.status] ?? row.original.status}
-          </span>
-        ),
-        enableSorting: false,
-        meta: { align: 'center', width: 104 },
-      },
-      {
-        id: 'actions',
-        header: '작업',
-        cell: ({ row }) => (
-          <RowActions>
-            <RowActionButton
-              icon={<Settings2 aria-hidden="true" />}
-              label={`분실물 #${row.original.targetId} 신고 관리`}
-              onClick={() => setSelectedReportId(row.original.id)}
-            />
-          </RowActions>
-        ),
-        enableSorting: false,
-        meta: { align: 'center', width: 64 },
-      },
-    ],
-    [],
-  );
-
   return (
     <div className="admin-stack">
       <ContentAdminPanel
@@ -269,10 +184,9 @@ export function LostItemsManagementPage() {
               />
             </label>
             <label className="content-select-field">
-              <PackageSearch size={16} aria-hidden="true" />
               <span className="sr-only">등록 구분</span>
               <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
-                <option value="all">분실·습득 전체</option>
+                <option value="all">전체</option>
                 <option value="lost">분실</option>
                 <option value="found">습득</option>
               </select>
@@ -283,7 +197,7 @@ export function LostItemsManagementPage() {
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value)}
               >
-                <option value="all">전체 상태</option>
+                <option value="all">전체</option>
                 {Object.entries(lostItemStatusLabel).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
@@ -322,54 +236,6 @@ export function LostItemsManagementPage() {
               ? '분실물 게시물을 삭제하는 중입니다.'
               : '분실물 처리 상태를 변경하는 중입니다.'
           }
-        />
-      </ContentAdminPanel>
-
-      <ContentAdminPanel
-        title="분실물 신고"
-        count={lostItemReports.length}
-        actions={
-          <>
-            <label className="content-select-field">
-              <ShieldAlert size={16} aria-hidden="true" />
-              <span className="sr-only">신고 상태 필터</span>
-              <select
-                value={reportStatusFilter}
-                onChange={(event) => setReportStatusFilter(event.target.value)}
-              >
-                <option value="all">전체 상태</option>
-                <option value="open">접수</option>
-                <option value="reviewing">검토 중</option>
-                <option value="closed">처리 완료</option>
-              </select>
-            </label>
-            <PageSizeSelect value={reportPageSize} onChange={setReportPageSize} />
-          </>
-        }
-      >
-        <ContentQueryState
-          isPending={reportsQuery.isPending}
-          error={reportsQuery.error}
-          hasData={filteredReports.length > 0}
-          resource="분실물 신고"
-          emptyText="접수된 분실물 신고가 없습니다."
-          onRetry={() => void reportsQuery.refetch()}
-        >
-          <DataTable
-            columns={reportColumns}
-            data={filteredReports}
-            loading={reportsQuery.isPending}
-            loadingText="신고 목록을 불러오는 중입니다."
-            emptyText="접수된 분실물 신고가 없습니다."
-            alwaysShowPagination
-            pageSize={reportPageSize}
-            caption="분실물 신고 목록"
-          />
-        </ContentQueryState>
-        <MutationMessage
-          isPending={updateReportMutation.isPending}
-          error={updateReportMutation.error}
-          pendingText="신고 처리 상태를 변경하는 중입니다."
         />
       </ContentAdminPanel>
 
@@ -482,78 +348,6 @@ export function LostItemsManagementPage() {
                   ? '분실물 게시물을 삭제하는 중입니다.'
                   : '분실물 처리 상태를 변경하는 중입니다.'
               }
-            />
-          </div>
-        ) : null}
-      </Drawer>
-
-      <Drawer
-        open={selectedReportId !== null}
-        onClose={() => setSelectedReportId(null)}
-        title="분실물 신고 처리"
-        description={selectedReport ? `분실물 #${selectedReport.targetId}` : undefined}
-        className="content-drawer"
-        footer={
-          selectedReport && selectedReport.status !== 'closed' ? (
-            <>
-              {selectedReport.status === 'open' ? (
-                <button
-                  className="quiet-button"
-                  type="button"
-                  disabled={updateReportMutation.isPending}
-                  onClick={() =>
-                    updateReportMutation.mutate(
-                      { id: selectedReport.id, status: 'reviewing' },
-                      { onSuccess: () => setSelectedReportId(null) },
-                    )
-                  }
-                >
-                  검토 시작
-                </button>
-              ) : null}
-              <button
-                className="primary-button"
-                type="button"
-                disabled={updateReportMutation.isPending}
-                onClick={() =>
-                  updateReportMutation.mutate(
-                    { id: selectedReport.id, status: 'closed' },
-                    { onSuccess: () => setSelectedReportId(null) },
-                  )
-                }
-              >
-                처리 완료
-              </button>
-            </>
-          ) : null
-        }
-      >
-        {selectedReport ? (
-          <div className="content-detail-stack">
-            <dl className="content-detail-list">
-              <div>
-                <dt>신고자</dt>
-                <dd>{selectedReport.reporterName || '익명'}</dd>
-              </div>
-              <div>
-                <dt>접수일</dt>
-                <dd>{formatAdminDate(selectedReport.createdAt)}</dd>
-              </div>
-              <div>
-                <dt>상태</dt>
-                <dd>{reportStatusLabel[selectedReport.status] ?? selectedReport.status}</dd>
-              </div>
-            </dl>
-            <section className="content-detail-section">
-              <h3>{selectedReport.reason}</h3>
-              <div className="content-detail-copy">
-                {selectedReport.detail || '추가 상세 내용이 없습니다.'}
-              </div>
-            </section>
-            <MutationMessage
-              isPending={updateReportMutation.isPending}
-              error={updateReportMutation.error}
-              pendingText="신고 처리 상태를 변경하는 중입니다."
             />
           </div>
         ) : null}

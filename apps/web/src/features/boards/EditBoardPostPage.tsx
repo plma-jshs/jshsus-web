@@ -296,9 +296,8 @@ export function EditBoardPostPage() {
 
   return (
     <PageScaffold
-      breadcrumbs={taskBreadcrumbs('board', '수정')}
+      breadcrumbs={taskBreadcrumbs('board', '글쓰기')}
       title="게시글 수정"
-      description="제목과 내용을 수정하세요."
       width="reading"
       variant="form"
     >

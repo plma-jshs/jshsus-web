@@ -28,9 +28,14 @@
   cursor: pointer;
 }
 .identity-primary-button {
-  border: 1px solid #087f79;
-  background: #087f79;
+  border: 1px solid var(--action-primary);
+  background: var(--action-primary);
   color: #fff;
+}
+
+.identity-primary-button:hover:not(:disabled) {
+  border-color: var(--action-primary-hover);
+  background: var(--action-primary-hover);
 }
 .identity-secondary-button {
   border: 1px solid #d5dfdd;
@@ -83,11 +88,11 @@
 }
 
 .identity-filter-bar.is-students {
-  grid-template-columns: minmax(220px, 320px) 110px 100px 100px 88px auto;
+  grid-template-columns: minmax(220px, 320px) 110px 100px 100px 88px;
 }
 
 .identity-filter-bar.is-staff {
-  grid-template-columns: minmax(260px, 360px) 88px auto;
+  grid-template-columns: minmax(260px, 360px) 88px;
 }
 .identity-field {
   display: grid;
@@ -121,11 +126,13 @@
 }
 
 .identity-file-picker {
+  position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   height: 40px;
   align-items: center;
   gap: 8px;
+  overflow: hidden;
   padding: 0 10px;
   border: 1px solid #cedad7;
   border-radius: 8px;
@@ -135,8 +142,8 @@
 }
 
 .identity-file-picker:focus-within {
-  border-color: #168e87;
-  box-shadow: 0 0 0 3px rgb(22 142 135 / 12%);
+  border-color: #cedad7;
+  box-shadow: none;
 }
 
 .identity-file-picker input {

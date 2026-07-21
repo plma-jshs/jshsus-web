@@ -19,6 +19,13 @@ function jsonResponse(payload: unknown): Response {
   });
 }
 
+function htmlResponse(html: string): Response {
+  return new Response(html, {
+    status: 200,
+    headers: { 'content-type': 'text/html;charset=UTF-8' },
+  });
+}
+
 const fixedNow = new Date('2026-07-12T03:00:00.000Z');
 
 function scheduleRow(index: number) {
@@ -195,9 +202,56 @@ describe('SchoolDataService', () => {
     expect(result.schoolEventsAvailable).toBe(true);
     expect(result.events).toHaveLength(2);
     expect(result.events.map((event) => event.source)).toEqual(['neis', 'school']);
-    const requestedUrl = String(fetchMock.mock.calls[0]?.[0]);
+    const requestedUrl = String(fetchMock.mock.calls[1]?.[0]);
     expect(requestedUrl).toContain('AA_FROM_YMD=20260601');
     expect(requestedUrl).toContain('AA_TO_YMD=20260831');
+  });
+
+  it('prefers the school homepage calendar and expands homepage range hints', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      htmlResponse(`
+        <input type="hidden" id="selectYearMonth" name="selectYearMonth" value="202607" />
+        <table>
+          <tbody>
+            <tr>
+              <td class="selectDay" id="20260717">
+                <p class="calLink "><a><span>· 제헌절</span></a></p>
+              </td>
+              <td class="selectDay" id="20260721">
+                <p class="calLink btnInfo" data-seq="summer-1" data-schdulTitle="방과후 수업 시작 1차(~24일)">
+                  <a>방과후 수업 시작 1차(~24일)</a>
+                </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      `),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const service = createService();
+    vi.spyOn(service, 'listManagedEvents').mockResolvedValue([]);
+
+    const result = await service.getCalendar('2026-07-01', '2026-07-31', fixedNow);
+
+    expect(result.neisAvailable).toBe(true);
+    expect(result.events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: '방과후 수업 시작 1차',
+          startsAt: '2026-07-21T00:00:00.000+09:00',
+          endsAt: '2026-07-24T23:59:59.999+09:00',
+          isHoliday: false,
+          source: 'school',
+        }),
+        expect.objectContaining({
+          title: '제헌절',
+          isHoliday: true,
+          source: 'school',
+        }),
+      ]),
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('schdulCalendarView.do');
   });
 
   it('returns a unified admin calendar while keeping NEIS read-only and private school events visible', async () => {
@@ -276,8 +330,8 @@ describe('SchoolDataService', () => {
 
     expect(result.events).toHaveLength(101);
     expect(result.availability).toBe('available');
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('pIndex=2');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(String(fetchMock.mock.calls[2]?.[0])).toContain('pIndex=2');
   });
 
   it('reports a partial result instead of silently truncating beyond the NEIS safety cap', async () => {

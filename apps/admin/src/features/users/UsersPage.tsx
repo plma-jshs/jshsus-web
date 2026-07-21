@@ -561,21 +561,13 @@ export function UsersPage() {
     setIssuedStaffNo(null);
   };
 
-  const applyFilters = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
+  const updateFilters = (nextFilters: Partial<AdminIdentityListQuery>) => {
     setPage(1);
-    setFilters({
-      pageSize: filters.pageSize ?? 20,
-      q: String(form.get('q') || ''),
-      ...(tab === 'students'
-        ? {
-            schoolYear: form.get('schoolYear') ? Number(form.get('schoolYear')) : undefined,
-            grade: form.get('grade') ? Number(form.get('grade')) : undefined,
-            classNo: form.get('classNo') ? Number(form.get('classNo')) : undefined,
-          }
-        : {}),
-    });
+    setFilters((current) => ({
+      ...current,
+      ...nextFilters,
+      pageSize: current.pageSize ?? 20,
+    }));
   };
 
   const submitCreateStudent = (event: FormEvent<HTMLFormElement>) => {
@@ -726,14 +718,29 @@ export function UsersPage() {
 
       <section className="identity-panel">
         <TableToolbar summary={`총 ${data?.total ?? 0}명`}>
-          <form className={`identity-filter-bar is-${tab}`} onSubmit={applyFilters}>
+          <div className={`identity-filter-bar is-${tab}`}>
             <Field label="검색">
-              <input name="q" defaultValue={filters.q} placeholder="학번·교사번호 또는 이름" />
+              <input
+                name="q"
+                value={filters.q ?? ''}
+                onChange={(event) => updateFilters({ q: event.currentTarget.value })}
+                placeholder="학번·교사번호 또는 이름"
+              />
             </Field>
             {tab === 'students' ? (
               <>
                 <Field label="학년도">
-                  <select name="schoolYear" defaultValue={filters.schoolYear ?? ''}>
+                  <select
+                    name="schoolYear"
+                    value={filters.schoolYear ?? ''}
+                    onChange={(event) =>
+                      updateFilters({
+                        schoolYear: event.currentTarget.value
+                          ? Number(event.currentTarget.value)
+                          : undefined,
+                      })
+                    }
+                  >
                     <option value="">활성</option>
                     {(schoolYearsQuery.data ?? []).map((year) => (
                       <option key={year.id} value={year.year}>
@@ -743,7 +750,17 @@ export function UsersPage() {
                   </select>
                 </Field>
                 <Field label="학년">
-                  <select name="grade" defaultValue={filters.grade ?? ''}>
+                  <select
+                    name="grade"
+                    value={filters.grade ?? ''}
+                    onChange={(event) =>
+                      updateFilters({
+                        grade: event.currentTarget.value
+                          ? Number(event.currentTarget.value)
+                          : undefined,
+                      })
+                    }
+                  >
                     <option value="">전체</option>
                     {[1, 2, 3].map((value) => (
                       <option key={value}>{value}</option>
@@ -751,7 +768,17 @@ export function UsersPage() {
                   </select>
                 </Field>
                 <Field label="반">
-                  <select name="classNo" defaultValue={filters.classNo ?? ''}>
+                  <select
+                    name="classNo"
+                    value={filters.classNo ?? ''}
+                    onChange={(event) =>
+                      updateFilters({
+                        classNo: event.currentTarget.value
+                          ? Number(event.currentTarget.value)
+                          : undefined,
+                      })
+                    }
+                  >
                     <option value="">전체</option>
                     {[1, 2, 3, 4].map((value) => (
                       <option key={value}>{value}</option>
@@ -763,14 +790,10 @@ export function UsersPage() {
             <PageSizeSelect
               value={filters.pageSize ?? 20}
               onChange={(pageSize) => {
-                setPage(1);
-                setFilters((current) => ({ ...current, pageSize }));
+                updateFilters({ pageSize });
               }}
             />
-            <button className="identity-secondary-button" type="submit">
-              조회
-            </button>
-          </form>
+          </div>
         </TableToolbar>
 
         {tab === 'students' ? (
@@ -1165,7 +1188,6 @@ function IdentityActions({
       <RowActionButton
         icon={<Pencil aria-hidden="true" />}
         label="정보 수정"
-        variant="primary"
         onClick={() => onOpen({ type: 'edit', identity })}
       />
       <RowActionButton

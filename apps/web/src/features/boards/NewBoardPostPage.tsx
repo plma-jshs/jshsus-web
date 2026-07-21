@@ -162,7 +162,6 @@ export function NewBoardPostPage() {
     <PageScaffold
       breadcrumbs={taskBreadcrumbs('board', '글쓰기')}
       title="게시글 작성"
-      description="제목과 내용을 입력하세요."
       width="reading"
       variant="form"
     >

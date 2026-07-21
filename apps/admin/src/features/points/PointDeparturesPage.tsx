@@ -9,7 +9,6 @@ import {
   Dialog,
   FormField,
   PageSizeSelect,
-  RowActionButton,
   RowActions,
   SegmentedTabs,
   TableToolbar,
@@ -242,16 +241,19 @@ export function PointDeparturesPage() {
         cell: ({ row }) =>
           row.original.currentPoint <= -20 ? (
             <RowActions>
-              <RowActionButton
-                icon={<LogOut size={15} aria-hidden="true" />}
-                label={`${row.original.studentNo} ${row.original.name} 퇴사 처리`}
+              <Button
+                className="point-departure-action"
                 variant="danger"
+                size="sm"
                 onClick={() => {
                   setSelected(row.original);
                   setMemo('');
                   setBaseDate(today);
                 }}
-              />
+              >
+                <LogOut size={14} aria-hidden="true" />
+                퇴사
+              </Button>
             </RowActions>
           ) : (
             '—'

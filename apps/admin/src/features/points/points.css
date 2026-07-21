@@ -104,6 +104,11 @@
   gap: 5px;
 }
 
+.point-departure-action.ui-button {
+  min-height: 30px;
+  padding-inline: 9px;
+}
+
 .point-dialog-form {
   display: grid;
   gap: 16px;

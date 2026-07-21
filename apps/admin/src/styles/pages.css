@@ -1163,6 +1163,11 @@
   box-shadow: 0 0 0 3px rgba(18, 130, 119, 0.1);
 }
 
+.content-select-field:focus-within {
+  border-color: var(--line);
+  box-shadow: none;
+}
+
 .content-search-field input,
 .content-select-field select {
   min-width: 0;

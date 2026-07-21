@@ -131,7 +131,6 @@ export function NoticeManagementPage() {
                 row.original.pinned ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />
               }
               label={row.original.pinned ? '공지 고정 해제' : '공지 고정'}
-              variant="primary"
               disabled={updateNoticeMutation.isPending}
               onClick={() =>
                 updateNoticeMutation.mutate({

@@ -277,27 +277,6 @@ export function DeviceCasesPage() {
       <section className="admin-panel">
         <div className="panel-title">
           <h2>휴대폰 보관함</h2>
-          <div className="device-control-actions">
-            <span className="device-list-count">{cases.length.toLocaleString('ko-KR')}대</span>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => runBulkCommand('open')}
-              disabled={isCommandPending || cases.length === 0}
-            >
-              <LockOpen size={15} aria-hidden="true" />
-              {hasSelectedCases ? '선택 해제' : '전체 해제'}
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => runBulkCommand('close')}
-              disabled={isCommandPending || cases.length === 0}
-            >
-              <Lock size={15} aria-hidden="true" />
-              {hasSelectedCases ? '선택 잠금' : '전체 잠금'}
-            </Button>
-          </div>
         </div>
         {casesQuery.isError ? (
           <p className="form-error">{describeAdminApiError(casesQuery.error, '휴대폰 보관함')}</p>
@@ -308,6 +287,24 @@ export function DeviceCasesPage() {
             hasSelectedCases ? ` · 선택 ${selectedCount.toLocaleString('ko-KR')}대` : ''
           }`}
         >
+          <div className="device-control-actions">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => runBulkCommand('open')}
+              disabled={isCommandPending || cases.length === 0}
+            >
+              {hasSelectedCases ? '선택 해제' : '전체 해제'}
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => runBulkCommand('close')}
+              disabled={isCommandPending || cases.length === 0}
+            >
+              {hasSelectedCases ? '선택 잠금' : '전체 잠금'}
+            </Button>
+          </div>
           <PageSizeSelect value={casePageSize} onChange={setCasePageSize} />
         </TableToolbar>
         <DataTable
