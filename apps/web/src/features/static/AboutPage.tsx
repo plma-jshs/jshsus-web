@@ -450,7 +450,7 @@ function DeveloperIntroduce() {
           role="Developer"
           contribution={<>- 2025 과구리 개발</>}
         >
-          안녕하세요, <b>32기 IT부 강재환</b>입니다. 과구리 개발에 참여했습니다.
+          안녕하세요, <b>32기 IT부 강재환</b>입니다.
         </DeveloperProfile>
 
         <DeveloperProfile
@@ -465,7 +465,7 @@ function DeveloperIntroduce() {
             </>
           }
         >
-          안녕하세요, <b>32기 IT부 김성찬</b>입니다. 과구리 개발에 참여했습니다.
+          안녕하세요, <b>32기 IT부 김성찬</b>입니다.
         </DeveloperProfile>
       </div>
     </section>

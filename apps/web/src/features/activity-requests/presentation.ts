@@ -5,6 +5,7 @@ import type {
 } from '@jshsus/types';
 
 export type ActivityRequestFilter = 'all' | 'submitted' | 'approved' | 'rejected' | 'finished';
+export type ActivityRequestSearchField = 'activity_location' | 'activity' | 'location';
 
 export const activityStatusLabels: Record<ActivityRequestStatus, string> = {
   draft: '임시저장',
@@ -24,12 +25,41 @@ export function matchesActivityFilter(
   return request.status === filter;
 }
 
-export function matchesActivityQuery(request: ActivityRequestSummary, query: string) {
+export function matchesActivityQuery(
+  request: ActivityRequestSummary,
+  query: string,
+  field: ActivityRequestSearchField = 'activity_location',
+) {
   const normalized = query.trim().toLocaleLowerCase('ko-KR');
   if (!normalized) return true;
-  return `${request.id} #${request.id} ${request.studentName} ${request.purpose} ${request.location} ${request.teacherName ?? ''}`
-    .toLocaleLowerCase('ko-KR')
-    .includes(normalized);
+  const values = {
+    activity_location: `${request.purpose} ${request.location}`,
+    activity: request.purpose,
+    location: request.location,
+  };
+  return values[field].toLocaleLowerCase('ko-KR').includes(normalized);
+}
+
+export function formatActivityParticipants(
+  participants: ActivityRequestSummary['participants'],
+  fallback: Pick<ActivityRequestSummary, 'studentName' | 'studentNo'>,
+) {
+  const students = participants?.length
+    ? participants
+    : [
+        {
+          isRepresentative: true,
+          studentId: fallback.studentNo,
+          studentName: fallback.studentName,
+          studentNo: fallback.studentNo,
+        },
+      ];
+  return students
+    .map(
+      (student) =>
+        `${student.studentNo}${student.studentName}${student.isRepresentative ? '(대표)' : ''}`,
+    )
+    .join(', ');
 }
 
 export function searchActivityRequestStudents(

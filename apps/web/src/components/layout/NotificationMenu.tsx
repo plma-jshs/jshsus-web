@@ -63,6 +63,22 @@ function NotificationTypeIcon({ notification }: { notification: NotificationItem
   );
 }
 
+function NotificationTitle({ title }: { title: string }) {
+  const activitySubmittedMatch = /^(.*?) 님이 새로운 탐구활동서를 제출했습니다\.$/.exec(title);
+  if (activitySubmittedMatch) {
+    return (
+      <span className="notification-item__title">
+        <strong>{activitySubmittedMatch[1]}</strong>
+        <span> 님이 새로운 </span>
+        <strong>탐구활동서</strong>
+        <span>를 제출했습니다.</span>
+      </span>
+    );
+  }
+
+  return <strong className="notification-item__title">{title}</strong>;
+}
+
 function NotificationListState({
   isLoading,
   isError,
@@ -205,15 +221,14 @@ export function NotificationMenuView({
                     >
                       <NotificationTypeIcon notification={notification} />
                       <span className="notification-item__content">
-                        <strong>{notification.title}</strong>
-                        {notification.body ? <span>{notification.body}</span> : null}
+                        <NotificationTitle title={notification.title} />
+                        {notification.body ? (
+                          <span className="notification-item__body">{notification.body}</span>
+                        ) : null}
                         <time dateTime={notification.createdAt}>
                           {formatKoreanRelativeTime(notification.createdAt)}
                         </time>
                       </span>
-                      {!notification.isRead ? (
-                        <span className="notification-item__unread-dot" aria-hidden="true" />
-                      ) : null}
                     </button>
                   </li>
                 );

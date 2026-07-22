@@ -35,7 +35,7 @@ import {
   Unlink,
   X,
 } from 'lucide-react';
-import type { FormEvent, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import {
   FontSizeMark,
@@ -335,30 +335,37 @@ function ToolbarPalette({
               </button>
             ))}
           </div>
-          <form
-            className="rich-text-toolbar-palette__hex"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!normalizedHexValue) return;
-              onChange(normalizedHexValue);
-              setOpen(false);
-            }}
-          >
+          <div className="rich-text-toolbar-palette__hex">
             <label>
               <span className="sr-only">{label} HEX 코드</span>
               <input
                 inputMode="text"
                 maxLength={7}
                 onChange={(event) => setHexValue(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter') return;
+                  event.preventDefault();
+                  if (!normalizedHexValue) return;
+                  onChange(normalizedHexValue);
+                  setOpen(false);
+                }}
                 placeholder="#000000"
                 spellCheck={false}
                 value={hexValue}
               />
             </label>
-            <button disabled={!normalizedHexValue} type="submit">
+            <button
+              disabled={!normalizedHexValue}
+              type="button"
+              onClick={() => {
+                if (!normalizedHexValue) return;
+                onChange(normalizedHexValue);
+                setOpen(false);
+              }}
+            >
               적용
             </button>
-          </form>
+          </div>
         </div>
       ) : null}
     </div>
@@ -545,8 +552,7 @@ export function RichTextEditor({
     setLinkOpen(true);
   };
 
-  const applyLink = (event: FormEvent) => {
-    event.preventDefault();
+  const applyLink = () => {
     const href = normalizeLink(linkValue);
     if (!href) {
       setLinkError('올바른 http 또는 https 주소를 입력해 주세요.');
@@ -565,9 +571,9 @@ export function RichTextEditor({
     mark: 'textColor' | 'fontSize' | 'fontFamily' | 'highlight',
     value: string,
   ) => {
-    const chain = editor.chain().focus();
+    const chain = editor.chain().focus().unsetMark(mark);
     if (!value) {
-      chain.unsetMark(mark).run();
+      chain.run();
       return;
     }
     const attribute = mark === 'fontSize' ? 'size' : mark === 'fontFamily' ? 'family' : 'color';
@@ -739,11 +745,10 @@ export function RichTextEditor({
             if (event.target === event.currentTarget) setLinkOpen(false);
           }}
         >
-          <form
+          <div
             aria-label="링크 삽입"
             aria-modal="true"
             className="rich-text-link-modal__dialog"
-            onSubmit={applyLink}
             role="dialog"
           >
             <header>
@@ -763,6 +768,11 @@ export function RichTextEditor({
                 autoFocus
                 inputMode="url"
                 onChange={(event) => setLinkValue(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter') return;
+                  event.preventDefault();
+                  applyLink();
+                }}
                 placeholder="https://example.com"
                 type="text"
                 value={linkValue}
@@ -779,9 +789,11 @@ export function RichTextEditor({
               <button onClick={() => setLinkOpen(false)} type="button">
                 취소
               </button>
-              <button type="submit">적용</button>
+              <button type="button" onClick={applyLink}>
+                적용
+              </button>
             </div>
-          </form>
+          </div>
         </div>
       ) : null}
       <EditorContent editor={editor} />

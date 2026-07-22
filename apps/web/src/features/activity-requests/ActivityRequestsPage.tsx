@@ -2,21 +2,24 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { FilePlus2 } from 'lucide-react';
-import { DataTablePagination } from '../../components/page/DataTableControls';
 import {
-  FilterChips,
-  PageScaffold,
-  PageState,
-  PageToolbar,
-  SearchField,
-} from '../../components/page/PageScaffold';
+  DataTablePagination,
+  type DataTablePageSize,
+  DataTableToolbar,
+} from '../../components/page/DataTableControls';
+import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { getMyActivityRequests } from './api';
-import { koreaDateInput } from './activitySchedule';
+import {
+  formatActivityPeriodLabel,
+  formatActivityTimeRange,
+  koreaDateInput,
+} from './activitySchedule';
 import {
   type ActivityRequestFilter,
   activityStatusLabels,
+  formatActivityParticipants,
   matchesActivityFilter,
   matchesActivityQuery,
 } from './presentation';
@@ -26,15 +29,6 @@ const activityDayFormatter = createKoreanDateFormatter({
   month: '2-digit',
   day: '2-digit',
 });
-const activityTimeFormatter = createKoreanDateFormatter({
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23',
-});
-
-function getParticipantCount(request: { participants?: unknown[] }) {
-  return request.participants?.length ?? 1;
-}
 
 export function ActivityRequestsPage() {
   const requestsQuery = useQuery({
@@ -45,46 +39,21 @@ export function ActivityRequestsPage() {
   const [query, setQuery] = useState('');
   const [activityDate, setActivityDate] = useState(() => koreaDateInput());
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<DataTablePageSize>(20);
   const requests = useMemo(() => requestsQuery.data ?? [], [requestsQuery.data]);
   const filtered = useMemo(
     () =>
       requests.filter(
         (request) =>
           matchesActivityFilter(request, filter) &&
-          matchesActivityQuery(request, query) &&
+          matchesActivityQuery(request, query, 'activity_location') &&
           (!activityDate || koreaDateInput(new Date(request.startsAt)) === activityDate),
       ),
     [activityDate, filter, query, requests],
   );
-  const pageSize = 20;
   const totalPages = Math.ceil(filtered.length / pageSize);
   const safePage = Math.min(page, Math.max(totalPages, 1));
   const visibleRequests = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
-
-  const filterOptions: Array<{ value: ActivityRequestFilter; label: string; count: number }> = [
-    { value: 'all', label: '전체', count: requests.length },
-    {
-      value: 'submitted',
-      label: '승인 대기',
-      count: requests.filter((item) => item.status === 'submitted').length,
-    },
-    {
-      value: 'approved',
-      label: '승인',
-      count: requests.filter((item) => item.status === 'approved').length,
-    },
-    {
-      value: 'rejected',
-      label: '반려',
-      count: requests.filter((item) => item.status === 'rejected').length,
-    },
-    {
-      value: 'finished',
-      label: '완료·취소',
-      count: requests.filter((item) => item.status === 'completed' || item.status === 'canceled')
-        .length,
-    },
-  ];
 
   return (
     <PageScaffold
@@ -97,51 +66,58 @@ export function ActivityRequestsPage() {
       }
     >
       <section
-        className="workflow-table-section activity-table-section"
+        className="data-table-section activity-table-section"
         aria-label="탐구활동서 신청 내역"
       >
-        <PageToolbar>
-          <FilterChips
-            value={filter}
-            onChange={(value) => {
-              setFilter(value);
-              setPage(1);
-            }}
-            label="신청 상태"
-            options={filterOptions}
-          />
-          <div className="activity-list-controls">
-            <div className="activity-date-control">
-              <label className="sr-only" htmlFor="activity-date-filter">
-                활동 날짜
+        <DataTableToolbar
+          key={query}
+          total={filtered.length}
+          page={safePage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          field="activity_location"
+          query={query}
+          showSearchField={false}
+          onPageSizeChange={(nextPageSize) => {
+            setPageSize(nextPageSize);
+            setPage(1);
+          }}
+          onSearch={(_field, nextQuery) => {
+            setQuery(nextQuery);
+            setPage(1);
+          }}
+          extraControls={
+            <>
+              <label>
+                <span className="sr-only">신청 상태</span>
+                <select
+                  value={filter}
+                  onChange={(event) => {
+                    setFilter(event.target.value as ActivityRequestFilter);
+                    setPage(1);
+                  }}
+                >
+                  <option value="all">전체</option>
+                  <option value="submitted">승인 대기</option>
+                  <option value="approved">승인</option>
+                  <option value="rejected">반려</option>
+                  <option value="finished">완료·취소</option>
+                </select>
               </label>
-              <input
-                id="activity-date-filter"
-                type="date"
-                value={activityDate}
-                onChange={(event) => {
-                  setActivityDate(event.target.value);
-                  setPage(1);
-                }}
-              />
-            </div>
-            <SearchField
-              value={query}
-              onChange={(value) => {
-                setQuery(value);
-                setPage(1);
-              }}
-              label="탐구활동서 검색"
-              placeholder="활동 내용, 장소 검색"
-            />
-          </div>
-        </PageToolbar>
-
-        <div className="workflow-table-summary activity-table-summary" aria-live="polite">
-          {query.trim() || filter !== 'all' || activityDate
-            ? `검색 결과 ${filtered.length}건`
-            : `총 ${requests.length}건`}
-        </div>
+              <label className="activity-date-control">
+                <span className="sr-only">활동 날짜</span>
+                <input
+                  type="date"
+                  value={activityDate}
+                  onChange={(event) => {
+                    setActivityDate(event.target.value);
+                    setPage(1);
+                  }}
+                />
+              </label>
+            </>
+          }
+        />
 
         {requestsQuery.isLoading ? (
           <PageState kind="loading" variant="table" title="신청 내역을 불러오는 중입니다." />
@@ -188,14 +164,14 @@ export function ActivityRequestsPage() {
         ) : null}
 
         {filtered.length ? (
-          <div className="workflow-table-viewport activity-table-viewport">
-            <table className="workflow-table activity-table">
+          <div className="data-table-viewport activity-table-viewport">
+            <table className="data-table activity-table">
               <colgroup>
                 <col style={{ width: 88 }} />
-                <col style={{ width: '28%' }} />
-                <col style={{ width: 104 }} />
+                <col style={{ width: '26%' }} />
+                <col style={{ width: 220 }} />
                 <col style={{ width: 128 }} />
-                <col style={{ width: 132 }} />
+                <col style={{ width: 150 }} />
                 <col style={{ width: 112 }} />
               </colgroup>
               <thead>
@@ -225,18 +201,21 @@ export function ActivityRequestsPage() {
                       </Link>
                     </td>
                     <td className="activity-table__participants" data-label="활동 인원">
-                      {getParticipantCount(request)}명
+                      {formatActivityParticipants(request.participants, request)}
                     </td>
                     <td className="activity-table__location" data-label="장소">
                       {request.location}
                     </td>
                     <td className="activity-table__period" data-label="활동 기간">
-                      <time dateTime={request.startsAt}>
-                        {activityTimeFormatter.format(new Date(request.startsAt))}
-                      </time>
-                      <time dateTime={request.endsAt}>
-                        {activityTimeFormatter.format(new Date(request.endsAt))}
-                      </time>
+                      <strong>
+                        {formatActivityPeriodLabel(
+                          koreaDateInput(new Date(request.startsAt)),
+                          request.startsAt,
+                          request.endsAt,
+                          request.activitySlotIds,
+                        )}
+                      </strong>
+                      <span>{formatActivityTimeRange(request.startsAt, request.endsAt)}</span>
                     </td>
                     <td data-label="상태">
                       <span className={`activity-status is-${request.status}`}>

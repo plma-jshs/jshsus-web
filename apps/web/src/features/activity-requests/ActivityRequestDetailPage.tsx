@@ -9,16 +9,18 @@ import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { parsePositiveRouteId } from '../../shared/lib/route';
 import { getSession } from '../auth/api';
 import { deleteActivityRequest, getActivityRequest } from './api';
-import { activityStatusLabels, getActivityDurationLabel } from './presentation';
+import {
+  formatActivityPeriodLabel,
+  formatActivityTimeRange,
+  koreaDateInput,
+} from './activitySchedule';
+import { activityStatusLabels, formatActivityParticipants } from './presentation';
 import '../../styles/activity-requests.css';
 
-const dateFormatter = createKoreanDateFormatter({
+const activityDateFormatter = createKoreanDateFormatter({
   year: 'numeric',
   month: 'long',
   day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23',
 });
 
 function DetailError({
@@ -146,7 +148,7 @@ export function ActivityRequestDetailPage() {
   const canEdit =
     sessionQuery.data?.isLogined === true &&
     Number(sessionQuery.data.stuid ?? sessionQuery.data.identifier) === request.studentNo;
-  const duration = getActivityDurationLabel(request.startsAt, request.endsAt);
+  const activityDate = koreaDateInput(new Date(request.startsAt));
   return (
     <PageScaffold
       breadcrumbs={detailBreadcrumbs('activityRequests')}
@@ -193,31 +195,29 @@ export function ActivityRequestDetailPage() {
               <dd>{request.location}</dd>
             </div>
             <div>
-              <dt>참여 학생</dt>
-              <dd>
-                {request.participants.map((student, index) => (
-                  <span key={student.studentId}>
-                    {student.studentNo} {student.studentName}
-                    {index < request.participants.length - 1 ? ' · ' : ''}
-                  </span>
-                ))}
-              </dd>
+              <dt>활동 인원</dt>
+              <dd>{formatActivityParticipants(request.participants, request)}</dd>
             </div>
             <div>
-              <dt>시작 일시</dt>
+              <dt>활동일</dt>
               <dd>
-                <time dateTime={request.startsAt}>
-                  {dateFormatter.format(new Date(request.startsAt))}
+                <time dateTime={activityDate}>
+                  {activityDateFormatter.format(new Date(request.startsAt))}
                 </time>
               </dd>
             </div>
             <div>
-              <dt>종료 일시</dt>
+              <dt>활동기간</dt>
               <dd>
-                <time dateTime={request.endsAt}>
-                  {dateFormatter.format(new Date(request.endsAt))}
-                </time>
-                {duration ? <small>총 {duration}</small> : null}
+                <strong>
+                  {formatActivityPeriodLabel(
+                    activityDate,
+                    request.startsAt,
+                    request.endsAt,
+                    request.activitySlotIds,
+                  )}
+                </strong>
+                <small>{formatActivityTimeRange(request.startsAt, request.endsAt)}</small>
               </dd>
             </div>
             <div>

@@ -88,6 +88,7 @@
   flex-wrap: nowrap;
   gap: 4px;
   border-bottom: 1px solid var(--j-color-border);
+  border-radius: calc(var(--j-radius-md) - 1px) calc(var(--j-radius-md) - 1px) 0 0;
   background: var(--j-color-surface-subtle);
 }
 

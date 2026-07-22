@@ -298,6 +298,11 @@ function extractHtmlAttribute(value: string, name: string): string | undefined {
   return raw ? decodeBasicEntities(raw) : undefined;
 }
 
+function hasRedBackgroundStyle(attributes: string): boolean {
+  const style = extractHtmlAttribute(attributes, 'style')?.replace(/\s+/g, '').toLowerCase() ?? '';
+  return /background(?:-color)?:#?(?:f00|ff0000)\b/.test(style);
+}
+
 function normalizeSchoolHomepageTitle(value: string): string {
   return value
     .replace(/\u00a0/g, ' ')
@@ -787,13 +792,14 @@ export class SchoolDataService {
         const title = normalizeSchoolHomepageTitle(rawTitle);
         if (!title) continue;
         const seq = extractHtmlAttribute(attributes, 'data-seq');
-        const isHoliday = !className.split(/\s+/).includes('btnInfo');
+        const isManagedLink = className.split(/\s+/).includes('btnInfo');
+        const isHoliday = !isManagedLink && hasRedBackgroundStyle(attributes);
         const startDate = date;
         const endDate = inferSchoolHomepageEndDate(rawTitle, date);
         const key = seq ? `seq:${seq}:${title}` : `date:${date}:${title}`;
         const previous = groupedEvents.get(key);
         groupedEvents.set(key, {
-          category: isHoliday ? 'holiday' : 'academic',
+          category: isHoliday ? 'holiday' : isManagedLink ? 'academic' : 'observance',
           endsAt: previous?.endsAt && previous.endsAt > endDate ? previous.endsAt : endDate,
           id: seq ? `school-homepage:${seq}` : `school-homepage:${dateId}:${title}`,
           isHoliday,

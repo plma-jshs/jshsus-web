@@ -1,30 +1,49 @@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 
 export type DataTableSearchField = 'title_content' | 'title' | 'author';
 export type DataTablePageSize = 20 | 50 | 100;
+export type DataTableSearchFieldOption<TField extends string = DataTableSearchField> = {
+  value: TField;
+  label: string;
+};
 
-type DataTableToolbarProps = {
+type DataTableToolbarProps<TField extends string = DataTableSearchField> = {
   total: number;
   page: number;
   totalPages: number;
   pageSize: DataTablePageSize;
-  field: DataTableSearchField;
+  field: TField;
   query: string;
+  extraControls?: ReactNode;
+  showSearchField?: boolean;
   onPageSizeChange: (pageSize: DataTablePageSize) => void;
-  onSearch: (field: DataTableSearchField, query: string) => void;
+  onSearch: (field: TField, query: string) => void;
+  searchFieldOptions?: readonly DataTableSearchFieldOption<TField>[];
 };
 
-export function DataTableToolbar({
+const defaultSearchFieldOptions: readonly DataTableSearchFieldOption[] = [
+  { value: 'title_content', label: '제목+내용' },
+  { value: 'title', label: '제목' },
+  { value: 'author', label: '작성자' },
+];
+
+export function DataTableToolbar<TField extends string = DataTableSearchField>({
   total,
   page,
   totalPages,
   pageSize,
   field,
   query,
+  extraControls,
+  showSearchField = true,
   onPageSizeChange,
   onSearch,
-}: DataTableToolbarProps) {
+  searchFieldOptions,
+}: DataTableToolbarProps<TField>) {
+  const effectiveSearchFieldOptions = (searchFieldOptions ??
+    defaultSearchFieldOptions) as readonly DataTableSearchFieldOption<TField>[];
   const [draftField, setDraftField] = useState(field);
   const [draftQuery, setDraftQuery] = useState(query);
 
@@ -59,17 +78,22 @@ export function DataTableToolbar({
             ))}
           </select>
         </label>
-        <label>
-          <span className="sr-only">검색 범위</span>
-          <select
-            value={draftField}
-            onChange={(event) => setDraftField(event.target.value as DataTableSearchField)}
-          >
-            <option value="title_content">제목+내용</option>
-            <option value="title">제목</option>
-            <option value="author">작성자</option>
-          </select>
-        </label>
+        {showSearchField ? (
+          <label>
+            <span className="sr-only">검색 범위</span>
+            <select
+              value={draftField}
+              onChange={(event) => setDraftField(event.target.value as TField)}
+            >
+              {effectiveSearchFieldOptions.map((option) => (
+                <option value={option.value} key={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {extraControls}
         <label className="data-table-toolbar__query">
           <span className="sr-only">검색어</span>
           <input

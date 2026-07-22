@@ -129,6 +129,9 @@ export function inferCognitoSurface(
 const cookieBaseOptions = (request: Request) => {
   const isLocalhost = ['localhost', '127.0.0.1'].includes(request.hostname);
   const useHostOnlyCookie = env.SESSION_COOKIE_HOST_ONLY || env.AUTH_MODE === 'cognito';
+  const requiresSecurePrefix = [env.IAM_COOKIE_NAME, env.CSRF_COOKIE_NAME].some(
+    (name) => name.startsWith('__Host-') || name.startsWith('__Secure-'),
+  );
 
   return {
     domain:
@@ -136,7 +139,7 @@ const cookieBaseOptions = (request: Request) => {
         ? undefined
         : env.SESSION_COOKIE_DOMAIN,
     path: '/',
-    secure: isLocalhost ? false : env.SESSION_COOKIE_SECURE,
+    secure: requiresSecurePrefix || (!isLocalhost && env.SESSION_COOKIE_SECURE),
     sameSite: (useHostOnlyCookie || isLocalhost || !env.SESSION_COOKIE_SECURE ? 'lax' : 'none') as
       'none' | 'lax',
   };

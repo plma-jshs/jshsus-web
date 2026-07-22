@@ -1,8 +1,8 @@
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
-import { ArrowLeft, CheckCircle2, Send, X } from 'lucide-react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { ArrowLeft, Send, X } from 'lucide-react';
 import { useToast } from '../../components/feedback/Toast';
 import { PageScaffold } from '../../components/page/PageScaffold';
 import { taskBreadcrumbs } from '../../components/page/pageHierarchy';
@@ -40,6 +40,7 @@ function initialForm(): ActivityRequestForm {
 
 export function NewActivityRequestPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const [form, setForm] = useState<ActivityRequestForm>(initialForm);
   const [activityDate, setActivityDate] = useState(() => koreaDateInput());
@@ -49,7 +50,6 @@ export function NewActivityRequestPage() {
   });
   const [touched, setTouched] = useState<Partial<Record<keyof ActivityRequestForm, boolean>>>({});
   const [attempted, setAttempted] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [studentSearch, setStudentSearch] = useState('');
   const [participantStudentNos, setParticipantStudentNos] = useState<number[]>([]);
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
@@ -88,9 +88,9 @@ export function NewActivityRequestPage() {
       });
     },
     onSuccess: async () => {
-      setSubmitted(true);
       await queryClient.invalidateQueries({ queryKey: ['activity-requests', 'me'] });
-      showToast({ title: '탐구활동서를 제출했습니다.', tone: 'success' });
+      window.alert('탐구활동서가 제출되었습니다.');
+      void navigate({ to: '/activity-requests' });
     },
     onError: (error) =>
       showToast({
@@ -132,34 +132,6 @@ export function NewActivityRequestPage() {
       : [...activitySlotIds, slotId];
     if (next.length) applySchedule(activityDate, next);
   };
-
-  if (submitted && mutation.data) {
-    return (
-      <PageScaffold
-        breadcrumbs={taskBreadcrumbs('activityRequests', '신청')}
-        title="탐구활동서가 제출되었습니다"
-        width="reading"
-        variant="form"
-      >
-        <section className="activity-submit-success" role="status">
-          <CheckCircle2 size={28} aria-hidden="true" />
-          <div>
-            <strong>{form.purpose}</strong>
-            <p>
-              {form.location} · {activitySlotIds.length}개 활동 시간
-            </p>
-          </div>
-          <Link
-            className="detail-primary-button"
-            to="/activity-requests/$requestId"
-            params={{ requestId: String(mutation.data.request.id) }}
-          >
-            신청 확인하기
-          </Link>
-        </section>
-      </PageScaffold>
-    );
-  }
 
   return (
     <PageScaffold

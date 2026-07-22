@@ -36,6 +36,13 @@
       "when": 1784689200000,
       "tag": "0004_users_student_no_nullable",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1784775600000,
+      "tag": "0005_users_legacy_plma_cleanup",
+      "breakpoints": true
     }
   ]
 }

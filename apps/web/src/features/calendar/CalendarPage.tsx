@@ -60,7 +60,8 @@ function eventTouchesDate(event: AcademicEvent, dateKey: string) {
 }
 
 function eventColor(event: AcademicEvent) {
-  if (event.isHoliday) return { color: '#ffffff', background: '#e94b4b' };
+  if (event.isHoliday) return { color: '#ffffff', background: '#e34242' };
+  if (event.category === 'observance') return { color: '#0c43b7', background: 'transparent' };
   return { color: '#000000', background: '#d8f5e6' };
 }
 
@@ -102,6 +103,12 @@ function nextDateKey(dateKey: string) {
   const date = fromDateKey(dateKey);
   date.setDate(date.getDate() + 1);
   return toDateKey(date);
+}
+
+function eventTitleNeedsTwoRows(event: AcademicEvent, columnSpan: number, showLabel: boolean) {
+  if (!showLabel) return false;
+  const title = displayEventTitle(event.title);
+  return title.length > Math.max(8, columnSpan * 9);
 }
 
 function mergeAdjacentEvents(sourceEvents: AcademicEvent[]) {
@@ -156,6 +163,16 @@ function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridSt
   const weekStartKey = week[0].dateKey;
   const weekEndKey = week[6].dateKey;
   const lanes: Array<Array<{ end: number; start: number }>> = [];
+  const isLaneRangeFree = (lane: number, rowSpan: number, start: number, end: number) =>
+    Array.from({ length: rowSpan }, (_, offset) => lane + offset).every((targetLane) =>
+      (lanes[targetLane] ?? []).every((occupied) => end < occupied.start || start > occupied.end),
+    );
+  const occupyLaneRange = (lane: number, rowSpan: number, start: number, end: number) => {
+    for (let offset = 0; offset < rowSpan; offset += 1) {
+      const targetLane = lane + offset;
+      lanes[targetLane] = [...(lanes[targetLane] ?? []), { end, start }];
+    }
+  };
   return [...events]
     .sort((left, right) => {
       const leftRange = eventRange(left);
@@ -176,12 +193,12 @@ function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridSt
       const end = week.findIndex((cell) => cell.dateKey === segmentEndKey);
       if (start < 0 || end < 0) return [];
 
-      const laneIndex = lanes.findIndex((lane) =>
-        lane.every((occupied) => end < occupied.start || start > occupied.end),
-      );
-      const lane = laneIndex >= 0 ? laneIndex : lanes.length;
-      lanes[lane] = [...(lanes[lane] ?? []), { end, start }];
       const firstVisibleStartKey = range.startsAt < gridStartKey ? gridStartKey : range.startsAt;
+      const showLabel = segmentStartKey === firstVisibleStartKey;
+      const rowSpan = eventTitleNeedsTwoRows(event, end - start + 1, showLabel) ? 2 : 1;
+      let lane = 0;
+      while (!isLaneRangeFree(lane, rowSpan, start, end)) lane += 1;
+      occupyLaneRange(lane, rowSpan, start, end);
 
       return [
         {
@@ -190,7 +207,8 @@ function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridSt
           endColumn: end + 1,
           event,
           lane,
-          showLabel: segmentStartKey === firstVisibleStartKey,
+          rowSpan,
+          showLabel,
           startColumn: start + 1,
         },
       ];
@@ -351,6 +369,7 @@ export function CalendarPage() {
                         const dayEvents = events.filter((event) =>
                           eventTouchesDate(event, dateKey),
                         );
+                        const isHolidayDate = dayEvents.some((event) => event.isHoliday);
                         const hiddenEventCount = Math.max(
                           0,
                           dayEvents.length - maxVisibleEventBars,
@@ -368,6 +387,7 @@ export function CalendarPage() {
                             className={[
                               dateKey === selectedDate ? 'is-selected' : '',
                               dateKey === todayKey ? 'is-today' : '',
+                              isHolidayDate ? 'is-holiday-date' : '',
                               cell.inCurrentMonth ? '' : 'is-outside-month',
                             ]
                               .filter(Boolean)
@@ -390,7 +410,7 @@ export function CalendarPage() {
                     </div>
                     <div className="full-calendar__bars" aria-hidden="true">
                       {weekEventSegments(week, events, cells[0].dateKey)
-                        .filter((segment) => segment.lane < maxVisibleEventBars)
+                        .filter((segment) => segment.lane + segment.rowSpan <= maxVisibleEventBars)
                         .map((segment) => (
                           <span
                             className={`full-calendar__event-bar${
@@ -404,7 +424,7 @@ export function CalendarPage() {
                             style={{
                               ...styleForEvent(segment.event),
                               gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
-                              gridRow: segment.lane + 1,
+                              gridRow: `${segment.lane + 1} / span ${segment.rowSpan}`,
                             }}
                             title={displayEventTitle(segment.event.title)}
                           >

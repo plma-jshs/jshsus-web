@@ -28,17 +28,6 @@
   background: var(--j-color-danger-subtle);
 }
 
-.activity-list-controls {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 8px;
-}
-
-.activity-table-section .page-toolbar {
-  flex-wrap: nowrap;
-}
-
 .activity-date-control {
   position: relative;
   display: flex;
@@ -47,8 +36,8 @@
 }
 
 .activity-date-control input {
-  width: 148px;
-  min-height: 44px;
+  width: 142px;
+  min-height: 40px;
   padding-inline: 10px;
   font-size: 13px;
 }
@@ -87,19 +76,30 @@
   white-space: nowrap;
 }
 
+.activity-table__participants {
+  overflow: hidden;
+  text-align: left !important;
+  text-overflow: ellipsis;
+}
+
 .activity-table__period {
   display: grid;
   justify-content: center;
-  gap: 1px;
+  gap: 3px;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   line-height: 1.35;
   white-space: normal;
 }
 
-.activity-table__period time + time::before {
-  content: '~ ';
+.activity-table__period strong {
+  color: var(--j-color-text);
+  font-size: 13px;
+}
+
+.activity-table__period span {
   color: var(--j-color-text-muted);
+  font-size: 11px;
 }
 
 .activity-document {
@@ -166,8 +166,14 @@
   font-size: 14px;
 }
 
+.activity-definition-list dd strong {
+  color: var(--j-color-text);
+  font-weight: 650;
+}
+
 .activity-definition-list dd small {
-  margin-left: 10px;
+  display: block;
+  margin-top: 3px;
   color: var(--j-color-text-muted);
   font-size: 12px;
 }
@@ -680,37 +686,6 @@
   padding-top: 22px;
 }
 
-.activity-submit-success {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 16px;
-  padding: 22px;
-  border: 1px solid var(--j-color-border);
-  border-radius: var(--j-radius-lg);
-  background: var(--j-color-surface);
-  box-shadow: var(--j-shadow-card);
-}
-
-.activity-submit-success > svg {
-  color: var(--j-color-positive);
-}
-
-.activity-submit-success strong,
-.activity-submit-success p {
-  margin: 0;
-}
-
-.activity-submit-success strong {
-  color: var(--j-color-text);
-}
-
-.activity-submit-success p {
-  margin-top: 3px;
-  color: var(--j-color-text-muted);
-  font-size: 13px;
-}
-
 @media (max-width: 767px) {
   .activity-document,
   .activity-form {
@@ -815,8 +790,7 @@
     gap: 12px;
   }
 
-  .activity-cancel-confirm,
-  .activity-submit-success {
+  .activity-cancel-confirm {
     align-items: stretch;
     grid-template-columns: 1fr;
     flex-direction: column;
@@ -839,8 +813,7 @@
     flex-direction: column-reverse;
   }
 
-  .activity-form-actions > *,
-  .activity-submit-success .detail-primary-button {
+  .activity-form-actions > * {
     justify-content: center;
   }
 }

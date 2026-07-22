@@ -44,6 +44,42 @@ export function activitySlotDateTimes(date: string, slotId: ActivityTimeSlotId) 
   return activitySlotsDateTimes(date, [slotId]);
 }
 
+function slotLabel(slotId: ActivityTimeSlotId, selectedSlotIds: ActivityTimeSlotId[]) {
+  const slot = activityTimeSlots.find((item) => item.id === slotId);
+  if (!slot) return null;
+  const simpleLabel = slot.label.replace(/^(오전|오후|저녁)\s*/, '');
+  const duplicateSimpleLabels = activityTimeSlots
+    .filter((item) => selectedSlotIds.includes(item.id))
+    .map((item) => item.label.replace(/^(오전|오후|저녁)\s*/, ''))
+    .filter((label, index, labels) => labels.indexOf(label) !== index);
+  return duplicateSimpleLabels.includes(simpleLabel) ? slot.label : simpleLabel;
+}
+
+const timeFormatter = new Intl.DateTimeFormat('ko-KR', {
+  timeZone: 'Asia/Seoul',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
+
+export function formatActivityTimeRange(startsAt: string, endsAt: string) {
+  return `${timeFormatter.format(new Date(startsAt))}~${timeFormatter.format(new Date(endsAt))}`;
+}
+
+export function formatActivityPeriodLabel(
+  date: string,
+  startsAt: string,
+  endsAt: string,
+  savedSlotIds?: ActivityTimeSlotId[],
+) {
+  const slotIds = inferActivityTimeSlotIds(date, startsAt, endsAt, savedSlotIds);
+  if (!slotIds.length) return '직접 입력';
+  return slotIds
+    .map((slotId) => slotLabel(slotId, slotIds))
+    .filter((label): label is string => Boolean(label))
+    .join(', ');
+}
+
 export function inferActivityTimeSlotIds(
   date: string,
   startsAt: string,
@@ -56,6 +92,16 @@ export function inferActivityTimeSlotIds(
 
   const start = new Date(startsAt).toISOString();
   const end = new Date(endsAt).toISOString();
+  const availableSlots = activityTimeSlots.filter((slot) => availableIds.has(slot.id));
+  for (let startIndex = 0; startIndex < availableSlots.length; startIndex += 1) {
+    for (let endIndex = startIndex; endIndex < availableSlots.length; endIndex += 1) {
+      const slotIds = availableSlots
+        .slice(startIndex, endIndex + 1)
+        .map((slot) => slot.id as ActivityTimeSlotId);
+      const times = activitySlotsDateTimes(date, slotIds);
+      if (times?.startsAt === start && times.endsAt === end) return slotIds;
+    }
+  }
   const exact = activityTimeSlots.find((slot) => {
     const times = activitySlotDateTimes(date, slot.id);
     return times?.startsAt === start && times.endsAt === end;
