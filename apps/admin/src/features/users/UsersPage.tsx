@@ -7,12 +7,21 @@ import type {
   AdminSchoolYearSummary,
   AdminStaffSummary,
   AdminStudentSummary,
+  AdminUserStatus,
   RosterImportAction,
   RosterImportPreview,
   RosterImportRowInput,
   StudentGender,
 } from '@jshsus/types';
-import { Download, FileSpreadsheet, KeyRound, Pencil, Plus, ShieldCheck } from 'lucide-react';
+import {
+  Download,
+  FileSpreadsheet,
+  KeyRound,
+  Pencil,
+  Plus,
+  ShieldAlert,
+  ShieldCheck,
+} from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   Dialog,
@@ -304,6 +313,11 @@ export function UsersPage() {
     (sessionQuery.data.roles?.map(String).includes('system_admin') ||
       sessionQuery.data.permissions?.includes('iam.manage')),
   );
+  const canManageUsers = Boolean(
+    sessionQuery.data?.isLogined &&
+    (sessionQuery.data.roles?.map(String).includes('system_admin') ||
+      sessionQuery.data.permissions?.includes('users.manage')),
+  );
 
   const query: AdminIdentityListQuery = {
     ...filters,
@@ -400,6 +414,24 @@ export function UsersPage() {
     },
     onError: () => showToast({ title: '인증코드를 발급하지 못했습니다.', tone: 'danger' }),
   });
+  const updateUserStatus = useMutation({
+    mutationFn: ({
+      userId,
+      status,
+    }: {
+      userId: number;
+      status: Exclude<AdminUserStatus, 'deleted'>;
+    }) => api.updateUserStatus(userId, status),
+    onSuccess: async (result) => {
+      await refresh();
+      showToast({
+        title:
+          result.status === 'restricted' ? '학생을 제재했습니다.' : '학생 제재를 해제했습니다.',
+        tone: 'success',
+      });
+    },
+    onError: () => showToast({ title: '학생 상태를 변경하지 못했습니다.', tone: 'danger' }),
+  });
   const previewRoster = useMutation({
     mutationFn: api.previewStudentRoster,
     onSuccess: (preview) => {
@@ -477,7 +509,13 @@ export function UsersPage() {
         <IdentityActions
           identity={{ kind: 'student', value: row.original }}
           canManageRoles={canManageRoles}
+          canManageStatus={canManageUsers}
+          statusPending={updateUserStatus.isPending}
           onOpen={setDialog}
+          onUpdateStatus={(identity, status) => {
+            if (!identity.value.userId) return;
+            updateUserStatus.mutate({ userId: identity.value.userId, status });
+          }}
           onOpenActivation={(identity) => {
             issueActivation.reset();
             setIssuedActivation(null);
@@ -485,7 +523,7 @@ export function UsersPage() {
           }}
         />
       ),
-      meta: { align: 'center', width: 132 },
+      meta: { align: 'center', width: 152 },
     },
   ];
   const staffColumns: ColumnDef<AdminStaffSummary>[] = [
@@ -542,7 +580,13 @@ export function UsersPage() {
         <IdentityActions
           identity={{ kind: 'staff', value: row.original }}
           canManageRoles={canManageRoles}
+          canManageStatus={canManageUsers}
+          statusPending={updateUserStatus.isPending}
           onOpen={setDialog}
+          onUpdateStatus={(identity, status) => {
+            if (!identity.value.userId) return;
+            updateUserStatus.mutate({ userId: identity.value.userId, status });
+          }}
           onOpenActivation={(identity) => {
             issueActivation.reset();
             setIssuedActivation(null);
@@ -1174,15 +1218,25 @@ export function UsersPage() {
 function IdentityActions({
   identity,
   canManageRoles,
+  canManageStatus,
+  statusPending,
   onOpen,
+  onUpdateStatus,
   onOpenActivation,
 }: {
   identity: Identity;
   canManageRoles: boolean;
+  canManageStatus: boolean;
+  statusPending: boolean;
   onOpen: (state: DialogState) => void;
+  onUpdateStatus: (
+    identity: Identity,
+    status: Exclude<AdminUserStatus, 'deleted' | 'graduated'>,
+  ) => void;
   onOpenActivation: (identity: Identity) => void;
 }) {
   const disabled = !identity.value.userId;
+  const isRestricted = identity.kind === 'student' && identity.value.status === 'restricted';
   return (
     <RowActions className="identity-row-actions">
       <RowActionButton
@@ -1201,6 +1255,16 @@ function IdentityActions({
           label="역할 수정"
           disabled={disabled}
           onClick={() => onOpen({ type: 'roles', identity })}
+        />
+      ) : null}
+      {identity.kind === 'student' && canManageStatus ? (
+        <RowActionButton
+          icon={
+            isRestricted ? <ShieldCheck aria-hidden="true" /> : <ShieldAlert aria-hidden="true" />
+          }
+          label={isRestricted ? '제재 해제' : '제재'}
+          disabled={disabled || statusPending}
+          onClick={() => onUpdateStatus(identity, isRestricted ? 'active' : 'restricted')}
         />
       ) : null}
     </RowActions>

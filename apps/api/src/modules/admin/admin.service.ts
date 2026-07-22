@@ -534,6 +534,7 @@ export class AdminService {
           gender: schema.users.gender,
           email: schema.users.email,
           phone: schema.users.phone,
+          status: schema.users.status,
           lastLoginAt: schema.users.lastLoginAt,
         })
         .from(schema.studentEnrollments)
@@ -563,6 +564,7 @@ export class AdminService {
           gender: normalizeStudentGender(row.gender),
           email: row.email ?? undefined,
           phone: row.phone ?? undefined,
+          status: (row.status as AdminUserStatus | null) ?? undefined,
           roles: row.userId ? (roles.get(row.userId) ?? []) : [],
           lastLoginAt: row.lastLoginAt?.toISOString(),
         })),

@@ -7,6 +7,115 @@
   box-shadow: var(--j-shadow-card);
 }
 
+.board-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--j-space-2);
+}
+
+.board-rules-modal {
+  position: fixed;
+  z-index: var(--j-layer-modal);
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--j-space-6);
+  background: color-mix(in srgb, var(--j-color-text) 42%, transparent);
+}
+
+.board-rules-modal__dialog {
+  width: min(860px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-lg);
+  background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-overlay);
+}
+
+.board-rules-modal__dialog > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--j-space-4);
+  padding: var(--j-space-5) var(--j-space-6);
+  border-bottom: 1px solid var(--j-color-border);
+}
+
+.board-rules-modal__dialog header p {
+  margin: 0 0 4px;
+  color: var(--j-color-brand-strong);
+  font-size: var(--j-text-xs);
+  font-weight: var(--j-weight-bold);
+}
+
+.board-rules-modal__dialog h2 {
+  margin: 0;
+  font-size: var(--j-text-xl);
+}
+
+.board-rules-modal__dialog header button {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--j-radius-md);
+  color: var(--j-color-text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.board-rules-modal__dialog header button:hover {
+  color: var(--j-color-text);
+  background: var(--j-color-surface-hover);
+}
+
+.board-rules-modal__body {
+  overflow-y: auto;
+  padding: var(--j-space-6);
+  color: var(--j-color-text-secondary);
+  line-height: 1.72;
+}
+
+.board-rules-modal__body section + section {
+  margin-top: var(--j-space-7);
+  padding-top: var(--j-space-6);
+  border-top: 1px solid var(--j-color-border);
+}
+
+.board-rules-modal__body h3,
+.board-rules-modal__body h4 {
+  margin: 0 0 var(--j-space-3);
+  color: var(--j-color-text);
+}
+
+.board-rules-modal__body h3 {
+  font-size: var(--j-text-lg);
+}
+
+.board-rules-modal__body h4 {
+  margin-top: var(--j-space-5);
+  font-size: var(--j-text-base);
+}
+
+.board-rules-modal__body h4:first-of-type {
+  margin-top: 0;
+}
+
+.board-rules-modal__body ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.board-rules-modal__body li + li {
+  margin-top: var(--j-space-2);
+}
+
 .workflow-table-section {
   min-width: 0;
   padding: var(--j-space-4) var(--j-space-5) var(--j-space-5);

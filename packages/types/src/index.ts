@@ -433,6 +433,7 @@ export type AdminStudentSummary = StudentOption & {
   schoolYear?: number;
   enrollmentId?: number;
   enrollmentStatus?: StudentEnrollmentStatus;
+  status?: AdminUserStatus;
   gender?: StudentGender;
   email?: string;
   phone?: string;

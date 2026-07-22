@@ -32,8 +32,22 @@ export function matchesActivityQuery(
 ) {
   const normalized = query.trim().toLocaleLowerCase('ko-KR');
   if (!normalized) return true;
+  const participantText = (request.participants ?? [])
+    .map((student) => `${student.studentNo} ${student.studentName}`)
+    .join(' ');
   const values = {
-    activity_location: `${request.purpose} ${request.location}`,
+    activity_location: [
+      request.purpose,
+      request.location,
+      request.advisorTeacherName,
+      request.teacherName,
+      request.reviewerName,
+      request.creatorName,
+      request.studentName,
+      request.studentNo,
+      participantText,
+      `#${request.id}`,
+    ].join(' '),
     activity: request.purpose,
     location: request.location,
   };
