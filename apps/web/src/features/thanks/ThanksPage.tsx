@@ -65,11 +65,7 @@ export function ThanksPage() {
   };
 
   return (
-    <PageScaffold
-      breadcrumbs={listBreadcrumbs('thanks')}
-      title="감사챌린지"
-      description="감사 메시지를 남기고 기존 과구리 감사챌린지 기록을 확인하세요."
-    >
+    <PageScaffold breadcrumbs={listBreadcrumbs('thanks')} title="감사챌린지">
       <section className="thanks-page" aria-label="감사챌린지">
         <div className="thanks-tabs" role="tablist" aria-label="감사챌린지 보기">
           <button

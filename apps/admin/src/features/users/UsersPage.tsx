@@ -284,7 +284,7 @@ export function UsersPage() {
   const [tab, setTab] = useState<Tab>('students');
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<AdminIdentityListQuery>({ pageSize: 20 });
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'identifier', desc: false }]);
   const [dialog, setDialog] = useState<DialogState>(null);
   const [issuedStaffNo, setIssuedStaffNo] = useState<number | null>(null);
   const [rosterRows, setRosterRows] = useState<RosterImportRowInput[]>([]);
@@ -557,7 +557,7 @@ export function UsersPage() {
     setTab(next);
     setPage(1);
     setFilters({ pageSize: 20 });
-    setSorting([]);
+    setSorting([{ id: 'identifier', desc: false }]);
     setIssuedStaffNo(null);
   };
 

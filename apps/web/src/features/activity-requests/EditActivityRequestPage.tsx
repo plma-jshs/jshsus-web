@@ -381,7 +381,6 @@ export function EditActivityRequestPage() {
     <PageScaffold
       breadcrumbs={taskBreadcrumbs('activityRequests', '수정')}
       title="탐구활동서 수정"
-      description="승인 대기 중인 신청 내용을 수정합니다."
       width="reading"
       variant="form"
     >

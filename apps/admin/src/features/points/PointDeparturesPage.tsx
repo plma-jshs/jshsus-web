@@ -56,7 +56,7 @@ export function PointDeparturesPage() {
   const [grade, setGrade] = useState('');
   const [classNo, setClassNo] = useState('');
   const [riskStatus, setRiskStatus] = useState<'risk' | 'departure' | 'all'>('all');
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'currentPoint', desc: false }]);
   const [historySorting, setHistorySorting] = useState<SortingState>([
     { id: 'handledAt', desc: true },
   ]);
@@ -209,7 +209,19 @@ export function PointDeparturesPage() {
 
   const candidateColumns = useMemo<ColumnDef<DepartureCandidate>[]>(
     () => [
-      { accessorKey: 'studentNo', header: '학번', meta: { align: 'center', width: 120 } },
+      {
+        accessorKey: 'studentNo',
+        header: '학번',
+        cell: ({ row }) => (
+          <a
+            className="point-table-link"
+            href={`/points/records?search=${encodeURIComponent(String(row.original.studentNo))}`}
+          >
+            {row.original.studentNo}
+          </a>
+        ),
+        meta: { align: 'center', width: 120 },
+      },
       {
         accessorKey: 'name',
         header: '이름',
@@ -265,7 +277,19 @@ export function PointDeparturesPage() {
   );
   const historyColumns = useMemo<ColumnDef<DepartureHistoryRow>[]>(
     () => [
-      { accessorKey: 'studentNo', header: '학번', meta: { align: 'center', width: 120 } },
+      {
+        accessorKey: 'studentNo',
+        header: '학번',
+        cell: ({ row }) => (
+          <a
+            className="point-table-link"
+            href={`/points/records?search=${encodeURIComponent(String(row.original.studentNo))}`}
+          >
+            {row.original.studentNo}
+          </a>
+        ),
+        meta: { align: 'center', width: 120 },
+      },
       { accessorKey: 'name', header: '이름', meta: { align: 'center', width: 130 } },
       {
         accessorKey: 'handledAt',

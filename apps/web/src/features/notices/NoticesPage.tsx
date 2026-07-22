@@ -56,7 +56,6 @@ export function NoticesPage() {
     <PageScaffold
       breadcrumbs={listBreadcrumbs('notices')}
       title="공지사항"
-      description="학교 공지와 학생생활 안내를 확인하세요."
       action={
         sessionQuery.data?.isLogined && sessionQuery.data.permissions.includes('notices.manage') ? (
           <Link className="detail-primary-button" to="/notices/new">

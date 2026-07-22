@@ -71,7 +71,6 @@ export function PetitionsPage() {
     <PageScaffold
       breadcrumbs={listBreadcrumbs('petitions')}
       title="청원·제안"
-      description="학교생활 관련 제안을 확인하고 참여하세요."
       action={
         <Link className="detail-primary-button" to="/petitions/new">
           <PenLine size={16} aria-hidden="true" /> 제안하기

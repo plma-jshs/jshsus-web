@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { LostItemSummary } from '@jshsus/types';
 import { Search, Settings2, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
@@ -29,6 +29,7 @@ export function LostItemsManagementPage() {
   const [selectedItemStatus, setSelectedItemStatus] =
     useState<LostItemSummary['status']>('PROCESSING');
   const [itemPageSize, setItemPageSize] = useState(20);
+  const [itemSorting, setItemSorting] = useState<SortingState>([{ id: 'id', desc: true }]);
 
   const lostItemsQuery = useQuery({
     queryKey: ['admin-lost-items'],
@@ -73,10 +74,9 @@ export function LostItemsManagementPage() {
   const itemColumns = useMemo<ColumnDef<LostItemSummary>[]>(
     () => [
       {
-        id: 'number',
+        accessorKey: 'id',
         header: '번호',
-        cell: ({ row }) => (lostItemsQuery.data?.length ?? 0) - row.index,
-        enableSorting: false,
+        cell: ({ row }) => row.original.id,
         meta: { align: 'center', width: 72 },
       },
       {
@@ -164,7 +164,7 @@ export function LostItemsManagementPage() {
         meta: { align: 'center', width: 64 },
       },
     ],
-    [lostItemsQuery.data?.length],
+    [],
   );
 
   return (
@@ -225,6 +225,8 @@ export function LostItemsManagementPage() {
             emptyText="조건에 맞는 분실물 게시물이 없습니다."
             alwaysShowPagination
             pageSize={itemPageSize}
+            sorting={itemSorting}
+            onSortingChange={setItemSorting}
             caption="분실물 관리 목록"
           />
         </ContentQueryState>

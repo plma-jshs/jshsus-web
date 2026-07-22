@@ -107,7 +107,7 @@ export type AdminSchoolCalendar = {
   to: string;
   events: AdminSchoolCalendarEvent[];
   availability: 'available' | 'partial' | 'unavailable';
-  neisAvailable: boolean;
+  homepageAvailable: boolean;
   schoolEventsAvailable: boolean;
 };
 

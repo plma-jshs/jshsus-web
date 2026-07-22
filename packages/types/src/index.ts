@@ -281,7 +281,7 @@ export type AcademicEvent = {
   description?: string;
   category: string;
   isHoliday: boolean;
-  source: 'neis' | 'school';
+  source: 'school';
 };
 
 export type SchoolDataAvailability = 'available' | 'partial' | 'unavailable';
@@ -294,7 +294,7 @@ export type SchoolDataMeta = {
   availability: SchoolDataAvailability;
   mealAvailability: SchoolDataSourceAvailability;
   calendarAvailability: SchoolDataAvailability;
-  neisCalendarAvailability: SchoolDataSourceAvailability;
+  homepageCalendarAvailability: SchoolDataSourceAvailability;
   schoolEventsAvailability: SchoolDataSourceAvailability;
 };
 

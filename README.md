@@ -126,7 +126,7 @@ GitHub `production` Environment에는 다음 secret이 필요합니다.
 - `DEPLOY_HOST`, `DEPLOY_PORT`, `DEPLOY_USER`, `DEPLOY_PATH`
 - `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`
 - `PRODUCTION_ENV_FILE`
-- `NEIS_API_KEY` (NEIS 키만 독립적으로 교체할 수 있도록 별도 보관)
+- `NEIS_API_KEY` (식단 NEIS API 키만 독립적으로 교체할 수 있도록 별도 보관)
 - `YOUTUBE_API_KEY` (필수, JBS와 기상곡의 영상 제목·길이·임베드 가능 여부 검증)
 
 `PRODUCTION_ENV_FILE`에 중복 기록하지 않으며, 배포 시 임시 환경파일에만 병합된다.

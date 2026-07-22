@@ -97,7 +97,6 @@ export function NewLostItemPage() {
     <PageScaffold
       breadcrumbs={taskBreadcrumbs('lostItems', '등록')}
       title="분실물 등록"
-      description="분실·습득 물품 정보를 입력하세요."
       width="reading"
       variant="form"
     >

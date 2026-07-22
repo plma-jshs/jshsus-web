@@ -24,7 +24,7 @@ describe('HomeController', () => {
         availability: 'partial',
         mealAvailability: 'unavailable',
         calendarAvailability: 'partial',
-        neisCalendarAvailability: 'unavailable',
+        homepageCalendarAvailability: 'unavailable',
         schoolEventsAvailability: 'available',
       }),
     } as unknown as SchoolDataService;
@@ -43,7 +43,7 @@ describe('HomeController', () => {
       availability: 'partial',
       mealAvailability: 'unavailable',
       calendarAvailability: 'partial',
-      neisCalendarAvailability: 'unavailable',
+      homepageCalendarAvailability: 'unavailable',
       schoolEventsAvailability: 'available',
     });
   });

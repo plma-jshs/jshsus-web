@@ -215,7 +215,7 @@ function MealCard({
       </header>
       {hasDataError ? (
         <div className="home-inline-error" role="alert">
-          <span>선택한 날짜의 NEIS 식단 정보를 확인할 수 없습니다.</span>
+          <span>선택한 날짜의 식단 정보를 확인할 수 없습니다.</span>
           <button type="button" onClick={retry}>
             다시 시도
           </button>
@@ -305,7 +305,7 @@ function CalendarCard({
   initialFrom,
   initialTo,
   initialAvailability,
-  initialNeisAvailability,
+  initialHomepageAvailability,
   initialSchoolEventsAvailability,
   onRetryInitial,
 }: {
@@ -313,7 +313,7 @@ function CalendarCard({
   initialFrom: string;
   initialTo: string;
   initialAvailability: SchoolDataAvailability;
-  initialNeisAvailability: SchoolDataSourceAvailability;
+  initialHomepageAvailability: SchoolDataSourceAvailability;
   initialSchoolEventsAvailability: SchoolDataSourceAvailability;
   onRetryInitial: () => void;
 }) {
@@ -338,9 +338,9 @@ function CalendarCard({
   });
   const hasDataError = cardState === 'error' || cardState === 'unavailable';
   const hasPartialData = cardState === 'partial';
-  const neisAvailability = usesInitialData
-    ? initialNeisAvailability
-    : calendarQuery.data?.neisAvailable
+  const homepageAvailability = usesInitialData
+    ? initialHomepageAvailability
+    : calendarQuery.data?.homepageAvailable
       ? 'available'
       : 'unavailable';
   const schoolEventsAvailability = usesInitialData
@@ -349,7 +349,7 @@ function CalendarCard({
       ? 'available'
       : 'unavailable';
   const unavailableCalendarSources = [
-    neisAvailability === 'unavailable' ? 'NEIS 학사일정' : null,
+    homepageAvailability === 'unavailable' ? '학교 홈페이지 학사일정' : null,
     schoolEventsAvailability === 'unavailable' ? '학교 등록 일정' : null,
   ].filter((source): source is string => Boolean(source));
   const retry = () => {
@@ -562,7 +562,7 @@ export function DashboardPage() {
           initialFrom={dashboard.schoolData.scheduleFrom}
           initialTo={dashboard.schoolData.scheduleTo}
           initialAvailability={dashboard.schoolData.calendarAvailability}
-          initialNeisAvailability={dashboard.schoolData.neisCalendarAvailability}
+          initialHomepageAvailability={dashboard.schoolData.homepageCalendarAvailability}
           initialSchoolEventsAvailability={dashboard.schoolData.schoolEventsAvailability}
           onRetryInitial={() => void dashboardQuery.refetch()}
         />

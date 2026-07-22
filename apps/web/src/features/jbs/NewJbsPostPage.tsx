@@ -96,7 +96,6 @@ export function NewJbsPostPage() {
     <PageScaffold
       breadcrumbs={taskBreadcrumbs('jbs', '영상 등록')}
       title="JBS 영상 등록"
-      description="YouTube URL과 게시글 내용을 입력하세요."
       width="reading"
       variant="form"
     >

@@ -138,7 +138,6 @@ export function NewActivityRequestPage() {
       <PageScaffold
         breadcrumbs={taskBreadcrumbs('activityRequests', '신청')}
         title="탐구활동서가 제출되었습니다"
-        description="처리 상태는 탐구활동서 목록에서 확인할 수 있습니다."
         width="reading"
         variant="form"
       >
@@ -166,7 +165,6 @@ export function NewActivityRequestPage() {
     <PageScaffold
       breadcrumbs={taskBreadcrumbs('activityRequests', '신청')}
       title="탐구활동서 신청"
-      description="활동 목적, 일정, 장소와 참여 학생을 입력하세요."
       width="reading"
       variant="form"
     >

@@ -45,7 +45,6 @@ export function LostItemsPage() {
     <PageScaffold
       breadcrumbs={listBreadcrumbs('lostItems')}
       title="분실물"
-      description="분실·습득 물품을 조회하고 등록하세요."
       action={
         <Link className="detail-primary-button" to="/lost-items/new">
           <PackagePlus size={16} aria-hidden="true" /> 등록하기

@@ -23,7 +23,6 @@ const MAX_PUBLIC_RANGE_DAYS = 93;
 const PUBLIC_PAST_DAYS = 366;
 const PUBLIC_FUTURE_DAYS = 366;
 const NEIS_PAGE_SIZE = 100;
-const MAX_NEIS_CALENDAR_ROWS = 500;
 const MAX_NEIS_MEAL_ROWS = 300;
 const MAX_MEMORY_CACHE_ENTRIES = 128;
 const MAX_FAILURE_ENTRIES = 128;
@@ -97,13 +96,6 @@ const neisMealRowSchema = z.object({
   CAL_INFO: z.string().optional(),
 });
 
-const neisScheduleRowSchema = z.object({
-  AA_YMD: compactDateSchema,
-  EVENT_NM: z.string(),
-  EVENT_CNTNT: z.string().optional(),
-  SBTR_DD_SC_NM: z.string().optional(),
-});
-
 const schoolMealCacheSchema = z.array(
   z.object({
     id: z.string(),
@@ -126,7 +118,7 @@ const academicEventCacheSchema = z.array(
     description: z.string().optional(),
     category: z.string(),
     isHoliday: z.boolean(),
-    source: z.enum(['neis', 'school']),
+    source: z.literal('school'),
   }),
 );
 
@@ -155,7 +147,7 @@ export type HomeSchoolData = {
   availability: SchoolDataAvailability;
   mealAvailability: SchoolDataSourceAvailability;
   calendarAvailability: SchoolDataAvailability;
-  neisCalendarAvailability: SchoolDataSourceAvailability;
+  homepageCalendarAvailability: SchoolDataSourceAvailability;
   schoolEventsAvailability: SchoolDataSourceAvailability;
 };
 
@@ -170,7 +162,7 @@ export type AdminSchoolCalendar = {
   to: string;
   events: AdminSchoolCalendarEvent[];
   availability: SchoolDataAvailability;
-  neisAvailable: boolean;
+  homepageAvailable: boolean;
   schoolEventsAvailable: boolean;
 };
 
@@ -386,12 +378,12 @@ export class SchoolDataService {
       academicEvents: calendar.events,
       availability: availability([
         meals.available,
-        calendar.neisAvailable,
+        calendar.homepageAvailable,
         calendar.schoolEventsAvailable,
       ]),
       mealAvailability: meals.available ? 'available' : 'unavailable',
       calendarAvailability: calendar.availability,
-      neisCalendarAvailability: calendar.neisAvailable ? 'available' : 'unavailable',
+      homepageCalendarAvailability: calendar.homepageAvailable ? 'available' : 'unavailable',
       schoolEventsAvailability: calendar.schoolEventsAvailable ? 'available' : 'unavailable',
     };
   }
@@ -434,7 +426,7 @@ export class SchoolDataService {
     events: AcademicEvent[];
     available: boolean;
     availability: SchoolDataAvailability;
-    neisAvailable: boolean;
+    homepageAvailable: boolean;
     schoolEventsAvailable: boolean;
   }> {
     const today = formatKoreanDate(now);
@@ -459,15 +451,7 @@ export class SchoolDataService {
       ),
       this.safeListManagedEvents(from, to, false),
     ]);
-    const neis = homepage.available
-      ? ({ value: [], available: false } satisfies LoadResult<AcademicEvent[]>)
-      : await this.cachedLoad<AcademicEvent[]>(
-          `neis:calendar:${env.NEIS_ATPT_OFCDC_SC_CODE}:${env.NEIS_SD_SCHUL_CODE}:${cacheRange.from}:${cacheRange.to}`,
-          () => this.loadNeisCalendar(cacheRange.from, cacheRange.to),
-          (value): value is AcademicEvent[] => academicEventCacheSchema.safeParse(value).success,
-          [],
-        );
-    const externalCalendar = homepage.available ? homepage : neis;
+    const externalCalendar = homepage;
 
     const visibleExternalEvents = externalCalendar.value.filter(
       (event) =>
@@ -483,7 +467,7 @@ export class SchoolDataService {
       events,
       available: externalCalendar.available || custom.available,
       availability: availability([externalCalendar.available, custom.available]),
-      neisAvailable: externalCalendar.available,
+      homepageAvailable: externalCalendar.available,
       schoolEventsAvailable: custom.available,
     };
   }
@@ -510,15 +494,7 @@ export class SchoolDataService {
       ),
       this.safeListRawManagedEvents(from, to, true),
     ]);
-    const neis = homepage.available
-      ? ({ value: [], available: false } satisfies LoadResult<AcademicEvent[]>)
-      : await this.cachedLoad<AcademicEvent[]>(
-          `neis:calendar:${env.NEIS_ATPT_OFCDC_SC_CODE}:${env.NEIS_SD_SCHUL_CODE}:${cacheRange.from}:${cacheRange.to}`,
-          () => this.loadNeisCalendar(cacheRange.from, cacheRange.to),
-          (value): value is AcademicEvent[] => academicEventCacheSchema.safeParse(value).success,
-          [],
-        );
-    const externalCalendar = homepage.available ? homepage : neis;
+    const externalCalendar = homepage;
 
     const visibleExternalEvents = externalCalendar.value.filter(
       (event) =>
@@ -556,7 +532,7 @@ export class SchoolDataService {
       to,
       events,
       availability: availability([externalCalendar.available, custom.available]),
-      neisAvailable: externalCalendar.available,
+      homepageAvailable: externalCalendar.available,
       schoolEventsAvailable: custom.available,
     };
   }
@@ -731,35 +707,6 @@ export class SchoolDataService {
     }));
   }
 
-  private async loadNeisCalendar(from: string, to: string): Promise<AcademicEvent[]> {
-    const rows = await this.requestAllNeisRows(
-      'SchoolSchedule',
-      {
-        AA_FROM_YMD: toCompactDate(from),
-        AA_TO_YMD: toCompactDate(to),
-      },
-      neisScheduleRowSchema,
-      MAX_NEIS_CALENDAR_ROWS,
-    );
-    return rows.map((row, index) => {
-      const date = fromCompactDate(row.AA_YMD);
-      const isHoliday = Boolean(
-        row.SBTR_DD_SC_NM && row.SBTR_DD_SC_NM !== '\uD574\uB2F9\uC5C6\uC74C',
-      );
-      return {
-        id: `neis:event:${row.AA_YMD}:${index}`,
-        title: row.EVENT_NM.trim(),
-        startsAt: `${date}T00:00:00.000+09:00`,
-        endsAt: `${date}T23:59:59.999+09:00`,
-        allDay: true,
-        description: row.EVENT_CNTNT?.trim() || undefined,
-        category: isHoliday ? 'holiday' : 'academic',
-        isHoliday,
-        source: 'neis' as const,
-      };
-    });
-  }
-
   private async loadSchoolHomepageCalendar(from: string, to: string): Promise<AcademicEvent[]> {
     const htmlPages = await Promise.all(
       monthKeysBetween(from, to).map((yearMonth) => this.requestSchoolHomepageCalendar(yearMonth)),
@@ -790,7 +737,7 @@ export class SchoolDataService {
       headers: {
         Accept: 'text/html,application/xhtml+xml',
       },
-      signal: AbortSignal.timeout(env.NEIS_REQUEST_TIMEOUT_MS),
+      signal: AbortSignal.timeout(env.SCHOOL_DATA_REQUEST_TIMEOUT_MS),
     });
     if (!response.ok) throw new Error(`School homepage returned HTTP ${response.status}.`);
     const contentType = response.headers.get('content-type') ?? '';
@@ -863,8 +810,7 @@ export class SchoolDataService {
     }));
   }
 
-  private async requestNeis(
-    endpoint: 'mealServiceDietInfo' | 'SchoolSchedule',
+  private async requestNeisMeal(
     requestParameters: Record<string, string>,
     pageIndex: number,
   ): Promise<unknown> {
@@ -878,47 +824,49 @@ export class SchoolDataService {
     });
     if (env.NEIS_API_KEY) parameters.set('KEY', env.NEIS_API_KEY);
 
-    const response = await fetch(`${NEIS_BASE_URL}/${endpoint}?${parameters.toString()}`, {
-      // The NEIS gateway returns HTTP 500 for `Accept: application/json` even
-      // though Type=json is valid. Its default media negotiation (`*/*`)
-      // returns the requested JSON payload reliably.
+    const response = await fetch(`${NEIS_BASE_URL}/mealServiceDietInfo?${parameters.toString()}`, {
+      // NEIS meal API returns the requested JSON reliably with wildcard negotiation.
       headers: { Accept: '*/*' },
       signal: AbortSignal.timeout(env.NEIS_REQUEST_TIMEOUT_MS),
     });
-    if (!response.ok) throw new Error(`NEIS returned HTTP ${response.status}.`);
+    if (!response.ok) throw new Error(`NEIS meal API returned HTTP ${response.status}.`);
     return response.json();
   }
 
   private async requestAllNeisRows<T>(
-    endpoint: 'mealServiceDietInfo' | 'SchoolSchedule',
+    name: 'mealServiceDietInfo',
     requestParameters: Record<string, string>,
     rowSchema: z.ZodType<T>,
     maxRows: number,
   ): Promise<T[]> {
-    const firstPayload = await this.requestNeis(endpoint, requestParameters, 1);
-    const firstPage = this.extractPage(firstPayload, endpoint, rowSchema);
+    const firstPayload = await this.requestNeisMeal(requestParameters, 1);
+    const firstPage = this.extractNeisPage(firstPayload, name, rowSchema);
     if (firstPage.totalCount > maxRows) {
-      throw new Error(`NEIS ${endpoint} result exceeds the ${maxRows}-row safety limit.`);
+      throw new Error(`NEIS ${name} result exceeds the ${maxRows}-row safety limit.`);
     }
 
     const pageCount = Math.ceil(firstPage.totalCount / NEIS_PAGE_SIZE);
     const remainingPages = await Promise.all(
       Array.from({ length: Math.max(0, pageCount - 1) }, (_, index) =>
-        this.requestNeis(endpoint, requestParameters, index + 2).then((payload) =>
-          this.extractPage(payload, endpoint, rowSchema),
+        this.requestNeisMeal(requestParameters, index + 2).then((payload) =>
+          this.extractNeisPage(payload, name, rowSchema),
         ),
       ),
     );
     const rows = [firstPage, ...remainingPages].flatMap((page) => page.rows);
     if (rows.length !== firstPage.totalCount) {
       throw new Error(
-        `NEIS ${endpoint} returned ${rows.length} of ${firstPage.totalCount} expected rows.`,
+        `NEIS ${name} returned ${rows.length} of ${firstPage.totalCount} expected rows.`,
       );
     }
     return rows;
   }
 
-  private extractPage<T>(payload: unknown, name: string, rowSchema: z.ZodType<T>): NeisPage<T> {
+  private extractNeisPage<T>(
+    payload: unknown,
+    name: 'mealServiceDietInfo',
+    rowSchema: z.ZodType<T>,
+  ): NeisPage<T> {
     if (!payload || typeof payload !== 'object') throw new Error('NEIS returned invalid JSON.');
     const root = payload as Record<string, unknown>;
     const result = root.RESULT;
@@ -992,7 +940,7 @@ export class SchoolDataService {
         }
       }
     } catch (error) {
-      this.logger.debug(`NEIS cache read skipped: ${this.safeError(error)}`);
+      this.logger.debug(`School data cache read skipped: ${this.safeError(error)}`);
     }
 
     if (this.readFailureUntil(key, now) > now) {
@@ -1004,7 +952,7 @@ export class SchoolDataService {
       let request = this.inFlight.get(key) as Promise<T> | undefined;
       if (!request) {
         if (this.inFlight.size >= MAX_IN_FLIGHT_LOADS) {
-          this.logger.warn('NEIS request concurrency limit reached.');
+          this.logger.warn('School data request concurrency limit reached.');
           if (memory && memory.staleUntil > now) return { value: memory.value, available: true };
           return { value: fallback, available: false };
         }
@@ -1017,14 +965,17 @@ export class SchoolDataService {
       this.failureUntil.delete(key);
       this.remember(key, value);
       try {
-        await this.redis.setJson(key, value, env.NEIS_CACHE_TTL_SECONDS);
+        await this.redis.setJson(key, value, env.SCHOOL_DATA_CACHE_TTL_SECONDS);
       } catch (error) {
-        this.logger.debug(`NEIS cache write skipped: ${this.safeError(error)}`);
+        this.logger.debug(`School data cache write skipped: ${this.safeError(error)}`);
       }
       return { value, available: true };
     } catch (error) {
-      this.logger.warn(`NEIS ${key.split(':')[1]} unavailable: ${this.safeError(error)}`);
-      this.recordFailure(key, Date.now() + Math.min(env.NEIS_CACHE_TTL_SECONDS * 1000, 60_000));
+      this.logger.warn(`School data ${key.split(':')[1]} unavailable: ${this.safeError(error)}`);
+      this.recordFailure(
+        key,
+        Date.now() + Math.min(env.SCHOOL_DATA_CACHE_TTL_SECONDS * 1000, 60_000),
+      );
       if (memory && memory.staleUntil > now) return { value: memory.value, available: true };
       return { value: fallback, available: false };
     }
@@ -1032,7 +983,7 @@ export class SchoolDataService {
 
   private remember<T>(key: string, value: T): void {
     const now = Date.now();
-    const ttlMs = env.NEIS_CACHE_TTL_SECONDS * 1000;
+    const ttlMs = env.SCHOOL_DATA_CACHE_TTL_SECONDS * 1000;
     for (const [cachedKey, entry] of this.memoryCache) {
       if (entry.staleUntil <= now) this.memoryCache.delete(cachedKey);
     }
@@ -1129,10 +1080,7 @@ export class SchoolDataService {
   private safeError(error: unknown): string {
     if (error instanceof Error) {
       if (error.name === 'TimeoutError') return 'request timed out';
-      const withoutKey = env.NEIS_API_KEY
-        ? error.message.replaceAll(env.NEIS_API_KEY, '[redacted]')
-        : error.message;
-      return withoutKey.replace(/([?&]KEY=)[^&\s]+/gi, '$1[redacted]');
+      return error.message.replace(/([?&](?:KEY|apiKey|token)=)[^&\s]+/gi, '$1[redacted]');
     }
     return 'unknown error';
   }

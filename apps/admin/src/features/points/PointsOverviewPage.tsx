@@ -6,7 +6,7 @@ import { AdminListPanel, PageSizeSelect, TableToolbar } from '../../components/u
 import { pointsApi, type PointStudentRow } from './pointsApi';
 import './points.css';
 
-type StudentSort = 'studentNo' | 'name' | 'meritPoint' | 'penaltyPoint';
+type StudentSort = 'studentNo' | 'name' | 'meritPoint' | 'penaltyPoint' | 'currentPoint';
 
 function formatSignedPoint(value: number) {
   if (value > 0) return `+${value}`;
@@ -21,7 +21,7 @@ export function PointsOverviewPage() {
   );
   const [grade, setGrade] = useState('');
   const [classNo, setClassNo] = useState('');
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'studentNo', desc: false }]);
   const sort = sorting[0];
   const query = useQuery({
     queryKey: ['point-student-page', page, pageSize, search, grade, classNo, sort?.id, sort?.desc],

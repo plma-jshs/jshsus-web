@@ -48,7 +48,6 @@ export function BoardPage() {
     <PageScaffold
       breadcrumbs={listBreadcrumbs('board')}
       title="자유게시판"
-      description="학교생활 관련 이야기와 정보를 나눕니다."
       action={
         <Link className="detail-primary-button" to="/boards/free/new">
           <PenLine size={16} aria-hidden="true" /> 글쓰기

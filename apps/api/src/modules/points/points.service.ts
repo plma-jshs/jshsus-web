@@ -122,7 +122,9 @@ const studentPageSchema = z.object({
     .union([z.literal('true'), z.literal('false'), z.boolean()])
     .transform((value) => value === true || value === 'true')
     .default(false),
-  sortBy: z.enum(['studentNo', 'name', 'meritPoint', 'penaltyPoint']).default('studentNo'),
+  sortBy: z
+    .enum(['studentNo', 'name', 'meritPoint', 'penaltyPoint', 'currentPoint'])
+    .default('studentNo'),
   sortOrder: z.enum(['asc', 'desc']).default('asc'),
 });
 
@@ -393,7 +395,9 @@ export class PointsService {
             ? meritPoint
             : sortBy === 'penaltyPoint'
               ? penaltyPoint
-              : schema.students.studentNo;
+              : sortBy === 'currentPoint'
+                ? schema.students.currentPoint
+                : schema.students.studentNo;
       const orderExpression = sortOrder === 'asc' ? asc(sortExpression) : desc(sortExpression);
       const searchRank = search ? studentSearchRankSql(search) : undefined;
 

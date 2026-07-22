@@ -67,8 +67,16 @@ function calendarDays(month: string) {
   const first = `${month}-01`;
   const [year, monthNumber] = month.split('-').map(Number);
   const weekday = new Date(Date.UTC(year, monthNumber - 1, 1)).getUTCDay();
+  const lastDay = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+  const weekCount = Math.max(5, Math.ceil((weekday + lastDay) / 7));
   const start = shiftDate(first, -weekday);
-  return Array.from({ length: 42 }, (_, index) => shiftDate(start, index));
+  return Array.from({ length: weekCount * 7 }, (_, index) => shiftDate(start, index));
+}
+
+function calendarWeeks(days: string[]) {
+  return Array.from({ length: days.length / 7 }, (_, index) =>
+    days.slice(index * 7, index * 7 + 7),
+  );
 }
 
 function monthLabel(month: string) {
@@ -147,6 +155,63 @@ function eventTone(event: AdminSchoolCalendarEvent) {
   return event.isHoliday ? 'holiday' : 'schedule';
 }
 
+function eventRange(event: AdminSchoolCalendarEvent) {
+  return {
+    startsAt: koreanDate(event.startsAt),
+    endsAt: koreanDate(event.endsAt),
+  };
+}
+
+function weekEventSegments(
+  week: string[],
+  events: AdminSchoolCalendarEvent[],
+  gridStartDate: string,
+) {
+  const weekStart = week[0]!;
+  const weekEnd = week[6]!;
+  const lanes: Array<Array<{ end: number; start: number }>> = [];
+  return [...events]
+    .sort((left, right) => {
+      const leftRange = eventRange(left);
+      const rightRange = eventRange(right);
+      return (
+        leftRange.startsAt.localeCompare(rightRange.startsAt) ||
+        rightRange.endsAt.localeCompare(leftRange.endsAt) ||
+        left.title.localeCompare(right.title, 'ko-KR')
+      );
+    })
+    .flatMap((event) => {
+      const range = eventRange(event);
+      if (range.startsAt > weekEnd || range.endsAt < weekStart) return [];
+
+      const segmentStart = range.startsAt < weekStart ? weekStart : range.startsAt;
+      const segmentEnd = range.endsAt > weekEnd ? weekEnd : range.endsAt;
+      const start = week.indexOf(segmentStart);
+      const end = week.indexOf(segmentEnd);
+      if (start < 0 || end < 0) return [];
+
+      const laneIndex = lanes.findIndex((lane) =>
+        lane.every((occupied) => end < occupied.start || start > occupied.end),
+      );
+      const lane = laneIndex >= 0 ? laneIndex : lanes.length;
+      lanes[lane] = [...(lanes[lane] ?? []), { end, start }];
+      const firstVisibleStart = range.startsAt < gridStartDate ? gridStartDate : range.startsAt;
+
+      return [
+        {
+          continuesAfter: range.endsAt > segmentEnd,
+          continuesBefore: range.startsAt < segmentStart,
+          endColumn: end + 1,
+          event,
+          isMultiDay: range.startsAt !== range.endsAt,
+          lane,
+          showLabel: segmentStart === firstVisibleStart,
+          startColumn: start + 1,
+        },
+      ];
+    });
+}
+
 function eventCategoryLabel(event: AdminSchoolCalendarEvent) {
   if (event.isHoliday) return '공휴일·휴일';
   const labels: Record<string, string> = {
@@ -168,7 +233,7 @@ export function SchoolEventsPage() {
   const today = koreanDate();
   const [month, setMonth] = useState(monthKey(today));
   const [selectedDate, setSelectedDate] = useState(today);
-  const [source, setSource] = useState<'all' | 'neis' | 'school'>('all');
+  const [source, setSource] = useState<'all' | 'homepage' | 'managed'>('all');
   const [visibility, setVisibility] = useState<'all' | 'public' | 'private'>('all');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -178,7 +243,8 @@ export function SchoolEventsPage() {
   const [deleteTarget, setDeleteTarget] = useState<AdminSchoolCalendarEvent | null>(null);
 
   const days = useMemo(() => calendarDays(month), [month]);
-  const range = { from: days[0]!, to: days[41]! };
+  const weeks = useMemo(() => calendarWeeks(days), [days]);
+  const range = { from: days[0]!, to: days[days.length - 1]! };
   const calendarQuery = useQuery({
     queryKey: ['admin-school-calendar', range.from, range.to],
     queryFn: () => api.schoolCalendar(range),
@@ -192,7 +258,8 @@ export function SchoolEventsPage() {
   const visibleEvents = useMemo(
     () =>
       (calendarQuery.data?.events ?? []).filter((event) => {
-        if (source !== 'all' && event.source !== source) return false;
+        if (source === 'homepage' && event.editable) return false;
+        if (source === 'managed' && !event.editable) return false;
         if (visibility === 'public' && !event.isPublic) return false;
         if (visibility === 'private' && event.isPublic) return false;
         return true;
@@ -307,8 +374,8 @@ export function SchoolEventsPage() {
                 onChange={(event) => setSource(event.target.value as typeof source)}
               >
                 <option value="all">모든 일정</option>
-                <option value="neis">NEIS</option>
-                <option value="school">학교 자체</option>
+                <option value="homepage">홈페이지 연동</option>
+                <option value="managed">직접 등록</option>
               </select>
             </label>
             <label>
@@ -348,51 +415,73 @@ export function SchoolEventsPage() {
               {weekday}
             </div>
           ))}
-          {days.map((date) => {
-            const dateEvents = visibleEvents.filter((event) => occursOn(event, date));
-            const inMonth = date.startsWith(month);
-            const isSelected = date === selectedDate;
-            const isToday = date === today;
-            const weekday = weekdayOf(date);
-            const isHoliday = dateEvents.some((event) => event.isHoliday);
-            return (
-              <article
-                className={`school-calendar-day${inMonth ? '' : ' outside'}${isSelected ? ' selected' : ''}${isHoliday ? ' is-holiday' : ''}${weekday === 0 ? ' is-sunday' : ''}${weekday === 6 ? ' is-saturday' : ''}`}
-                key={date}
-              >
-                <button
-                  className={`school-calendar-date${isToday ? ' today' : ''}`}
-                  type="button"
-                  onClick={() => {
-                    setSelectedDate(date);
-                    setSelectedEventId(null);
-                  }}
-                  aria-label={`${date} 선택`}
-                >
-                  {Number(date.slice(-2))}
-                </button>
-                <div className="school-calendar-events">
-                  {dateEvents.slice(0, 3).map((event) => (
-                    <button
-                      className={`school-calendar-event ${eventTone(event)}${event.isPublic ? '' : ' private'}`}
-                      type="button"
-                      key={`${date}-${event.id}`}
-                      title={event.title}
-                      onClick={() => {
-                        setSelectedDate(date);
-                        setSelectedEventId(event.id);
-                      }}
-                    >
-                      {event.title}
-                    </button>
-                  ))}
-                  {dateEvents.length > 3 ? (
-                    <span className="school-calendar-more">+{dateEvents.length - 3}</span>
-                  ) : null}
+          <div className="school-calendar-month">
+            {weeks.map((week) => (
+              <div className="school-calendar-week" key={week[0]}>
+                <div className="school-calendar-week-days">
+                  {week.map((date) => {
+                    const dateEvents = visibleEvents.filter((event) => occursOn(event, date));
+                    const inMonth = date.startsWith(month);
+                    const isSelected = date === selectedDate;
+                    const isToday = date === today;
+                    const weekday = weekdayOf(date);
+                    const isHoliday = dateEvents.some((event) => event.isHoliday);
+                    const hiddenEventCount = Math.max(0, dateEvents.length - 3);
+                    return (
+                      <article
+                        className={`school-calendar-day${inMonth ? '' : ' outside'}${isSelected ? ' selected' : ''}${isHoliday ? ' is-holiday' : ''}${weekday === 0 ? ' is-sunday' : ''}${weekday === 6 ? ' is-saturday' : ''}`}
+                        key={date}
+                      >
+                        <button
+                          className={`school-calendar-date${isToday ? ' today' : ''}`}
+                          type="button"
+                          onClick={() => {
+                            setSelectedDate(date);
+                            setSelectedEventId(null);
+                          }}
+                          aria-label={`${date} 선택`}
+                        >
+                          {Number(date.slice(-2))}
+                        </button>
+                        {hiddenEventCount ? (
+                          <span className="school-calendar-more">+{hiddenEventCount}</span>
+                        ) : null}
+                      </article>
+                    );
+                  })}
                 </div>
-              </article>
-            );
-          })}
+                <div className="school-calendar-events">
+                  {weekEventSegments(week, visibleEvents, days[0]!)
+                    .filter((segment) => segment.lane < 3)
+                    .map((segment) => (
+                      <button
+                        className={`school-calendar-event ${eventTone(segment.event)}${
+                          segment.event.isPublic ? '' : ' private'
+                        }${segment.isMultiDay ? ' is-multi-day' : ''}${
+                          segment.showLabel ? '' : ' is-continuation'
+                        }${segment.continuesBefore ? ' starts-before' : ''}${
+                          segment.continuesAfter ? ' ends-after' : ''
+                        }${segment.endColumn === 7 ? ' ends-week' : ''}`}
+                        type="button"
+                        key={`${segment.event.id}-${week[0]}`}
+                        title={segment.event.title}
+                        style={{
+                          gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
+                          gridRow: segment.lane + 1,
+                        }}
+                        onClick={() => {
+                          const range = eventRange(segment.event);
+                          setSelectedDate(range.startsAt);
+                          setSelectedEventId(segment.event.id);
+                        }}
+                      >
+                        {segment.showLabel ? segment.event.title : null}
+                      </button>
+                    ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         {calendarQuery.isLoading ? (
           <p className="calendar-status">달력을 불러오는 중입니다.</p>
@@ -440,7 +529,7 @@ export function SchoolEventsPage() {
         description={
           selectedEvent
             ? `${eventCategoryLabel(selectedEvent)} · ${
-                selectedEvent.source === 'neis' ? 'NEIS 연동 · 읽기 전용' : '직접 등록'
+                selectedEvent.editable ? '직접 등록' : '홈페이지 연동 · 읽기 전용'
               }`
             : undefined
         }
@@ -495,9 +584,9 @@ export function SchoolEventsPage() {
             </div>
             <div>
               <dt>출처</dt>
-              <dd>{selectedEvent.source === 'neis' ? 'NEIS 연동' : '직접 등록'}</dd>
+              <dd>{selectedEvent.editable ? '직접 등록' : '홈페이지 연동'}</dd>
             </div>
-            {selectedEvent.source === 'school' ? (
+            {selectedEvent.editable ? (
               <div>
                 <dt>공개</dt>
                 <dd>{selectedEvent.isPublic ? '공개' : '비공개'}</dd>

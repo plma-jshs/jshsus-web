@@ -27,7 +27,6 @@ export function ByteCalculatorPage() {
     <PageScaffold
       breadcrumbs={listBreadcrumbs('byteCalculator')}
       title="세특 바이트 계산기"
-      description="NEIS 기준 바이트 수를 계산합니다."
       width="reading"
       variant="workspace"
     >

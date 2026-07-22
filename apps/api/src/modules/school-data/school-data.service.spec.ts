@@ -32,15 +32,6 @@ function fetchUrls(fetchMock: ReturnType<typeof vi.fn>): string[] {
   return fetchMock.mock.calls.map((call) => String(call[0]));
 }
 
-function scheduleRow(index: number) {
-  return {
-    AA_YMD: '20260720',
-    EVENT_NM: `event-${index}`,
-    EVENT_CNTNT: '',
-    SBTR_DD_SC_NM: '\uD574\uB2F9\uC5C6\uC74C',
-  };
-}
-
 describe('SchoolDataService', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -129,7 +120,7 @@ describe('SchoolDataService', () => {
       events: [],
       available: true,
       availability: 'partial',
-      neisAvailable: false,
+      homepageAvailable: false,
       schoolEventsAvailable: true,
     });
 
@@ -139,7 +130,7 @@ describe('SchoolDataService', () => {
       availability: 'partial',
       mealAvailability: 'unavailable',
       calendarAvailability: 'partial',
-      neisCalendarAvailability: 'unavailable',
+      homepageCalendarAvailability: 'unavailable',
       schoolEventsAvailability: 'available',
     });
   });
@@ -167,23 +158,24 @@ describe('SchoolDataService', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('combines validated NEIS and managed school events', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      jsonResponse({
-        SchoolSchedule: [
-          { head: [{ list_total_count: 1 }, { RESULT: { CODE: 'INFO-000' } }] },
-          {
-            row: [
-              {
-                AA_YMD: '20260720',
-                EVENT_NM: '방학식',
-                EVENT_CNTNT: '',
-                SBTR_DD_SC_NM: '해당없음',
-              },
-            ],
-          },
-        ],
-      }),
+  it('combines homepage calendar events and managed school events', async () => {
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        htmlResponse(`
+        <input type="hidden" id="selectYearMonth" name="selectYearMonth" value="202607" />
+        <table>
+          <tbody>
+            <tr>
+              <td class="selectDay" id="20260720">
+                <p class="calLink btnInfo" data-seq="closing" data-schdulTitle="방학식">
+                  <a>방학식</a>
+                </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      `),
+      ),
     );
     vi.stubGlobal('fetch', fetchMock);
     const service = createService();
@@ -202,14 +194,13 @@ describe('SchoolDataService', () => {
 
     const result = await service.getCalendar('2026-07-01', '2026-07-31', fixedNow);
 
-    expect(result.neisAvailable).toBe(true);
+    expect(result.homepageAvailable).toBe(true);
     expect(result.schoolEventsAvailable).toBe(true);
     expect(result.events).toHaveLength(2);
-    expect(result.events.map((event) => event.source)).toEqual(['neis', 'school']);
+    expect(result.events.map((event) => event.source)).toEqual(['school', 'school']);
     const requestedUrls = fetchUrls(fetchMock);
-    const requestedUrl = requestedUrls.find((url) => url.includes('/hub/SchoolSchedule'));
-    expect(requestedUrl).toContain('AA_FROM_YMD=20260601');
-    expect(requestedUrl).toContain('AA_TO_YMD=20260831');
+    expect(requestedUrls.every((url) => !url.includes('/hub/SchoolSchedule'))).toBe(true);
+    expect(requestedUrls[0]).toContain('selectYearMonth=202606');
   });
 
   it('prefers the school homepage calendar and expands homepage range hints', async () => {
@@ -240,7 +231,7 @@ describe('SchoolDataService', () => {
 
     const result = await service.getCalendar('2026-07-01', '2026-07-31', fixedNow);
 
-    expect(result.neisAvailable).toBe(true);
+    expect(result.homepageAvailable).toBe(true);
     expect(result.events).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -262,25 +253,26 @@ describe('SchoolDataService', () => {
     ).toHaveLength(3);
   });
 
-  it('returns a unified admin calendar while keeping NEIS read-only and private school events visible', async () => {
+  it('returns a unified admin calendar while keeping homepage events read-only and private school events visible', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(
-        jsonResponse({
-          SchoolSchedule: [
-            { head: [{ list_total_count: 1 }, { RESULT: { CODE: 'INFO-000' } }] },
-            {
-              row: [
-                {
-                  AA_YMD: '20260720',
-                  EVENT_NM: 'NEIS 일정',
-                  EVENT_CNTNT: '',
-                  SBTR_DD_SC_NM: '해당없음',
-                },
-              ],
-            },
-          ],
-        }),
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          htmlResponse(`
+          <input type="hidden" id="selectYearMonth" name="selectYearMonth" value="202607" />
+          <table>
+            <tbody>
+              <tr>
+                <td class="selectDay" id="20260720">
+                  <p class="calLink btnInfo" data-seq="homepage-1" data-schdulTitle="홈페이지 일정">
+                    <a>홈페이지 일정</a>
+                  </p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        `),
+        ),
       ),
     );
     const service = createService();
@@ -300,12 +292,12 @@ describe('SchoolDataService', () => {
     const result = await service.getAdminCalendar('2026-07-01', '2026-07-31');
 
     expect(result.events).toHaveLength(2);
-    expect(result.events.find((event) => event.source === 'neis')).toMatchObject({
-      title: 'NEIS 일정',
+    expect(result.events.find((event) => event.id === 'school-homepage:homepage-1')).toMatchObject({
+      title: '홈페이지 일정',
       editable: false,
       isPublic: true,
     });
-    expect(result.events.find((event) => event.source === 'school')).toMatchObject({
+    expect(result.events.find((event) => event.id === 'school:9')).toMatchObject({
       id: 'school:9',
       managedId: 9,
       title: '내부 검토 일정',
@@ -314,59 +306,20 @@ describe('SchoolDataService', () => {
     });
   });
 
-  it('paginates NEIS schedules and verifies the complete row count', async () => {
-    const fetchMock = vi.fn().mockImplementation((input: string | URL | Request) => {
-      const page = Number(new URL(String(input)).searchParams.get('pIndex'));
-      const rows =
-        page === 1
-          ? Array.from({ length: 100 }, (_, index) => scheduleRow(index))
-          : [scheduleRow(100)];
-      return Promise.resolve(
-        jsonResponse({
-          SchoolSchedule: [
-            { head: [{ list_total_count: 101 }, { RESULT: { CODE: 'INFO-000' } }] },
-            { row: rows },
-          ],
-        }),
-      );
-    });
+  it('does not fall back to NEIS schedules when the school homepage calendar is unavailable', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error('homepage unavailable'));
     vi.stubGlobal('fetch', fetchMock);
     const service = createService();
     vi.spyOn(service, 'listManagedEvents').mockResolvedValue([]);
 
     const result = await service.getCalendar('2026-07-01', '2026-07-31', fixedNow);
 
-    expect(result.events).toHaveLength(101);
-    expect(result.availability).toBe('available');
-    const requestedUrls = fetchUrls(fetchMock);
-    const homepageUrls = requestedUrls.filter((url) => url.includes('schdulCalendarView.do'));
-    const neisUrls = requestedUrls.filter((url) => url.includes('/hub/SchoolSchedule'));
-    expect(homepageUrls).toHaveLength(3);
-    expect(neisUrls).toHaveLength(2);
-    expect(neisUrls[1]).toContain('pIndex=2');
-  });
-
-  it('reports a partial result instead of silently truncating beyond the NEIS safety cap', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        jsonResponse({
-          SchoolSchedule: [
-            { head: [{ list_total_count: 501 }, { RESULT: { CODE: 'INFO-000' } }] },
-            { row: [] },
-          ],
-        }),
-      ),
-    );
-    const service = createService();
-    vi.spyOn(service, 'listManagedEvents').mockResolvedValue([]);
-
-    const result = await service.getCalendar('2026-07-01', '2026-07-31', fixedNow);
-
     expect(result.events).toEqual([]);
-    expect(result.neisAvailable).toBe(false);
+    expect(result.homepageAvailable).toBe(false);
     expect(result.schoolEventsAvailable).toBe(true);
     expect(result.availability).toBe('partial');
+    const requestedUrls = fetchUrls(fetchMock);
+    expect(requestedUrls.every((url) => !url.includes('/hub/SchoolSchedule'))).toBe(true);
   });
 
   it('keeps the in-process LRU cache bounded across distinct valid dates', async () => {

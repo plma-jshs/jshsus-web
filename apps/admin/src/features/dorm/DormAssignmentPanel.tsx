@@ -183,7 +183,9 @@ export function DormAssignmentPanel({
   const [selectedAssignments, setSelectedAssignments] = useState<number[]>([]);
   const [previewPageSize, setPreviewPageSize] = useState(20);
   const [pageSize, setPageSize] = useState(20);
-  const [assignmentSorting, setAssignmentSorting] = useState<SortingState>([]);
+  const [assignmentSorting, setAssignmentSorting] = useState<SortingState>([
+    { id: 'roomName', desc: false },
+  ]);
   const [movingAssignment, setMovingAssignment] = useState<DormAssignment | null>(null);
   const [cancelTarget, setCancelTarget] = useState<DormAssignment | null>(null);
   const [moveRoomId, setMoveRoomId] = useState('');

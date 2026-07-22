@@ -23,7 +23,7 @@ export function DormOverviewPage() {
   const [dormName, setDormName] = useState<'' | DormRoom['dormName']>('');
   const [grade, setGrade] = useState<number | ''>('');
   const [pageSize, setPageSize] = useState(20);
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'name', desc: false }]);
   const [selectedRoom, setSelectedRoom] = useState<DormRoom | null>(null);
   const { roomsQuery, reportsQuery, isError } = useDormData({
     year,

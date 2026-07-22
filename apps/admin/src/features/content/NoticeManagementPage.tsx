@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { NoticeSummary } from '@jshsus/types';
 import { ExternalLink, Paperclip, Pin, PinOff, Search, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
@@ -19,6 +19,7 @@ export function NoticeManagementPage() {
   const { showToast } = useToast();
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState(20);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'id', desc: true }]);
 
   const noticesQuery = useQuery({
     queryKey: ['admin-notices'],
@@ -63,10 +64,9 @@ export function NoticeManagementPage() {
   const columns = useMemo<ColumnDef<NoticeSummary>[]>(
     () => [
       {
-        id: 'number',
+        accessorKey: 'id',
         header: '번호',
-        cell: ({ row }) => (noticesQuery.data?.length ?? 0) - row.index,
-        enableSorting: false,
+        cell: ({ row }) => row.original.id,
         meta: { align: 'center', width: 72 },
       },
       {
@@ -156,7 +156,7 @@ export function NoticeManagementPage() {
         meta: { align: 'center', width: 92 },
       },
     ],
-    [deleteNoticeMutation, noticesQuery.data?.length, updateNoticeMutation],
+    [deleteNoticeMutation, updateNoticeMutation],
   );
 
   return (
@@ -202,6 +202,8 @@ export function NoticeManagementPage() {
             loadingText="공지 목록을 불러오는 중입니다."
             emptyText={search ? '검색 조건에 맞는 공지가 없습니다.' : '등록된 공지가 없습니다.'}
             pageSize={pageSize}
+            sorting={sorting}
+            onSortingChange={setSorting}
             alwaysShowPagination
             caption="공지 관리 목록"
           />

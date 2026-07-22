@@ -34,7 +34,7 @@ export function PointReasonsPage() {
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
   const [type, setType] = useState<PointReason['type'] | ''>('');
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'id', desc: false }]);
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PointReasonRow | null>(null);
   const [form, setForm] = useState<{ type: PointReason['type']; point: string; comment: string }>({
@@ -122,7 +122,7 @@ export function PointReasonsPage() {
   const columns = useMemo<ColumnDef<PointReasonRow>[]>(
     () => [
       {
-        id: 'id',
+        accessorKey: 'id',
         header: '사유코드',
         cell: ({ row }) => row.original.id,
         meta: { align: 'center', width: 120 },

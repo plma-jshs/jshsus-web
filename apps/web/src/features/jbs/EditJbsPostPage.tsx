@@ -282,7 +282,6 @@ export function EditJbsPostPage() {
     <PageScaffold
       breadcrumbs={taskBreadcrumbs('jbs', '수정')}
       title="JBS 영상 수정"
-      description="YouTube URL과 게시글 내용을 수정하세요."
       width="reading"
       variant="form"
     >

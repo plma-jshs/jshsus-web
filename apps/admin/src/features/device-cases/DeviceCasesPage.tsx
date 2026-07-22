@@ -167,6 +167,7 @@ export function DeviceCasesPage() {
       {
         accessorKey: 'id',
         header: 'ID',
+        enableSorting: false,
         cell: ({ getValue }) => getValue<number>(),
         meta: { align: 'center', width: 64 },
       },
@@ -198,6 +199,7 @@ export function DeviceCasesPage() {
       {
         accessorKey: 'lastSeenAt',
         header: '마지막 동기화',
+        enableSorting: false,
         cell: ({ getValue }) => formatDateTime(getValue<string>()),
         meta: { align: 'center', width: 170 },
       },
@@ -249,7 +251,12 @@ export function DeviceCasesPage() {
       cell: ({ getValue }) => commandLabels[getValue<DeviceCaseCommand['command']>()],
       meta: { align: 'center', width: 90 },
     },
-    { accessorKey: 'actorName', header: '실행자', meta: { align: 'center', width: 130 } },
+    {
+      accessorKey: 'actorName',
+      header: '실행자',
+      enableSorting: false,
+      meta: { align: 'center', width: 130 },
+    },
     {
       accessorKey: 'status',
       header: '상태',
@@ -267,6 +274,7 @@ export function DeviceCasesPage() {
     {
       accessorKey: 'createdAt',
       header: '실행 시각',
+      enableSorting: false,
       cell: ({ getValue }) => formatDateTime(getValue<string>()),
       meta: { align: 'center', width: 170 },
     },

@@ -9,6 +9,7 @@ export type PointRiskStatus = 'normal' | 'risk' | 'departure';
 export type SortOrder = 'asc' | 'desc';
 
 export type PointStudentRow = StudentOption & {
+  currentPoint: number;
   meritPoint: number;
   penaltyPoint: number;
   isDepartureCandidate: boolean;
@@ -164,7 +165,7 @@ export const pointsApi = {
     number?: number;
     riskStatus?: PointRiskStatus;
     watchOnly?: boolean;
-    sortBy?: 'studentNo' | 'name' | 'meritPoint' | 'penaltyPoint';
+    sortBy?: 'studentNo' | 'name' | 'meritPoint' | 'penaltyPoint' | 'currentPoint';
     sortOrder?: SortOrder;
   }) => request<PageResult<PointStudentRow>>(withQuery('/api/admin/points/students/page', query)),
   records: (query: {

@@ -354,7 +354,7 @@ export function ActivityReviewPage() {
           {row.original.studentNo} {row.original.studentName}
         </strong>
       ),
-      meta: { minWidth: 145 },
+      meta: { minWidth: 120, maxWidth: 150 },
     },
     {
       id: 'participantCount',
@@ -362,19 +362,19 @@ export function ActivityReviewPage() {
       header: '참여 인원',
       enableSorting: false,
       cell: ({ getValue }) => `${getValue<number>()}명`,
-      meta: { width: 90, align: 'center' },
+      meta: { width: 125, align: 'center' },
     },
     {
       accessorKey: 'purpose',
       header: '활동 목적',
       enableSorting: false,
-      meta: { minWidth: 220, maxWidth: 420, truncate: true },
+      meta: { minWidth: 320, maxWidth: 560, truncate: true },
     },
     {
       accessorKey: 'location',
       header: '장소',
       enableSorting: false,
-      meta: { minWidth: 120, maxWidth: 180, truncate: true },
+      meta: { minWidth: 96, maxWidth: 130, truncate: true },
     },
     {
       accessorKey: 'startsAt',

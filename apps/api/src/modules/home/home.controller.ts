@@ -44,7 +44,7 @@ export class HomeController {
         availability: schoolData.availability,
         mealAvailability: schoolData.mealAvailability,
         calendarAvailability: schoolData.calendarAvailability,
-        neisCalendarAvailability: schoolData.neisCalendarAvailability,
+        homepageCalendarAvailability: schoolData.homepageCalendarAvailability,
         schoolEventsAvailability: schoolData.schoolEventsAvailability,
       },
     };

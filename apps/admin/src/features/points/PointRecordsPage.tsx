@@ -121,6 +121,19 @@ export function PointRecordsPage() {
     cancelSelectedMutation.mutate(ids);
   }, [cancelSelectedMutation, selectedRecordIds, visibleRecordIds]);
 
+  const applyRecordSearch = useCallback((value: number | string) => {
+    const nextSearch = String(value);
+    setSearch(nextSearch);
+    setPage(1);
+    setSelectedRecordIds(new Set());
+
+    const params = new URLSearchParams(window.location.search);
+    if (nextSearch) params.set('search', nextSearch);
+    else params.delete('search');
+    const query = params.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
+  }, []);
+
   const columns = useMemo<ColumnDef<PointRecordRow>[]>(
     () => [
       {
@@ -172,7 +185,11 @@ export function PointRecordsPage() {
         cell: ({ row }) => (
           <a
             className="point-table-link"
-            href={`/points?search=${encodeURIComponent(String(row.original.studentNo))}`}
+            href={`/points/records?search=${encodeURIComponent(String(row.original.studentNo))}`}
+            onClick={(event) => {
+              event.preventDefault();
+              applyRecordSearch(row.original.studentNo);
+            }}
           >
             {row.original.studentNo}
           </a>
@@ -217,6 +234,7 @@ export function PointRecordsPage() {
     ],
     [
       allVisibleRecordsSelected,
+      applyRecordSearch,
       cancelSelectedMutation.isPending,
       deleteSelectedRecords,
       selectedRecordIds,

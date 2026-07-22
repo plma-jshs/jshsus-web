@@ -96,7 +96,6 @@ export function PointsPage() {
     <PageScaffold
       breadcrumbs={listBreadcrumbs('points')}
       title="상벌점"
-      description="상벌점 합계와 기록을 확인하세요."
       width="wide"
       variant="workspace"
     >

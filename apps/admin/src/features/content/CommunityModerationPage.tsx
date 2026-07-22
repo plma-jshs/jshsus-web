@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { BoardCommentSummary, BoardPostSummary, ContentReportSummary } from '@jshsus/types';
 import { Eye, EyeOff, Search, Settings2, ShieldAlert } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
@@ -66,6 +66,7 @@ export function CommunityModerationPage({
   const [postPageSize, setPostPageSize] = useState(20);
   const [commentPageSize, setCommentPageSize] = useState(20);
   const [reportPageSize, setReportPageSize] = useState(20);
+  const [postSorting, setPostSorting] = useState<SortingState>([{ id: 'id', desc: true }]);
 
   const activeSource =
     sources.find((source) => source.slug === activeBoardSlug) ?? sources[0] ?? freeBoardSource;
@@ -139,10 +140,9 @@ export function CommunityModerationPage({
   const postColumns = useMemo<ColumnDef<BoardPostSummary>[]>(
     () => [
       {
-        id: 'number',
+        accessorKey: 'id',
         header: '번호',
-        cell: ({ row }) => (postsQuery.data?.length ?? 0) - row.index,
-        enableSorting: false,
+        cell: ({ row }) => row.original.id,
         meta: { align: 'center', width: 72 },
       },
       {
@@ -221,7 +221,7 @@ export function CommunityModerationPage({
         meta: { align: 'center', width: 64 },
       },
     ],
-    [activeSource.slug, postsQuery.data?.length],
+    [activeSource.slug],
   );
 
   const reportColumns = useMemo<ColumnDef<ContentReportSummary>[]>(
@@ -415,6 +415,8 @@ export function CommunityModerationPage({
             }
             alwaysShowPagination
             pageSize={postPageSize}
+            sorting={postSorting}
+            onSortingChange={setPostSorting}
             caption={`${activeSource.label} 게시글 관리 목록`}
           />
         </ContentQueryState>

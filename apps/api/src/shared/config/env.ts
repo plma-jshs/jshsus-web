@@ -117,7 +117,8 @@ const envSchema = z
       .regex(/^[0-9]{7}$/)
       .default('7140163'),
     NEIS_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(500).max(10_000).default(3_500),
-    NEIS_CACHE_TTL_SECONDS: z.coerce.number().int().min(60).max(86_400).default(3_600),
+    SCHOOL_DATA_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(500).max(10_000).default(3_500),
+    SCHOOL_DATA_CACHE_TTL_SECONDS: z.coerce.number().int().min(60).max(86_400).default(3_600),
   })
   .transform((value) => {
     const cognitoClientId = value.COGNITO_CLIENT_ID.trim();

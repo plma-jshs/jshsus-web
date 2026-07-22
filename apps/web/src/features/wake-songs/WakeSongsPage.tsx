@@ -179,7 +179,6 @@ export function WakeSongsPage() {
     <PageScaffold
       breadcrumbs={listBreadcrumbs('wakeSongs')}
       title="기상곡 신청"
-      description="재생 구간과 속도를 지정해 기상곡을 신청하세요."
       width="wide"
       variant="workspace"
       meta={

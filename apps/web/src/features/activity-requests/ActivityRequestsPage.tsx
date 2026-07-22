@@ -90,7 +90,6 @@ export function ActivityRequestsPage() {
     <PageScaffold
       breadcrumbs={listBreadcrumbs('activityRequests')}
       title="탐구활동서"
-      description="탐구활동서를 신청하고 처리 상태를 확인하세요."
       action={
         <Link className="detail-primary-button" to="/activity-requests/new">
           <FilePlus2 size={16} aria-hidden="true" /> 신규 신청

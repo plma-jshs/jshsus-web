@@ -25,7 +25,7 @@ export function getSchoolCalendar(from: string, to: string) {
     events: AcademicEvent[];
     available: boolean;
     availability: SchoolDataAvailability;
-    neisAvailable: boolean;
+    homepageAvailable: boolean;
     schoolEventsAvailable: boolean;
   }>(`/api/school-data/calendar?${search.toString()}`);
 }

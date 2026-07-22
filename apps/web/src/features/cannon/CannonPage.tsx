@@ -93,7 +93,6 @@ export function CannonPage() {
     <PageScaffold
       breadcrumbs={[{ label: '방송·도구' }, { label: '대포' }]}
       title="대포"
-      description="대포를 눌러 무작위 추첨을 진행하세요."
       width="wide"
       variant="workspace"
     >

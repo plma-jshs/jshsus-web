@@ -60,7 +60,7 @@ function eventTouchesDate(event: AcademicEvent, dateKey: string) {
 }
 
 function eventColor(event: AcademicEvent) {
-  if (event.isHoliday) return { color: '#ffffff', background: '#ff0000' };
+  if (event.isHoliday) return { color: '#ffffff', background: '#e94b4b' };
   return { color: '#000000', background: '#d8f5e6' };
 }
 
@@ -268,7 +268,6 @@ export function CalendarPage() {
     <PageScaffold
       breadcrumbs={listBreadcrumbs('calendar')}
       title="학사일정"
-      description="학교 일정과 공휴일을 월별로 확인하세요."
       width="wide"
       variant="workspace"
     >
@@ -381,7 +380,7 @@ export function CalendarPage() {
                               segment.showLabel ? '' : ' is-continuation'
                             }${segment.continuesBefore ? ' starts-before' : ''}${
                               segment.continuesAfter ? ' ends-after' : ''
-                            }`}
+                            }${segment.endColumn === 7 ? ' ends-week' : ''}`}
                             key={`${segment.event.id}-${week[0].dateKey}`}
                             style={{
                               ...styleForEvent(segment.event),
