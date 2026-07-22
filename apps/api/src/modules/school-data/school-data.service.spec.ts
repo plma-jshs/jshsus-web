@@ -212,7 +212,7 @@ describe('SchoolDataService', () => {
           <tbody>
             <tr>
               <td class="selectDay" id="20260717">
-                <p class="calLink "><a><span>· 제헌절</span></a></p>
+                <p class="calLink "><a><span>&nbsp;&nbsp;· 제헌절</span></a></p>
               </td>
               <td class="selectDay" id="20260721">
                 <p class="calLink btnInfo" data-seq="summer-1" data-schdulTitle="방과후 수업 시작 1차(~24일)">

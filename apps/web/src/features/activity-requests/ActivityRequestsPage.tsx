@@ -22,19 +22,19 @@ import {
 } from './presentation';
 import '../../styles/activity-requests.css';
 
-const dateFormatter = createKoreanDateFormatter({
-  year: 'numeric',
+const activityDayFormatter = createKoreanDateFormatter({
   month: '2-digit',
   day: '2-digit',
+});
+const activityTimeFormatter = createKoreanDateFormatter({
   hour: '2-digit',
   minute: '2-digit',
+  hourCycle: 'h23',
 });
 
-const requestDateFormatter = createKoreanDateFormatter({
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
+function getParticipantCount(request: { participants?: unknown[] }) {
+  return request.participants?.length ?? 1;
+}
 
 export function ActivityRequestsPage() {
   const requestsQuery = useQuery({
@@ -132,7 +132,7 @@ export function ActivityRequestsPage() {
                 setPage(1);
               }}
               label="탐구활동서 검색"
-              placeholder="활동 목적, 장소 검색"
+              placeholder="활동 내용, 장소 검색"
             />
           </div>
         </PageToolbar>
@@ -191,60 +191,57 @@ export function ActivityRequestsPage() {
           <div className="workflow-table-viewport activity-table-viewport">
             <table className="workflow-table activity-table">
               <colgroup>
+                <col style={{ width: 88 }} />
+                <col style={{ width: '28%' }} />
+                <col style={{ width: 104 }} />
+                <col style={{ width: 128 }} />
+                <col style={{ width: 132 }} />
                 <col style={{ width: 112 }} />
-                <col />
-                <col style={{ width: 130 }} />
-                <col style={{ width: 160 }} />
-                <col style={{ width: 240 }} />
               </colgroup>
               <thead>
                 <tr>
-                  <th scope="col">상태</th>
-                  <th scope="col">활동 목적</th>
-                  <th scope="col">신청일</th>
+                  <th scope="col">활동일</th>
+                  <th scope="col">활동 내용</th>
+                  <th scope="col">활동 인원</th>
                   <th scope="col">장소</th>
                   <th scope="col">활동 기간</th>
+                  <th scope="col">상태</th>
                 </tr>
               </thead>
               <tbody>
                 {visibleRequests.map((request) => (
                   <tr key={request.id}>
-                    <td data-label="상태">
-                      <span className={`activity-status is-${request.status}`}>
-                        {activityStatusLabels[request.status]}
-                      </span>
+                    <td className="activity-table__day" data-label="활동일">
+                      <time dateTime={request.startsAt}>
+                        {activityDayFormatter.format(new Date(request.startsAt))}
+                      </time>
                     </td>
-                    <td className="activity-table__purpose" data-label="활동 목적">
+                    <td className="activity-table__purpose" data-label="활동 내용">
                       <Link
                         to="/activity-requests/$requestId"
                         params={{ requestId: String(request.id) }}
                       >
                         {request.purpose}
                       </Link>
-                      <small>
-                        #{request.id} · {request.studentNo} {request.studentName} · 대표
-                      </small>
                     </td>
-                    <td className="activity-table__created" data-label="신청일">
-                      {request.createdAt ? (
-                        <time dateTime={request.createdAt}>
-                          {requestDateFormatter.format(new Date(request.createdAt))}
-                        </time>
-                      ) : (
-                        '—'
-                      )}
+                    <td className="activity-table__participants" data-label="활동 인원">
+                      {getParticipantCount(request)}명
                     </td>
                     <td className="activity-table__location" data-label="장소">
                       {request.location}
                     </td>
                     <td className="activity-table__period" data-label="활동 기간">
                       <time dateTime={request.startsAt}>
-                        {dateFormatter.format(new Date(request.startsAt))}
+                        {activityTimeFormatter.format(new Date(request.startsAt))}
                       </time>
-                      <span>–</span>
                       <time dateTime={request.endsAt}>
-                        {dateFormatter.format(new Date(request.endsAt))}
+                        {activityTimeFormatter.format(new Date(request.endsAt))}
                       </time>
+                    </td>
+                    <td data-label="상태">
+                      <span className={`activity-status is-${request.status}`}>
+                        {activityStatusLabels[request.status]}
+                      </span>
                     </td>
                   </tr>
                 ))}

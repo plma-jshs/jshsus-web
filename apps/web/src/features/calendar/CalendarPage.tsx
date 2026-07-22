@@ -79,9 +79,18 @@ function styleForEvent(event: AcademicEvent): CSSProperties {
   } as CSSProperties;
 }
 
+function displayEventTitle(title: string) {
+  return title
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\u00a0/g, ' ')
+    .replace(/^\s*·\s*/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function eventMergeKey(event: AcademicEvent) {
   return [
-    event.title.trim(),
+    displayEventTitle(event.title),
     event.isHoliday ? 'holiday' : 'school',
     event.category,
     event.source,
@@ -188,13 +197,23 @@ function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridSt
     });
 }
 
-const fullDateFormatter = createKoreanDateFormatter({
+const ariaDateFormatter = createKoreanDateFormatter({
   year: 'numeric',
   month: 'long',
   day: 'numeric',
   weekday: 'short',
 });
+const headingDateFormatter = createKoreanDateFormatter({
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+const weekdayFormatter = createKoreanDateFormatter({ weekday: 'short' });
 const shortDateFormatter = createKoreanDateFormatter({ month: 'numeric', day: 'numeric' });
+
+function formatSelectedDateHeading(date: Date) {
+  return `${headingDateFormatter.format(date)} (${weekdayFormatter.format(date)})`;
+}
 
 function formatEventRange(event: AcademicEvent) {
   const startsAt = fromDateKey(toKoreanDateKey(event.startsAt));
@@ -339,7 +358,7 @@ export function CalendarPage() {
                         const eventSummary = dayEvents.length
                           ? `, 일정 ${dayEvents.length}개: ${dayEvents
                               .slice(0, 2)
-                              .map((event) => event.title)
+                              .map((event) => displayEventTitle(event.title))
                               .join(', ')}${hiddenEventCount ? ` 외 ${hiddenEventCount}개` : ''}`
                           : ', 일정 없음';
                         return (
@@ -356,7 +375,7 @@ export function CalendarPage() {
                             onClick={() => selectDate(date)}
                             onKeyDown={(event) => handleDateKeyDown(event, dateKey)}
                             tabIndex={dateKey === selectedDate ? 0 : -1}
-                            aria-label={`${fullDateFormatter.format(date)}${eventSummary}`}
+                            aria-label={`${ariaDateFormatter.format(date)}${eventSummary}`}
                             aria-pressed={dateKey === selectedDate}
                             aria-current={dateKey === todayKey ? 'date' : undefined}
                             key={dateKey}
@@ -387,9 +406,9 @@ export function CalendarPage() {
                               gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
                               gridRow: segment.lane + 1,
                             }}
-                            title={segment.event.title}
+                            title={displayEventTitle(segment.event.title)}
                           >
-                            {segment.showLabel ? segment.event.title : null}
+                            {segment.showLabel ? displayEventTitle(segment.event.title) : null}
                           </span>
                         ))}
                     </div>
@@ -401,20 +420,18 @@ export function CalendarPage() {
             <aside className="calendar-agenda" aria-live="polite">
               <div className="calendar-agenda__heading">
                 <CalendarDays size={18} aria-hidden="true" />
-                <div>
-                  <span>선택한 날짜</span>
-                  <h3>{fullDateFormatter.format(fromDateKey(selectedDate))}</h3>
-                </div>
+                <h3>{formatSelectedDateHeading(fromDateKey(selectedDate))}</h3>
               </div>
               {selectedEvents.length === 0 ? (
                 <p className="calendar-agenda__empty">등록된 일정이 없습니다.</p>
               ) : (
                 <div className="calendar-agenda__list">
                   {selectedEvents.map((event) => (
-                    <article key={event.id}>
+                    <article key={event.id} style={styleForEvent(event)}>
+                      <span className="calendar-agenda__chip" aria-hidden="true" />
                       <div>
                         <span className="calendar-agenda__meta">{formatEventRange(event)}</span>
-                        <h4>{event.title}</h4>
+                        <h4>{displayEventTitle(event.title)}</h4>
                         {event.description ? <p>{event.description}</p> : null}
                       </div>
                     </article>

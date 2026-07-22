@@ -237,7 +237,14 @@ export function DataTable<T>({
                     >
                       {header.isPlaceholder ? null : canSort ? (
                         <button
-                          className="admin-table-sort"
+                          className={[
+                            'admin-table-sort',
+                            sortDirection ? 'is-sorted' : '',
+                            sortDirection === 'asc' ? 'is-asc' : '',
+                            sortDirection === 'desc' ? 'is-desc' : '',
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
                           type="button"
                           onClick={() => toggleColumnSorting(header.column.id)}
                         >

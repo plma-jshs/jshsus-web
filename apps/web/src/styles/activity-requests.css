@@ -74,34 +74,31 @@
   text-underline-offset: 3px;
 }
 
-.activity-table__purpose small {
-  display: block;
-  margin-top: 3px;
-  color: var(--j-color-text-muted);
-  font-family: var(--j-font-mono);
-  font-size: 12px;
-}
-
 .activity-table__location {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.activity-table__created {
+.activity-table__day,
+.activity-table__participants {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .activity-table__period {
+  display: grid;
+  justify-content: center;
+  gap: 1px;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  line-height: 1.35;
+  white-space: normal;
 }
 
-.activity-table__period span {
-  margin: 0 5px;
+.activity-table__period time + time::before {
+  content: '~ ';
   color: var(--j-color-text-muted);
 }
 

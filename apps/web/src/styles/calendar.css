@@ -172,12 +172,13 @@
 }
 
 .full-calendar__week-days > button.is-today .full-calendar__date {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 6px;
   color: var(--j-color-text-inverse);
-  background: var(--j-color-brand-strong);
-  font-weight: 700;
+  background: #111827;
+  font-weight: 650;
 }
 
 .full-calendar__bars {
@@ -188,33 +189,32 @@
   left: 0;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-auto-rows: 19px;
+  grid-auto-rows: minmax(17px, max-content);
   gap: 3px 0;
   overflow: hidden;
   pointer-events: none;
 }
 
 .full-calendar__event-bar {
-  display: flex;
-  height: 17px;
+  display: -webkit-box;
+  min-height: 17px;
   min-width: 0;
   overflow: hidden;
-  align-items: center;
   margin-inline: 6px;
-  padding: 0 7px;
+  padding: 2px 7px;
   border-radius: 4px;
   box-shadow: none;
   color: var(--event-color);
   background: var(--event-bg);
   font-size: 11px;
   font-weight: 600;
-  line-height: 1;
+  line-height: 1.2;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .full-calendar__event-bar.is-multi-day {
-  justify-content: center;
   text-align: center;
 }
 
@@ -261,18 +261,11 @@
 
 .calendar-agenda__heading {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   padding-bottom: 20px;
   border-bottom: 1px solid var(--j-color-border);
   color: var(--j-color-brand-strong);
-}
-
-.calendar-agenda__heading span {
-  display: block;
-  margin-bottom: 4px;
-  color: var(--j-color-text-muted);
-  font-size: 12px;
 }
 
 .calendar-agenda__heading h3 {
@@ -299,20 +292,32 @@
   display: flex;
   min-height: 86px;
   align-items: center;
+  gap: 11px;
   padding: 14px 13px;
   border: 1px solid var(--j-color-border);
   border-radius: 8px;
   background: var(--j-color-surface);
 }
 
+.calendar-agenda__chip {
+  width: 8px;
+  min-height: 48px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--event-bg);
+}
+
 .calendar-agenda__meta {
+  display: inline-flex;
+  min-height: 18px;
+  align-items: center;
   color: var(--j-color-text-muted);
   font-size: 12px;
   font-weight: 650;
 }
 
 .calendar-agenda__list h4 {
-  margin: 5px 0 0;
+  margin: 0;
   color: var(--j-color-text);
   font-size: 14px;
   line-height: 1.5;
@@ -380,7 +385,7 @@
   }
 
   .full-calendar__event-bar {
-    height: 18px;
+    min-height: 18px;
     margin-inline: 2px;
     padding-inline: 5px;
     font-size: 10px;

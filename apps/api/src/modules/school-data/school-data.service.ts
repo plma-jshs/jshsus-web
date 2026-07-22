@@ -275,6 +275,7 @@ function fromCompactDate(date: string): string {
 
 function decodeBasicEntities(value: string): string {
   return value
+    .replaceAll('&nbsp;', ' ')
     .replaceAll('&amp;', '&')
     .replaceAll('&lt;', '<')
     .replaceAll('&gt;', '>')
@@ -298,7 +299,12 @@ function extractHtmlAttribute(value: string, name: string): string | undefined {
 }
 
 function normalizeSchoolHomepageTitle(value: string): string {
-  return value.replace(/\s*[(（]\s*~\s*\d{1,2}\s*일\s*[)）]\s*$/, '').trim();
+  return value
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s*[(（]\s*~\s*\d{1,2}\s*일\s*[)）]\s*$/, '')
+    .replace(/^\s*·\s*/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function inferSchoolHomepageEndDate(title: string, startsAt: string): string {

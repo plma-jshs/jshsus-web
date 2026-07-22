@@ -18,6 +18,7 @@ const dateFormatter = createKoreanDateFormatter({
   day: 'numeric',
   hour: '2-digit',
   minute: '2-digit',
+  hourCycle: 'h23',
 });
 
 function DetailError({
@@ -157,7 +158,6 @@ export function ActivityRequestDetailPage() {
           <span className={`activity-status is-${request.status}`}>
             {activityStatusLabels[request.status]}
           </span>
-          <span>발급번호 #{request.id}</span>
         </>
       }
     >
@@ -182,11 +182,12 @@ export function ActivityRequestDetailPage() {
         <section aria-labelledby="activity-information-title">
           <div className="activity-document__heading">
             <h2 id="activity-information-title">신청 정보</h2>
-            <span>
-              {request.studentNo} {request.studentName} · 대표
-            </span>
           </div>
           <dl className="activity-definition-list">
+            <div>
+              <dt>활동 목적</dt>
+              <dd>{request.purpose}</dd>
+            </div>
             <div>
               <dt>활동 장소</dt>
               <dd>{request.location}</dd>
@@ -197,7 +198,6 @@ export function ActivityRequestDetailPage() {
                 {request.participants.map((student, index) => (
                   <span key={student.studentId}>
                     {student.studentNo} {student.studentName}
-                    {student.isRepresentative ? ' · 대표' : ''}
                     {index < request.participants.length - 1 ? ' · ' : ''}
                   </span>
                 ))}

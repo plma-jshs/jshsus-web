@@ -82,13 +82,15 @@
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke: #d8dee8;
+  stroke: currentColor;
   stroke-width: 1.6;
+  opacity: 0.32;
 }
 
 .admin-table-sort__glyph path.is-active {
-  stroke: #2563eb;
+  stroke: currentColor;
   stroke-width: 2.1;
+  opacity: 1;
 }
 
 .admin-table-sort:hover,
@@ -98,6 +100,15 @@
 
 .admin-data-table th[aria-sort='ascending'] .admin-table-sort,
 .admin-data-table th[aria-sort='descending'] .admin-table-sort {
+  color: var(--action-primary-hover);
+}
+
+.admin-table-sort.is-sorted {
+  color: var(--action-primary-hover);
+  font-weight: 700;
+}
+
+.admin-table-sort.is-sorted .admin-table-sort__indicator {
   color: var(--action-primary-hover);
 }
 
