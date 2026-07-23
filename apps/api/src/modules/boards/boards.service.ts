@@ -662,6 +662,7 @@ export class BoardsService {
           parentId: schema.comments.parentId,
           authorName: schema.users.name,
           authorNickname: schema.users.nickname,
+          storedAuthorName: schema.comments.authorName,
           content: schema.comments.content,
           isHidden: schema.comments.isHidden,
           createdAt: schema.comments.createdAt,
@@ -689,7 +690,10 @@ export class BoardsService {
         postId: row.postId,
         parentId: row.parentId ?? undefined,
         authorName:
-          (includeHidden ? row.authorName : row.authorNickname) ?? row.authorName ?? undefined,
+          (includeHidden ? row.authorName : row.authorNickname) ??
+          row.authorName ??
+          row.storedAuthorName ??
+          undefined,
         content: row.content,
         isHidden: row.isHidden,
         createdAt: row.createdAt.toISOString(),
@@ -818,6 +822,7 @@ export class BoardsService {
           postId,
           parentId: parsed.data.parentId,
           authorId: actorId && actorId > 0 ? actorId : null,
+          authorName: null,
           content: parsed.data.content,
         })
         .$returningId();

@@ -172,6 +172,13 @@ function nonEmpty(value, fallback) {
   return text || fallback;
 }
 
+function visibleLegacyCommentContent(value) {
+  const content = htmlToText(value);
+  if (!content) return null;
+  if (/^삭제된\s*(댓글|답글|내용)(입니다)?\.?$/i.test(content)) return null;
+  return content;
+}
+
 function buildUserMap(rows) {
   const users = new Map();
   for (const row of rows) {
@@ -214,6 +221,7 @@ function main() {
     .map((notice, index) => ({ publicNo: index + 1, ...notice }));
 
   const usedPostNumbers = new Set();
+  const seededPostIds = new Set();
   const freeBoardPosts = parseInsertRows(sql, 'school_board')
     .map((row) => {
       const [legacyId, title, authorId, createdAt, viewCount, , display, , commentCount, publicNo] =
@@ -223,6 +231,7 @@ function main() {
       const numericPublicNo = asNumber(publicNo);
       if (numericPublicNo <= 0 || usedPostNumbers.has(numericPublicNo)) return null;
       usedPostNumbers.add(numericPublicNo);
+      seededPostIds.add(legacyId);
       return {
         legacyId,
         publicNo: numericPublicNo,
@@ -239,9 +248,68 @@ function main() {
     .filter(Boolean)
     .sort((left, right) => left.publicNo - right.publicNo);
 
+  const freeBoardComments = parseInsertRows(sql, 'board_comment')
+    .map((row) => {
+      const [legacyPostId, legacyCommentId, authorId, createdAt, comment, , display] = row;
+      if (!seededPostIds.has(legacyPostId)) return null;
+      if (display !== 'y') return null;
+      const content = visibleLegacyCommentContent(comment);
+      if (!content) return null;
+      return {
+        legacyPostId,
+        legacyCommentId,
+        legacyParentCommentId: null,
+        authorName: users.get(authorId) ?? '작성자',
+        content,
+        isHidden: false,
+        createdAt: `${createdAt}.000`,
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+
+  const freeBoardCommentReplies = parseInsertRows(sql, 'board_reply')
+    .map((row) => {
+      const [
+        legacyPostId,
+        legacyParentCommentId,
+        legacyCommentId,
+        authorId,
+        createdAt,
+        reply,
+        display,
+      ] = row;
+      if (!seededPostIds.has(legacyPostId)) return null;
+      if (display !== 'y') return null;
+      const content = visibleLegacyCommentContent(reply);
+      if (!content) return null;
+      return {
+        legacyPostId,
+        legacyCommentId,
+        legacyParentCommentId,
+        authorName: users.get(authorId) ?? '작성자',
+        content,
+        isHidden: false,
+        createdAt: `${createdAt}.000`,
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+
   mkdirSync(dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, `${JSON.stringify({ notices, freeBoardPosts }, null, 2)}\n`, 'utf8');
-  console.log(`Wrote ${notices.length} notices and ${freeBoardPosts.length} free board posts.`);
+  writeFileSync(
+    outputPath,
+    `${JSON.stringify(
+      { notices, freeBoardPosts, freeBoardComments, freeBoardCommentReplies },
+      null,
+      2,
+    )}\n`,
+    'utf8',
+  );
+  console.log(
+    `Wrote ${notices.length} notices, ${freeBoardPosts.length} free board posts, ` +
+      `${freeBoardComments.length} comments, and ${freeBoardCommentReplies.length} replies.`,
+  );
 }
 
 if (require.main === module) main();

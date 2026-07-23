@@ -771,7 +771,7 @@ export class SchoolDataService {
       throw new Error(`School homepage returned ${contentType}.`);
     }
     const html = await response.text();
-    if (!html.includes('selectYearMonth') || !html.includes('calLink')) {
+    if (!html.includes('selectYearMonth')) {
       throw new Error('School homepage calendar markup was not found.');
     }
     return html;

@@ -257,7 +257,57 @@ function loadLegacyContentSeed() {
   return {
     notices: Array.isArray(parsed.notices) ? parsed.notices : [],
     freeBoardPosts: Array.isArray(parsed.freeBoardPosts) ? parsed.freeBoardPosts : [],
+    freeBoardComments: Array.isArray(parsed.freeBoardComments) ? parsed.freeBoardComments : [],
+    freeBoardCommentReplies: Array.isArray(parsed.freeBoardCommentReplies)
+      ? parsed.freeBoardCommentReplies
+      : [],
   };
+}
+
+async function findSeededComment(connection, comment) {
+  const [[existing]] = await connection.execute(
+    `SELECT id
+     FROM comments
+     WHERE post_id = ?
+       AND ((? IS NULL AND parent_id IS NULL) OR parent_id = ?)
+       AND author_id IS NULL
+       AND author_name <=> ?
+       AND content = ?
+       AND is_hidden = ?
+       AND created_at = ?
+     LIMIT 1`,
+    [
+      comment.postId,
+      comment.parentId ?? null,
+      comment.parentId ?? null,
+      comment.authorName ?? null,
+      comment.content,
+      comment.isHidden ? 1 : 0,
+      comment.createdAt,
+    ],
+  );
+  return existing?.id;
+}
+
+async function upsertSeededComment(connection, comment) {
+  const existingId = await findSeededComment(connection, comment);
+  if (existingId) return existingId;
+
+  const [result] = await connection.execute(
+    `INSERT INTO comments
+     (post_id, parent_id, author_id, author_name, content, is_hidden, created_at, updated_at)
+     VALUES (?, ?, NULL, ?, ?, ?, ?, ?)`,
+    [
+      comment.postId,
+      comment.parentId ?? null,
+      comment.authorName ?? null,
+      comment.content,
+      comment.isHidden ? 1 : 0,
+      comment.createdAt,
+      comment.createdAt,
+    ],
+  );
+  return result.insertId;
 }
 
 async function upsertLegacyContent(connection) {
@@ -311,6 +361,45 @@ async function upsertLegacyContent(connection) {
         post.createdAt,
       ],
     );
+  }
+
+  if (seed.freeBoardComments.length === 0 && seed.freeBoardCommentReplies.length === 0) return;
+
+  const [postRows] = await connection.execute(
+    'SELECT id, public_no AS publicNo FROM posts WHERE board_id = ?',
+    [freeBoard.id],
+  );
+  const postIdByPublicNo = new Map(postRows.map((row) => [Number(row.publicNo), row.id]));
+  const postIdByLegacyId = new Map();
+  for (const post of seed.freeBoardPosts) {
+    const postId = postIdByPublicNo.get(Number(post.publicNo));
+    if (postId) postIdByLegacyId.set(post.legacyId, postId);
+  }
+
+  const commentIdByLegacyKey = new Map();
+  for (const comment of seed.freeBoardComments) {
+    const postId = postIdByLegacyId.get(comment.legacyPostId);
+    if (!postId) continue;
+    const id = await upsertSeededComment(connection, {
+      ...comment,
+      postId,
+      parentId: null,
+    });
+    commentIdByLegacyKey.set(`${comment.legacyPostId}:${comment.legacyCommentId}`, id);
+  }
+
+  for (const reply of seed.freeBoardCommentReplies) {
+    const postId = postIdByLegacyId.get(reply.legacyPostId);
+    const parentId = commentIdByLegacyKey.get(
+      `${reply.legacyPostId}:${reply.legacyParentCommentId}`,
+    );
+    if (!postId || !parentId) continue;
+    const id = await upsertSeededComment(connection, {
+      ...reply,
+      postId,
+      parentId,
+    });
+    commentIdByLegacyKey.set(`${reply.legacyPostId}:${reply.legacyCommentId}`, id);
   }
 }
 

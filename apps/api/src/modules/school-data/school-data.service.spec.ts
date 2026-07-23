@@ -334,6 +334,31 @@ describe('SchoolDataService', () => {
     expect(requestedUrls.every((url) => !url.includes('/hub/SchoolSchedule'))).toBe(true);
   });
 
+  it('accepts homepage calendar months with no event links', async () => {
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        htmlResponse(`
+          <input type="hidden" id="selectYearMonth" name="selectYearMonth" value="202609" />
+          <table>
+            <tbody>
+              <tr><td class="selectDay" id="20260901"></td></tr>
+            </tbody>
+          </table>
+        `),
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const service = createService();
+    vi.spyOn(service, 'listManagedEvents').mockResolvedValue([]);
+
+    const result = await service.getCalendar('2026-09-01', '2026-09-30', fixedNow);
+
+    expect(result.events).toEqual([]);
+    expect(result.homepageAvailable).toBe(true);
+    expect(result.availability).toBe('available');
+    expect(fetchUrls(fetchMock).every((url) => !url.includes('/hub/SchoolSchedule'))).toBe(true);
+  });
+
   it('keeps the in-process LRU cache bounded across distinct valid dates', async () => {
     const service = createService();
     const internal = service as unknown as {

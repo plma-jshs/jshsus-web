@@ -94,6 +94,7 @@ export const comments = mysqlTable(
       .references(() => posts.id),
     parentId: int('parent_id'),
     authorId: int('author_id').references(() => users.id),
+    authorName: varchar('author_name', { length: 80 }),
     content: text('content').notNull(),
     isHidden: boolean('is_hidden').notNull().default(false),
     ...timestamps,
