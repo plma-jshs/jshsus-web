@@ -196,10 +196,10 @@ const PollNode = TiptapNode.create({
           },
           ['span', { class: 'rich-text-poll__option-bar', 'aria-hidden': 'true' }],
           ['span', { class: 'rich-text-poll__option-text' }, option.text],
-          ['span', { class: 'rich-text-poll__count' }, '0표'],
+          ['span', { class: 'rich-text-poll__count' }],
         ]),
       ],
-      ['p', { class: 'rich-text-poll__total' }, '0명 참여'],
+      ['p', { class: 'rich-text-poll__total' }],
     ];
   },
 });
@@ -1108,9 +1108,11 @@ export function RichTextContent({
         const pollId = pollElement.dataset.pollId ?? '';
         const state = states.get(pollId);
         const totalVotes = state?.totalVotes ?? 0;
+        const hasVoted = Boolean(state?.myOptionId);
         const totalElement = pollElement.querySelector<HTMLElement>('.rich-text-poll__total');
+        pollElement.classList.toggle('has-results', hasVoted);
         if (totalElement) {
-          totalElement.textContent = `${totalVotes.toLocaleString('ko-KR')}명 참여`;
+          totalElement.textContent = hasVoted ? `${totalVotes.toLocaleString('ko-KR')}명 참여` : '';
         }
 
         pollElement
@@ -1121,11 +1123,16 @@ export function RichTextContent({
             const voteCount = option?.voteCount ?? 0;
             const percent = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
             const countElement = button.querySelector<HTMLElement>('.rich-text-poll__count');
-            button.disabled = pollVotePending || !onPollVote;
+            button.disabled = pollVotePending || !onPollVote || hasVoted;
             button.classList.toggle('is-selected', state?.myOptionId === optionId);
-            button.style.setProperty('--poll-percent', `${percent}%`);
-            button.setAttribute('aria-label', `${option?.text ?? '선택지'} ${voteCount}표`);
-            if (countElement) countElement.textContent = `${voteCount.toLocaleString('ko-KR')}표`;
+            button.style.setProperty('--poll-percent', hasVoted ? `${percent}%` : '0%');
+            button.setAttribute(
+              'aria-label',
+              hasVoted ? `${option?.text ?? '선택지'} ${voteCount}표` : (option?.text ?? '선택지'),
+            );
+            if (countElement) {
+              countElement.textContent = hasVoted ? `${voteCount.toLocaleString('ko-KR')}표` : '';
+            }
           });
       });
   }, [onPollVote, pollResults, pollVotePending]);

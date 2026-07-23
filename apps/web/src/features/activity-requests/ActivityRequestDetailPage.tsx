@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { ContentMoreMenu } from '../../components/page/ContentMoreMenu';
+import { useToast } from '../../components/feedback/Toast';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { detailBreadcrumbs } from '../../components/page/pageHierarchy';
 import { ApiError } from '../../shared/api/http';
@@ -83,6 +84,7 @@ export function ActivityRequestDetailPage() {
   const id = parsedId ?? 0;
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
   const requestQuery = useQuery({
     queryKey: ['activity-requests', 'detail', id],
@@ -91,12 +93,11 @@ export function ActivityRequestDetailPage() {
   });
   const deleteMutation = useMutation({
     mutationFn: () => deleteActivityRequest(id),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['activity-requests', 'me'] }),
-        queryClient.invalidateQueries({ queryKey: ['activity-requests', 'detail', id] }),
-      ]);
-      await navigate({ to: '/activity-requests' });
+    onSuccess: () => {
+      showToast({ title: '탐구활동서를 삭제했습니다.', tone: 'success' });
+      void navigate({ to: '/activity-requests' });
+      void queryClient.invalidateQueries({ queryKey: ['activity-requests', 'me'] });
+      void queryClient.invalidateQueries({ queryKey: ['activity-requests', 'detail', id] });
     },
   });
 
@@ -170,7 +171,9 @@ export function ActivityRequestDetailPage() {
               deleteDisabled={deleteMutation.isPending}
               deleteLabel={deleteMutation.isPending ? '삭제 중' : '삭제'}
               onDelete={() => {
-                if (window.confirm('이 탐구활동서 신청을 삭제할까요?')) deleteMutation.mutate();
+                if (window.confirm('삭제한 탐구활동서는 복구할 수 없습니다.\n정말 삭제할까요?')) {
+                  deleteMutation.mutate();
+                }
               }}
               onEdit={() =>
                 void navigate({

@@ -82,6 +82,11 @@
   text-overflow: ellipsis;
 }
 
+.activity-table__participants.is-dense {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .activity-table__period {
   display: grid;
   justify-content: center;

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -379,17 +380,27 @@ export class BoardsService {
         throw new BadRequestException('Invalid poll option.');
       }
 
-      await db
-        .insert(schema.postPollVotes)
-        .values({
-          postId: row.id,
-          pollId,
-          optionId: parsed.data.optionId,
-          userId: actorId,
-        })
-        .onDuplicateKeyUpdate({
-          set: { optionId: parsed.data.optionId, updatedAt: new Date() },
-        });
+      const [existingVote] = await db
+        .select({ optionId: schema.postPollVotes.optionId })
+        .from(schema.postPollVotes)
+        .where(
+          and(
+            eq(schema.postPollVotes.postId, row.id),
+            eq(schema.postPollVotes.pollId, pollId),
+            eq(schema.postPollVotes.userId, actorId),
+          ),
+        )
+        .limit(1);
+      if (existingVote) {
+        throw new ConflictException('Poll has already been voted.');
+      }
+
+      await db.insert(schema.postPollVotes).values({
+        postId: row.id,
+        pollId,
+        optionId: parsed.data.optionId,
+        userId: actorId,
+      });
       await this.database.writeAudit({
         actorId,
         action: 'board.poll.vote',

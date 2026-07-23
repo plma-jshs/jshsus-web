@@ -152,6 +152,11 @@ export function BoardPostDetailPage() {
         goToLogin();
         return;
       }
+      if (error instanceof ApiError && error.status === 409) {
+        showToast({ title: '이미 투표했습니다.', tone: 'info' });
+        void queryClient.invalidateQueries({ queryKey: postQueryKey });
+        return;
+      }
       showToast({ title: '투표를 반영하지 못했습니다.', tone: 'danger' });
     },
   });

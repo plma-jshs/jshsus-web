@@ -185,45 +185,53 @@ export function ActivityRequestsPage() {
                 </tr>
               </thead>
               <tbody>
-                {visibleRequests.map((request) => (
-                  <tr key={request.id}>
-                    <td className="activity-table__day" data-label="활동일">
-                      <time dateTime={request.startsAt}>
-                        {activityDayFormatter.format(new Date(request.startsAt))}
-                      </time>
-                    </td>
-                    <td className="activity-table__purpose" data-label="활동 내용">
-                      <Link
-                        to="/activity-requests/$requestId"
-                        params={{ requestId: String(request.id) }}
+                {visibleRequests.map((request) => {
+                  const participantCount = Math.max(1, request.participants?.length ?? 0);
+                  return (
+                    <tr key={request.id}>
+                      <td className="activity-table__day" data-label="활동일">
+                        <time dateTime={request.startsAt}>
+                          {activityDayFormatter.format(new Date(request.startsAt))}
+                        </time>
+                      </td>
+                      <td className="activity-table__purpose" data-label="활동 내용">
+                        <Link
+                          to="/activity-requests/$requestId"
+                          params={{ requestId: String(request.id) }}
+                        >
+                          {request.purpose}
+                        </Link>
+                      </td>
+                      <td
+                        className={`activity-table__participants${
+                          participantCount >= 3 ? ' is-dense' : ''
+                        }`}
+                        data-label="활동 인원"
                       >
-                        {request.purpose}
-                      </Link>
-                    </td>
-                    <td className="activity-table__participants" data-label="활동 인원">
-                      {formatActivityParticipants(request.participants, request)}
-                    </td>
-                    <td className="activity-table__location" data-label="장소">
-                      {request.location}
-                    </td>
-                    <td className="activity-table__period" data-label="활동 기간">
-                      <strong>
-                        {formatActivityPeriodLabel(
-                          koreaDateInput(new Date(request.startsAt)),
-                          request.startsAt,
-                          request.endsAt,
-                          request.activitySlotIds,
-                        )}
-                      </strong>
-                      <span>{formatActivityTimeRange(request.startsAt, request.endsAt)}</span>
-                    </td>
-                    <td data-label="상태">
-                      <span className={`activity-status is-${request.status}`}>
-                        {activityStatusLabels[request.status]}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                        {formatActivityParticipants(request.participants, request)}
+                      </td>
+                      <td className="activity-table__location" data-label="장소">
+                        {request.location}
+                      </td>
+                      <td className="activity-table__period" data-label="활동 기간">
+                        <strong>
+                          {formatActivityPeriodLabel(
+                            koreaDateInput(new Date(request.startsAt)),
+                            request.startsAt,
+                            request.endsAt,
+                            request.activitySlotIds,
+                          )}
+                        </strong>
+                        <span>{formatActivityTimeRange(request.startsAt, request.endsAt)}</span>
+                      </td>
+                      <td data-label="상태">
+                        <span className={`activity-status is-${request.status}`}>
+                          {activityStatusLabels[request.status]}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

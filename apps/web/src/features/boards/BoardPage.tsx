@@ -194,7 +194,6 @@ function BoardRulesModal({ onClose }: { onClose: () => void }) {
       >
         <header>
           <div>
-            <p>과구리 자유게시판</p>
             <h2 id="board-rules-title">이용 규정</h2>
           </div>
           <button type="button" aria-label="규정 닫기" onClick={onClose}>

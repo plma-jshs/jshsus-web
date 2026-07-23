@@ -1094,12 +1094,16 @@ export class ActivityRequestsService {
       userIds.length === 0
         ? []
         : await db
-            .select({ id: schema.users.id, name: schema.users.name })
+            .select({ id: schema.users.id, name: schema.users.name, status: schema.users.status })
             .from(schema.users)
             .where(inArray(schema.users.id, userIds));
     return {
       participants,
-      userNames: new Map(userRows.map((user) => [user.id, user.name])),
+      userNames: new Map(
+        userRows
+          .filter((user) => user.status !== 'deleted' && user.name !== '삭제된 시스템 계정')
+          .map((user) => [user.id, user.name]),
+      ),
     };
   }
 
