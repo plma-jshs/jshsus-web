@@ -28,6 +28,7 @@
     "db:migrate": "pnpm --filter @jshsus/db db:migrate",
     "local:reset-db": "node scripts/reset-local-db.cjs",
     "db:migrations:check": "node scripts/check-migrations.cjs",
+    "db:migrations:apply-check": "node scripts/check-clean-db-migrations.cjs",
     "smoke:core": "pnpm --filter @jshsus/api smoke:core"
   },
   "devDependencies": {

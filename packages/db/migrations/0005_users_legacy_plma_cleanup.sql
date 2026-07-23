@@ -14,7 +14,7 @@ DEALLOCATE PREPARE drop_users_legacy_plma_id_stmt;
 -- Exact-name `시스템` staff placeholders are not the point-system actor. Keep audit safety by retiring FK targets instead of hard-deleting them.
 UPDATE `users`
 SET `name` = '삭제된 시스템 계정',
-	`status` = 'deleted',
+	`user_status` = 'deleted',
 	`updated_at` = now(3)
 WHERE `name` = '시스템'
 	AND `id` NOT IN (

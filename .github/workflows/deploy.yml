@@ -67,6 +67,9 @@ jobs:
       - name: Backward-compatible migration policy
         run: pnpm db:migrations:check
 
+      - name: Clean database migration apply check
+        run: pnpm db:migrations:apply-check
+
   build-images:
     name: Build ${{ matrix.image }} image
     needs: verify
