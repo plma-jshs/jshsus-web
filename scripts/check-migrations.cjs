@@ -53,9 +53,11 @@ const contractCleanupLabels = new Set([
   'ALTER TABLE ... DROP',
   'MODIFY COLUMN',
 ]);
+const dataPurgeLabels = new Set(['DELETE without a compatibility window']);
 for (const file of files) {
   const sql = fs.readFileSync(path.join(migrationDir, file), 'utf8');
   const isApprovedContractCleanup = /--\s*codex-contract-cleanup-approved:/.test(sql);
+  const isApprovedDataPurge = /--\s*codex-data-purge-approved:/.test(sql);
   for (const violation of findOverlongMysqlConstraintAndIndexIdentifiers(sql)) {
     failures.push(
       `${file}: ${violation.keyword} identifier \`${violation.identifier}\` is ${violation.length} characters (MySQL maximum: ${violation.maxLength})`,
@@ -85,7 +87,10 @@ for (const file of files) {
         label === 'DROP DATABASE, TABLE, VIEW, INDEX, or COLUMN' &&
         safeIndexReplacements.get(file)?.test(normalized);
       const allowedContractCleanup = isApprovedContractCleanup && contractCleanupLabels.has(label);
-      if (!allowedReplacement && !allowedContractCleanup) failures.push(`${file}: ${label}`);
+      const allowedDataPurge = isApprovedDataPurge && dataPurgeLabels.has(label);
+      if (!allowedReplacement && !allowedContractCleanup && !allowedDataPurge) {
+        failures.push(`${file}: ${label}`);
+      }
     }
   }
 }

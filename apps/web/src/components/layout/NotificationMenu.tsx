@@ -171,7 +171,10 @@ export function NotificationMenuView({
           <Bell aria-hidden="true" size={19} />
         )}
         {unreadCount > 0 ? (
-          <span className="header-notification-badge" aria-hidden="true">
+          <span
+            className={`header-notification-badge${unreadCount > 9 ? ' is-wide' : ''}`}
+            aria-hidden="true"
+          >
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         ) : null}

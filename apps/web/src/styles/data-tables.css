@@ -75,7 +75,8 @@
 }
 
 .board-rules-modal__body section + section {
-  margin-top: var(--j-space-7);
+  margin-top: var(--j-space-8);
+  padding-top: var(--j-space-3);
 }
 
 .board-rules-modal__body h3,

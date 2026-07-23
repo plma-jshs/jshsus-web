@@ -115,7 +115,7 @@ export function PointRecordsPage() {
     const ids = visibleRecordIds.filter((id) => selectedRecordIds.has(id));
     if (ids.length === 0 || cancelSelectedMutation.isPending) return;
     const confirmed = window.confirm(
-      `선택한 상벌점 기록 ${ids.length}건을 삭제할까요?\n삭제하면 학생 점수에서 제외되고 감사 로그에 남습니다.`,
+      `선택한 상벌점 기록 ${ids.length}건을 삭제하시겠습니까?\n삭제하면 학생 점수에서 제외되고 감사 로그에 남습니다.`,
     );
     if (!confirmed) return;
     cancelSelectedMutation.mutate(ids);

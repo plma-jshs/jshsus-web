@@ -384,7 +384,7 @@ export function SchoolEventsPage() {
                 value={visibility}
                 onChange={(event) => setVisibility(event.target.value as typeof visibility)}
               >
-                <option value="all">모든 공개 상태</option>
+                <option value="all">전체</option>
                 <option value="public">공개</option>
                 <option value="private">비공개</option>
               </select>
@@ -409,117 +409,134 @@ export function SchoolEventsPage() {
           ) : null}
         </div>
 
-        <div className="school-calendar-grid" aria-label={`${monthLabel(month)} 달력`}>
-          {WEEKDAYS.map((weekday, index) => (
-            <div className={`school-calendar-weekday weekday-${index}`} key={weekday}>
-              {weekday}
-            </div>
-          ))}
-          <div className="school-calendar-month">
-            {weeks.map((week) => (
-              <div className="school-calendar-week" key={week[0]}>
-                <div className="school-calendar-week-days">
-                  {week.map((date) => {
-                    const dateEvents = visibleEvents.filter((event) => occursOn(event, date));
-                    const inMonth = date.startsWith(month);
-                    const isSelected = date === selectedDate;
-                    const isToday = date === today;
-                    const weekday = weekdayOf(date);
-                    const isHoliday = dateEvents.some((event) => event.isHoliday);
-                    const hiddenEventCount = Math.max(0, dateEvents.length - 3);
-                    return (
-                      <article
-                        className={`school-calendar-day${inMonth ? '' : ' outside'}${isSelected ? ' selected' : ''}${isHoliday ? ' is-holiday' : ''}${weekday === 0 ? ' is-sunday' : ''}${weekday === 6 ? ' is-saturday' : ''}`}
-                        key={date}
-                      >
-                        <button
-                          className={`school-calendar-date${isToday ? ' today' : ''}`}
-                          type="button"
-                          onClick={() => {
-                            setSelectedDate(date);
-                            setSelectedEventId(null);
-                          }}
-                          aria-label={`${date} 선택`}
-                        >
-                          {Number(date.slice(-2))}
-                        </button>
-                        {hiddenEventCount ? (
-                          <span className="school-calendar-more">+{hiddenEventCount}</span>
-                        ) : null}
-                      </article>
-                    );
-                  })}
+        <div className="school-calendar-workspace">
+          <div className="school-calendar-main">
+            <div className="school-calendar-grid" aria-label={`${monthLabel(month)} 달력`}>
+              {WEEKDAYS.map((weekday, index) => (
+                <div className={`school-calendar-weekday weekday-${index}`} key={weekday}>
+                  {weekday}
                 </div>
-                <div className="school-calendar-events">
-                  {weekEventSegments(week, visibleEvents, days[0]!)
-                    .filter((segment) => segment.lane < 3)
-                    .map((segment) => (
-                      <button
-                        className={`school-calendar-event ${eventTone(segment.event)}${
-                          segment.event.isPublic ? '' : ' private'
-                        }${segment.isMultiDay ? ' is-multi-day' : ''}${
-                          segment.showLabel ? '' : ' is-continuation'
-                        }${segment.continuesBefore ? ' starts-before' : ''}${
-                          segment.continuesAfter ? ' ends-after' : ''
-                        }${segment.endColumn === 7 ? ' ends-week' : ''}`}
-                        type="button"
-                        key={`${segment.event.id}-${week[0]}`}
-                        title={segment.event.title}
-                        style={{
-                          gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
-                          gridRow: segment.lane + 1,
-                        }}
-                        onClick={() => {
-                          const range = eventRange(segment.event);
-                          setSelectedDate(range.startsAt);
-                          setSelectedEventId(segment.event.id);
-                        }}
-                      >
-                        {segment.showLabel ? segment.event.title : null}
-                      </button>
-                    ))}
-                </div>
+              ))}
+              <div className="school-calendar-month">
+                {weeks.map((week) => (
+                  <div className="school-calendar-week" key={week[0]}>
+                    <div className="school-calendar-week-days">
+                      {week.map((date) => {
+                        const dateEvents = visibleEvents.filter((event) => occursOn(event, date));
+                        const inMonth = date.startsWith(month);
+                        const isSelected = date === selectedDate;
+                        const isToday = date === today;
+                        const weekday = weekdayOf(date);
+                        const isHoliday = dateEvents.some((event) => event.isHoliday);
+                        const hiddenEventCount = Math.max(0, dateEvents.length - 3);
+                        return (
+                          <article
+                            className={`school-calendar-day${inMonth ? '' : ' outside'}${isSelected ? ' selected' : ''}${isHoliday ? ' is-holiday' : ''}${weekday === 0 ? ' is-sunday' : ''}${weekday === 6 ? ' is-saturday' : ''}`}
+                            key={date}
+                          >
+                            <button
+                              className={`school-calendar-date${isToday ? ' today' : ''}`}
+                              type="button"
+                              onClick={() => {
+                                setSelectedDate(date);
+                                setSelectedEventId(null);
+                              }}
+                              aria-label={`${date} 선택`}
+                            >
+                              {Number(date.slice(-2))}
+                            </button>
+                            {hiddenEventCount ? (
+                              <span className="school-calendar-more">+{hiddenEventCount}</span>
+                            ) : null}
+                          </article>
+                        );
+                      })}
+                    </div>
+                    <div className="school-calendar-events">
+                      {weekEventSegments(week, visibleEvents, days[0]!)
+                        .filter((segment) => segment.lane < 3)
+                        .map((segment) => (
+                          <button
+                            className={`school-calendar-event ${eventTone(segment.event)}${
+                              segment.event.isPublic ? '' : ' private'
+                            }${segment.isMultiDay ? ' is-multi-day' : ''}${
+                              segment.showLabel ? '' : ' is-continuation'
+                            }${segment.continuesBefore ? ' starts-before' : ''}${
+                              segment.continuesAfter ? ' ends-after' : ''
+                            }${segment.endColumn === 7 ? ' ends-week' : ''}`}
+                            type="button"
+                            key={`${segment.event.id}-${week[0]}`}
+                            title={segment.event.title}
+                            style={{
+                              gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
+                              gridRow: segment.lane + 1,
+                            }}
+                            onClick={() => {
+                              const range = eventRange(segment.event);
+                              setSelectedDate(range.startsAt);
+                              setSelectedEventId(segment.event.id);
+                            }}
+                          >
+                            {segment.showLabel ? segment.event.title : null}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+            {calendarQuery.isLoading ? (
+              <p className="calendar-status">달력을 불러오는 중입니다.</p>
+            ) : null}
+            {calendarQuery.isError ? (
+              <div className="calendar-status error" role="alert">
+                <span>학사일정을 불러오지 못했습니다.</span>
+                <button
+                  className="quiet-button"
+                  type="button"
+                  onClick={() => calendarQuery.refetch()}
+                >
+                  다시 시도
+                </button>
+              </div>
+            ) : null}
           </div>
+          <aside className="school-calendar-side" aria-label="선택한 날짜 일정">
+            <section className="selected-day-panel">
+              <div className="panel-title">
+                <div>
+                  <h2>{selectedDate}</h2>
+                  <span>{selectedDateEvents.length}건</span>
+                </div>
+                <button
+                  className="quiet-button"
+                  type="button"
+                  onClick={() => openCreate(selectedDate)}
+                >
+                  <Plus size={15} /> 일정 추가
+                </button>
+              </div>
+              {selectedDateEvents.length ? (
+                <div className="selected-day-list">
+                  {selectedDateEvents.map((event) => (
+                    <button
+                      type="button"
+                      key={event.id}
+                      onClick={() => setSelectedEventId(event.id)}
+                    >
+                      <i className={`source-dot ${eventTone(event)}`} />
+                      <strong>{event.title}</strong>
+                      <span>{formatPeriod(event)}</span>
+                      {!event.isPublic ? <em>비공개</em> : null}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="empty-text compact-empty">등록된 일정이 없습니다.</p>
+              )}
+            </section>
+          </aside>
         </div>
-        {calendarQuery.isLoading ? (
-          <p className="calendar-status">달력을 불러오는 중입니다.</p>
-        ) : null}
-        {calendarQuery.isError ? (
-          <div className="calendar-status error" role="alert">
-            <span>학사일정을 불러오지 못했습니다.</span>
-            <button className="quiet-button" type="button" onClick={() => calendarQuery.refetch()}>
-              다시 시도
-            </button>
-          </div>
-        ) : null}
-      </section>
-
-      <section className="admin-panel selected-day-panel">
-        <div className="panel-title">
-          <div>
-            <h2>{selectedDate}</h2>
-            <span>{selectedDateEvents.length}건</span>
-          </div>
-          <button className="quiet-button" type="button" onClick={() => openCreate(selectedDate)}>
-            <Plus size={15} /> 일정 추가
-          </button>
-        </div>
-        {selectedDateEvents.length ? (
-          <div className="selected-day-list">
-            {selectedDateEvents.map((event) => (
-              <button type="button" key={event.id} onClick={() => setSelectedEventId(event.id)}>
-                <i className={`source-dot ${eventTone(event)}`} />
-                <strong>{event.title}</strong>
-                <span>{formatPeriod(event)}</span>
-                {!event.isPublic ? <em>비공개</em> : null}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p className="empty-text compact-empty">등록된 일정이 없습니다.</p>
-        )}
       </section>
 
       <Drawer

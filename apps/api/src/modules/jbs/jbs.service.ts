@@ -208,9 +208,20 @@ export class JbsService {
           .limit(1);
         if (!board) throw new NotFoundException('JBS board was not found.');
 
+        const [nextNumber] = await tx
+          .select({
+            publicNo:
+              sql<number>`cast(coalesce(max(${schema.posts.publicNo}), 0) + 1 as unsigned)`.mapWith(
+                Number,
+              ),
+          })
+          .from(schema.posts)
+          .where(eq(schema.posts.boardId, board.id))
+          .limit(1);
         const [post] = await tx
           .insert(schema.posts)
           .values({
+            publicNo: nextNumber?.publicNo ?? 1,
             boardId: board.id,
             authorId: actorId,
             title: parsed.data.title,

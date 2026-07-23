@@ -125,7 +125,7 @@ export function DormRoommateBlocksPanel({
               variant="danger"
               disabled={deleteMutation.isPending}
               onClick={() => {
-                if (window.confirm('이 블랙리스트 항목을 삭제할까요?')) {
+                if (window.confirm('이 블랙리스트 항목을 삭제하시겠습니까?')) {
                   deleteMutation.mutate(row.original.id);
                 }
               }}

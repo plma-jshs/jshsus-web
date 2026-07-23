@@ -7,6 +7,7 @@ export function wakeSongStatusPresentation(status: WakeSongRequestStatus) {
   if (status === 'APPROVED' || status === 'SCHEDULED' || status === 'PLAYED') {
     return { label: '승인', tone: 'approved' } as const;
   }
+  if (status === 'CANCELED') return { label: '취소', tone: 'canceled' } as const;
   return { label: '반려', tone: 'rejected' } as const;
 }
 

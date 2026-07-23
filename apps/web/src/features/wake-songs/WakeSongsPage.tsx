@@ -1,5 +1,5 @@
-import type { FormEvent } from 'react';
-import { useMemo, useState } from 'react';
+import type { CSSProperties, FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Clock3, ExternalLink, Music2, Pencil, RotateCcw, X } from 'lucide-react';
 import { YouTubeSegmentPlayer } from '../../components/youtube/YouTubeSegmentPlayer';
@@ -47,6 +47,27 @@ const initialForm: FormState = {
   requestNote: '',
 };
 
+const MAX_WAKE_SONG_DURATION_SECONDS = 180;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function looksLikeYouTubeUrl(value: string) {
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.replace(/^www\./, '');
+    return (
+      hostname === 'youtube.com' ||
+      hostname === 'music.youtube.com' ||
+      hostname === 'm.youtube.com' ||
+      hostname === 'youtu.be'
+    );
+  } catch {
+    return false;
+  }
+}
+
 function describeError(error: unknown) {
   if (error instanceof ApiError && error.payload && typeof error.payload === 'object') {
     const message = (error.payload as { message?: unknown }).message;
@@ -61,6 +82,7 @@ export function WakeSongsPage() {
   const [formError, setFormError] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [previewFor, setPreviewFor] = useState('');
+  const [previewAttemptFor, setPreviewAttemptFor] = useState('');
   const [page, setPage] = useState(1);
 
   const requestsQuery = useQuery({
@@ -68,6 +90,7 @@ export function WakeSongsPage() {
     queryFn: getMyWakeSongRequests,
   });
   const previewMutation = useMutation({ mutationFn: previewWakeSong });
+  const { mutate: previewMutate, reset: resetPreview } = previewMutation;
   const saveMutation = useMutation({
     mutationFn: (input: {
       editingId: number | null;
@@ -80,6 +103,7 @@ export function WakeSongsPage() {
       setForm(initialForm);
       setEditingId(null);
       setPreviewFor('');
+      setPreviewAttemptFor('');
       setFormError('');
       setPage(1);
       await queryClient.invalidateQueries({ queryKey: ['wake-songs', 'me'] });
@@ -99,7 +123,24 @@ export function WakeSongsPage() {
       ? 0
       : effectiveDuration(startSeconds, endSeconds, form.playbackRate);
   const requests = useMemo(() => requestsQuery.data?.items ?? [], [requestsQuery.data]);
-  const preview = previewFor === form.url ? previewMutation.data : undefined;
+  const normalizedUrl = form.url.trim();
+  const preview = previewFor === normalizedUrl ? previewMutation.data : undefined;
+  const timelineMax = Math.max(
+    1,
+    Math.floor(preview?.durationSeconds ?? MAX_WAKE_SONG_DURATION_SECONDS),
+  );
+  const safeStartSeconds = clamp(startSeconds ?? 0, 0, Math.max(0, timelineMax - 1));
+  const safeEndSeconds = clamp(
+    endSeconds ?? Math.min(timelineMax, MAX_WAKE_SONG_DURATION_SECONDS),
+    safeStartSeconds + 1,
+    timelineMax,
+  );
+  const timelineStartPercent = (safeStartSeconds / timelineMax) * 100;
+  const timelineEndPercent = (safeEndSeconds / timelineMax) * 100;
+  const timelineStyle = {
+    '--wake-start': `${timelineStartPercent}%`,
+    '--wake-end': `${timelineEndPercent}%`,
+  } as CSSProperties;
   const pageSize = 20;
   const totalPages = Math.max(1, Math.ceil(requests.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -108,15 +149,69 @@ export function WakeSongsPage() {
     [requests, safePage],
   );
 
+  const requestPreview = useCallback(
+    (url: string) => {
+      setPreviewAttemptFor(url);
+      setFormError('');
+      previewMutate(url, {
+        onSuccess: (data) => {
+          setPreviewFor(url);
+          if (!data.durationSeconds) return;
+          const max = Math.max(1, Math.floor(data.durationSeconds));
+          setForm((current) => {
+            const currentStart = parseDuration(current.start) ?? 0;
+            const currentEnd =
+              parseDuration(current.end) ?? Math.min(max, MAX_WAKE_SONG_DURATION_SECONDS);
+            const nextStart = clamp(currentStart, 0, Math.max(0, max - 1));
+            const nextEnd = clamp(currentEnd, nextStart + 1, max);
+            const nextStartText = formatDuration(nextStart);
+            const nextEndText = formatDuration(nextEnd);
+            if (nextStartText === current.start && nextEndText === current.end) return current;
+            return { ...current, start: nextStartText, end: nextEndText };
+          });
+        },
+      });
+    },
+    [previewMutate],
+  );
+
+  useEffect(() => {
+    if (
+      !normalizedUrl ||
+      previewFor === normalizedUrl ||
+      previewAttemptFor === normalizedUrl ||
+      previewMutation.isPending ||
+      !looksLikeYouTubeUrl(normalizedUrl)
+    ) {
+      return undefined;
+    }
+    const timer = window.setTimeout(() => requestPreview(normalizedUrl), 520);
+    return () => window.clearTimeout(timer);
+  }, [normalizedUrl, previewAttemptFor, previewFor, previewMutation.isPending, requestPreview]);
+
   const handlePreview = () => {
     setFormError('');
-    if (!form.url.trim()) {
+    if (!normalizedUrl) {
       setFormError('YouTube URL을 입력해 주세요.');
       return;
     }
-    previewMutation.mutate(form.url, {
-      onSuccess: () => setPreviewFor(form.url),
-    });
+    requestPreview(normalizedUrl);
+  };
+
+  const updateSegment = (nextStart: number, nextEnd: number) => {
+    setForm((current) => ({
+      ...current,
+      start: formatDuration(nextStart),
+      end: formatDuration(nextEnd),
+    }));
+  };
+
+  const updateSegmentStart = (nextValue: number) => {
+    updateSegment(clamp(nextValue, 0, safeEndSeconds - 1), safeEndSeconds);
+  };
+
+  const updateSegmentEnd = (nextValue: number) => {
+    updateSegment(safeStartSeconds, clamp(nextValue, safeStartSeconds + 1, timelineMax));
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -131,8 +226,17 @@ export function WakeSongsPage() {
       setFormError('종료 시각은 시작 시각보다 뒤여야 합니다.');
       return;
     }
-    if (selectedDuration > 180) {
+    if (selectedDuration > MAX_WAKE_SONG_DURATION_SECONDS) {
       setFormError('배속을 반영한 실제 재생 시간은 최대 3분이어야 합니다.');
+      return;
+    }
+    if (!normalizedUrl) {
+      setFormError('YouTube URL을 입력해 주세요.');
+      return;
+    }
+    if (!preview) {
+      setFormError('영상 확인 후 기상곡을 신청해 주세요.');
+      requestPreview(normalizedUrl);
       return;
     }
     if (!editingId && (requestsQuery.data?.pendingCount ?? 0) >= 3) {
@@ -143,7 +247,7 @@ export function WakeSongsPage() {
     saveMutation.mutate({
       editingId,
       request: {
-        url: form.url,
+        url: normalizedUrl,
         startSeconds,
         endSeconds,
         playbackRate: form.playbackRate,
@@ -153,16 +257,19 @@ export function WakeSongsPage() {
   };
 
   const beginEdit = (request: WakeSongRequest) => {
+    const nextUrl = request.canonicalUrl;
     setEditingId(request.id);
     setForm({
-      url: request.canonicalUrl,
+      url: nextUrl,
       start: formatDuration(request.startSeconds),
       end: formatDuration(request.endSeconds),
       playbackRate: request.playbackRate,
       requestNote: request.requestNote,
     });
-    setPreviewFor(request.canonicalUrl);
-    previewMutation.reset();
+    setPreviewFor('');
+    setPreviewAttemptFor('');
+    resetPreview();
+    requestPreview(nextUrl);
     setFormError('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -171,7 +278,8 @@ export function WakeSongsPage() {
     setEditingId(null);
     setForm(initialForm);
     setPreviewFor('');
-    previewMutation.reset();
+    setPreviewAttemptFor('');
+    resetPreview();
     setFormError('');
   };
 
@@ -187,12 +295,12 @@ export function WakeSongsPage() {
         </span>
       }
     >
-      <div className="wake-song-builder">
-        <section className="wake-song-form-panel" aria-labelledby="wake-song-form-title">
+      <section className="wake-song-builder" aria-labelledby="wake-song-form-title">
+        <div className="wake-song-card">
           <div className="wake-song-section-title">
             <div>
               <span>{editingId ? '신청 수정' : '새 신청'}</span>
-              <h2 id="wake-song-form-title">재생 구간 설정</h2>
+              <h2 id="wake-song-form-title">기상곡 구간 만들기</h2>
             </div>
             {editingId ? (
               <button className="detail-text-button" type="button" onClick={stopEditing}>
@@ -202,7 +310,7 @@ export function WakeSongsPage() {
           </div>
 
           <form className="wake-song-form" onSubmit={handleSubmit}>
-            <label className="wake-song-url-field">
+            <label className="wake-song-url-field wake-song-url-field--hero">
               <span>YouTube URL</span>
               <div>
                 <input
@@ -211,6 +319,7 @@ export function WakeSongsPage() {
                   onChange={(event) => {
                     setForm((current) => ({ ...current, url: event.target.value }));
                     setPreviewFor('');
+                    setPreviewAttemptFor('');
                   }}
                   placeholder="https://www.youtube.com/watch?v=..."
                   required
@@ -226,73 +335,6 @@ export function WakeSongsPage() {
               </div>
             </label>
 
-            <div className="wake-song-timing-grid">
-              <label>
-                <span>시작 시각</span>
-                <input
-                  value={form.start}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, start: event.target.value }))
-                  }
-                  inputMode="numeric"
-                  placeholder="00:00"
-                  required
-                />
-              </label>
-              <label>
-                <span>종료 시각</span>
-                <input
-                  value={form.end}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, end: event.target.value }))
-                  }
-                  inputMode="numeric"
-                  placeholder="03:00"
-                  required
-                />
-              </label>
-              <label>
-                <span>재생 속도</span>
-                <select
-                  value={form.playbackRate}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      playbackRate: Number(event.target.value),
-                    }))
-                  }
-                >
-                  {WAKE_SONG_PLAYBACK_RATES.map((rate) => (
-                    <option value={rate} key={rate}>
-                      {rate}배
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <div
-              className={`wake-song-duration ${selectedDuration > 180 ? 'is-over' : ''}`}
-              aria-live="polite"
-            >
-              <Clock3 size={17} aria-hidden="true" />
-              실제 재생 시간 <strong>{formatDuration(selectedDuration)}</strong>
-              <span>최대 03:00</span>
-            </div>
-
-            <label>
-              <span>신청 메모</span>
-              <textarea
-                value={form.requestNote}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, requestNote: event.target.value }))
-                }
-                rows={3}
-                maxLength={500}
-                placeholder="담당자에게 전달할 내용이 있다면 입력해 주세요."
-              />
-            </label>
-
             {formError ? <p className="wake-song-form-error">{formError}</p> : null}
             {previewMutation.isError ? (
               <p className="wake-song-form-error">{describeError(previewMutation.error)}</p>
@@ -301,53 +343,171 @@ export function WakeSongsPage() {
               <p className="wake-song-form-error">{describeError(saveMutation.error)}</p>
             ) : null}
 
-            <button
-              className="detail-primary-button wake-song-submit"
-              type="submit"
-              disabled={saveMutation.isPending}
-            >
-              <Music2 size={17} aria-hidden="true" />
-              {saveMutation.isPending ? '저장 중' : editingId ? '신청 내용 저장' : '기상곡 신청'}
-            </button>
-          </form>
-        </section>
+            <div className={`wake-song-studio${preview ? ' has-preview' : ''}`}>
+              {preview ? (
+                <>
+                  <div className="wake-song-player-card">
+                    <div className="wake-song-player-wrap">
+                      <YouTubeSegmentPlayer
+                        className="wake-song-player"
+                        videoId={preview.videoId}
+                        startSeconds={safeStartSeconds}
+                        endSeconds={safeEndSeconds}
+                        playbackRate={form.playbackRate}
+                        title={`${preview.title} 미리보기`}
+                      />
+                    </div>
+                    <div className="wake-song-media-meta">
+                      <img
+                        src={`https://i.ytimg.com/vi/${preview.videoId}/hqdefault.jpg`}
+                        alt=""
+                        loading="lazy"
+                      />
+                      <div>
+                        <span>확인한 영상</span>
+                        <h3>{preview.title}</h3>
+                        {preview.channelTitle ? <p>{preview.channelTitle}</p> : null}
+                        <div className="wake-song-media-badges">
+                          {preview.durationSeconds ? (
+                            <span>전체 {formatDuration(preview.durationSeconds)}</span>
+                          ) : (
+                            <span>길이 확인 중</span>
+                          )}
+                          <span>{form.playbackRate}배속</span>
+                          <a href={preview.canonicalUrl} target="_blank" rel="noreferrer">
+                            YouTube에서 보기 <ExternalLink size={13} aria-hidden="true" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-        <aside className="wake-song-preview" aria-label="영상 미리보기">
-          {preview ? (
-            <>
-              <YouTubeSegmentPlayer
-                className="wake-song-player"
-                videoId={preview.videoId}
-                startSeconds={startSeconds ?? 0}
-                endSeconds={endSeconds ?? 1}
-                playbackRate={form.playbackRate}
-                title={`${preview.title} 미리보기`}
-              />
-              <div className="wake-song-preview-copy">
-                <span>확인한 영상</span>
-                <h2>{preview.title}</h2>
-                {preview.channelTitle ? <p>{preview.channelTitle}</p> : null}
-                <div>
-                  {preview.durationSeconds ? (
-                    <span>전체 {formatDuration(preview.durationSeconds)}</span>
-                  ) : (
-                    <span>영상 길이는 제출 시 서버에서 다시 확인합니다.</span>
-                  )}
-                  <a href={preview.canonicalUrl} target="_blank" rel="noreferrer">
-                    YouTube에서 보기 <ExternalLink size={13} aria-hidden="true" />
-                  </a>
+                  <section className="wake-song-segment-card" aria-label="재생 구간">
+                    <div
+                      className={`wake-song-duration-chip ${
+                        selectedDuration > MAX_WAKE_SONG_DURATION_SECONDS ? 'is-over' : ''
+                      }`}
+                      aria-live="polite"
+                    >
+                      <Clock3 size={16} aria-hidden="true" />
+                      실제 재생 시간
+                      <strong>{formatDuration(selectedDuration)}</strong>
+                      <span>/ 최대 03:00</span>
+                    </div>
+
+                    <div className="wake-song-timeline" style={timelineStyle}>
+                      <div className="wake-song-timeline__track" aria-hidden="true" />
+                      <input
+                        aria-label="시작 시각"
+                        className="wake-song-timeline__range is-start"
+                        max={Math.max(1, timelineMax - 1)}
+                        min={0}
+                        onChange={(event) => updateSegmentStart(Number(event.target.value))}
+                        step={1}
+                        type="range"
+                        value={safeStartSeconds}
+                      />
+                      <input
+                        aria-label="종료 시각"
+                        className="wake-song-timeline__range is-end"
+                        max={timelineMax}
+                        min={1}
+                        onChange={(event) => updateSegmentEnd(Number(event.target.value))}
+                        step={1}
+                        type="range"
+                        value={safeEndSeconds}
+                      />
+                    </div>
+
+                    <div className="wake-song-segment-readout">
+                      <label>
+                        <span>시작</span>
+                        <input
+                          value={form.start}
+                          onChange={(event) =>
+                            setForm((current) => ({ ...current, start: event.target.value }))
+                          }
+                          inputMode="numeric"
+                          placeholder="00:00"
+                          required
+                        />
+                      </label>
+                      <label>
+                        <span>종료</span>
+                        <input
+                          value={form.end}
+                          onChange={(event) =>
+                            setForm((current) => ({ ...current, end: event.target.value }))
+                          }
+                          inputMode="numeric"
+                          placeholder="03:00"
+                          required
+                        />
+                      </label>
+                      <label>
+                        <span>속도</span>
+                        <select
+                          value={form.playbackRate}
+                          onChange={(event) =>
+                            setForm((current) => ({
+                              ...current,
+                              playbackRate: Number(event.target.value),
+                            }))
+                          }
+                        >
+                          {WAKE_SONG_PLAYBACK_RATES.map((rate) => (
+                            <option value={rate} key={rate}>
+                              {rate}배
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+
+                    <label className="wake-song-note-field">
+                      <span>신청 메모</span>
+                      <textarea
+                        value={form.requestNote}
+                        onChange={(event) =>
+                          setForm((current) => ({ ...current, requestNote: event.target.value }))
+                        }
+                        rows={2}
+                        maxLength={500}
+                        placeholder="담당자에게 전달할 내용이 있다면 입력해 주세요."
+                      />
+                    </label>
+
+                    <button
+                      className="detail-primary-button wake-song-submit"
+                      type="submit"
+                      disabled={saveMutation.isPending}
+                    >
+                      <Music2 size={18} aria-hidden="true" />
+                      {saveMutation.isPending
+                        ? '저장 중'
+                        : editingId
+                          ? '이 구간으로 신청 내용 저장'
+                          : '이 구간으로 기상곡 신청하기'}
+                    </button>
+                  </section>
+                </>
+              ) : (
+                <div className="wake-song-preview-empty">
+                  <Music2 size={28} aria-hidden="true" />
+                  <strong>
+                    {previewMutation.isPending
+                      ? '영상을 확인하는 중입니다.'
+                      : 'URL을 붙여넣어 주세요.'}
+                  </strong>
+                  <p>
+                    YouTube URL을 입력하면 영상 미리보기와 구간 타임라인이 이 카드 안에 펼쳐집니다.
+                  </p>
                 </div>
-              </div>
-            </>
-          ) : (
-            <div className="wake-song-preview-empty">
-              <Music2 size={28} aria-hidden="true" />
-              <strong>영상을 먼저 확인해 주세요.</strong>
-              <p>YouTube URL을 입력하면 제목과 재생 화면을 여기서 확인할 수 있습니다.</p>
+              )}
             </div>
-          )}
-        </aside>
-      </div>
+          </form>
+        </div>
+      </section>
 
       <section className="wake-song-history" aria-labelledby="wake-song-history-title">
         <div className="wake-song-section-title">
@@ -440,7 +600,7 @@ export function WakeSongsPage() {
                             <button
                               type="button"
                               onClick={() => {
-                                if (window.confirm('이 기상곡 신청을 취소할까요?')) {
+                                if (window.confirm('이 기상곡 신청을 취소하시겠습니까?')) {
                                   cancelMutation.mutate(request.id);
                                 }
                               }}

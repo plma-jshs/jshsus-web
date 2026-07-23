@@ -141,6 +141,43 @@ function placeholders(values) {
   return values.map(() => '?').join(', ');
 }
 
+async function selectOne(connection, query, values = []) {
+  const [rows] = await connection.execute(query, values);
+  return rows[0] ?? null;
+}
+
+async function nextPostPublicNo(connection, boardId) {
+  const row = await selectOne(
+    connection,
+    'SELECT COALESCE(MAX(public_no), 0) + 1 AS value FROM posts WHERE board_id = ?',
+    [boardId],
+  );
+  return Number(row?.value ?? 1);
+}
+
+async function renumberBoardPostsByCreatedDate(connection, boardId) {
+  await connection.execute(
+    `UPDATE posts p
+     INNER JOIN (
+       SELECT id, row_number() OVER (ORDER BY created_at, id) AS next_public_no
+       FROM posts
+       WHERE board_id = ?
+     ) ordered_posts ON ordered_posts.id = p.id
+     SET p.public_no = ordered_posts.next_public_no + 100000000`,
+    [boardId],
+  );
+  await connection.execute(
+    `UPDATE posts p
+     INNER JOIN (
+       SELECT id, row_number() OVER (ORDER BY created_at, id) AS next_public_no
+       FROM posts
+       WHERE board_id = ?
+     ) ordered_posts ON ordered_posts.id = p.id
+     SET p.public_no = ordered_posts.next_public_no`,
+    [boardId],
+  );
+}
+
 function loadLocalEnv() {
   const envPath = resolve(ROOT_DIR, '.env');
   if (!existsSync(envPath)) return;
@@ -271,12 +308,14 @@ async function upsertLegacyJbsVideos(connection) {
       continue;
     }
 
+    const publicNo = await nextPostPublicNo(connection, board.id);
     const [result] = await connection.execute(
       `INSERT INTO posts
-       (board_id, author_id, title, content, content_json, post_status, is_anonymous,
+       (public_no, board_id, author_id, title, content, content_json, post_status, is_anonymous,
          is_hidden, view_count, created_at, updated_at)
-       VALUES (?, ?, ?, ?, CAST(? AS JSON), 'published', 0, 0, 0, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, CAST(? AS JSON), 'published', 0, 0, 0, ?, ?)`,
       [
+        publicNo,
         board.id,
         legacyAuthorId,
         video.title,
@@ -293,6 +332,8 @@ async function upsertLegacyJbsVideos(connection) {
       [result.insertId, video.youtubeVideoId, canonicalUrl, video.createdAt, video.createdAt],
     );
   }
+
+  await renumberBoardPostsByCreatedDate(connection, board.id);
 }
 
 async function upsertActiveSchoolYear(connection, schoolYear) {

@@ -263,16 +263,14 @@ async function downloadRosterTemplate() {
     { header: '전화번호', key: 'phone', width: 16 },
     { header: '이메일', key: 'email', width: 24 },
     { header: '이전학번', key: 'previousStudentNo', width: 12 },
-    { header: 'user_id', key: 'userId', width: 12 },
   ];
   worksheet.addRow({
     studentNo: 1101,
     name: '홍길동',
     gender: '남',
     phone: '01012345678',
-    email: '',
+    email: 'student@example.com',
     previousStudentNo: '',
-    userId: '',
   });
   const buffer = await workbook.xlsx.writeBuffer();
   const url = URL.createObjectURL(
@@ -952,7 +950,8 @@ export function UsersPage() {
               </p>
             ) : (
               <p className="identity-field-note">
-                첫 행 헤더는 학번, 이름을 포함해야 합니다. 신규 학생은 초기비밀번호가 필요합니다.
+                첫 행 헤더는 학번, 이름을 포함해야 합니다. 이메일과 휴대폰은 통합로그인 계정 연동과
+                계정 찾기에 사용됩니다.
               </p>
             )}
 

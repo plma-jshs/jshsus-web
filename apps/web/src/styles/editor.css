@@ -439,18 +439,36 @@
   background: var(--j-color-info);
 }
 
+.rich-text-link-modal__actions button:last-child:disabled {
+  border-color: color-mix(in srgb, var(--j-color-info) 58%, white);
+  color: var(--j-color-white);
+  background: color-mix(in srgb, var(--j-color-info) 58%, white);
+  opacity: 1;
+}
+
 .rich-text-link-modal__actions button:last-child:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--j-color-info) 86%, black);
   background: color-mix(in srgb, var(--j-color-info) 86%, black);
 }
 
 .rich-text-poll-modal__dialog {
-  width: min(520px, 100%);
+  width: min(460px, 100%);
+  padding: 22px;
+  gap: 14px;
+}
+
+.rich-text-poll-modal__dialog header strong {
+  font-size: var(--j-text-lg);
+}
+
+.rich-text-poll-modal__dialog input {
+  min-height: 40px;
+  font-size: var(--j-text-sm);
 }
 
 .rich-text-poll-modal__options {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .rich-text-poll-modal__options > span {
@@ -465,14 +483,26 @@
 }
 
 .rich-text-poll-modal__options label button {
-  width: 40px;
-  min-height: 42px;
+  width: 38px;
+  min-height: 40px;
   padding: 0;
 }
 
 .rich-text-poll-modal__options > button {
   width: fit-content;
+  min-height: 38px;
   border-radius: var(--j-radius-md);
+  font-size: var(--j-text-sm);
+}
+
+.rich-text-poll-modal__dialog .rich-text-link-modal__actions {
+  margin-top: 4px;
+}
+
+.rich-text-poll-modal__dialog .rich-text-link-modal__actions button {
+  min-height: 40px;
+  padding-inline: 16px;
+  font-size: var(--j-text-sm);
 }
 
 .rich-text-editor__content > :first-child,

@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { Button } from './Button';
+import { Button, type ButtonVariant } from './Button';
 
 type TableSelectionCheckboxProps = {
   checked: boolean;
@@ -41,6 +41,8 @@ type SelectedRowsHeaderActionProps = {
   deleteLabel?: string;
   disabled?: boolean;
   loading?: boolean;
+  loadingLabel?: ReactNode;
+  variant?: ButtonVariant;
   onDelete: () => void;
 };
 
@@ -50,6 +52,8 @@ export function SelectedRowsHeaderAction({
   deleteLabel = '선택 삭제',
   disabled = false,
   loading = false,
+  loadingLabel = '삭제 중',
+  variant = 'danger',
   onDelete,
 }: SelectedRowsHeaderActionProps) {
   if (selectedCount <= 0) return <>{defaultLabel}</>;
@@ -57,10 +61,10 @@ export function SelectedRowsHeaderAction({
   return (
     <Button
       className="admin-selected-header-action"
-      variant="danger"
+      variant={variant}
       size="sm"
       loading={loading}
-      loadingLabel="삭제 중"
+      loadingLabel={loadingLabel}
       disabled={disabled}
       onClick={onDelete}
     >

@@ -145,7 +145,7 @@ export function LostItemDetailPage() {
             <ContentMoreMenu
               deleteDisabled={deleteMutation.isPending}
               onDelete={() => {
-                if (window.confirm('이 분실물 게시물을 삭제할까요?')) deleteMutation.mutate();
+                if (window.confirm('이 분실물 게시물을 삭제하시겠습니까?')) deleteMutation.mutate();
               }}
               onEdit={() => setIsEditing(true)}
             />
@@ -210,7 +210,7 @@ export function LostItemDetailPage() {
                   statusMutation.mutate(event.target.value as 'PROCESSING' | 'RETURNED')
                 }
               >
-                <option value="PROCESSING">처리 중</option>
+                <option value="PROCESSING">찾는 중</option>
                 <option value="RETURNED">반환 완료</option>
               </select>
             </label>

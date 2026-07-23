@@ -171,7 +171,9 @@ export function ActivityRequestDetailPage() {
               deleteDisabled={deleteMutation.isPending}
               deleteLabel={deleteMutation.isPending ? '삭제 중' : '삭제'}
               onDelete={() => {
-                if (window.confirm('삭제한 탐구활동서는 복구할 수 없습니다.\n정말 삭제할까요?')) {
+                if (
+                  window.confirm('삭제한 탐구활동서는 복구할 수 없습니다.\n정말 삭제하시겠습니까?')
+                ) {
                   deleteMutation.mutate();
                 }
               }}

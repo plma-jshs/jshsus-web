@@ -134,6 +134,17 @@ function normalizedSegment(startSeconds: number, endSeconds: number) {
   return { start, end: Math.max(start + 1, Math.floor(endSeconds)) };
 }
 
+function fallbackEmbedUrl(videoId: string, startSeconds: number, endSeconds: number) {
+  const segment = normalizedSegment(startSeconds, endSeconds);
+  const search = new URLSearchParams({
+    controls: '1',
+    rel: '0',
+    start: String(segment.start),
+    end: String(segment.end),
+  });
+  return `https://www.youtube-nocookie.com/embed/${videoId}?${search.toString()}`;
+}
+
 function applyRate(player: YouTubePlayer, requestedRate: number) {
   const available = player.getAvailablePlaybackRates();
   const rate = available.includes(requestedRate) ? requestedRate : 1;
@@ -272,12 +283,22 @@ export function YouTubeSegmentPlayer({
   }, [title]);
 
   const displayedStatus = VIDEO_ID_PATTERN.test(videoId) ? status : 'error';
+  const showFallback = displayedStatus !== 'ready' && VIDEO_ID_PATTERN.test(videoId);
 
   return (
     <div
       className={['youtube-segment-player', className].filter(Boolean).join(' ')}
       data-player-status={displayedStatus}
     >
+      {showFallback ? (
+        <iframe
+          className="youtube-segment-player__fallback"
+          src={fallbackEmbedUrl(videoId, startSeconds, endSeconds)}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      ) : null}
       <div className="youtube-segment-player__target" ref={targetRef} />
       {displayedStatus === 'loading' ? (
         <span className="youtube-segment-player__state" role="status">

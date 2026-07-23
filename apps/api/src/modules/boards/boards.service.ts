@@ -97,6 +97,7 @@ export class BoardsService {
       const rows = await db
         .select({
           id: schema.posts.id,
+          publicNumber: schema.posts.publicNo,
           title: schema.posts.title,
           authorName: schema.users.name,
           authorNickname: schema.users.nickname,
@@ -118,6 +119,7 @@ export class BoardsService {
       return {
         items: rows.map((row) => ({
           id: row.id,
+          publicNumber: row.publicNumber ?? row.id,
           boardSlug: slug,
           title: row.title,
           authorName: row.isAnonymous
@@ -144,6 +146,7 @@ export class BoardsService {
       const rows = await db
         .select({
           id: schema.posts.id,
+          publicNumber: schema.posts.publicNo,
           title: schema.posts.title,
           content: schema.posts.content,
           contentJson: schema.posts.contentJson,
@@ -181,6 +184,7 @@ export class BoardsService {
       );
       return rows.map((row) => ({
         id: row.id,
+        publicNumber: row.publicNumber ?? row.id,
         boardSlug: slug,
         title: row.title,
         content: row.content,
@@ -222,19 +226,40 @@ export class BoardsService {
     }
 
     return this.database.query('boards.posts.create', async (db) => {
-      const board = await this.findMemberWritableBoard(db, slug);
-      const [result] = await db
-        .insert(schema.posts)
-        .values({
-          boardId: board.id,
-          authorId: actorId,
-          title: parsed.title,
-          content: parsed.content,
-          contentJson: parsed.contentDoc,
-          status: parsed.status,
-          isAnonymous: slug === 'free' ? false : parsed.isAnonymous,
-        })
-        .$returningId();
+      const insertPost = async (tx: AppDatabase) => {
+        const board = await this.findMemberWritableBoard(tx as unknown as AppDatabase, slug);
+        const [nextNumber] = await tx
+          .select({
+            publicNo:
+              sql<number>`cast(coalesce(max(${schema.posts.publicNo}), 0) + 1 as unsigned)`.mapWith(
+                Number,
+              ),
+          })
+          .from(schema.posts)
+          .where(eq(schema.posts.boardId, board.id))
+          .limit(1);
+        const [result] = await tx
+          .insert(schema.posts)
+          .values({
+            publicNo: nextNumber?.publicNo ?? 1,
+            boardId: board.id,
+            authorId: actorId,
+            title: parsed.title,
+            content: parsed.content,
+            contentJson: parsed.contentDoc,
+            status: parsed.status,
+            isAnonymous: slug === 'free' ? false : parsed.isAnonymous,
+          })
+          .$returningId();
+        return result;
+      };
+      const maybeTransactionalDb = db as AppDatabase & {
+        transaction?: AppDatabase['transaction'];
+      };
+      const result =
+        typeof maybeTransactionalDb.transaction === 'function'
+          ? await maybeTransactionalDb.transaction(async (tx) => insertPost(tx as AppDatabase))
+          : await insertPost(db as unknown as AppDatabase);
       await this.database.writeAudit({
         actorId,
         action: 'board.post.create',
@@ -264,6 +289,7 @@ export class BoardsService {
       const [row] = await db
         .select({
           id: schema.posts.id,
+          publicNumber: schema.posts.publicNo,
           title: schema.posts.title,
           content: schema.posts.content,
           contentJson: schema.posts.contentJson,
@@ -316,6 +342,7 @@ export class BoardsService {
 
       return {
         id: row.id,
+        publicNumber: row.publicNumber ?? row.id,
         boardSlug: slug,
         title: row.title,
         content: row.content,

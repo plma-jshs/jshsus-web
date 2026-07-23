@@ -66,7 +66,7 @@ export function NoticeManagementPage() {
       {
         accessorKey: 'id',
         header: '번호',
-        cell: ({ row }) => row.original.id,
+        cell: ({ row }) => row.original.publicNumber ?? row.original.id,
         meta: { align: 'center', width: 72 },
       },
       {
@@ -145,7 +145,7 @@ export function NoticeManagementPage() {
               variant="danger"
               disabled={deleteNoticeMutation.isPending}
               onClick={() => {
-                if (window.confirm(`‘${row.original.title}’ 공지를 삭제할까요?`)) {
+                if (window.confirm(`‘${row.original.title}’ 공지를 삭제하시겠습니까?`)) {
                   deleteNoticeMutation.mutate(row.original.id);
                 }
               }}

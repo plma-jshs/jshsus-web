@@ -103,8 +103,10 @@ describe('NoticesService public author display', () => {
     expect(result.items).toEqual([
       {
         id: 1,
+        publicNumber: 1,
         title: '방송 안내',
         department: '방송부',
+        pinned: false,
         publishedAt: '2026-07-15T00:00:00.000Z',
         viewCount: 3,
       },

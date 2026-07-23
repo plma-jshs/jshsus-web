@@ -35,6 +35,7 @@ export const notices = mysqlTable(
   'notices',
   {
     id,
+    publicNo: int('public_no').notNull(),
     title: varchar('title', { length: 255 }).notNull(),
     content: longtext('content').notNull(),
     department: varchar('department', { length: 80 }),
@@ -47,6 +48,7 @@ export const notices = mysqlTable(
   },
   (table) => ({
     publishedIdx: index('notices_published_idx').on(table.publishedAt, table.pinned),
+    publicNoIdx: uniqueIndex('notices_public_no_idx').on(table.publicNo),
   }),
 );
 
@@ -56,6 +58,7 @@ export const posts = mysqlTable(
   'posts',
   {
     id,
+    publicNo: int('public_no').notNull(),
     boardId: int('board_id')
       .notNull()
       .references(() => boards.id),
@@ -71,6 +74,7 @@ export const posts = mysqlTable(
   },
   (table) => ({
     boardCreatedIdx: index('posts_board_created_idx').on(table.boardId, table.createdAt),
+    boardPublicNoIdx: uniqueIndex('posts_board_public_no_idx').on(table.boardId, table.publicNo),
     boardStatusCreatedIdx: index('posts_board_status_created_idx').on(
       table.boardId,
       table.status,
@@ -188,7 +192,7 @@ export const reports = mysqlTable(
     dedupeKey: varchar('dedupe_key', { length: 190 }),
     reason: varchar('reason', { length: 120 }).notNull(),
     detail: text('detail'),
-    status: varchar('status', { length: 32 }).notNull().default('open'),
+    status: varchar('status', { length: 32 }).notNull().default('reviewing'),
     ...timestamps,
   },
   (table) => ({

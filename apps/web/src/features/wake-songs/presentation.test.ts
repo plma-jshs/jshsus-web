@@ -31,7 +31,7 @@ describe('wake-song status presentation', () => {
     ['SCHEDULED', '승인', 'approved'],
     ['PLAYED', '승인', 'approved'],
     ['REJECTED', '반려', 'rejected'],
-    ['CANCELED', '반려', 'rejected'],
+    ['CANCELED', '취소', 'canceled'],
   ] as const)('maps %s to the compact public status', (status, label, tone) => {
     expect(wakeSongStatusPresentation(status)).toEqual({ label, tone });
   });

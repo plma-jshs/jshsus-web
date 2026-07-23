@@ -1,10 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { BoardCommentSummary, BoardPostSummary, ContentReportSummary } from '@jshsus/types';
 import { Eye, EyeOff, Search, Settings2, ShieldAlert } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { Drawer, PageSizeSelect, RowActionButton, RowActions, useToast } from '../../components/ui';
+import {
+  Drawer,
+  PageSizeSelect,
+  RowActionButton,
+  RowActions,
+  SelectedRowsHeaderAction,
+  TableSelectionCheckbox,
+  useToast,
+} from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 import {
   ContentAdminPanel,
@@ -66,6 +74,7 @@ export function CommunityModerationPage({
   const [postPageSize, setPostPageSize] = useState(20);
   const [commentPageSize, setCommentPageSize] = useState(20);
   const [reportPageSize, setReportPageSize] = useState(20);
+  const [selectedReportIds, setSelectedReportIds] = useState<Set<number>>(() => new Set());
   const [postSorting, setPostSorting] = useState<SortingState>([{ id: 'id', desc: true }]);
 
   const activeSource =
@@ -77,6 +86,16 @@ export function CommunityModerationPage({
   });
   const { reports, reportsQuery, updateReportMutation } =
     useContentReports(COMMUNITY_REPORT_TARGETS);
+  const completeSelectedReportsMutation = useMutation({
+    mutationFn: (ids: number[]) =>
+      Promise.all(ids.map((id) => api.updateReportStatus(id, 'closed'))),
+    onSuccess: async (_, ids) => {
+      setSelectedReportIds(new Set());
+      await queryClient.invalidateQueries({ queryKey: ['admin-reports'] });
+      showToast({ title: `신고 ${ids.length}건을 처리 완료했습니다.`, tone: 'success' });
+    },
+    onError: () => showToast({ title: '선택한 신고를 처리하지 못했습니다.', tone: 'danger' }),
+  });
   const commentsQuery = useQuery({
     queryKey: ['admin-board-comments', activeSource.slug, selectedPostId],
     queryFn: () => activeSource.loadComments(selectedPostId ?? 0),
@@ -133,16 +152,47 @@ export function CommunityModerationPage({
     () => reports.filter((report) => reportStatus === 'all' || report.status === reportStatus),
     [reportStatus, reports],
   );
+  const visibleReportIds = useMemo(
+    () => communityReports.map((report) => report.id),
+    [communityReports],
+  );
+  const allVisibleReportsSelected =
+    visibleReportIds.length > 0 && visibleReportIds.every((id) => selectedReportIds.has(id));
+  const someVisibleReportsSelected = visibleReportIds.some((id) => selectedReportIds.has(id));
+  const selectedReportCount = visibleReportIds.filter((id) => selectedReportIds.has(id)).length;
 
   const selectedPost = (postsQuery.data ?? []).find((post) => post.id === selectedPostId);
   const selectedReport = reports.find((report) => report.id === selectedReportId);
+
+  const toggleVisibleReports = useCallback(
+    (checked: boolean) => {
+      setSelectedReportIds(checked ? new Set(visibleReportIds) : new Set());
+    },
+    [visibleReportIds],
+  );
+
+  const toggleReport = useCallback((id: number, checked: boolean) => {
+    setSelectedReportIds((current) => {
+      const next = new Set(current);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const completeSelectedReports = useCallback(() => {
+    const ids = visibleReportIds.filter((id) => selectedReportIds.has(id));
+    if (ids.length === 0 || completeSelectedReportsMutation.isPending) return;
+    if (!window.confirm(`선택한 신고 ${ids.length}건을 처리 완료하시겠습니까?`)) return;
+    completeSelectedReportsMutation.mutate(ids);
+  }, [completeSelectedReportsMutation, selectedReportIds, visibleReportIds]);
 
   const postColumns = useMemo<ColumnDef<BoardPostSummary>[]>(
     () => [
       {
         accessorKey: 'id',
         header: '번호',
-        cell: ({ row }) => row.original.id,
+        cell: ({ row }) => row.original.publicNumber ?? row.original.id,
         meta: { align: 'center', width: 72 },
       },
       {
@@ -227,11 +277,43 @@ export function CommunityModerationPage({
   const reportColumns = useMemo<ColumnDef<ContentReportSummary>[]>(
     () => [
       {
+        id: 'selection',
+        header: () => (
+          <TableSelectionCheckbox
+            label="신고 전체 선택"
+            checked={allVisibleReportsSelected}
+            indeterminate={someVisibleReportsSelected && !allVisibleReportsSelected}
+            disabled={visibleReportIds.length === 0 || completeSelectedReportsMutation.isPending}
+            onChange={toggleVisibleReports}
+          />
+        ),
+        cell: ({ row }) => (
+          <TableSelectionCheckbox
+            label={`신고 #${row.original.id} 선택`}
+            checked={selectedReportIds.has(row.original.id)}
+            disabled={completeSelectedReportsMutation.isPending}
+            onChange={(checked) => toggleReport(row.original.id, checked)}
+          />
+        ),
+        enableSorting: false,
+        meta: { align: 'center', width: 64 },
+      },
+      {
         accessorKey: 'targetType',
-        header: '대상',
+        header: () => (
+          <SelectedRowsHeaderAction
+            selectedCount={selectedReportCount}
+            defaultLabel="대상"
+            deleteLabel="처리 완료"
+            variant="primary"
+            loading={completeSelectedReportsMutation.isPending}
+            loadingLabel="처리 중"
+            onDelete={completeSelectedReports}
+          />
+        ),
         cell: ({ row }) =>
           `${reportTargetLabel[row.original.targetType]} #${row.original.targetId}`,
-        enableSorting: false,
+        enableSorting: selectedReportCount === 0,
         meta: { align: 'center', width: 112 },
       },
       {
@@ -282,7 +364,17 @@ export function CommunityModerationPage({
         meta: { align: 'center', width: 64 },
       },
     ],
-    [],
+    [
+      allVisibleReportsSelected,
+      completeSelectedReports,
+      completeSelectedReportsMutation.isPending,
+      selectedReportCount,
+      selectedReportIds,
+      someVisibleReportsSelected,
+      toggleReport,
+      toggleVisibleReports,
+      visibleReportIds.length,
+    ],
   );
 
   const commentColumns = useMemo<ColumnDef<BoardCommentSummary>[]>(
@@ -440,7 +532,6 @@ export function CommunityModerationPage({
                 onChange={(event) => setReportStatus(event.target.value)}
               >
                 <option value="all">전체 상태</option>
-                <option value="open">접수</option>
                 <option value="reviewing">검토 중</option>
                 <option value="closed">처리 완료</option>
               </select>
@@ -469,8 +560,8 @@ export function CommunityModerationPage({
           />
         </ContentQueryState>
         <MutationMessage
-          isPending={updateReportMutation.isPending}
-          error={updateReportMutation.error}
+          isPending={updateReportMutation.isPending || completeSelectedReportsMutation.isPending}
+          error={updateReportMutation.error ?? completeSelectedReportsMutation.error}
           pendingText="신고 처리 상태를 변경하는 중입니다."
         />
       </ContentAdminPanel>
@@ -578,36 +669,19 @@ export function CommunityModerationPage({
         className="content-drawer"
         footer={
           selectedReport && selectedReport.status !== 'closed' ? (
-            <>
-              {selectedReport.status === 'open' ? (
-                <button
-                  className="quiet-button"
-                  type="button"
-                  disabled={updateReportMutation.isPending}
-                  onClick={() =>
-                    updateReportMutation.mutate(
-                      { id: selectedReport.id, status: 'reviewing' },
-                      { onSuccess: () => setSelectedReportId(null) },
-                    )
-                  }
-                >
-                  검토 시작
-                </button>
-              ) : null}
-              <button
-                className="primary-button"
-                type="button"
-                disabled={updateReportMutation.isPending}
-                onClick={() =>
-                  updateReportMutation.mutate(
-                    { id: selectedReport.id, status: 'closed' },
-                    { onSuccess: () => setSelectedReportId(null) },
-                  )
-                }
-              >
-                처리 완료
-              </button>
-            </>
+            <button
+              className="primary-button"
+              type="button"
+              disabled={updateReportMutation.isPending}
+              onClick={() =>
+                updateReportMutation.mutate(
+                  { id: selectedReport.id, status: 'closed' },
+                  { onSuccess: () => setSelectedReportId(null) },
+                )
+              }
+            >
+              처리 완료
+            </button>
           ) : null
         }
       >

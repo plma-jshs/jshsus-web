@@ -237,12 +237,15 @@ export class AdminService {
     private readonly authService: AuthService,
   ) {}
 
-  async dashboard(): Promise<AdminDashboard> {
+  async dashboard(actorId?: number | null): Promise<AdminDashboard> {
     const todayRange = koreanDayRange();
     const [pointSummary, deviceCases, activityRequests, todayApprovedRows] = await Promise.all([
       this.pointsService.getSummary(),
       this.deviceCasesService.list(),
-      this.activityRequestsService.adminList({ page: 1, pageSize: 20, status: 'pending' }),
+      this.activityRequestsService.adminList(
+        { page: 1, pageSize: 20, status: 'pending', assignedToMe: true },
+        actorId,
+      ),
       this.database.query('admin.dashboard.today-activity-requests', async (db) =>
         db
           .select({ total: sql<number>`cast(count(*) as unsigned)`.mapWith(Number) })

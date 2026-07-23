@@ -50,6 +50,20 @@
       "when": 1784806800000,
       "tag": "0006_post_poll_votes",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1784809428768,
+      "tag": "0007_zippy_epoch",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1784809667134,
+      "tag": "0008_naive_shockwave",
+      "breakpoints": true
     }
   ]
 }

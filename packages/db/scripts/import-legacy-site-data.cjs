@@ -275,6 +275,65 @@ async function selectOne(connection, query, values = []) {
   return rows[0] ?? null;
 }
 
+async function nextNoticePublicNo(connection) {
+  const row = await selectOne(
+    connection,
+    'SELECT COALESCE(MAX(public_no), 0) + 1 AS value FROM notices',
+  );
+  return Number(row?.value ?? 1);
+}
+
+async function nextPostPublicNo(connection, boardId) {
+  const row = await selectOne(
+    connection,
+    'SELECT COALESCE(MAX(public_no), 0) + 1 AS value FROM posts WHERE board_id = ?',
+    [boardId],
+  );
+  return Number(row?.value ?? 1);
+}
+
+async function renumberNoticesByPublishedDate(connection) {
+  await connection.execute(
+    `UPDATE notices n
+     INNER JOIN (
+       SELECT id, row_number() OVER (ORDER BY coalesce(published_at, created_at), id) AS next_public_no
+       FROM notices
+     ) ordered_notices ON ordered_notices.id = n.id
+     SET n.public_no = ordered_notices.next_public_no + 100000000`,
+  );
+  await connection.execute(
+    `UPDATE notices n
+     INNER JOIN (
+       SELECT id, row_number() OVER (ORDER BY coalesce(published_at, created_at), id) AS next_public_no
+       FROM notices
+     ) ordered_notices ON ordered_notices.id = n.id
+     SET n.public_no = ordered_notices.next_public_no`,
+  );
+}
+
+async function renumberBoardPostsByCreatedDate(connection, boardId) {
+  await connection.execute(
+    `UPDATE posts p
+     INNER JOIN (
+       SELECT id, row_number() OVER (ORDER BY created_at, id) AS next_public_no
+       FROM posts
+       WHERE board_id = ?
+     ) ordered_posts ON ordered_posts.id = p.id
+     SET p.public_no = ordered_posts.next_public_no + 100000000`,
+    [boardId],
+  );
+  await connection.execute(
+    `UPDATE posts p
+     INNER JOIN (
+       SELECT id, row_number() OVER (ORDER BY created_at, id) AS next_public_no
+       FROM posts
+       WHERE board_id = ?
+     ) ordered_posts ON ordered_posts.id = p.id
+     SET p.public_no = ordered_posts.next_public_no`,
+    [boardId],
+  );
+}
+
 async function ensureRole(connection, name, label) {
   await connection.execute(
     `INSERT INTO roles (name, label)
@@ -807,11 +866,13 @@ async function importNotices(target) {
       [detail.title, detail.publishedAt],
     );
     if (exists) continue;
+    const publicNo = await nextNoticePublicNo(target);
     await target.execute(
       `INSERT INTO notices
-        (title, content, department, visibility, pinned, published_at, view_count, created_at, updated_at)
-       VALUES (?, ?, ?, 'public', 0, ?, ?, ?, ?)`,
+        (public_no, title, content, department, visibility, pinned, published_at, view_count, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'public', 0, ?, ?, ?, ?)`,
       [
+        publicNo,
         detail.title,
         detail.content,
         detail.department.slice(0, 80),
@@ -823,6 +884,7 @@ async function importNotices(target) {
     );
     imported += 1;
   }
+  await renumberNoticesByPublishedDate(target);
   return { imported, skipped, seen: ids.length };
 }
 
@@ -984,12 +1046,14 @@ async function importBoardPosts(target) {
     );
     let postId = exists?.id;
     if (!postId) {
+      const publicNo = await nextPostPublicNo(target, board.id);
       const [result] = await target.execute(
         `INSERT INTO posts
-          (board_id, author_id, title, content, content_json, post_status, is_anonymous,
+          (public_no, board_id, author_id, title, content, content_json, post_status, is_anonymous,
            is_hidden, view_count, created_at, updated_at)
-         VALUES (?, ?, ?, ?, CAST(? AS JSON), 'published', 0, 0, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, CAST(? AS JSON), 'published', 0, 0, ?, ?, ?)`,
         [
+          publicNo,
           board.id,
           authorId,
           detail.title,
@@ -1021,6 +1085,7 @@ async function importBoardPosts(target) {
       }
     }
   }
+  await renumberBoardPostsByCreatedDate(target, board.id);
   return { imported, commentsImported, skipped, seen: entries.length };
 }
 

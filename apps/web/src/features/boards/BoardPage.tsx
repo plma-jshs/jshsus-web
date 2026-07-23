@@ -136,7 +136,8 @@ export function BoardPage() {
                   {posts.map((post, index) => (
                     <tr key={post.id}>
                       <td className="data-table__number">
-                        {Math.max(result.total - (result.page - 1) * result.pageSize - index, 1)}
+                        {post.publicNumber ??
+                          Math.max(result.total - (result.page - 1) * result.pageSize - index, 1)}
                       </td>
                       <td className="data-table__title-cell">
                         <Link

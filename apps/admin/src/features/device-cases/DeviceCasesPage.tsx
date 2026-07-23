@@ -121,7 +121,7 @@ export function DeviceCasesPage() {
   const runCaseCommand = useCallback(
     (deviceCase: DeviceCase, command: DeviceCaseControlCommand) => {
       const label = commandLabels[command];
-      if (!window.confirm(`${deviceCaseLabel(deviceCase.id)} 보관함을 ${label} 처리할까요?`))
+      if (!window.confirm(`${deviceCaseLabel(deviceCase.id)} 보관함을 ${label} 처리하시겠습니까?`))
         return;
       commandMutation.mutate({ command, id: deviceCase.id });
     },
@@ -134,7 +134,7 @@ export function DeviceCasesPage() {
         : [];
       const scope = hasSelectedCases ? `선택한 ${ids.length}개 보관함` : '전체 휴대폰 보관함';
       const label = commandLabels[command];
-      if (!window.confirm(`${scope}을 ${label} 처리할까요?`)) return;
+      if (!window.confirm(`${scope}을 ${label} 처리하시겠습니까?`)) return;
       bulkCommandMutation.mutate({ command, ids: ids.length ? ids : undefined });
     },
     [bulkCommandMutation, hasSelectedCases, selectedCaseIdsInList],

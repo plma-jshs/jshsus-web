@@ -19,24 +19,28 @@
   border-radius: 14px;
   background: #1e293b;
   box-shadow: 0 16px 36px rgb(15 23 42 / 24%);
-  color: var(--j-color-white);
+  color: var(--j-color-white, #fff);
   pointer-events: auto;
   animation: web-toast-enter 180ms ease-out;
 }
 
-.web-toast--info {
+.web-toast > svg {
   color: #93c5fd;
 }
 
-.web-toast--success {
+.web-toast--info > svg {
+  color: #93c5fd;
+}
+
+.web-toast--success > svg {
   color: #34d399;
 }
 
-.web-toast--warning {
+.web-toast--warning > svg {
   color: #fbbf24;
 }
 
-.web-toast--danger {
+.web-toast--danger > svg {
   color: #f87171;
 }
 
@@ -44,7 +48,7 @@
   display: grid;
   min-width: 0;
   align-content: center;
-  color: var(--j-color-white);
+  color: var(--j-color-white, #fff);
 }
 
 .web-toast__content strong,
@@ -79,7 +83,7 @@
 
 .web-toast__close:hover {
   background: rgb(255 255 255 / 0.1);
-  color: var(--j-color-white);
+  color: var(--j-color-white, #fff);
 }
 
 @keyframes web-toast-enter {

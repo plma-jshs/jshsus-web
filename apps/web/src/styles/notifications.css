@@ -5,15 +5,15 @@
 .header-notification-trigger {
   position: relative;
   display: grid;
-  width: 40px;
-  min-width: 40px;
-  height: 40px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
   padding: 0;
   place-items: center;
-  border: 1px solid transparent;
-  border-radius: 50%;
-  color: var(--j-color-text-secondary);
-  background: transparent;
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-md);
+  color: var(--j-color-text);
+  background: var(--j-color-surface);
   transition:
     color var(--j-motion-fast),
     border-color var(--j-motion-fast),
@@ -22,9 +22,9 @@
 
 .header-notification-trigger:hover,
 .header-notification-trigger[aria-expanded='true'] {
-  border-color: transparent;
-  color: var(--j-color-text);
-  background: var(--j-color-surface-hover);
+  border-color: var(--j-color-brand-subtle-strong);
+  color: var(--j-color-brand-strong);
+  background: var(--j-color-surface-selected);
 }
 
 .header-notification-badge {
@@ -32,19 +32,25 @@
   top: 7px;
   right: 7px;
   display: inline-flex;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 5px;
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0;
   align-items: center;
   justify-content: center;
   border: 2px solid var(--j-color-surface);
-  border-radius: var(--j-radius-pill);
+  border-radius: 999px;
   color: var(--j-color-text-inverse);
   background: var(--j-color-danger);
   font-size: 0.625rem;
   font-weight: var(--j-weight-bold);
   line-height: 1;
-  transform: translate(36%, -36%);
+}
+
+.header-notification-badge.is-wide {
+  width: auto;
+  min-width: 22px;
+  padding: 0 5px;
 }
 
 .notification-popover {
@@ -157,6 +163,10 @@
 .notification-item__icon.is-activity_request_rejected {
   color: var(--j-color-danger);
   background: var(--j-color-danger-subtle);
+}
+
+.notification-item__icon.is-point-penalty {
+  margin-right: 3px;
 }
 
 .notification-item__icon.is-activity_request_submitted {

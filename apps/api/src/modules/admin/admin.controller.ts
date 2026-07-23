@@ -32,8 +32,8 @@ export class AdminController {
 
   @Get('dashboard')
   @RequireRoles('system_admin', 'student_affairs_head', 'teacher')
-  dashboard() {
-    return this.adminService.dashboard();
+  dashboard(@Req() request: AuthenticatedRequest) {
+    return this.adminService.dashboard(request.authSession?.userId);
   }
 
   @Get('system-status')

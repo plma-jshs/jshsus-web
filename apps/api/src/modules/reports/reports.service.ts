@@ -41,7 +41,7 @@ export class ReportsService {
     try {
       [result] = await this.database.db
         .insert(schema.reports)
-        .values({ ...parsed.data, reporterId: actorId, dedupeKey })
+        .values({ ...parsed.data, reporterId: actorId, dedupeKey, status: 'reviewing' })
         .$returningId();
     } catch (error) {
       if (isDuplicateEntry(error)) {
@@ -55,7 +55,7 @@ export class ReportsService {
       targetType: parsed.data.targetType,
       targetId: parsed.data.targetId,
     });
-    return { ok: true, report: { id: result.id, status: 'open', ...parsed.data } };
+    return { ok: true, report: { id: result.id, status: 'reviewing', ...parsed.data } };
   }
 
   async list(): Promise<ContentReportSummary[]> {
@@ -82,7 +82,7 @@ export class ReportsService {
         reporterName: row.reporterName ?? undefined,
         reason: row.reason,
         detail: row.detail ?? undefined,
-        status: row.status,
+        status: row.status === 'open' ? 'reviewing' : row.status,
         createdAt: row.createdAt.toISOString(),
       }));
     });

@@ -136,7 +136,8 @@ export function NoticesPage() {
                   {notices.map((notice, index) => (
                     <tr className={notice.pinned ? 'is-pinned' : undefined} key={notice.id}>
                       <td className="data-table__number">
-                        {Math.max(result.total - (result.page - 1) * result.pageSize - index, 1)}
+                        {notice.publicNumber ??
+                          Math.max(result.total - (result.page - 1) * result.pageSize - index, 1)}
                       </td>
                       <td className="data-table__title-cell">
                         <Link

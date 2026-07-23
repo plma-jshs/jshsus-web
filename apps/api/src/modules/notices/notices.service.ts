@@ -57,6 +57,7 @@ export class NoticesService {
       const items = await db
         .select({
           id: schema.notices.id,
+          publicNumber: schema.notices.publicNo,
           title: schema.notices.title,
           department: schema.notices.department,
           pinned: schema.notices.pinned,
@@ -76,9 +77,10 @@ export class NoticesService {
       return {
         items: items.map((row) => ({
           id: row.id,
+          publicNumber: row.publicNumber ?? row.id,
           title: row.title,
           department: row.department ?? '학교',
-          pinned: row.pinned,
+          pinned: row.pinned ?? false,
           publishedAt: toIso(row.publishedAt),
           viewCount: row.viewCount,
         })),
@@ -97,6 +99,7 @@ export class NoticesService {
       const [row] = await db
         .select({
           id: schema.notices.id,
+          publicNumber: schema.notices.publicNo,
           title: schema.notices.title,
           content: schema.notices.content,
           department: schema.notices.department,
@@ -123,6 +126,7 @@ export class NoticesService {
 
       return {
         id: row.id,
+        publicNumber: row.publicNumber ?? row.id,
         title: row.title,
         content: row.content,
         department: row.department ?? '학교',
@@ -139,6 +143,7 @@ export class NoticesService {
       const rows = await db
         .select({
           id: schema.notices.id,
+          publicNumber: schema.notices.publicNo,
           title: schema.notices.title,
           content: schema.notices.content,
           department: schema.notices.department,
@@ -169,6 +174,7 @@ export class NoticesService {
       );
       return rows.map((row) => ({
         id: row.id,
+        publicNumber: row.publicNumber ?? row.id,
         title: row.title,
         content: row.content,
         department: row.department ?? '학교',
@@ -184,10 +190,28 @@ export class NoticesService {
     const parsed = noticeSchema.safeParse(body);
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
 
-    const [result] = await this.database.db
-      .insert(schema.notices)
-      .values({ ...parsed.data, authorId: actorId && actorId > 0 ? actorId : null })
-      .$returningId();
+    const result = await this.database.query('notices.create', async (db) =>
+      db.transaction(async (tx) => {
+        const [nextNumber] = await tx
+          .select({
+            publicNo:
+              sql<number>`cast(coalesce(max(${schema.notices.publicNo}), 0) + 1 as unsigned)`.mapWith(
+                Number,
+              ),
+          })
+          .from(schema.notices)
+          .limit(1);
+        const [created] = await tx
+          .insert(schema.notices)
+          .values({
+            ...parsed.data,
+            publicNo: nextNumber?.publicNo ?? 1,
+            authorId: actorId && actorId > 0 ? actorId : null,
+          })
+          .$returningId();
+        return created;
+      }),
+    );
     await this.database.writeAudit({
       actorId,
       action: 'notice.create',
@@ -249,8 +273,9 @@ export class NoticesService {
 
   async listDashboard(limit = 5): Promise<DashboardNotice[]> {
     const notices = await this.list(limit);
-    return notices.map(({ id, title, department, pinned, publishedAt }) => ({
+    return notices.map(({ id, publicNumber, title, department, pinned, publishedAt }) => ({
       id,
+      publicNumber,
       title,
       department,
       pinned,

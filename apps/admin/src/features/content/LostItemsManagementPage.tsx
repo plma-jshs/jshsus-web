@@ -1,10 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { LostItemSummary } from '@jshsus/types';
 import { Search, Settings2, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { Drawer, PageSizeSelect, RowActionButton, RowActions, useToast } from '../../components/ui';
+import {
+  Drawer,
+  PageSizeSelect,
+  RowActionButton,
+  RowActions,
+  SelectedRowsHeaderAction,
+  TableSelectionCheckbox,
+  useToast,
+} from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 import {
   ContentAdminPanel,
@@ -15,7 +23,7 @@ import {
 import { publicSiteHref } from './publicSiteHref';
 
 const lostItemStatusLabel: Record<LostItemSummary['status'], string> = {
-  PROCESSING: '처리 중',
+  PROCESSING: '찾는 중',
   RETURNED: '반환 완료',
 };
 
@@ -28,6 +36,7 @@ export function LostItemsManagementPage() {
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [selectedItemStatus, setSelectedItemStatus] =
     useState<LostItemSummary['status']>('PROCESSING');
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<number>>(() => new Set());
   const [itemPageSize, setItemPageSize] = useState(20);
   const [itemSorting, setItemSorting] = useState<SortingState>([{ id: 'id', desc: true }]);
 
@@ -44,6 +53,16 @@ export function LostItemsManagementPage() {
       showToast({ title: '분실물 처리 상태를 저장했습니다.', tone: 'success' });
     },
     onError: () => showToast({ title: '분실물 처리 상태를 저장하지 못했습니다.', tone: 'danger' }),
+  });
+  const completeSelectedItemsMutation = useMutation({
+    mutationFn: (ids: number[]) =>
+      Promise.all(ids.map((id) => api.updateLostItemStatus(id, 'RETURNED'))),
+    onSuccess: async (_, ids) => {
+      setSelectedItemIds(new Set());
+      await queryClient.invalidateQueries({ queryKey: ['admin-lost-items'] });
+      showToast({ title: `분실물 ${ids.length}건을 반환 완료로 변경했습니다.`, tone: 'success' });
+    },
+    onError: () => showToast({ title: '선택한 분실물을 처리하지 못했습니다.', tone: 'danger' }),
   });
   const deleteLostItemMutation = useMutation({
     mutationFn: (id: number) => api.deleteLostItem(id),
@@ -70,12 +89,75 @@ export function LostItemsManagementPage() {
   }, [lostItemsQuery.data, search, statusFilter, typeFilter]);
 
   const selectedItem = (lostItemsQuery.data ?? []).find((item) => item.id === selectedItemId);
+  const visibleItemIds = useMemo(() => filteredItems.map((item) => item.id), [filteredItems]);
+  const allVisibleItemsSelected =
+    visibleItemIds.length > 0 && visibleItemIds.every((id) => selectedItemIds.has(id));
+  const someVisibleItemsSelected = visibleItemIds.some((id) => selectedItemIds.has(id));
+  const selectedCount = visibleItemIds.filter((id) => selectedItemIds.has(id)).length;
+
+  const toggleVisibleItems = useCallback(
+    (checked: boolean) => {
+      setSelectedItemIds(checked ? new Set(visibleItemIds) : new Set());
+    },
+    [visibleItemIds],
+  );
+
+  const toggleItem = useCallback((id: number, checked: boolean) => {
+    setSelectedItemIds((current) => {
+      const next = new Set(current);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const completeSelectedItems = useCallback(() => {
+    const ids = visibleItemIds.filter((id) => selectedItemIds.has(id));
+    if (ids.length === 0 || completeSelectedItemsMutation.isPending) return;
+    if (!window.confirm(`선택한 분실물 ${ids.length}건을 반환 완료로 변경하시겠습니까?`)) {
+      return;
+    }
+    completeSelectedItemsMutation.mutate(ids);
+  }, [completeSelectedItemsMutation, selectedItemIds, visibleItemIds]);
 
   const itemColumns = useMemo<ColumnDef<LostItemSummary>[]>(
     () => [
       {
+        id: 'selection',
+        header: () => (
+          <TableSelectionCheckbox
+            label="분실물 전체 선택"
+            checked={allVisibleItemsSelected}
+            indeterminate={someVisibleItemsSelected && !allVisibleItemsSelected}
+            disabled={visibleItemIds.length === 0 || completeSelectedItemsMutation.isPending}
+            onChange={toggleVisibleItems}
+          />
+        ),
+        cell: ({ row }) => (
+          <TableSelectionCheckbox
+            label={`${row.original.itemName} 선택`}
+            checked={selectedItemIds.has(row.original.id)}
+            disabled={completeSelectedItemsMutation.isPending}
+            onChange={(checked) => toggleItem(row.original.id, checked)}
+          />
+        ),
+        enableSorting: false,
+        meta: { align: 'center', width: 64 },
+      },
+      {
         accessorKey: 'id',
-        header: '번호',
+        header: () => (
+          <SelectedRowsHeaderAction
+            selectedCount={selectedCount}
+            defaultLabel="번호"
+            deleteLabel="반환 완료"
+            variant="primary"
+            loading={completeSelectedItemsMutation.isPending}
+            loadingLabel="처리 중"
+            onDelete={completeSelectedItems}
+          />
+        ),
+        enableSorting: selectedCount === 0,
         cell: ({ row }) => row.original.id,
         meta: { align: 'center', width: 72 },
       },
@@ -164,7 +246,17 @@ export function LostItemsManagementPage() {
         meta: { align: 'center', width: 64 },
       },
     ],
-    [],
+    [
+      allVisibleItemsSelected,
+      completeSelectedItems,
+      completeSelectedItemsMutation.isPending,
+      selectedCount,
+      selectedItemIds,
+      someVisibleItemsSelected,
+      toggleItem,
+      toggleVisibleItems,
+      visibleItemIds.length,
+    ],
   );
 
   return (
@@ -231,8 +323,16 @@ export function LostItemsManagementPage() {
           />
         </ContentQueryState>
         <MutationMessage
-          isPending={updateLostStatusMutation.isPending || deleteLostItemMutation.isPending}
-          error={updateLostStatusMutation.error ?? deleteLostItemMutation.error}
+          isPending={
+            updateLostStatusMutation.isPending ||
+            deleteLostItemMutation.isPending ||
+            completeSelectedItemsMutation.isPending
+          }
+          error={
+            updateLostStatusMutation.error ??
+            deleteLostItemMutation.error ??
+            completeSelectedItemsMutation.error
+          }
           pendingText={
             deleteLostItemMutation.isPending
               ? '분실물 게시물을 삭제하는 중입니다.'
@@ -259,7 +359,7 @@ export function LostItemsManagementPage() {
                 type="button"
                 disabled={deleteLostItemMutation.isPending || updateLostStatusMutation.isPending}
                 onClick={() => {
-                  if (window.confirm('이 분실물 게시물을 삭제할까요?')) {
+                  if (window.confirm('이 분실물 게시물을 삭제하시겠습니까?')) {
                     deleteLostItemMutation.mutate(selectedItem.id);
                   }
                 }}

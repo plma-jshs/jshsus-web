@@ -189,7 +189,7 @@ export function JbsPostDetailPage() {
               <ContentMoreMenu
                 deleteDisabled={deleteMutation.isPending}
                 onDelete={() => {
-                  if (window.confirm('이 JBS 영상을 삭제할까요?')) deleteMutation.mutate();
+                  if (window.confirm('이 JBS 영상을 삭제하시겠습니까?')) deleteMutation.mutate();
                 }}
                 onEdit={() =>
                   void navigate({
