@@ -156,6 +156,7 @@ function BoardPostEditForm({ post }: { post: BoardPostDetail }) {
         <label htmlFor="board-post-content">내용</label>
         <RichTextEditor
           id="board-post-content"
+          allowPoll
           initialValue={post.contentDoc ?? plainTextToRichTextDocument(post.content)}
           onChange={setEditorValue}
         />

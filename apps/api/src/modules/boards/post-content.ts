@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import type { PostStatus, RichTextDocument, RichTextNode } from '@jshsus/types';
+import type { PostStatus, RichTextDocument, RichTextNode, RichTextPoll } from '@jshsus/types';
 import { z } from 'zod';
 import { env } from '../../shared/config/env';
 
@@ -119,6 +119,45 @@ const highlightMarkSchema = z
   })
   .strict();
 
+const pollIdSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(80)
+  .regex(/^[a-zA-Z0-9_-]+$/);
+
+const pollAttrsSchema = z
+  .object({
+    id: pollIdSchema,
+    question: z.string().trim().min(1).max(160),
+    options: z
+      .array(
+        z
+          .object({
+            id: pollIdSchema,
+            text: z.string().trim().min(1).max(80),
+          })
+          .strict(),
+      )
+      .min(2)
+      .max(8),
+  })
+  .strict()
+  .superRefine((poll, context) => {
+    const optionIds = new Set<string>();
+    for (const [index, option] of poll.options.entries()) {
+      if (!optionIds.has(option.id)) {
+        optionIds.add(option.id);
+        continue;
+      }
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['options', index, 'id'],
+        message: 'Poll option ids must be unique.',
+      });
+    }
+  });
+
 const markSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('bold') }).strict(),
   z.object({ type: z.literal('italic') }).strict(),
@@ -144,6 +183,7 @@ const nodeTypes = [
   'blockquote',
   'hardBreak',
   'image',
+  'poll',
 ] as const;
 
 const richTextNodeSchema: z.ZodTypeAny = z.lazy(() =>
@@ -207,6 +247,24 @@ const richTextNodeSchema: z.ZodTypeAny = z.lazy(() =>
         return;
       }
 
+      if (node.type === 'poll') {
+        const parsedAttrs = pollAttrsSchema.safeParse(node.attrs ?? {});
+        if (!parsedAttrs.success) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['attrs'],
+            message: parsedAttrs.error.issues[0]?.message ?? 'Invalid poll attributes.',
+          });
+        }
+        if (hasContent) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Poll nodes cannot have children.',
+          });
+        }
+        return;
+      }
+
       if (node.type === 'heading') {
         const parsedAttrs = z
           .object({ level: z.union([z.literal(2), z.literal(3)]) })
@@ -257,6 +315,7 @@ const blockTypes = new Set([
   'orderedList',
   'blockquote',
   'image',
+  'poll',
 ]);
 const inlineTypes = new Set(['text', 'hardBreak', 'image']);
 
@@ -345,14 +404,42 @@ export function projectDocumentToPlainText(document: RichTextDocument): string {
   const visit = (node: RichTextNode) => {
     if (node.type === 'text' && node.text) parts.push(node.text);
     if (node.type === 'image') parts.push(node.attrs?.alt?.trim() || '[이미지]');
+    if (node.type === 'poll') {
+      const parsed = pollAttrsSchema.safeParse(node.attrs ?? {});
+      if (parsed.success) {
+        parts.push(
+          [parsed.data.question, ...parsed.data.options.map((option) => option.text)].join(' '),
+        );
+      }
+    }
     for (const child of node.content ?? []) visit(child);
-    if (['paragraph', 'heading', 'listItem', 'blockquote'].includes(node.type)) parts.push('\n');
+    if (['paragraph', 'heading', 'listItem', 'blockquote', 'poll'].includes(node.type)) {
+      parts.push('\n');
+    }
   };
   for (const node of document.content) visit(node);
   return parts
     .join('')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+}
+
+export function extractPollDefinitions(document?: RichTextDocument | null): RichTextPoll[] {
+  if (!document) return [];
+  const polls: RichTextPoll[] = [];
+  const seenPollIds = new Set<string>();
+  const visit = (node: RichTextNode) => {
+    if (node.type === 'poll') {
+      const parsed = pollAttrsSchema.safeParse(node.attrs ?? {});
+      if (parsed.success && !seenPollIds.has(parsed.data.id)) {
+        seenPollIds.add(parsed.data.id);
+        polls.push(parsed.data);
+      }
+    }
+    for (const child of node.content ?? []) visit(child);
+  };
+  for (const node of document.content) visit(node);
+  return polls;
 }
 
 export function collectInlineImageSources(document?: RichTextDocument | null): string[] {

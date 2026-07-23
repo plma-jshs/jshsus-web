@@ -166,6 +166,7 @@ export type BoardPostDetail = BoardPostListItem & {
   attachments: UploadedFileSummary[];
   likeCount: number;
   likedByMe: boolean;
+  polls?: BoardPollVoteState[];
   canEdit: boolean;
 };
 
@@ -205,7 +206,8 @@ export type RichTextNode = {
     | 'listItem'
     | 'blockquote'
     | 'hardBreak'
-    | 'image';
+    | 'image'
+    | 'poll';
   attrs?: {
     level?: 2 | 3;
     start?: number;
@@ -213,6 +215,9 @@ export type RichTextNode = {
     src?: string;
     alt?: string | null;
     title?: string | null;
+    id?: string;
+    question?: string;
+    options?: RichTextPollOption[];
   };
   content?: RichTextNode[];
   text?: string;
@@ -222,6 +227,28 @@ export type RichTextNode = {
 export type RichTextDocument = {
   type: 'doc';
   content: RichTextNode[];
+};
+
+export type RichTextPollOption = {
+  id: string;
+  text: string;
+};
+
+export type RichTextPoll = {
+  id: string;
+  question: string;
+  options: RichTextPollOption[];
+};
+
+export type BoardPollVoteOptionState = RichTextPollOption & {
+  voteCount: number;
+};
+
+export type BoardPollVoteState = {
+  pollId: string;
+  myOptionId?: string;
+  totalVotes: number;
+  options: BoardPollVoteOptionState[];
 };
 
 export type BoardCommentSummary = {

@@ -1,5 +1,7 @@
+import { Node as TiptapNode } from '@tiptap/core';
 import type { JSONContent } from '@tiptap/react';
 import type {
+  BoardPollVoteState,
   RichTextColor,
   RichTextDocument as PersistedRichTextDocument,
   RichTextFontFamily,
@@ -7,6 +9,7 @@ import type {
   RichTextHighlight,
   RichTextMark as PersistedRichTextMark,
   RichTextNode as PersistedRichTextNode,
+  RichTextPollOption,
 } from '@jshsus/types';
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
 import Image from '@tiptap/extension-image';
@@ -22,6 +25,7 @@ import {
   ImagePlus,
   Italic,
   Link2,
+  ListChecks,
   List,
   ListOrdered,
   Palette,
@@ -35,7 +39,7 @@ import {
   Unlink,
   X,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import {
   FontSizeMark,
@@ -75,12 +79,16 @@ type RichTextEditorProps = {
   onChange: (value: RichTextEditorValue) => void;
   placeholder?: string;
   allowImages?: boolean;
+  allowPoll?: boolean;
   ariaLabel?: string;
 };
 
 type RichTextContentProps = {
   contentDoc?: RichTextDocument | null;
   plainText: string;
+  pollResults?: readonly BoardPollVoteState[];
+  pollVotePending?: boolean;
+  onPollVote?: (pollId: string, optionId: string) => void;
 };
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -100,8 +108,109 @@ const PendingImage = Image.extend({
   },
 });
 
+function normalizePollOptionText(value: unknown) {
+  return typeof value === 'string' ? value.trim().slice(0, 80) : '';
+}
+
+function createPollId(prefix = 'poll') {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function normalizePollAttrs(attrs: unknown) {
+  if (!attrs || typeof attrs !== 'object') return null;
+  const source = attrs as {
+    id?: unknown;
+    question?: unknown;
+    options?: unknown;
+  };
+  const id = typeof source.id === 'string' ? source.id.trim().slice(0, 80) : '';
+  const question = typeof source.question === 'string' ? source.question.trim().slice(0, 160) : '';
+  const rawOptions = Array.isArray(source.options) ? source.options : [];
+  const seenOptionIds = new Set<string>();
+  const options = rawOptions
+    .flatMap((option): RichTextPollOption[] => {
+      if (!option || typeof option !== 'object') return [];
+      const rawOption = option as { id?: unknown; text?: unknown };
+      const optionId =
+        typeof rawOption.id === 'string' ? rawOption.id.trim().slice(0, 80) : createPollId('opt');
+      const text = normalizePollOptionText(rawOption.text);
+      if (!/^[a-zA-Z0-9_-]{1,80}$/.test(optionId) || !text || seenOptionIds.has(optionId)) {
+        return [];
+      }
+      seenOptionIds.add(optionId);
+      return [{ id: optionId, text }];
+    })
+    .slice(0, 8);
+
+  if (!/^[a-zA-Z0-9_-]{1,80}$/.test(id) || !question || options.length < 2) return null;
+  return { id, question, options };
+}
+
+const PollNode = TiptapNode.create({
+  name: 'poll',
+  group: 'block',
+  atom: true,
+  selectable: true,
+  isolating: true,
+
+  addAttributes() {
+    return {
+      id: { default: null },
+      question: { default: '' },
+      options: { default: [] },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'section[data-rich-text-poll]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const poll = normalizePollAttrs(HTMLAttributes) ?? {
+      id: '',
+      question: '투표',
+      options: [],
+    };
+    return [
+      'section',
+      {
+        class: 'rich-text-poll',
+        'data-poll-id': poll.id,
+        'data-rich-text-poll': 'true',
+        contenteditable: 'false',
+      },
+      ['div', { class: 'rich-text-poll__question' }, poll.question],
+      [
+        'div',
+        { class: 'rich-text-poll__options' },
+        ...poll.options.map((option) => [
+          'button',
+          {
+            class: 'rich-text-poll__option',
+            'data-poll-option-id': option.id,
+            disabled: 'true',
+            type: 'button',
+          },
+          ['span', { class: 'rich-text-poll__option-bar', 'aria-hidden': 'true' }],
+          ['span', { class: 'rich-text-poll__option-text' }, option.text],
+          ['span', { class: 'rich-text-poll__count' }, '0표'],
+        ]),
+      ],
+      ['p', { class: 'rich-text-poll__total' }, '0명 참여'],
+    ];
+  },
+});
+
 function editorExtensions(
-  options: { readonly?: boolean; placeholder?: string; allowImages?: boolean } = {},
+  options: {
+    readonly?: boolean;
+    placeholder?: string;
+    allowImages?: boolean;
+    allowPoll?: boolean;
+  } = {},
 ) {
   const readonly = options.readonly ?? false;
   const allowImages = options.allowImages ?? true;
@@ -138,6 +247,7 @@ function editorExtensions(
           }),
         ]
       : []),
+    ...(options.allowPoll ? [PollNode] : []),
     ...(options.placeholder ? [Placeholder.configure({ placeholder: options.placeholder })] : []),
   ];
 }
@@ -165,6 +275,33 @@ function collectPendingIds(node: RichTextDocument, result = new Set<string>()) {
 function createPendingId() {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
   return `image-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function projectEditorDocumentToPlainText(document: RichTextDocument): string {
+  const parts: string[] = [];
+  const visit = (node: JSONContent) => {
+    if (node.type === 'text' && node.text) parts.push(node.text);
+    if (node.type === 'image') {
+      parts.push(
+        typeof node.attrs?.alt === 'string' && node.attrs.alt.trim()
+          ? node.attrs.alt.trim()
+          : '[이미지]',
+      );
+    }
+    if (node.type === 'poll') {
+      const poll = normalizePollAttrs(node.attrs);
+      if (poll) parts.push([poll.question, ...poll.options.map((option) => option.text)].join(' '));
+    }
+    node.content?.forEach(visit);
+    if (['paragraph', 'heading', 'listItem', 'blockquote', 'poll'].includes(node.type ?? '')) {
+      parts.push('\n');
+    }
+  };
+  document.content?.forEach(visit);
+  return parts
+    .join('')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function normalizeLink(value: string) {
@@ -435,6 +572,7 @@ export function RichTextEditor({
   onChange,
   placeholder = '내용을 입력하세요',
   allowImages = true,
+  allowPoll = false,
   ariaLabel = '게시글 내용',
 }: RichTextEditorProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -444,6 +582,9 @@ export function RichTextEditor({
   const [linkError, setLinkError] = useState<string | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkValue, setLinkValue] = useState('');
+  const [pollOpen, setPollOpen] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollOptions, setPollOptions] = useState(['', '']);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -451,7 +592,7 @@ export function RichTextEditor({
 
   const editor = useEditor({
     content: initialValue ?? plainTextToRichTextDocument(''),
-    extensions: editorExtensions({ placeholder, allowImages }),
+    extensions: editorExtensions({ placeholder, allowImages, allowPoll }),
     editorProps: {
       attributes: {
         'aria-label': ariaLabel,
@@ -460,9 +601,10 @@ export function RichTextEditor({
       },
     },
     onCreate: ({ editor: currentEditor }) => {
+      const contentDoc = currentEditor.getJSON();
       onChangeRef.current({
-        contentDoc: currentEditor.getJSON(),
-        plainText: currentEditor.getText({ blockSeparator: '\n' }).trim(),
+        contentDoc,
+        plainText: projectEditorDocumentToPlainText(contentDoc),
         pendingImages: [],
       });
     },
@@ -479,7 +621,7 @@ export function RichTextEditor({
 
       onChangeRef.current({
         contentDoc,
-        plainText: currentEditor.getText({ blockSeparator: '\n' }).trim(),
+        plainText: projectEditorDocumentToPlainText(contentDoc),
         pendingImages: [...pendingImagesRef.current.values()],
       });
     },
@@ -565,6 +707,51 @@ export function RichTextEditor({
   const removeLink = () => {
     editor.chain().focus().extendMarkRange('link').unsetLink().run();
     setLinkOpen(false);
+  };
+
+  const openPollEditor = () => {
+    setPollQuestion('');
+    setPollOptions(['', '']);
+    setPollOpen(true);
+  };
+
+  const updatePollOption = (index: number, value: string) => {
+    setPollOptions((current) =>
+      current.map((option, optionIndex) => (optionIndex === index ? value : option)),
+    );
+  };
+
+  const addPollOption = () => {
+    setPollOptions((current) => (current.length >= 8 ? current : [...current, '']));
+  };
+
+  const removePollOption = (index: number) => {
+    setPollOptions((current) =>
+      current.length <= 2 ? current : current.filter((_, optionIndex) => optionIndex !== index),
+    );
+  };
+
+  const insertPoll = () => {
+    const question = pollQuestion.trim();
+    const options = pollOptions.map(normalizePollOptionText).filter(Boolean);
+    if (!question || options.length < 2) return;
+    const pollId = createPollId('poll');
+    editor
+      .chain()
+      .focus()
+      .insertContent([
+        {
+          type: 'poll',
+          attrs: {
+            id: pollId,
+            question,
+            options: options.map((text) => ({ id: createPollId('option'), text })),
+          },
+        },
+        { type: 'paragraph' },
+      ])
+      .run();
+    setPollOpen(false);
   };
 
   const setStyleMark = (
@@ -703,6 +890,11 @@ export function RichTextEditor({
           <ToolbarButton active={toolbar.link} label="링크" onClick={openLinkEditor}>
             <Link2 size={17} />
           </ToolbarButton>
+          {allowPoll ? (
+            <ToolbarButton label="투표" onClick={openPollEditor}>
+              <ListChecks size={18} />
+            </ToolbarButton>
+          ) : null}
           {allowImages ? (
             <>
               <ToolbarButton label="본문 이미지" onClick={() => imageInputRef.current?.click()}>
@@ -796,6 +988,83 @@ export function RichTextEditor({
           </div>
         </div>
       ) : null}
+      {pollOpen ? (
+        <div
+          className="rich-text-link-modal"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setPollOpen(false);
+          }}
+        >
+          <div
+            aria-label="투표 삽입"
+            aria-modal="true"
+            className="rich-text-link-modal__dialog rich-text-poll-modal__dialog"
+            role="dialog"
+          >
+            <header>
+              <strong>투표</strong>
+              <button
+                aria-label="닫기"
+                onClick={() => setPollOpen(false)}
+                title="닫기"
+                type="button"
+              >
+                <X size={16} />
+              </button>
+            </header>
+            <label>
+              <span>질문</span>
+              <input
+                autoFocus
+                maxLength={160}
+                onChange={(event) => setPollQuestion(event.target.value)}
+                type="text"
+                value={pollQuestion}
+              />
+            </label>
+            <div className="rich-text-poll-modal__options">
+              <span>선택지</span>
+              {pollOptions.map((option, index) => (
+                <label key={index}>
+                  <span className="sr-only">선택지 {index + 1}</span>
+                  <input
+                    maxLength={80}
+                    onChange={(event) => updatePollOption(index, event.target.value)}
+                    type="text"
+                    value={option}
+                  />
+                  <button
+                    aria-label={`선택지 ${index + 1} 삭제`}
+                    disabled={pollOptions.length <= 2}
+                    onClick={() => removePollOption(index)}
+                    type="button"
+                  >
+                    <X size={15} />
+                  </button>
+                </label>
+              ))}
+              <button disabled={pollOptions.length >= 8} onClick={addPollOption} type="button">
+                선택지 추가
+              </button>
+            </div>
+            <div className="rich-text-link-modal__actions">
+              <button onClick={() => setPollOpen(false)} type="button">
+                취소
+              </button>
+              <button
+                disabled={
+                  !pollQuestion.trim() ||
+                  pollOptions.map(normalizePollOptionText).filter(Boolean).length < 2
+                }
+                type="button"
+                onClick={insertPoll}
+              >
+                삽입
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <EditorContent editor={editor} />
       <footer className="rich-text-editor__footer">
         {imageError ? <span className="rich-text-editor__error">{imageError}</span> : <span />}
@@ -805,11 +1074,18 @@ export function RichTextEditor({
   );
 }
 
-export function RichTextContent({ contentDoc, plainText }: RichTextContentProps) {
+export function RichTextContent({
+  contentDoc,
+  plainText,
+  pollResults,
+  pollVotePending = false,
+  onPollVote,
+}: RichTextContentProps) {
+  const rendererRef = useRef<HTMLDivElement>(null);
   const editor = useEditor({
     content: contentDoc ?? plainTextToRichTextDocument(plainText),
     editable: false,
-    extensions: editorExtensions({ readonly: true }),
+    extensions: editorExtensions({ readonly: true, allowPoll: true }),
     editorProps: {
       attributes: {
         class: 'rich-text-renderer__content',
@@ -821,7 +1097,57 @@ export function RichTextContent({ contentDoc, plainText }: RichTextContentProps)
     if (editor) editor.commands.setContent(contentDoc ?? plainTextToRichTextDocument(plainText));
   }, [contentDoc, editor, plainText]);
 
-  return <EditorContent className="rich-text-renderer" editor={editor} />;
+  useEffect(() => {
+    const root = rendererRef.current;
+    if (!root) return;
+    const states = new Map((pollResults ?? []).map((poll) => [poll.pollId, poll]));
+
+    root
+      .querySelectorAll<HTMLElement>('[data-rich-text-poll][data-poll-id]')
+      .forEach((pollElement) => {
+        const pollId = pollElement.dataset.pollId ?? '';
+        const state = states.get(pollId);
+        const totalVotes = state?.totalVotes ?? 0;
+        const totalElement = pollElement.querySelector<HTMLElement>('.rich-text-poll__total');
+        if (totalElement) {
+          totalElement.textContent = `${totalVotes.toLocaleString('ko-KR')}명 참여`;
+        }
+
+        pollElement
+          .querySelectorAll<HTMLButtonElement>('[data-poll-option-id]')
+          .forEach((button) => {
+            const optionId = button.dataset.pollOptionId ?? '';
+            const option = state?.options.find((candidate) => candidate.id === optionId);
+            const voteCount = option?.voteCount ?? 0;
+            const percent = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
+            const countElement = button.querySelector<HTMLElement>('.rich-text-poll__count');
+            button.disabled = pollVotePending || !onPollVote;
+            button.classList.toggle('is-selected', state?.myOptionId === optionId);
+            button.style.setProperty('--poll-percent', `${percent}%`);
+            button.setAttribute('aria-label', `${option?.text ?? '선택지'} ${voteCount}표`);
+            if (countElement) countElement.textContent = `${voteCount.toLocaleString('ko-KR')}표`;
+          });
+      });
+  }, [onPollVote, pollResults, pollVotePending]);
+
+  const handlePollClick = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const optionButton = target.closest<HTMLButtonElement>('[data-poll-option-id]');
+    if (!optionButton || optionButton.disabled || !onPollVote) return;
+    const pollElement = optionButton.closest<HTMLElement>('[data-poll-id]');
+    const pollId = pollElement?.dataset.pollId;
+    const optionId = optionButton.dataset.pollOptionId;
+    if (!pollId || !optionId) return;
+    event.preventDefault();
+    onPollVote(pollId, optionId);
+  };
+
+  return (
+    <div className="rich-text-renderer" ref={rendererRef} onClick={handlePollClick}>
+      <EditorContent editor={editor} />
+    </div>
+  );
 }
 
 function normalizeMarks(marks: JSONContent[] | undefined): PersistedRichTextMark[] | undefined {
@@ -889,6 +1215,7 @@ function toPersistedNode(
     'blockquote',
     'hardBreak',
     'image',
+    'poll',
   ]);
   if (!node.type || !supportedTypes.has(node.type)) return null;
 
@@ -913,6 +1240,15 @@ function toPersistedNode(
         alt: typeof node.attrs?.alt === 'string' ? node.attrs.alt : null,
         title: typeof node.attrs?.title === 'string' ? node.attrs.title : null,
       },
+    };
+  }
+
+  if (node.type === 'poll') {
+    const poll = normalizePollAttrs(node.attrs);
+    if (!poll) return null;
+    return {
+      type: 'poll',
+      attrs: poll,
     };
   }
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   parsePostCreate,
   parsePostUpdate,
+  extractPollDefinitions,
   projectDocumentToPlainText,
   richTextDocumentSchema,
 } from './post-content';
@@ -50,6 +51,17 @@ const tiptapDocument = {
       type: 'image',
       attrs: { src: '/api/files/7/content', alt: '첨부 이미지', title: null },
     },
+    {
+      type: 'poll',
+      attrs: {
+        id: 'poll-1',
+        question: '가장 기대되는 급식은?',
+        options: [
+          { id: 'option-1', text: '돈가스' },
+          { id: 'option-2', text: '비빔밥' },
+        ],
+      },
+    },
   ],
 } as const;
 
@@ -64,6 +76,17 @@ describe('board post rich-text validation', () => {
     expect(parsed.contentDoc).toEqual(tiptapDocument);
     expect(projectDocumentToPlainText(parsed.contentDoc!)).toContain('본문 링크');
     expect(parsed.content).toContain('첨부 이미지');
+    expect(parsed.content).toContain('가장 기대되는 급식은?');
+    expect(extractPollDefinitions(parsed.contentDoc!)).toEqual([
+      {
+        id: 'poll-1',
+        question: '가장 기대되는 급식은?',
+        options: [
+          { id: 'option-1', text: '돈가스' },
+          { id: 'option-2', text: '비빔밥' },
+        ],
+      },
+    ]);
   });
 
   it('keeps plain-text create requests compatible and permits empty drafts', () => {

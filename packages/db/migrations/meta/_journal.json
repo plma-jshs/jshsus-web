@@ -43,6 +43,13 @@
       "when": 1784775600000,
       "tag": "0005_users_legacy_plma_cleanup",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1784806800000,
+      "tag": "0006_post_poll_votes",
+      "breakpoints": true
     }
   ]
 }

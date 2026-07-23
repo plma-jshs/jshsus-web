@@ -75,6 +75,47 @@ describe('rich-text document persistence', () => {
     ]);
   });
 
+  it('persists valid poll blocks and drops malformed polls', () => {
+    const document: RichTextDocument = {
+      type: 'doc',
+      content: [
+        {
+          type: 'poll',
+          attrs: {
+            id: 'poll-1',
+            question: '점심 메뉴는?',
+            options: [
+              { id: 'option-1', text: '짜장면' },
+              { id: 'option-2', text: '카레' },
+            ],
+          },
+        },
+        {
+          type: 'poll',
+          attrs: {
+            id: 'broken poll id',
+            question: '잘못된 투표',
+            options: [{ id: 'option-1', text: '하나뿐' }],
+          },
+        },
+      ],
+    };
+
+    expect(stripPendingImages(document).content).toEqual([
+      {
+        type: 'poll',
+        attrs: {
+          id: 'poll-1',
+          question: '점심 메뉴는?',
+          options: [
+            { id: 'option-1', text: '짜장면' },
+            { id: 'option-2', text: '카레' },
+          ],
+        },
+      },
+    ]);
+  });
+
   it('replaces pending images with the uploaded inline endpoint', () => {
     const persisted = resolvePendingImages(
       documentWithPendingImage,

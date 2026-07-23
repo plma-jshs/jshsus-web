@@ -487,6 +487,92 @@ jobs:
         shell: bash
         run: rm -f "$HOME/.ssh/deploy_key" .env.production
 
+  apply-aws-retention:
+    name: Apply AWS retention policies
+    needs: deploy
+    if: github.ref == 'refs/heads/main' && (vars.ECR_REPOSITORIES != '' || vars.CLOUDWATCH_LOG_GROUPS != '')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ vars.AWS_REGION || 'ap-northeast-2' }}
+      ECR_REPOSITORIES: ${{ vars.ECR_REPOSITORIES }}
+      ECR_KEEP_LAST: ${{ vars.ECR_KEEP_LAST || '30' }}
+      CLOUDWATCH_LOG_GROUPS: ${{ vars.CLOUDWATCH_LOG_GROUPS }}
+      CLOUDWATCH_LOG_RETENTION_DAYS: ${{ vars.CLOUDWATCH_LOG_RETENTION_DAYS || '30' }}
+    steps:
+      - name: Apply ECR lifecycle and CloudWatch log retention
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$AWS_ACCESS_KEY_ID" || -z "$AWS_SECRET_ACCESS_KEY" ]]; then
+            printf '::error::AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are required when AWS retention vars are configured.\n' >&2
+            exit 1
+          fi
+          if ! [[ "$ECR_KEEP_LAST" =~ ^[0-9]+$ ]] || (( ECR_KEEP_LAST < 2 || ECR_KEEP_LAST > 1000 )); then
+            printf '::error::ECR_KEEP_LAST must be between 2 and 1000.\n' >&2
+            exit 1
+          fi
+          case "$CLOUDWATCH_LOG_RETENTION_DAYS" in
+            1|3|5|7|14|30|60|90|120|150|180|365|400|545|731|1096|1827|2192|2557|2922|3288|3653) ;;
+            *)
+              printf '::error::CLOUDWATCH_LOG_RETENTION_DAYS is not a supported CloudWatch retention value.\n' >&2
+              exit 1
+              ;;
+          esac
+
+          if [[ -n "$ECR_REPOSITORIES" ]]; then
+            policy_file="$(mktemp)"
+            cat > "$policy_file" <<POLICY
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Expire untagged images after 7 days",
+                "selection": {
+                  "tagStatus": "untagged",
+                  "countType": "sinceImagePushed",
+                  "countUnit": "days",
+                  "countNumber": 7
+                },
+                "action": { "type": "expire" }
+              },
+              {
+                "rulePriority": 100,
+                "description": "Keep only the most recent ${ECR_KEEP_LAST} images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": ${ECR_KEEP_LAST}
+                },
+                "action": { "type": "expire" }
+              }
+            ]
+          }
+          POLICY
+            while IFS= read -r repository; do
+              [[ -n "$repository" ]] || continue
+              aws ecr put-lifecycle-policy \
+                --repository-name "$repository" \
+                --lifecycle-policy-text "file://$policy_file"
+              printf 'Applied ECR lifecycle policy: %s\n' "$repository"
+            done < <(tr ', ' '\n\n' <<< "$ECR_REPOSITORIES")
+          fi
+
+          if [[ -n "$CLOUDWATCH_LOG_GROUPS" ]]; then
+            while IFS= read -r log_group; do
+              [[ -n "$log_group" ]] || continue
+              aws logs put-retention-policy \
+                --log-group-name "$log_group" \
+                --retention-in-days "$CLOUDWATCH_LOG_RETENTION_DAYS"
+              printf 'Applied CloudWatch retention: %s days=%s\n' \
+                "$log_group" "$CLOUDWATCH_LOG_RETENTION_DAYS"
+            done < <(tr ', ' '\n\n' <<< "$CLOUDWATCH_LOG_GROUPS")
+          fi
+
   promote-images:
     name: Promote release images
     needs: deploy
@@ -517,4 +603,72 @@ jobs:
           for name in "${images[@]}"; do
             image="ghcr.io/${{ github.repository_owner }}/jshsus-$name"
             docker buildx imagetools create --tag "$image:stable" "$image:${{ github.sha }}"
+          done
+
+  prune-ghcr-images:
+    name: Prune old GHCR image versions
+    needs: promote-images
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GHCR_RETAINED_VERSION_COUNT: ${{ vars.GHCR_RETAINED_VERSION_COUNT || '30' }}
+      OWNER: ${{ github.repository_owner }}
+    steps:
+      - name: Delete old immutable SHA image versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! [[ "$GHCR_RETAINED_VERSION_COUNT" =~ ^[0-9]+$ ]] || (( GHCR_RETAINED_VERSION_COUNT < 2 || GHCR_RETAINED_VERSION_COUNT > 500 )); then
+            printf '::error::GHCR_RETAINED_VERSION_COUNT must be between 2 and 500.\n' >&2
+            exit 1
+          fi
+
+          if gh api "/orgs/$OWNER" >/dev/null 2>&1; then
+            owner_path="/orgs/$OWNER"
+          else
+            owner_path="/users/$OWNER"
+          fi
+
+          for name in api web admin migrate; do
+            package="jshsus-$name"
+            versions_file="$(mktemp)"
+            if ! gh api --paginate "$owner_path/packages/container/$package/versions?per_page=100" \
+              --jq '.[] | @base64' > "$versions_file"; then
+              printf 'Skipping GHCR prune; package not found or unavailable: %s\n' "$package" >&2
+              rm -f "$versions_file"
+              continue
+            fi
+
+            eligible_file="$(mktemp)"
+            while IFS= read -r version_payload; do
+              [[ -n "$version_payload" ]] || continue
+              decoded="$(printf '%s' "$version_payload" | base64 -d)"
+              id="$(jq -r '.id' <<< "$decoded")"
+              created_at="$(jq -r '.created_at' <<< "$decoded")"
+              tags="$(jq -r '(.metadata.container.tags // []) | join(",")' <<< "$decoded")"
+              if [[ "$tags" =~ (^|,)(stable|previous|buildcache)(,|$) ]]; then
+                continue
+              fi
+              if [[ "$tags" =~ (^|,)[0-9a-f]{40}(,|$) ]]; then
+                printf '%s %s %s\n' "$created_at" "$id" "$tags" >> "$eligible_file"
+              fi
+            done < "$versions_file"
+
+            retained=0
+            while read -r _created_at id tags; do
+              [[ -n "${id:-}" ]] || continue
+              retained=$((retained + 1))
+              if (( retained <= GHCR_RETAINED_VERSION_COUNT )); then
+                continue
+              fi
+              gh api --method DELETE "$owner_path/packages/container/$package/versions/$id"
+              printf 'Deleted old GHCR image version: package=%s id=%s tags=%s\n' \
+                "$package" "$id" "$tags"
+            done < <(sort -r "$eligible_file")
+
+            rm -f "$versions_file" "$eligible_file"
           done

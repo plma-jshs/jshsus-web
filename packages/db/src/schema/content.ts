@@ -119,6 +119,27 @@ export const postLikes = mysqlTable(
   }),
 );
 
+export const postPollVotes = mysqlTable(
+  'post_poll_votes',
+  {
+    postId: int('post_id')
+      .notNull()
+      .references(() => posts.id, { onDelete: 'cascade' }),
+    pollId: varchar('poll_id', { length: 80 }).notNull(),
+    optionId: varchar('option_id', { length: 80 }).notNull(),
+    userId: int('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: datetime('created_at', { mode: 'date', fsp: 3 }).notNull().default(now),
+    updatedAt: datetime('updated_at', { mode: 'date', fsp: 3 }).notNull().default(now),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.postId, table.pollId, table.userId] }),
+    optionIdx: index('post_poll_votes_option_idx').on(table.postId, table.pollId, table.optionId),
+    userIdx: index('post_poll_votes_user_idx').on(table.userId),
+  }),
+);
+
 export const commentLikes = mysqlTable(
   'comment_likes',
   {

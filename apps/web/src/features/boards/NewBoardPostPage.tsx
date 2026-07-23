@@ -181,7 +181,7 @@ export function NewBoardPostPage() {
 
         <div className="editor-field">
           <label htmlFor="board-post-content">내용</label>
-          <RichTextEditor id="board-post-content" onChange={setEditorValue} />
+          <RichTextEditor id="board-post-content" allowPoll onChange={setEditorValue} />
         </div>
 
         <section className="editor-attachments" aria-labelledby="attachment-title">

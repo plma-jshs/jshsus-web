@@ -151,6 +151,25 @@ export class BoardsController {
     return this.boardsService.toggleFreePostLike(slug, Number(id), request.authSession?.userId);
   }
 
+  @Post('boards/:slug/posts/:id/polls/:pollId/vote')
+  @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
+  @RequireRoles(...memberRoles)
+  votePostPoll(
+    @Param('slug') slug: string,
+    @Param('id') id: string,
+    @Param('pollId') pollId: string,
+    @Body() body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.boardsService.votePostPoll(
+      slug,
+      Number(id),
+      pollId,
+      body,
+      request.authSession?.userId,
+    );
+  }
+
   @Post('boards/:slug/posts/:postId/comments/:commentId/like')
   @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
   @RequireRoles(...memberRoles)

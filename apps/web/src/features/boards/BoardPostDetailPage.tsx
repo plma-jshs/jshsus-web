@@ -23,6 +23,7 @@ import {
   getBoardPost,
   toggleBoardCommentLike,
   toggleBoardPostLike,
+  voteBoardPostPoll,
 } from './api';
 
 function reportTargetKey(targetType: 'post' | 'comment', targetId: number) {
@@ -128,6 +129,30 @@ export function BoardPostDetailPage() {
         return;
       }
       showToast({ title: '댓글 좋아요를 반영하지 못했습니다.', tone: 'danger' });
+    },
+  });
+  const pollVoteMutation = useMutation({
+    mutationFn: ({ pollId, optionId }: { pollId: string; optionId: string }) =>
+      voteBoardPostPoll('free', numericId, pollId, optionId),
+    onSuccess: async (result) => {
+      queryClient.setQueryData<BoardPostDetail>(postQueryKey, (current) =>
+        current
+          ? {
+              ...current,
+              polls: (current.polls ?? []).map((poll) =>
+                poll.pollId === result.poll.pollId ? result.poll : poll,
+              ),
+            }
+          : current,
+      );
+      await queryClient.invalidateQueries({ queryKey: postQueryKey });
+    },
+    onError: (error) => {
+      if (authActionRequiresLogin(sessionQuery.data, error)) {
+        goToLogin();
+        return;
+      }
+      showToast({ title: '투표를 반영하지 못했습니다.', tone: 'danger' });
     },
   });
   const deleteMutation = useMutation({
@@ -245,7 +270,17 @@ export function BoardPostDetailPage() {
           </span>
         </ContentDetailHeader>
         <div className="reading-body">
-          <RichTextContent contentDoc={post.contentDoc} plainText={post.content} />
+          <RichTextContent
+            contentDoc={post.contentDoc}
+            plainText={post.content}
+            pollResults={post.polls}
+            pollVotePending={pollVoteMutation.isPending}
+            onPollVote={(pollId, optionId) =>
+              sessionQuery.data?.isLogined
+                ? pollVoteMutation.mutate({ pollId, optionId })
+                : goToLogin()
+            }
+          />
         </div>
         {downloadableAttachments.length ? (
           <div className="detail-attachments">

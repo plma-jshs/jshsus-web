@@ -7,26 +7,43 @@ import {
 import * as schema from '@jshsus/db';
 import type {
   BoardCommentSummary,
+  BoardPollVoteState,
   BoardPostDetail,
   BoardPostListItem,
   BoardPostSummary,
   ContentLikeState,
   PaginatedResponse,
   RichTextDocument,
+  RichTextPoll,
 } from '@jshsus/types';
-import { and, count, desc, eq, isNull, like, or, sql } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, isNull, like, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { type ContentListQuery, toContainsPattern } from '../../shared/content-list-query';
 import type { AuthSession } from '../auth/auth.service';
 import { DatabaseService, type AppDatabase } from '../database/database.service';
 import { FilesService } from '../files/files.service';
-import { collectInlineImageSources, parsePostCreate, parsePostUpdate } from './post-content';
+import {
+  collectInlineImageSources,
+  extractPollDefinitions,
+  parsePostCreate,
+  parsePostUpdate,
+} from './post-content';
 
 const commentSchema = z.object({
   content: z.string().min(1).max(2000),
   parentId: z.coerce.number().int().positive().optional(),
 });
 const hiddenSchema = z.object({ isHidden: z.boolean() });
+const pollVoteSchema = z
+  .object({
+    optionId: z
+      .string()
+      .trim()
+      .min(1)
+      .max(80)
+      .regex(/^[a-zA-Z0-9_-]+$/),
+  })
+  .strict();
 const memberWritableBoardSlugs = new Set(['free']);
 const likeableBoardSlugs = new Set(['free', 'jbs']);
 
@@ -288,13 +305,20 @@ export class BoardsService {
         .set({ viewCount: sql`${schema.posts.viewCount} + 1` })
         .where(eq(schema.posts.id, id));
       const attachments = await this.filesService.listForTarget('post', id);
+      const contentDoc = (row.contentJson as RichTextDocument | null) ?? undefined;
+      const polls = await this.pollStatesForPost(
+        db,
+        row.id,
+        extractPollDefinitions(contentDoc),
+        actorId,
+      );
 
       return {
         id: row.id,
         boardSlug: slug,
         title: row.title,
         content: row.content,
-        contentDoc: (row.contentJson as RichTextDocument | null) ?? undefined,
+        contentDoc,
         authorName: row.isAnonymous
           ? undefined
           : (row.authorNickname ?? row.authorName ?? undefined),
@@ -303,10 +327,77 @@ export class BoardsService {
         commentCount: row.commentCount,
         likeCount: Number(row.likeCount ?? 0),
         likedByMe: Boolean(row.likedByMe),
+        polls,
         canEdit: Boolean(actorId && actorId > 0 && row.authorId === actorId),
         createdAt: row.createdAt.toISOString(),
         attachments,
       };
+    });
+  }
+
+  async votePostPoll(
+    slug: string,
+    id: number,
+    pollId: string,
+    body: unknown,
+    actorId?: number | null,
+  ) {
+    if (!actorId || actorId <= 0) throw new ForbiddenException('Login is required.');
+    const parsed = pollVoteSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    if (!/^[a-zA-Z0-9_-]{1,80}$/.test(pollId)) {
+      throw new BadRequestException('Invalid poll id.');
+    }
+
+    return this.database.query('boards.poll.vote', async (db) => {
+      const board = await this.findBoard(db, slug);
+      if (!board || board.visibility !== 'public') {
+        throw new NotFoundException('Post was not found.');
+      }
+
+      const [row] = await db
+        .select({
+          id: schema.posts.id,
+          contentJson: schema.posts.contentJson,
+        })
+        .from(schema.posts)
+        .where(
+          and(
+            eq(schema.posts.id, id),
+            eq(schema.posts.boardId, board.id),
+            or(eq(schema.posts.status, 'published'), isNull(schema.posts.status)),
+            eq(schema.posts.isHidden, false),
+          ),
+        )
+        .limit(1);
+      if (!row) throw new NotFoundException('Post was not found.');
+
+      const polls = extractPollDefinitions((row.contentJson as RichTextDocument | null) ?? null);
+      const poll = polls.find((candidate) => candidate.id === pollId);
+      if (!poll) throw new NotFoundException('Poll was not found.');
+      if (!poll.options.some((option) => option.id === parsed.data.optionId)) {
+        throw new BadRequestException('Invalid poll option.');
+      }
+
+      await db
+        .insert(schema.postPollVotes)
+        .values({
+          postId: row.id,
+          pollId,
+          optionId: parsed.data.optionId,
+          userId: actorId,
+        })
+        .onDuplicateKeyUpdate({
+          set: { optionId: parsed.data.optionId, updatedAt: new Date() },
+        });
+      await this.database.writeAudit({
+        actorId,
+        action: 'board.poll.vote',
+        targetType: 'posts',
+        targetId: id,
+      });
+      const [state] = await this.pollStatesForPost(db, row.id, [poll], actorId);
+      return { ok: true, poll: state };
     });
   }
 
@@ -451,6 +542,64 @@ export class BoardsService {
       targetId: id,
     });
     return { ok: true, id, isHidden: parsed.data.isHidden };
+  }
+
+  private async pollStatesForPost(
+    db: AppDatabase,
+    postId: number,
+    polls: RichTextPoll[],
+    actorId?: number | null,
+  ): Promise<BoardPollVoteState[]> {
+    if (polls.length === 0) return [];
+    const pollIds = polls.map((poll) => poll.id);
+    const [countRows, myRows] = await Promise.all([
+      db
+        .select({
+          pollId: schema.postPollVotes.pollId,
+          optionId: schema.postPollVotes.optionId,
+          voteCount: count(),
+        })
+        .from(schema.postPollVotes)
+        .where(
+          and(
+            eq(schema.postPollVotes.postId, postId),
+            inArray(schema.postPollVotes.pollId, pollIds),
+          ),
+        )
+        .groupBy(schema.postPollVotes.pollId, schema.postPollVotes.optionId),
+      actorId && actorId > 0
+        ? db
+            .select({
+              pollId: schema.postPollVotes.pollId,
+              optionId: schema.postPollVotes.optionId,
+            })
+            .from(schema.postPollVotes)
+            .where(
+              and(
+                eq(schema.postPollVotes.postId, postId),
+                eq(schema.postPollVotes.userId, actorId),
+                inArray(schema.postPollVotes.pollId, pollIds),
+              ),
+            )
+        : Promise.resolve([]),
+    ]);
+    const countByOption = new Map(
+      countRows.map((row) => [`${row.pollId}:${row.optionId}`, Number(row.voteCount)]),
+    );
+    const myOptionByPoll = new Map(myRows.map((row) => [row.pollId, row.optionId]));
+
+    return polls.map((poll) => {
+      const options = poll.options.map((option) => ({
+        ...option,
+        voteCount: countByOption.get(`${poll.id}:${option.id}`) ?? 0,
+      }));
+      return {
+        pollId: poll.id,
+        myOptionId: myOptionByPoll.get(poll.id),
+        totalVotes: options.reduce((total, option) => total + option.voteCount, 0),
+        options,
+      };
+    });
   }
 
   async listComments(

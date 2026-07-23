@@ -2,6 +2,7 @@ import type {
   BoardCommentSummary,
   BoardPostDetail,
   BoardPostListItem,
+  BoardPollVoteState,
   ContentLikeState,
   PaginatedResponse,
   PostStatus,
@@ -67,6 +68,16 @@ export function toggleBoardCommentLike(slug: string, postId: number, commentId: 
   return request<ContentLikeState>(
     `/api/boards/${slug}/posts/${postId}/comments/${commentId}/like`,
     { method: 'POST' },
+  );
+}
+
+export function voteBoardPostPoll(slug: string, postId: number, pollId: string, optionId: string) {
+  return request<{ ok: true; poll: BoardPollVoteState }>(
+    `/api/boards/${slug}/posts/${postId}/polls/${encodeURIComponent(pollId)}/vote`,
+    {
+      method: 'POST',
+      body: { optionId },
+    },
   );
 }
 
