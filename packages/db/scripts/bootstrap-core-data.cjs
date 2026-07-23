@@ -4,6 +4,7 @@ const { resolve } = require('node:path');
 const { seedConnectionOptions } = require('./seed-connection.cjs');
 
 const ROOT_DIR = resolve(__dirname, '../../..');
+const LEGACY_CONTENT_SEED_PATH = resolve(ROOT_DIR, 'packages/db/seed/legacy-content.json');
 
 const CORE_ROLES = [
   ['system_admin', '시스템 관리자'],
@@ -247,6 +248,72 @@ function richTextDocumentFromPlainText(value) {
   };
 }
 
+function loadLegacyContentSeed() {
+  if (!existsSync(LEGACY_CONTENT_SEED_PATH)) {
+    return { notices: [], freeBoardPosts: [] };
+  }
+
+  const parsed = JSON.parse(readFileSync(LEGACY_CONTENT_SEED_PATH, 'utf8'));
+  return {
+    notices: Array.isArray(parsed.notices) ? parsed.notices : [],
+    freeBoardPosts: Array.isArray(parsed.freeBoardPosts) ? parsed.freeBoardPosts : [],
+  };
+}
+
+async function upsertLegacyContent(connection) {
+  const seed = loadLegacyContentSeed();
+  if (seed.notices.length === 0 && seed.freeBoardPosts.length === 0) return;
+
+  for (const notice of seed.notices) {
+    await connection.execute(
+      `INSERT INTO notices
+       (public_no, title, content, department, author_name, visibility, pinned, published_at,
+         author_id, view_count, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'public', 0, ?, NULL, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE public_no = public_no`,
+      [
+        notice.publicNo,
+        notice.title,
+        notice.content,
+        notice.department,
+        notice.authorName ?? null,
+        notice.publishedAt,
+        notice.viewCount ?? 0,
+        notice.publishedAt,
+        notice.publishedAt,
+      ],
+    );
+  }
+
+  if (seed.freeBoardPosts.length === 0) return;
+  const [[freeBoard]] = await connection.execute(
+    "SELECT id FROM boards WHERE slug = 'free' LIMIT 1",
+  );
+  if (!freeBoard) throw new Error('Free board must exist before legacy posts are seeded.');
+
+  for (const post of seed.freeBoardPosts) {
+    await connection.execute(
+      `INSERT INTO posts
+       (public_no, board_id, author_id, author_name, title, content, content_json, post_status,
+         is_anonymous, is_hidden, view_count, created_at, updated_at)
+       VALUES (?, ?, NULL, ?, ?, ?, CAST(? AS JSON), 'published', 0, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE public_no = public_no`,
+      [
+        post.publicNo,
+        freeBoard.id,
+        post.authorName ?? null,
+        post.title,
+        post.content,
+        JSON.stringify(post.contentDoc ?? richTextDocumentFromPlainText(post.content)),
+        post.isHidden ? 1 : 0,
+        post.viewCount ?? 0,
+        post.createdAt,
+        post.createdAt,
+      ],
+    );
+  }
+}
+
 async function upsertLegacyJbsVideos(connection) {
   const [[board]] = await connection.execute("SELECT id FROM boards WHERE slug = 'jbs' LIMIT 1");
   if (!board) throw new Error('JBS board must exist before legacy videos are seeded.');
@@ -336,6 +403,7 @@ async function bootstrapCoreData(connection, options = {}) {
     await upsertPermissions(connection);
     await rebuildBuiltInRolePermissions(connection);
     await upsertBoards(connection);
+    await upsertLegacyContent(connection);
     await upsertLegacyJbsVideos(connection);
     await upsertActiveSchoolYear(connection, schoolYear);
     await connection.commit();

@@ -18,7 +18,7 @@
     "db:backup": "node scripts/backup-database.cjs",
     "db:provision-cognito-students": "node scripts/provision-cognito-students.cjs",
     "db:assert-local": "node -e \"require('./scripts/local-seed-safety.cjs').assertLocalSeedAllowed(); console.log('Local database target verified.')\"",
-    "db:bootstrap-local": "pnpm db:assert-local && pnpm db:migrate && pnpm db:bootstrap-core"
+    "db:bootstrap-local": "node scripts/bootstrap-local.cjs"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "3.1084.0",

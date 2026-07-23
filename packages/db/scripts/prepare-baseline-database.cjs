@@ -49,8 +49,8 @@ function readMigrationTimeline() {
   return entries;
 }
 
-function isSquashedBaseline(timeline) {
-  return timeline.length === 1 && timeline[0]?.tag === '0000_baseline';
+function isBaselineAnchored(timeline) {
+  return timeline[0]?.tag === '0000_baseline';
 }
 
 async function currentDatabaseObjects(connection, database) {
@@ -116,8 +116,10 @@ async function main() {
   }
 
   const migrationTimeline = readMigrationTimeline();
-  if (!isSquashedBaseline(migrationTimeline)) {
-    console.log('Baseline compatibility check skipped: migrations are not squashed.');
+  if (!isBaselineAnchored(migrationTimeline)) {
+    console.log(
+      'Baseline compatibility check skipped: migrations do not start from 0000_baseline.',
+    );
     return;
   }
 
@@ -144,7 +146,7 @@ async function main() {
     }
 
     const message =
-      `Existing database does not match the current squashed migration baseline. ` +
+      `Existing database does not match the current baseline migration timeline. ` +
       `database=${database}, objects=${objects.length}, ` +
       `databaseTimeline=[${databaseTimeline.join(', ')}], ` +
       `expectedTimeline=[${migrationTimeline.map((entry) => entry.when).join(', ')}].`;

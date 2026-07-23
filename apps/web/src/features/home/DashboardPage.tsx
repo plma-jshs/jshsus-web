@@ -520,7 +520,7 @@ export function DashboardPage() {
               })}
             </ul>
           ) : (
-            <p className="home-card-empty">등록된 공지가 없습니다.</p>
+            <PageState kind="empty" variant="section" title="등록된 공지사항이 없습니다." />
           )}
         </section>
 
@@ -574,7 +574,7 @@ export function DashboardPage() {
               })}
             </ul>
           ) : (
-            <p className="home-card-empty">등록된 게시글이 없습니다.</p>
+            <PageState kind="empty" variant="section" title="등록된 자유게시판 글이 없습니다." />
           )}
         </section>
 

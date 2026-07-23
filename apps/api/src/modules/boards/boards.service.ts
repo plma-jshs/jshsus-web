@@ -101,6 +101,7 @@ export class BoardsService {
           title: schema.posts.title,
           authorName: schema.users.name,
           authorNickname: schema.users.nickname,
+          storedAuthorName: schema.posts.authorName,
           isAnonymous: schema.posts.isAnonymous,
           viewCount: schema.posts.viewCount,
           createdAt: schema.posts.createdAt,
@@ -124,7 +125,7 @@ export class BoardsService {
           title: row.title,
           authorName: row.isAnonymous
             ? undefined
-            : (row.authorNickname ?? row.authorName ?? undefined),
+            : (row.authorNickname ?? row.authorName ?? row.storedAuthorName ?? undefined),
           isAnonymous: row.isAnonymous,
           viewCount: row.viewCount,
           commentCount: row.commentCount,
@@ -153,6 +154,7 @@ export class BoardsService {
           authorId: schema.posts.authorId,
           authorName: schema.users.name,
           authorNickname: schema.users.nickname,
+          storedAuthorName: schema.posts.authorName,
           isAnonymous: schema.posts.isAnonymous,
           isHidden: schema.posts.isHidden,
           status: schema.posts.status,
@@ -191,7 +193,10 @@ export class BoardsService {
         contentDoc: (row.contentJson as RichTextDocument | null) ?? undefined,
         authorName: row.isAnonymous
           ? undefined
-          : ((includeHidden ? row.authorName : row.authorNickname) ?? row.authorName ?? undefined),
+          : ((includeHidden ? row.authorName : row.authorNickname) ??
+            row.authorName ??
+            row.storedAuthorName ??
+            undefined),
         isAnonymous: row.isAnonymous,
         isHidden: row.isHidden,
         status: row.status ?? 'published',
@@ -244,6 +249,7 @@ export class BoardsService {
             publicNo: nextNumber?.publicNo ?? 1,
             boardId: board.id,
             authorId: actorId,
+            authorName: null,
             title: parsed.title,
             content: parsed.content,
             contentJson: parsed.contentDoc,
@@ -296,6 +302,7 @@ export class BoardsService {
           authorId: schema.posts.authorId,
           authorName: schema.users.name,
           authorNickname: schema.users.nickname,
+          storedAuthorName: schema.posts.authorName,
           isAnonymous: schema.posts.isAnonymous,
           viewCount: schema.posts.viewCount,
           createdAt: schema.posts.createdAt,
@@ -349,7 +356,7 @@ export class BoardsService {
         contentDoc,
         authorName: row.isAnonymous
           ? undefined
-          : (row.authorNickname ?? row.authorName ?? undefined),
+          : (row.authorNickname ?? row.authorName ?? row.storedAuthorName ?? undefined),
         isAnonymous: row.isAnonymous,
         viewCount: row.viewCount + 1,
         commentCount: row.commentCount,

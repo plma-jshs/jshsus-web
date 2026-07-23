@@ -64,6 +64,7 @@ export const posts = mysqlTable(
       .notNull()
       .references(() => boards.id),
     authorId: int('author_id').references(() => users.id),
+    authorName: varchar('author_name', { length: 80 }),
     title: varchar('title', { length: 255 }).notNull(),
     content: longtext('content').notNull(),
     contentJson: json('content_json'),

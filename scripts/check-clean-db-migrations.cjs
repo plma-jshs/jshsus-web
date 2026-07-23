@@ -65,6 +65,22 @@ function hostPort() {
   return match[1];
 }
 
+function mysqlExec(sql) {
+  return run('docker', [
+    'exec',
+    containerId,
+    'mysql',
+    '-h127.0.0.1',
+    `-u${user}`,
+    `-p${password}`,
+    database,
+    '-N',
+    '-B',
+    '-e',
+    sql,
+  ]);
+}
+
 function main() {
   console.log(`Starting clean MySQL migration check with ${image}...`);
   containerId = run('docker', [
@@ -91,6 +107,9 @@ function main() {
   const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
   const databaseUrl = `mysql://${user}:${password}@127.0.0.1:${port}/${database}`;
 
+  console.log('Seeding a stale object to verify baseline reset preflight...');
+  mysqlExec('CREATE TABLE stale_legacy_table (id int primary key)');
+
   console.log(`Checking baseline preflight on temporary database at 127.0.0.1:${port}...`);
   const preflight = spawnSync(pnpm, ['--filter', '@jshsus/db', 'db:prepare-baseline'], {
     stdio: 'inherit',
@@ -98,10 +117,19 @@ function main() {
       ...process.env,
       DATABASE_URL: databaseUrl,
       DATABASE_SSL_MODE: 'disabled',
+      RESET_DATABASE_ON_BASELINE_MISMATCH: 'true',
     },
   });
   if (preflight.status !== 0) {
     throw new Error(`Clean database baseline preflight failed with exit code ${preflight.status}.`);
+  }
+  const staleCount = Number(
+    mysqlExec(
+      "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'stale_legacy_table'",
+    ).trim(),
+  );
+  if (staleCount !== 0) {
+    throw new Error('Baseline preflight did not remove the seeded stale table.');
   }
 
   console.log(`Applying migrations to temporary database on 127.0.0.1:${port}...`);
@@ -117,7 +145,20 @@ function main() {
     throw new Error(`Clean database migration check failed with exit code ${result.status}.`);
   }
 
-  console.log('Clean database migration check passed.');
+  console.log(`Bootstrapping core data on temporary database at 127.0.0.1:${port}...`);
+  const bootstrap = spawnSync(pnpm, ['--filter', '@jshsus/db', 'db:bootstrap-core'], {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      DATABASE_URL: databaseUrl,
+      DATABASE_SSL_MODE: 'disabled',
+    },
+  });
+  if (bootstrap.status !== 0) {
+    throw new Error(`Clean database bootstrap check failed with exit code ${bootstrap.status}.`);
+  }
+
+  console.log('Clean database migration and bootstrap check passed.');
 }
 
 try {

@@ -304,7 +304,7 @@ function hasRedBackgroundStyle(attributes: string): boolean {
 }
 
 function normalizeSchoolHomepageTitle(value: string): string {
-  return value
+  return decodeBasicEntities(value)
     .replace(/\u00a0/g, ' ')
     .replace(/\s*[(（]\s*~\s*\d{1,2}\s*일\s*[)）]\s*$/, '')
     .replace(/^\s*·\s*/, '')
@@ -719,12 +719,26 @@ export class SchoolDataService {
   }
 
   private async loadSchoolHomepageCalendar(from: string, to: string): Promise<AcademicEvent[]> {
-    const htmlPages = await Promise.all(
-      monthKeysBetween(from, to).map((yearMonth) => this.requestSchoolHomepageCalendar(yearMonth)),
+    const loadedPages = await Promise.all(
+      monthKeysBetween(from, to).map(async (yearMonth) => {
+        try {
+          return { html: await this.requestSchoolHomepageCalendar(yearMonth), yearMonth };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          this.logger.warn(`School homepage calendar ${yearMonth} could not be loaded: ${message}`);
+          return null;
+        }
+      }),
     );
+    const htmlPages = loadedPages.filter(
+      (page): page is { html: string; yearMonth: string } => page !== null,
+    );
+    if (htmlPages.length === 0) {
+      throw new Error('School homepage calendar could not be loaded for any requested month.');
+    }
     const eventsById = new Map<string, AcademicEvent>();
-    for (const html of htmlPages) {
-      for (const event of this.parseSchoolHomepageCalendar(html)) {
+    for (const page of htmlPages) {
+      for (const event of this.parseSchoolHomepageCalendar(page.html)) {
         const startsAt = formatKoreanDate(new Date(event.startsAt));
         const endsAt = formatKoreanDate(new Date(event.endsAt));
         if (startsAt > to || endsAt < from) continue;
@@ -747,6 +761,7 @@ export class SchoolDataService {
     const response = await fetch(`${SCHOOL_HOMEPAGE_CALENDAR_URL}?${parameters.toString()}`, {
       headers: {
         Accept: 'text/html,application/xhtml+xml',
+        'User-Agent': 'jshsus-calendar-sync/1.0',
       },
       signal: AbortSignal.timeout(env.SCHOOL_DATA_REQUEST_TIMEOUT_MS),
     });
