@@ -140,6 +140,7 @@ services:
       DATABASE_URL: ${MIGRATION_DATABASE_URL:?MIGRATION_DATABASE_URL is required}
       DATABASE_SSL_MODE: ${DATABASE_SSL_MODE:-required}
       DATABASE_SSL_CA_PATH: ${DATABASE_SSL_CA_PATH:-}
+      RESET_DATABASE_ON_BASELINE_MISMATCH: ${RESET_DATABASE_ON_BASELINE_MISMATCH:-false}
       NODE_OPTIONS: --max-old-space-size=256
     extra_hosts:
       - host.docker.internal:host-gateway

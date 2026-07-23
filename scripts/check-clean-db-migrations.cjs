@@ -91,6 +91,19 @@ function main() {
   const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
   const databaseUrl = `mysql://${user}:${password}@127.0.0.1:${port}/${database}`;
 
+  console.log(`Checking baseline preflight on temporary database at 127.0.0.1:${port}...`);
+  const preflight = spawnSync(pnpm, ['--filter', '@jshsus/db', 'db:prepare-baseline'], {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      DATABASE_URL: databaseUrl,
+      DATABASE_SSL_MODE: 'disabled',
+    },
+  });
+  if (preflight.status !== 0) {
+    throw new Error(`Clean database baseline preflight failed with exit code ${preflight.status}.`);
+  }
+
   console.log(`Applying migrations to temporary database on 127.0.0.1:${port}...`);
   const result = spawnSync(pnpm, ['db:migrate'], {
     stdio: 'inherit',

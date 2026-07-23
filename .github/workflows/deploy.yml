@@ -340,6 +340,7 @@ jobs:
           set_env_value COGNITO_ADMIN_CLIENT_ID "$COGNITO_ADMIN_CLIENT_ID"
           set_env_value COGNITO_ADMIN_CLIENT_SECRET "$COGNITO_ADMIN_CLIENT_SECRET"
           set_env_value SENDON_API_KEY "$SENDON_API_KEY"
+          set_env_value RESET_DATABASE_ON_BASELINE_MISMATCH true
           set_optional_env_value SENDON_ACCOUNT_ID
           set_optional_env_value SENDON_KAKAO_SEND_PROFILE_ID
           set_optional_env_value SENDON_PASSWORD_RESET_TEMPLATE_ID
