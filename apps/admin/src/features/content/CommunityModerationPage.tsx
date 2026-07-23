@@ -192,7 +192,7 @@ export function CommunityModerationPage({
       {
         accessorKey: 'id',
         header: '번호',
-        cell: ({ row }) => row.original.publicNumber ?? row.original.id,
+        cell: ({ row }) => row.original.publicNumber,
         meta: { align: 'center', width: 72 },
       },
       {

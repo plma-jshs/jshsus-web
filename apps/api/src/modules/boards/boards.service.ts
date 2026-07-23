@@ -119,7 +119,7 @@ export class BoardsService {
       return {
         items: rows.map((row) => ({
           id: row.id,
-          publicNumber: row.publicNumber ?? row.id,
+          publicNumber: row.publicNumber,
           boardSlug: slug,
           title: row.title,
           authorName: row.isAnonymous
@@ -184,7 +184,7 @@ export class BoardsService {
       );
       return rows.map((row) => ({
         id: row.id,
-        publicNumber: row.publicNumber ?? row.id,
+        publicNumber: row.publicNumber,
         boardSlug: slug,
         title: row.title,
         content: row.content,
@@ -342,7 +342,7 @@ export class BoardsService {
 
       return {
         id: row.id,
-        publicNumber: row.publicNumber ?? row.id,
+        publicNumber: row.publicNumber,
         boardSlug: slug,
         title: row.title,
         content: row.content,

@@ -292,48 +292,6 @@ async function nextPostPublicNo(connection, boardId) {
   return Number(row?.value ?? 1);
 }
 
-async function renumberNoticesByPublishedDate(connection) {
-  await connection.execute(
-    `UPDATE notices n
-     INNER JOIN (
-       SELECT id, row_number() OVER (ORDER BY coalesce(published_at, created_at), id) AS next_public_no
-       FROM notices
-     ) ordered_notices ON ordered_notices.id = n.id
-     SET n.public_no = ordered_notices.next_public_no + 100000000`,
-  );
-  await connection.execute(
-    `UPDATE notices n
-     INNER JOIN (
-       SELECT id, row_number() OVER (ORDER BY coalesce(published_at, created_at), id) AS next_public_no
-       FROM notices
-     ) ordered_notices ON ordered_notices.id = n.id
-     SET n.public_no = ordered_notices.next_public_no`,
-  );
-}
-
-async function renumberBoardPostsByCreatedDate(connection, boardId) {
-  await connection.execute(
-    `UPDATE posts p
-     INNER JOIN (
-       SELECT id, row_number() OVER (ORDER BY created_at, id) AS next_public_no
-       FROM posts
-       WHERE board_id = ?
-     ) ordered_posts ON ordered_posts.id = p.id
-     SET p.public_no = ordered_posts.next_public_no + 100000000`,
-    [boardId],
-  );
-  await connection.execute(
-    `UPDATE posts p
-     INNER JOIN (
-       SELECT id, row_number() OVER (ORDER BY created_at, id) AS next_public_no
-       FROM posts
-       WHERE board_id = ?
-     ) ordered_posts ON ordered_posts.id = p.id
-     SET p.public_no = ordered_posts.next_public_no`,
-    [boardId],
-  );
-}
-
 async function ensureRole(connection, name, label) {
   await connection.execute(
     `INSERT INTO roles (name, label)
@@ -840,6 +798,7 @@ function parseNoticeDetail(html, url) {
   return {
     title,
     department: department || author || '공지',
+    author,
     content: serializeNoticeContent(contentDoc, plainText),
     publishedAt,
     viewCount,
@@ -869,13 +828,14 @@ async function importNotices(target) {
     const publicNo = await nextNoticePublicNo(target);
     await target.execute(
       `INSERT INTO notices
-        (public_no, title, content, department, visibility, pinned, published_at, view_count, created_at, updated_at)
-       VALUES (?, ?, ?, ?, 'public', 0, ?, ?, ?, ?)`,
+        (public_no, title, content, department, author_name, visibility, pinned, published_at, view_count, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'public', 0, ?, ?, ?, ?)`,
       [
         publicNo,
         detail.title,
         detail.content,
         detail.department.slice(0, 80),
+        detail.author.slice(0, 80) || null,
         detail.publishedAt,
         detail.viewCount,
         detail.publishedAt,
@@ -884,7 +844,6 @@ async function importNotices(target) {
     );
     imported += 1;
   }
-  await renumberNoticesByPublishedDate(target);
   return { imported, skipped, seen: ids.length };
 }
 
@@ -1085,7 +1044,6 @@ async function importBoardPosts(target) {
       }
     }
   }
-  await renumberBoardPostsByCreatedDate(target, board.id);
   return { imported, commentsImported, skipped, seen: entries.length };
 }
 

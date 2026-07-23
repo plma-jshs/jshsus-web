@@ -39,6 +39,7 @@ export const notices = mysqlTable(
     title: varchar('title', { length: 255 }).notNull(),
     content: longtext('content').notNull(),
     department: varchar('department', { length: 80 }),
+    authorName: varchar('author_name', { length: 80 }),
     visibility: visibilityEnum.notNull().default('public'),
     pinned: boolean('pinned').notNull().default(false),
     publishedAt: datetime('published_at', { mode: 'date', fsp: 3 }),

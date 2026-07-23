@@ -75,8 +75,10 @@ describe('NoticesService public author display', () => {
       offset: vi.fn().mockResolvedValue([
         {
           id: 1,
+          publicNumber: 1,
           title: '방송 안내',
           department: '방송부',
+          pinned: false,
           publishedAt: new Date('2026-07-15T00:00:00.000Z'),
           viewCount: 3,
         },

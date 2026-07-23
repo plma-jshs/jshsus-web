@@ -155,29 +155,6 @@ async function nextPostPublicNo(connection, boardId) {
   return Number(row?.value ?? 1);
 }
 
-async function renumberBoardPostsByCreatedDate(connection, boardId) {
-  await connection.execute(
-    `UPDATE posts p
-     INNER JOIN (
-       SELECT id, row_number() OVER (ORDER BY created_at, id) AS next_public_no
-       FROM posts
-       WHERE board_id = ?
-     ) ordered_posts ON ordered_posts.id = p.id
-     SET p.public_no = ordered_posts.next_public_no + 100000000`,
-    [boardId],
-  );
-  await connection.execute(
-    `UPDATE posts p
-     INNER JOIN (
-       SELECT id, row_number() OVER (ORDER BY created_at, id) AS next_public_no
-       FROM posts
-       WHERE board_id = ?
-     ) ordered_posts ON ordered_posts.id = p.id
-     SET p.public_no = ordered_posts.next_public_no`,
-    [boardId],
-  );
-}
-
 function loadLocalEnv() {
   const envPath = resolve(ROOT_DIR, '.env');
   if (!existsSync(envPath)) return;
@@ -332,8 +309,6 @@ async function upsertLegacyJbsVideos(connection) {
       [result.insertId, video.youtubeVideoId, canonicalUrl, video.createdAt, video.createdAt],
     );
   }
-
-  await renumberBoardPostsByCreatedDate(connection, board.id);
 }
 
 async function upsertActiveSchoolYear(connection, schoolYear) {

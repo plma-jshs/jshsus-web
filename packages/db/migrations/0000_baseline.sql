@@ -1,3 +1,18 @@
+CREATE TABLE `account_activation_codes` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`identity_type` enum('student','staff') NOT NULL,
+	`identity_number` int NOT NULL,
+	`code_hash` varchar(128) NOT NULL,
+	`attempt_count` int NOT NULL DEFAULT 0,
+	`issued_by_id` int,
+	`used_by_id` int,
+	`used_at` datetime(3),
+	`created_at` datetime(3) NOT NULL DEFAULT (now(3)),
+	`updated_at` datetime(3) NOT NULL DEFAULT (now(3)),
+	CONSTRAINT `account_activation_codes_id` PRIMARY KEY(`id`),
+	CONSTRAINT `account_activation_identity_idx` UNIQUE(`identity_type`,`identity_number`)
+);
+--> statement-breakpoint
 CREATE TABLE `audit_logs` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`actor_id` int,
@@ -75,7 +90,7 @@ CREATE TABLE `user_roles` (
 --> statement-breakpoint
 CREATE TABLE `users` (
 	`id` int AUTO_INCREMENT NOT NULL,
-	`student_no` int NOT NULL,
+	`student_no` int,
 	`name` varchar(64) NOT NULL,
 	`nickname` varchar(16),
 	`grade` int,
@@ -176,9 +191,11 @@ CREATE TABLE `lost_items` (
 --> statement-breakpoint
 CREATE TABLE `notices` (
 	`id` int AUTO_INCREMENT NOT NULL,
+	`public_no` int NOT NULL,
 	`title` varchar(255) NOT NULL,
 	`content` longtext NOT NULL,
 	`department` varchar(80),
+	`author_name` varchar(80),
 	`visibility` enum('public','members','staff','admin') NOT NULL DEFAULT 'public',
 	`pinned` boolean NOT NULL DEFAULT false,
 	`published_at` datetime(3),
@@ -186,7 +203,8 @@ CREATE TABLE `notices` (
 	`view_count` int NOT NULL DEFAULT 0,
 	`created_at` datetime(3) NOT NULL DEFAULT (now(3)),
 	`updated_at` datetime(3) NOT NULL DEFAULT (now(3)),
-	CONSTRAINT `notices_id` PRIMARY KEY(`id`)
+	CONSTRAINT `notices_id` PRIMARY KEY(`id`),
+	CONSTRAINT `notices_public_no_idx` UNIQUE(`public_no`)
 );
 --> statement-breakpoint
 CREATE TABLE `petition_answers` (
@@ -229,8 +247,19 @@ CREATE TABLE `post_likes` (
 	CONSTRAINT `post_likes_post_id_user_id_pk` PRIMARY KEY(`post_id`,`user_id`)
 );
 --> statement-breakpoint
+CREATE TABLE `post_poll_votes` (
+	`post_id` int NOT NULL,
+	`poll_id` varchar(80) NOT NULL,
+	`option_id` varchar(80) NOT NULL,
+	`user_id` int NOT NULL,
+	`created_at` datetime(3) NOT NULL DEFAULT (now(3)),
+	`updated_at` datetime(3) NOT NULL DEFAULT (now(3)),
+	CONSTRAINT `post_poll_votes_post_id_poll_id_user_id_pk` PRIMARY KEY(`post_id`,`poll_id`,`user_id`)
+);
+--> statement-breakpoint
 CREATE TABLE `posts` (
 	`id` int AUTO_INCREMENT NOT NULL,
+	`public_no` int NOT NULL,
 	`board_id` int NOT NULL,
 	`author_id` int,
 	`title` varchar(255) NOT NULL,
@@ -242,7 +271,8 @@ CREATE TABLE `posts` (
 	`view_count` int NOT NULL DEFAULT 0,
 	`created_at` datetime(3) NOT NULL DEFAULT (now(3)),
 	`updated_at` datetime(3) NOT NULL DEFAULT (now(3)),
-	CONSTRAINT `posts_id` PRIMARY KEY(`id`)
+	CONSTRAINT `posts_id` PRIMARY KEY(`id`),
+	CONSTRAINT `posts_board_public_no_idx` UNIQUE(`board_id`,`public_no`)
 );
 --> statement-breakpoint
 CREATE TABLE `reactions` (
@@ -262,7 +292,7 @@ CREATE TABLE `reports` (
 	`dedupe_key` varchar(190),
 	`reason` varchar(120) NOT NULL,
 	`detail` text,
-	`status` varchar(32) NOT NULL DEFAULT 'open',
+	`status` varchar(32) NOT NULL DEFAULT 'reviewing',
 	`created_at` datetime(3) NOT NULL DEFAULT (now(3)),
 	`updated_at` datetime(3) NOT NULL DEFAULT (now(3)),
 	CONSTRAINT `reports_id` PRIMARY KEY(`id`),
@@ -607,6 +637,8 @@ CREATE TABLE `school_events` (
 	CONSTRAINT `school_events_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
+ALTER TABLE `account_activation_codes` ADD CONSTRAINT `account_activation_codes_issued_by_id_users_id_fk` FOREIGN KEY (`issued_by_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `account_activation_codes` ADD CONSTRAINT `account_activation_codes_used_by_id_users_id_fk` FOREIGN KEY (`used_by_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `audit_logs` ADD CONSTRAINT `audit_logs_actor_id_users_id_fk` FOREIGN KEY (`actor_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `auth_accounts` ADD CONSTRAINT `auth_accounts_user_id_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `role_permissions` ADD CONSTRAINT `role_permissions_role_id_roles_id_fk` FOREIGN KEY (`role_id`) REFERENCES `roles`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -632,6 +664,8 @@ ALTER TABLE `petition_participants` ADD CONSTRAINT `petition_participants_user_i
 ALTER TABLE `petitions` ADD CONSTRAINT `petitions_author_id_users_id_fk` FOREIGN KEY (`author_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `post_likes` ADD CONSTRAINT `post_likes_post_id_posts_id_fk` FOREIGN KEY (`post_id`) REFERENCES `posts`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `post_likes` ADD CONSTRAINT `post_likes_user_id_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `post_poll_votes` ADD CONSTRAINT `post_poll_votes_post_id_posts_id_fk` FOREIGN KEY (`post_id`) REFERENCES `posts`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `post_poll_votes` ADD CONSTRAINT `post_poll_votes_user_id_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `posts` ADD CONSTRAINT `posts_board_id_boards_id_fk` FOREIGN KEY (`board_id`) REFERENCES `boards`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `posts` ADD CONSTRAINT `posts_author_id_users_id_fk` FOREIGN KEY (`author_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `reactions` ADD CONSTRAINT `reactions_user_id_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -671,6 +705,8 @@ ALTER TABLE `student_enrollments` ADD CONSTRAINT `student_enrollments_student_id
 ALTER TABLE `student_enrollments` ADD CONSTRAINT `student_enrollments_school_year_school_years_year_fk` FOREIGN KEY (`school_year`) REFERENCES `school_years`(`year`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `students` ADD CONSTRAINT `students_user_id_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `school_events` ADD CONSTRAINT `school_events_created_by_id_users_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `users`(`id`) ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX `account_activation_issuer_idx` ON `account_activation_codes` (`issued_by_id`);--> statement-breakpoint
+CREATE INDEX `account_activation_used_idx` ON `account_activation_codes` (`used_at`);--> statement-breakpoint
 CREATE INDEX `audit_logs_actor_idx` ON `audit_logs` (`actor_id`);--> statement-breakpoint
 CREATE INDEX `audit_logs_target_idx` ON `audit_logs` (`target_type`,`target_id`);--> statement-breakpoint
 CREATE INDEX `auth_accounts_user_provider_idx` ON `auth_accounts` (`user_id`,`provider`);--> statement-breakpoint
@@ -684,6 +720,8 @@ CREATE INDEX `lost_items_status_idx` ON `lost_items` (`lost_item_status`,`create
 CREATE INDEX `notices_published_idx` ON `notices` (`published_at`,`pinned`);--> statement-breakpoint
 CREATE INDEX `petitions_status_ends_idx` ON `petitions` (`petition_status`,`ends_at`);--> statement-breakpoint
 CREATE INDEX `post_likes_user_idx` ON `post_likes` (`user_id`);--> statement-breakpoint
+CREATE INDEX `post_poll_votes_option_idx` ON `post_poll_votes` (`post_id`,`poll_id`,`option_id`);--> statement-breakpoint
+CREATE INDEX `post_poll_votes_user_idx` ON `post_poll_votes` (`user_id`);--> statement-breakpoint
 CREATE INDEX `posts_board_created_idx` ON `posts` (`board_id`,`created_at`);--> statement-breakpoint
 CREATE INDEX `posts_board_status_created_idx` ON `posts` (`board_id`,`post_status`,`created_at`);--> statement-breakpoint
 CREATE INDEX `reports_target_idx` ON `reports` (`report_target`,`target_id`);--> statement-breakpoint

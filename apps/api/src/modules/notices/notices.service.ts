@@ -77,7 +77,7 @@ export class NoticesService {
       return {
         items: items.map((row) => ({
           id: row.id,
-          publicNumber: row.publicNumber ?? row.id,
+          publicNumber: row.publicNumber,
           title: row.title,
           department: row.department ?? '학교',
           pinned: row.pinned ?? false,
@@ -103,11 +103,14 @@ export class NoticesService {
           title: schema.notices.title,
           content: schema.notices.content,
           department: schema.notices.department,
+          storedAuthorName: schema.notices.authorName,
+          accountAuthorName: schema.users.name,
           pinned: schema.notices.pinned,
           publishedAt: schema.notices.publishedAt,
           viewCount: schema.notices.viewCount,
         })
         .from(schema.notices)
+        .leftJoin(schema.users, eq(schema.notices.authorId, schema.users.id))
         .where(
           and(
             eq(schema.notices.id, id),
@@ -126,10 +129,11 @@ export class NoticesService {
 
       return {
         id: row.id,
-        publicNumber: row.publicNumber ?? row.id,
+        publicNumber: row.publicNumber,
         title: row.title,
         content: row.content,
         department: row.department ?? '학교',
+        authorName: row.storedAuthorName ?? row.accountAuthorName ?? undefined,
         pinned: row.pinned,
         publishedAt: toIso(row.publishedAt),
         viewCount: row.viewCount + 1,
@@ -174,7 +178,7 @@ export class NoticesService {
       );
       return rows.map((row) => ({
         id: row.id,
-        publicNumber: row.publicNumber ?? row.id,
+        publicNumber: row.publicNumber,
         title: row.title,
         content: row.content,
         department: row.department ?? '학교',

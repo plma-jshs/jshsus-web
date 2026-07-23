@@ -1,9 +1,149 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "25b675ff-78d2-4639-b247-5921a3c3349c",
+  "id": "5afb845e-0128-42dc-9edd-7778a76b71cc",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
+    "account_activation_codes": {
+      "name": "account_activation_codes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "identity_type": {
+          "name": "identity_type",
+          "type": "enum('student','staff')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "identity_number": {
+          "name": "identity_number",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "code_hash": {
+          "name": "code_hash",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attempt_count": {
+          "name": "attempt_count",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "issued_by_id": {
+          "name": "issued_by_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "used_by_id": {
+          "name": "used_by_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "used_at": {
+          "name": "used_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {
+        "account_activation_identity_idx": {
+          "name": "account_activation_identity_idx",
+          "columns": [
+            "identity_type",
+            "identity_number"
+          ],
+          "isUnique": true
+        },
+        "account_activation_issuer_idx": {
+          "name": "account_activation_issuer_idx",
+          "columns": [
+            "issued_by_id"
+          ],
+          "isUnique": false
+        },
+        "account_activation_used_idx": {
+          "name": "account_activation_used_idx",
+          "columns": [
+            "used_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "account_activation_codes_issued_by_id_users_id_fk": {
+          "name": "account_activation_codes_issued_by_id_users_id_fk",
+          "tableFrom": "account_activation_codes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "issued_by_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "account_activation_codes_used_by_id_users_id_fk": {
+          "name": "account_activation_codes_used_by_id_users_id_fk",
+          "tableFrom": "account_activation_codes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "used_by_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "account_activation_codes_id": {
+          "name": "account_activation_codes_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
     "audit_logs": {
       "name": "audit_logs",
       "columns": {
@@ -609,7 +749,7 @@
           "name": "student_no",
           "type": "int",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "name": {
@@ -1439,6 +1579,13 @@
           "notNull": true,
           "autoincrement": true
         },
+        "public_no": {
+          "name": "public_no",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "title": {
           "name": "title",
           "type": "varchar(255)",
@@ -1455,6 +1602,13 @@
         },
         "department": {
           "name": "department",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "author_name": {
+          "name": "author_name",
           "type": "varchar(80)",
           "primaryKey": false,
           "notNull": false,
@@ -1523,6 +1677,13 @@
             "pinned"
           ],
           "isUnique": false
+        },
+        "notices_public_no_idx": {
+          "name": "notices_public_no_idx",
+          "columns": [
+            "public_no"
+          ],
+          "isUnique": true
         }
       },
       "foreignKeys": {
@@ -1910,6 +2071,113 @@
       "uniqueConstraints": {},
       "checkConstraint": {}
     },
+    "post_poll_votes": {
+      "name": "post_poll_votes",
+      "columns": {
+        "post_id": {
+          "name": "post_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "poll_id": {
+          "name": "poll_id",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "option_id": {
+          "name": "option_id",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now(3))"
+        }
+      },
+      "indexes": {
+        "post_poll_votes_option_idx": {
+          "name": "post_poll_votes_option_idx",
+          "columns": [
+            "post_id",
+            "poll_id",
+            "option_id"
+          ],
+          "isUnique": false
+        },
+        "post_poll_votes_user_idx": {
+          "name": "post_poll_votes_user_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "post_poll_votes_post_id_posts_id_fk": {
+          "name": "post_poll_votes_post_id_posts_id_fk",
+          "tableFrom": "post_poll_votes",
+          "tableTo": "posts",
+          "columnsFrom": [
+            "post_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "post_poll_votes_user_id_users_id_fk": {
+          "name": "post_poll_votes_user_id_users_id_fk",
+          "tableFrom": "post_poll_votes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "post_poll_votes_post_id_poll_id_user_id_pk": {
+          "name": "post_poll_votes_post_id_poll_id_user_id_pk",
+          "columns": [
+            "post_id",
+            "poll_id",
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
     "posts": {
       "name": "posts",
       "columns": {
@@ -1919,6 +2187,13 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": true
+        },
+        "public_no": {
+          "name": "public_no",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
         "board_id": {
           "name": "board_id",
@@ -2012,6 +2287,14 @@
             "created_at"
           ],
           "isUnique": false
+        },
+        "posts_board_public_no_idx": {
+          "name": "posts_board_public_no_idx",
+          "columns": [
+            "board_id",
+            "public_no"
+          ],
+          "isUnique": true
         },
         "posts_board_status_created_idx": {
           "name": "posts_board_status_created_idx",
@@ -2190,7 +2473,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'open'"
+          "default": "'reviewing'"
         },
         "created_at": {
           "name": "created_at",

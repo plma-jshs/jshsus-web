@@ -305,16 +305,12 @@ function CalendarCard({
   initialFrom,
   initialTo,
   initialAvailability,
-  initialHomepageAvailability,
-  initialSchoolEventsAvailability,
   onRetryInitial,
 }: {
   initialEvents: AcademicEvent[];
   initialFrom: string;
   initialTo: string;
   initialAvailability: SchoolDataAvailability;
-  initialHomepageAvailability: SchoolDataSourceAvailability;
-  initialSchoolEventsAvailability: SchoolDataSourceAvailability;
   onRetryInitial: () => void;
 }) {
   const [initialYear, initialMonth] = initialFrom.split('-').map(Number);
@@ -337,21 +333,6 @@ function CalendarCard({
     availability: usesInitialData ? initialAvailability : calendarQuery.data?.availability,
   });
   const hasDataError = cardState === 'error' || cardState === 'unavailable';
-  const hasPartialData = cardState === 'partial';
-  const homepageAvailability = usesInitialData
-    ? initialHomepageAvailability
-    : calendarQuery.data?.homepageAvailable
-      ? 'available'
-      : 'unavailable';
-  const schoolEventsAvailability = usesInitialData
-    ? initialSchoolEventsAvailability
-    : calendarQuery.data?.schoolEventsAvailable
-      ? 'available'
-      : 'unavailable';
-  const unavailableCalendarSources = [
-    homepageAvailability === 'unavailable' ? '학교 홈페이지 학사일정' : null,
-    schoolEventsAvailability === 'unavailable' ? '학교 등록 일정' : null,
-  ].filter((source): source is string => Boolean(source));
   const retry = () => {
     if (usesInitialData) onRetryInitial();
     else void calendarQuery.refetch();
@@ -398,16 +379,9 @@ function CalendarCard({
         <span className="home-card__meta">{visibleMonth.year}년</span>
       </header>
 
-      {hasDataError || hasPartialData ? (
-        <div
-          className={`home-inline-error${hasPartialData ? ' home-inline-error--partial' : ''}`}
-          role={hasDataError ? 'alert' : 'status'}
-        >
-          <span>
-            {hasPartialData
-              ? `${unavailableCalendarSources.join('·')} 정보를 불러오지 못해 확인된 일정만 표시합니다.`
-              : '선택한 달의 일정 정보를 확인할 수 없습니다.'}
-          </span>
+      {hasDataError ? (
+        <div className="home-inline-error" role="alert">
+          <span>선택한 달의 일정 정보를 확인할 수 없습니다.</span>
           <button type="button" onClick={retry}>
             다시 시도
           </button>
@@ -562,8 +536,6 @@ export function DashboardPage() {
           initialFrom={dashboard.schoolData.scheduleFrom}
           initialTo={dashboard.schoolData.scheduleTo}
           initialAvailability={dashboard.schoolData.calendarAvailability}
-          initialHomepageAvailability={dashboard.schoolData.homepageCalendarAvailability}
-          initialSchoolEventsAvailability={dashboard.schoolData.schoolEventsAvailability}
           onRetryInitial={() => void dashboardQuery.refetch()}
         />
       </div>

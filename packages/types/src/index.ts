@@ -26,7 +26,7 @@ export type NotificationListResponse = {
 
 export type DashboardNotice = {
   id: number;
-  publicNumber?: number;
+  publicNumber: number;
   title: string;
   department: string;
   pinned: boolean;
@@ -45,7 +45,7 @@ export type ContentSearchField = 'title_content' | 'title' | 'author';
 
 export type NoticeListItem = {
   id: number;
-  publicNumber?: number;
+  publicNumber: number;
   title: string;
   department: string;
   pinned: boolean;
@@ -55,6 +55,7 @@ export type NoticeListItem = {
 
 export type NoticeDetail = NoticeListItem & {
   content: string;
+  authorName?: string;
   attachments: UploadedFileSummary[];
 };
 
@@ -135,7 +136,7 @@ export type LostItemDetail = Omit<LostItemSummary, 'attachments'> & {
 
 export type BoardPostSummary = {
   id: number;
-  publicNumber?: number;
+  publicNumber: number;
   boardSlug: string;
   title: string;
   content: string;
@@ -154,7 +155,7 @@ export type PostStatus = 'draft' | 'published';
 
 export type BoardPostListItem = {
   id: number;
-  publicNumber?: number;
+  publicNumber: number;
   boardSlug: string;
   title: string;
   authorName?: string;

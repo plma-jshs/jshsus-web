@@ -112,13 +112,16 @@ export function NoticeDetailPage() {
       !inlineImageSources.has(file.inlineUrl) &&
       !inlineImageSources.has(`/api/files/${file.id}/content`),
   );
+  const displayAuthor = notice.authorName
+    ? `${notice.department} (작성자: ${notice.authorName})`
+    : notice.department;
 
   return (
     <PageScaffold breadcrumbs={detailBreadcrumbs('notices')} width="reading" variant="document">
       <article className="reading-surface">
         <ContentDetailHeader
           title={notice.title}
-          author={notice.department}
+          author={displayAuthor}
           createdAt={notice.publishedAt}
           actions={
             canManage ? (

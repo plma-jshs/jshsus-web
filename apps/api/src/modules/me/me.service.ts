@@ -76,35 +76,25 @@ export class MeService {
     }
 
     return this.database.query('me.status', async (db) => {
-      const studentColumns = {
-        id: schema.students.id,
-        userId: schema.students.userId,
-        studentNo: schema.students.studentNo,
-        name: schema.students.name,
-        nickname: schema.users.nickname,
-        grade: schema.students.grade,
-        classNo: schema.students.classNo,
-        number: schema.students.number,
-        currentPoint: schema.students.currentPoint,
-      };
-      const studentByNo = session.stuid
-        ? await db
-            .select(studentColumns)
-            .from(schema.students)
-            .leftJoin(schema.users, eq(schema.students.userId, schema.users.id))
-            .where(eq(schema.students.studentNo, session.stuid))
-            .limit(1)
-        : [];
-      const studentByUser =
-        studentByNo.length === 0 && session.userId && session.userId > 0
+      const [student] =
+        session.userId && session.userId > 0
           ? await db
-              .select(studentColumns)
+              .select({
+                id: schema.students.id,
+                userId: schema.students.userId,
+                studentNo: schema.students.studentNo,
+                name: schema.students.name,
+                nickname: schema.users.nickname,
+                grade: schema.students.grade,
+                classNo: schema.students.classNo,
+                number: schema.students.number,
+                currentPoint: schema.students.currentPoint,
+              })
               .from(schema.students)
               .leftJoin(schema.users, eq(schema.students.userId, schema.users.id))
               .where(eq(schema.students.userId, session.userId))
               .limit(1)
           : [];
-      const student = studentByNo[0] ?? studentByUser[0];
 
       if (!student) {
         throw new BadRequestException('Student profile is not linked to this session.');
