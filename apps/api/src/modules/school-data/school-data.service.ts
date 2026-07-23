@@ -13,10 +13,12 @@ import { z } from 'zod';
 import { env } from '../../shared/config/env';
 import { DatabaseService } from '../database/database.service';
 import { RedisService } from '../redis/redis.service';
+import { schoolHomepageCalendarSnapshot } from './school-homepage-calendar.snapshot';
 
 const NEIS_BASE_URL = 'https://open.neis.go.kr/hub';
 const SCHOOL_HOMEPAGE_CALENDAR_URL =
   'https://jeonnam-sh.jge.hs.kr/chonnam-sh_hs/schl/sv/schdulView/schdulCalendarView.do';
+const SCHOOL_HOMEPAGE_CALENDAR_MENU_ID = '52322';
 const KOREA_TIME_ZONE = 'Asia/Seoul';
 const MAX_MANAGED_RANGE_DAYS = 366;
 const MAX_PUBLIC_RANGE_DAYS = 93;
@@ -337,6 +339,31 @@ function monthKeysBetween(from: string, to: string): string[] {
     current.setUTCMonth(current.getUTCMonth() + 1);
   }
   return keys;
+}
+
+function monthRangeFromKey(yearMonth: string): { from: string; to: string } {
+  return monthRange(`${yearMonth.slice(0, 4)}-${yearMonth.slice(4, 6)}-01`);
+}
+
+function academicEventOverlapsRange(event: AcademicEvent, from: string, to: string): boolean {
+  const startsAt = formatKoreanDate(new Date(event.startsAt));
+  const endsAt = formatKoreanDate(new Date(event.endsAt));
+  return startsAt <= to && endsAt >= from;
+}
+
+function schoolHomepageSnapshotEvents(
+  from: string,
+  to: string,
+  yearMonths = monthKeysBetween(from, to),
+): AcademicEvent[] {
+  const ranges = yearMonths.map(monthRangeFromKey);
+  return schoolHomepageCalendarSnapshot
+    .filter(
+      (event) =>
+        academicEventOverlapsRange(event, from, to) &&
+        ranges.some((range) => academicEventOverlapsRange(event, range.from, range.to)),
+    )
+    .map((event) => ({ ...event }));
 }
 
 function parseDishes(value: string): string[] {
@@ -719,8 +746,9 @@ export class SchoolDataService {
   }
 
   private async loadSchoolHomepageCalendar(from: string, to: string): Promise<AcademicEvent[]> {
+    const requestedMonths = monthKeysBetween(from, to);
     const loadedPages = await Promise.all(
-      monthKeysBetween(from, to).map(async (yearMonth) => {
+      requestedMonths.map(async (yearMonth) => {
         try {
           return { html: await this.requestSchoolHomepageCalendar(yearMonth), yearMonth };
         } catch (error) {
@@ -734,6 +762,11 @@ export class SchoolDataService {
       (page): page is { html: string; yearMonth: string } => page !== null,
     );
     if (htmlPages.length === 0) {
+      const snapshotEvents = schoolHomepageSnapshotEvents(from, to, requestedMonths);
+      if (snapshotEvents.length > 0) {
+        this.logger.warn(`Using bundled school homepage calendar snapshot for ${from} to ${to}.`);
+        return snapshotEvents;
+      }
       throw new Error('School homepage calendar could not be loaded for any requested month.');
     }
     const eventsById = new Map<string, AcademicEvent>();
@@ -742,6 +775,13 @@ export class SchoolDataService {
         const startsAt = formatKoreanDate(new Date(event.startsAt));
         const endsAt = formatKoreanDate(new Date(event.endsAt));
         if (startsAt > to || endsAt < from) continue;
+        eventsById.set(event.id, event);
+      }
+    }
+    const loadedMonths = new Set(htmlPages.map((page) => page.yearMonth));
+    const missingMonths = requestedMonths.filter((yearMonth) => !loadedMonths.has(yearMonth));
+    if (missingMonths.length > 0) {
+      for (const event of schoolHomepageSnapshotEvents(from, to, missingMonths)) {
         eventsById.set(event.id, event);
       }
     }
@@ -754,6 +794,7 @@ export class SchoolDataService {
 
   private async requestSchoolHomepageCalendar(yearMonth: string): Promise<string> {
     const parameters = new URLSearchParams({
+      mi: SCHOOL_HOMEPAGE_CALENDAR_MENU_ID,
       selectYearMonth: yearMonth,
       selectType: 'haksa',
       sysId: 'chonnam-sh_hs',

@@ -200,6 +200,7 @@ describe('SchoolDataService', () => {
     expect(result.events.map((event) => event.source)).toEqual(['school', 'school']);
     const requestedUrls = fetchUrls(fetchMock);
     expect(requestedUrls.every((url) => !url.includes('/hub/SchoolSchedule'))).toBe(true);
+    expect(requestedUrls[0]).toContain('mi=52322');
     expect(requestedUrls[0]).toContain('selectYearMonth=202606');
   });
 
@@ -318,7 +319,7 @@ describe('SchoolDataService', () => {
     });
   });
 
-  it('does not fall back to NEIS schedules when the school homepage calendar is unavailable', async () => {
+  it('uses the bundled homepage snapshot instead of NEIS schedules when live homepage access is unavailable', async () => {
     const fetchMock = vi.fn().mockRejectedValue(new Error('homepage unavailable'));
     vi.stubGlobal('fetch', fetchMock);
     const service = createService();
@@ -326,10 +327,19 @@ describe('SchoolDataService', () => {
 
     const result = await service.getCalendar('2026-07-01', '2026-07-31', fixedNow);
 
-    expect(result.events).toEqual([]);
-    expect(result.homepageAvailable).toBe(false);
+    expect(result.events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: '방과후 수업 시작 1차',
+          startsAt: '2026-07-21T00:00:00.000+09:00',
+          endsAt: '2026-07-24T23:59:59.999+09:00',
+          source: 'school',
+        }),
+      ]),
+    );
+    expect(result.homepageAvailable).toBe(true);
     expect(result.schoolEventsAvailable).toBe(true);
-    expect(result.availability).toBe('partial');
+    expect(result.availability).toBe('available');
     const requestedUrls = fetchUrls(fetchMock);
     expect(requestedUrls.every((url) => !url.includes('/hub/SchoolSchedule'))).toBe(true);
   });
