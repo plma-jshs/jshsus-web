@@ -309,11 +309,7 @@ export const api = {
       method: 'POST',
       body: input,
     }),
-  issueStudentActivationBulk: (input: {
-    schoolYear?: number;
-    grade?: number;
-    classNo?: number;
-  }) =>
+  issueStudentActivationBulk: (input: { schoolYear?: number; grade?: number; classNo?: number }) =>
     request<AccountActivationBulkIssueResult>('/api/admin/account-activations/bulk', {
       method: 'POST',
       body: input,
@@ -374,7 +370,11 @@ export const api = {
       method: 'POST',
       body: input,
     }),
-  importSchoolEventsJson: (input: { fileName?: string; replaceRange: boolean; events: unknown[] }) =>
+  importSchoolEventsJson: (input: {
+    fileName?: string;
+    replaceRange: boolean;
+    events: unknown[];
+  }) =>
     request<SchoolEventImportResult>('/api/admin/school-events/import-json', {
       method: 'POST',
       body: input,

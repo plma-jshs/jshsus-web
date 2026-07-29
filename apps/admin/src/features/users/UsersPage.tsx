@@ -449,7 +449,8 @@ export function UsersPage() {
         tone: 'success',
       });
     },
-    onError: () => showToast({ title: '학생 인증코드를 일괄 발급하지 못했습니다.', tone: 'danger' }),
+    onError: () =>
+      showToast({ title: '학생 인증코드를 일괄 발급하지 못했습니다.', tone: 'danger' }),
   });
   const updateUserStatus = useMutation({
     mutationFn: ({

@@ -302,9 +302,7 @@ const basicHtmlEntities: Record<string, string> = {
 
 function decodeBasicEntities(value: string): string {
   return value
-    .replace(/&#x([0-9a-f]+);?/gi, (_, code: string) =>
-      String.fromCodePoint(parseInt(code, 16)),
-    )
+    .replace(/&#x([0-9a-f]+);?/gi, (_, code: string) => String.fromCodePoint(parseInt(code, 16)))
     .replace(/&#(\d+);?/g, (_, code: string) => String.fromCodePoint(Number(code)))
     .replace(/&([a-z][a-z0-9]+);?/gi, (match, name: string) => {
       return basicHtmlEntities[name.toLowerCase()] ?? match;
@@ -421,9 +419,7 @@ export class SchoolDataService {
     const { from, to } = parsed.data;
     assertPublicCalendarWindow(from, to, now);
     const custom = await this.safeListManagedEvents(from, to, false);
-    const events = custom.value.sort((left, right) =>
-      left.startsAt.localeCompare(right.startsAt),
-    );
+    const events = custom.value.sort((left, right) => left.startsAt.localeCompare(right.startsAt));
     return {
       from,
       to,
@@ -590,10 +586,7 @@ export class SchoolDataService {
     const values = parsed.data.events.map((event) => this.toEventValues(event));
     const range = values.reduce(
       (current, event) => ({
-        from:
-          current.from.getTime() <= event.startsAt.getTime()
-            ? current.from
-            : event.startsAt,
+        from: current.from.getTime() <= event.startsAt.getTime() ? current.from : event.startsAt,
         to: current.to.getTime() >= event.endsAt.getTime() ? current.to : event.endsAt,
       }),
       { from: values[0]!.startsAt, to: values[0]!.endsAt },
@@ -606,11 +599,21 @@ export class SchoolDataService {
         const [countRow] = await tx
           .select({ total: sql<number>`cast(count(*) as unsigned)`.mapWith(Number) })
           .from(schema.schoolEvents)
-          .where(and(lte(schema.schoolEvents.startsAt, range.to), gte(schema.schoolEvents.endsAt, range.from)));
+          .where(
+            and(
+              lte(schema.schoolEvents.startsAt, range.to),
+              gte(schema.schoolEvents.endsAt, range.from),
+            ),
+          );
         replacedCount = countRow?.total ?? 0;
         await tx
           .delete(schema.schoolEvents)
-          .where(and(lte(schema.schoolEvents.startsAt, range.to), gte(schema.schoolEvents.endsAt, range.from)));
+          .where(
+            and(
+              lte(schema.schoolEvents.startsAt, range.to),
+              gte(schema.schoolEvents.endsAt, range.from),
+            ),
+          );
       }
 
       await tx.insert(schema.schoolEvents).values(
@@ -629,7 +632,8 @@ export class SchoolDataService {
       actorId,
       action: parsed.data.replaceRange ? 'school-event.import.replace' : 'school-event.import',
       targetType: 'school_events',
-      targetId: parsed.data.fileName ?? `${formatKoreanDate(range.from)}:${formatKoreanDate(range.to)}`,
+      targetId:
+        parsed.data.fileName ?? `${formatKoreanDate(range.from)}:${formatKoreanDate(range.to)}`,
     });
 
     return {

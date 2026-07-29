@@ -1,16 +1,7 @@
 import type { ChangeEvent, FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  Pencil,
-  Plus,
-  Trash2,
-  Upload,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, EyeOff, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { Dialog, Drawer, RowActionButton, RowActions, useToast } from '../../components/ui';
 import {
   api,
@@ -491,11 +482,7 @@ export function SchoolEventsPage() {
                 >
                   {importJsonMutation.isPending ? '반영 중' : '반영'}
                 </button>
-                <button
-                  className="quiet-button"
-                  type="button"
-                  onClick={() => setJsonImport(null)}
-                >
+                <button className="quiet-button" type="button" onClick={() => setJsonImport(null)}>
                   취소
                 </button>
               </>
