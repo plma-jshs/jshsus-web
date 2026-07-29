@@ -4,13 +4,19 @@ const mysql = require('mysql2/promise');
 const {
   AdminCreateUserCommand,
   AdminGetUserCommand,
+  AdminUpdateUserAttributesCommand,
   CognitoIdentityProviderClient,
   DescribeUserPoolCommand,
+  ListUsersCommand,
 } = require('@aws-sdk/client-cognito-identity-provider');
 const { seedConnectionOptions } = require('./seed-connection.cjs');
 const {
   TEST_STUDENT_NO,
+  STUDENT_NUMBER_ATTRIBUTE,
+  attributesToMap,
   canonicalUsername,
+  generateTemporaryPassword,
+  isLegacyBridgeCandidate,
   parseArgs,
   safeErrorName,
   safeErrorSummary,
@@ -35,7 +41,8 @@ Options:
   --apply                     Create Cognito users and link their sub values
   --confirm-pool-id <id>      Required with --apply; must exactly match COGNITO_USER_POOL_ID
   --temporary-password-env <name>
-                              Read a single pilot user's temporary password from this env var
+                              Optional single-student pilot password. Bulk runs generate a
+                              different unrecoverable temporary password for every new user.
   --help                      Show this help
 
 Required environment:
@@ -43,8 +50,10 @@ Required environment:
 
 AWS credentials use the standard SDK provider chain, including AWS_PROFILE.
 The credential principal must be allowed to call cognito-idp:DescribeUserPool
-for preflight validation and AdminGetUser/AdminCreateUser for pilot provisioning.
-Bulk apply is intentionally blocked until an encrypted credential-distribution process exists.
+for preflight validation and AdminGetUser/ListUsers/AdminCreateUser/
+AdminUpdateUserAttributes for provisioning.
+Bulk-created users receive random suppressed temporary passwords and complete account
+activation through the existing activation-code flow; no password file is produced.
 Temporary passwords are never printed or persisted by this command.`);
 }
 
@@ -63,17 +72,12 @@ function readConfig(environment, options) {
     );
   }
 
-  if (options.apply && options.studentNo == null) {
-    throw new Error(
-      'Bulk apply is disabled until encrypted temporary-password distribution is implemented.',
-    );
-  }
-  if (options.apply && !options.temporaryPasswordEnv) {
-    throw new Error('--apply requires --temporary-password-env for the single pilot account.');
+  if (options.temporaryPasswordEnv && options.studentNo == null) {
+    throw new Error('--temporary-password-env is only allowed with --student-no.');
   }
 
   let temporaryPassword = null;
-  if (options.apply) {
+  if (options.apply && options.temporaryPasswordEnv) {
     temporaryPassword = validateTemporaryPassword(environment[options.temporaryPasswordEnv]);
   }
 
@@ -115,25 +119,20 @@ function userActiveClause(userColumns) {
   return '1 = 1';
 }
 
-async function loadFromCurrentEnrollment(connection, metadata) {
-  const requiredTables = ['users', 'students', 'student_enrollments', 'school_years'];
-  if (!requiredTables.every((table) => metadata.tables.has(table))) return [];
+function enrollmentActiveClause(enrollmentColumns) {
+  if (enrollmentColumns.has('student_enrollment_status')) {
+    return "AND se.`student_enrollment_status` = 'active'";
+  }
+  if (enrollmentColumns.has('status')) return "AND se.`status` = 'active'";
+  return '';
+}
 
+async function loadFromCurrentEnrollment(connection, metadata) {
   const userColumns = metadata.columns.get('users') ?? new Set();
   const studentColumns = metadata.columns.get('students') ?? new Set();
   const enrollmentColumns = metadata.columns.get('student_enrollments') ?? new Set();
-  const schoolYearColumns = metadata.columns.get('school_years') ?? new Set();
-  if (
-    !studentColumns.has('user_id') ||
-    !enrollmentColumns.has('student_id') ||
-    !enrollmentColumns.has('student_no') ||
-    !schoolYearColumns.has('year') ||
-    !schoolYearColumns.has('is_active')
-  ) {
-    return [];
-  }
 
-  const enrollmentStatus = enrollmentColumns.has('status') ? "AND se.`status` = 'active'" : '';
+  const enrollmentStatus = enrollmentActiveClause(enrollmentColumns);
   const [rows] = await connection.query(
     `SELECT DISTINCT
        u.id AS userId,
@@ -148,6 +147,21 @@ async function loadFromCurrentEnrollment(connection, metadata) {
      ORDER BY se.student_no ASC`,
   );
   return rows;
+}
+
+function supportsCurrentEnrollmentSource(metadata) {
+  const requiredColumns = new Map([
+    ['students', ['user_id']],
+    ['student_enrollments', ['student_id', 'student_no']],
+    ['school_years', ['year', 'is_active']],
+    ['users', ['id']],
+  ]);
+  for (const [table, columns] of requiredColumns) {
+    if (!metadata.tables.has(table)) return false;
+    const available = metadata.columns.get(table) ?? new Set();
+    if (columns.some((column) => !available.has(column))) return false;
+  }
+  return true;
 }
 
 async function loadFromStudents(connection, metadata) {
@@ -190,9 +204,29 @@ async function loadFromUsers(connection, metadata) {
   return rows;
 }
 
+async function loadExplicitTestAccount(connection, metadata) {
+  if (!metadata.tables.has('users')) return [];
+  const columns = metadata.columns.get('users') ?? new Set();
+  if (!columns.has('id') || !columns.has('student_no')) return [];
+  const [rows] = await connection.execute(
+    `SELECT
+       u.id AS userId,
+       u.student_no AS studentNo,
+       ${columnExpression(columns, 'u', 'name')} AS name,
+       ${columnExpression(columns, 'u', 'email')} AS email
+     FROM users u
+     WHERE ${userActiveClause(columns)}
+       AND u.student_no = ?
+     ORDER BY u.id ASC`,
+    [TEST_STUDENT_NO],
+  );
+  return rows;
+}
+
 function normalizeCandidates(rows, options) {
   const byStudentNo = new Map();
   const byUserId = new Map();
+  const excludedLegacyBridges = [];
   for (const row of rows) {
     const userId = Number(row.userId);
     const studentNo = Number(row.studentNo);
@@ -202,6 +236,10 @@ function normalizeCandidates(rows, options) {
     }
     if (!options.includeTestAccount && studentNo === TEST_STUDENT_NO) continue;
     if (options.studentNo != null && studentNo !== options.studentNo) continue;
+    if (isLegacyBridgeCandidate(row)) {
+      excludedLegacyBridges.push({ name: row.name, studentNo, userId });
+      continue;
+    }
     if (byStudentNo.has(studentNo)) throw new Error(`Duplicate student number: ${studentNo}.`);
     if (byUserId.has(userId)) throw new Error(`User ${userId} has multiple student profiles.`);
 
@@ -220,36 +258,54 @@ function normalizeCandidates(rows, options) {
     (left, right) => left.studentNo - right.studentNo,
   );
   if (options.studentNo != null && candidates.length === 0) {
+    if (excludedLegacyBridges.length > 0) {
+      throw new Error(`Student ${options.studentNo} is a retired legacy bridge.`);
+    }
     throw new Error(`Active student ${options.studentNo} was not found.`);
   }
-  return candidates;
+  return { candidates, excludedLegacyBridges };
+}
+
+function validateCandidateAttributesForPool(pool, candidates) {
+  const emailRequired = (pool?.SchemaAttributes ?? []).some(
+    (attribute) => attribute.Name === 'email' && attribute.Required === true,
+  );
+  if (!emailRequired) return;
+  const missingEmailCount = candidates.filter((candidate) => !candidate.email).length;
+  if (missingEmailCount > 0) {
+    throw new Error(
+      `The User Pool requires email, but ${missingEmailCount} provisioning candidates ` +
+        'do not have one. Use a pool with optional email or complete the roster emails first.',
+    );
+  }
 }
 
 async function loadCandidates(connection, options) {
   const metadata = await databaseMetadata(connection);
-  let source = 'active enrollment';
-  let rows = await loadFromCurrentEnrollment(connection, metadata);
-  if (
-    options.studentNo != null &&
-    !rows.some((row) => Number(row.studentNo) === options.studentNo)
-  ) {
-    rows = [];
-  }
-  if (rows.length === 0) {
-    source = 'students';
+  let source;
+  let rows;
+  if (supportsCurrentEnrollmentSource(metadata)) {
+    source = 'active enrollment';
+    rows = await loadFromCurrentEnrollment(connection, metadata);
+  } else {
+    source = 'students fallback';
     rows = await loadFromStudents(connection, metadata);
+    if (rows.length === 0) {
+      source = 'users fallback';
+      rows = await loadFromUsers(connection, metadata);
+    }
   }
   if (
-    options.studentNo != null &&
-    !rows.some((row) => Number(row.studentNo) === options.studentNo)
+    options.includeTestAccount &&
+    !rows.some((row) => Number(row.studentNo) === TEST_STUDENT_NO)
   ) {
-    rows = [];
+    const testRows = await loadExplicitTestAccount(connection, metadata);
+    if (testRows.length > 0) {
+      rows = [...rows, ...testRows];
+      source += ' + explicit test account';
+    }
   }
-  if (rows.length === 0) {
-    source = 'users fallback';
-    rows = await loadFromUsers(connection, metadata);
-  }
-  return { candidates: normalizeCandidates(rows, options), source };
+  return { ...normalizeCandidates(rows, options), source };
 }
 
 function requireColumns(metadata, table, required) {
@@ -441,6 +497,26 @@ async function getCognitoUser(client, poolId, username) {
   }
 }
 
+function escapeCognitoFilterValue(value) {
+  return String(value).replaceAll('\\', '\\\\').replaceAll('"', '\\"');
+}
+
+async function getCognitoUserBySubject(client, poolId, subject) {
+  const result = await sendWithRetry(
+    client,
+    () =>
+      new ListUsersCommand({
+        Filter: `sub = "${escapeCognitoFilterValue(subject)}"`,
+        Limit: 2,
+        UserPoolId: poolId,
+      }),
+  );
+  const users = result.Users ?? [];
+  if (users.length > 1) throw new Error(`Multiple Cognito users have subject ${subject}.`);
+  if (users.length === 0) return null;
+  return getCognitoUser(client, poolId, users[0].Username);
+}
+
 async function readDatabaseLinks(connection, userId, subject = null) {
   const parameters = [PROVIDER, userId];
   let subjectClause = '';
@@ -475,37 +551,103 @@ function validateLinks(links, candidate, subject = null) {
   return userLinks[0] ?? null;
 }
 
-async function inspectCandidate(connection, client, poolId, candidate) {
-  const canonical = await getCognitoUser(client, poolId, candidate.username);
-  const aliasUser = await getCognitoUser(client, poolId, String(candidate.studentNo));
-  if (aliasUser && aliasUser.Username !== candidate.username) {
-    throw new Error(`Student-number alias ${candidate.studentNo} belongs to another Cognito user.`);
+function managedCognitoAttributes(candidate, supportsPreferredUsernameAlias = false) {
+  const attributes = [
+    { Name: STUDENT_NUMBER_ATTRIBUTE, Value: String(candidate.studentNo) },
+    { Name: 'name', Value: candidate.name },
+  ];
+  if (candidate.email) attributes.push({ Name: 'email', Value: candidate.email });
+  if (supportsPreferredUsernameAlias) {
+    attributes.push({ Name: 'preferred_username', Value: String(candidate.studentNo) });
+  }
+  return attributes;
+}
+
+function changedCognitoAttributes(user, candidate, supportsPreferredUsernameAlias = false) {
+  const current = attributesToMap(user?.UserAttributes);
+  return managedCognitoAttributes(candidate, supportsPreferredUsernameAlias).filter(
+    (attribute) => current.get(attribute.Name) !== attribute.Value,
+  );
+}
+
+async function inspectCandidate(
+  connection,
+  client,
+  poolId,
+  candidate,
+  supportsPreferredUsernameAlias,
+) {
+  const linksBeforeLookup = await readDatabaseLinks(connection, candidate.userId);
+  const existingLink = validateLinks(linksBeforeLookup, candidate);
+  const linkedUser = existingLink
+    ? await getCognitoUserBySubject(client, poolId, existingLink.subject)
+    : null;
+  const loginUser = await getCognitoUser(client, poolId, candidate.username);
+
+  if (linkedUser && loginUser && linkedUser.Username !== loginUser.Username) {
+    throw new Error(`Student-number login ${candidate.studentNo} belongs to another Cognito user.`);
+  }
+  const canonical = linkedUser ?? loginUser;
+  if (linkedUser && linkedUser.Username !== candidate.username && !supportsPreferredUsernameAlias) {
+    throw new Error(
+      `Student ${candidate.studentNo} is linked to immutable Cognito username ` +
+        `${linkedUser.Username}; the pool requires preferred_username alias support for yearly number changes.`,
+    );
   }
 
-  const subject = canonical ? validateCognitoUser(canonical, candidate) : null;
-  const links = await readDatabaseLinks(connection, candidate.userId, subject);
-  const link = validateLinks(links, candidate, subject);
+  const currentSubject = canonical
+    ? (attributesToMap(canonical.UserAttributes).get('sub') ?? null)
+    : null;
+  if (canonical && !currentSubject) {
+    throw new Error(`Cognito user ${canonical.Username} has no sub attribute.`);
+  }
+  const links = await readDatabaseLinks(connection, candidate.userId, currentSubject);
+  const link = validateLinks(links, candidate, currentSubject);
   if (!canonical && link) {
     throw new Error(
-      `Student ${candidate.studentNo} has a database link but no canonical Cognito user.`,
+      `Student ${candidate.studentNo} has a database link but no Cognito user with that subject.`,
     );
   }
 
   if (!canonical) return { action: 'create_and_link', candidate };
-  if (!link) return { action: 'link_existing', candidate, subject };
-  return { action: 'no_op', candidate, subject };
+  const attributeUpdates = changedCognitoAttributes(
+    canonical,
+    candidate,
+    supportsPreferredUsernameAlias,
+  );
+  if (!link) {
+    return {
+      action: 'sync_and_link',
+      attributeUpdates,
+      candidate,
+      cognitoUsername: canonical.Username,
+      subject: currentSubject,
+    };
+  }
+  if (attributeUpdates.length > 0) {
+    return {
+      action: 'sync_attributes',
+      attributeUpdates,
+      candidate,
+      cognitoUsername: canonical.Username,
+      subject: currentSubject,
+    };
+  }
+  return {
+    action: 'no_op',
+    candidate,
+    cognitoUsername: canonical.Username,
+    subject: currentSubject,
+  };
 }
 
-function cognitoAttributes(candidate) {
-  const attributes = [
-    { Name: 'preferred_username', Value: String(candidate.studentNo) },
-    { Name: 'name', Value: candidate.name },
-  ];
-  if (candidate.email) attributes.push({ Name: 'email', Value: candidate.email });
-  return attributes;
-}
-
-async function createOrLoadCognitoUser(client, poolId, candidate, temporaryPassword) {
+async function createOrLoadCognitoUser(
+  client,
+  poolId,
+  candidate,
+  temporaryPassword,
+  supportsPreferredUsernameAlias,
+) {
   const existing = await getCognitoUser(client, poolId, candidate.username);
   if (existing) return existing;
 
@@ -515,8 +657,8 @@ async function createOrLoadCognitoUser(client, poolId, candidate, temporaryPassw
       () =>
         new AdminCreateUserCommand({
           MessageAction: 'SUPPRESS',
-          TemporaryPassword: temporaryPassword,
-          UserAttributes: cognitoAttributes(candidate),
+          TemporaryPassword: temporaryPassword ?? generateTemporaryPassword(),
+          UserAttributes: managedCognitoAttributes(candidate, supportsPreferredUsernameAlias),
           Username: candidate.username,
           UserPoolId: poolId,
         }),
@@ -529,6 +671,19 @@ async function createOrLoadCognitoUser(client, poolId, candidate, temporaryPassw
   if (!created)
     throw new Error(`Cognito user creation could not be confirmed for ${candidate.studentNo}.`);
   return created;
+}
+
+async function updateCognitoAttributes(client, poolId, username, attributes) {
+  if (attributes.length === 0) return;
+  await sendWithRetry(
+    client,
+    () =>
+      new AdminUpdateUserAttributesCommand({
+        UserAttributes: attributes,
+        Username: username,
+        UserPoolId: poolId,
+      }),
+  );
 }
 
 async function ensureDatabaseLink(connection, candidate, subject) {
@@ -557,9 +712,31 @@ async function ensureDatabaseLink(connection, candidate, subject) {
   }
 }
 
-async function applyPlan(connection, client, poolId, item, temporaryPassword) {
-  const user = await createOrLoadCognitoUser(client, poolId, item.candidate, temporaryPassword);
-  const subject = validateCognitoUser(user, item.candidate);
+async function applyPlan(
+  connection,
+  client,
+  poolId,
+  item,
+  temporaryPassword,
+  supportsPreferredUsernameAlias,
+) {
+  const user =
+    item.action === 'create_and_link'
+      ? await createOrLoadCognitoUser(
+          client,
+          poolId,
+          item.candidate,
+          temporaryPassword,
+          supportsPreferredUsernameAlias,
+        )
+      : await getCognitoUser(client, poolId, item.cognitoUsername);
+  if (!user) {
+    throw new Error(`Cognito user ${item.cognitoUsername} no longer exists.`);
+  }
+  await updateCognitoAttributes(client, poolId, user.Username, item.attributeUpdates ?? []);
+  const refreshed =
+    item.attributeUpdates?.length > 0 ? await getCognitoUser(client, poolId, user.Username) : user;
+  const subject = validateCognitoUser(refreshed, item.candidate);
   await ensureDatabaseLink(connection, item.candidate, subject);
 }
 
@@ -569,7 +746,7 @@ function summarizePlan(plan) {
       summary[item.action] += 1;
       return summary;
     },
-    { create_and_link: 0, link_existing: 0, no_op: 0 },
+    { create_and_link: 0, no_op: 0, sync_and_link: 0, sync_attributes: 0 },
   );
 }
 
@@ -605,16 +782,28 @@ async function main(argv = process.argv.slice(2), environment = process.env) {
       () => new DescribeUserPoolCommand({ UserPoolId: config.poolId }),
     );
     validatePoolSupportsStudentNumberLogin(description.UserPool);
+    const supportsPreferredUsernameAlias = (description.UserPool?.AliasAttributes ?? []).includes(
+      'preferred_username',
+    );
 
     if (options.ensureTestAccount) {
       await ensureStagingTestAccount(connection);
     }
 
-    const { candidates, source } = await loadCandidates(connection, options);
+    const { candidates, excludedLegacyBridges, source } = await loadCandidates(connection, options);
+    validateCandidateAttributesForPool(description.UserPool, candidates);
     const plan = [];
     for (const candidate of candidates) {
       try {
-        plan.push(await inspectCandidate(connection, client, config.poolId, candidate));
+        plan.push(
+          await inspectCandidate(
+            connection,
+            client,
+            config.poolId,
+            candidate,
+            supportsPreferredUsernameAlias,
+          ),
+        );
       } catch (error) {
         throw new Error(
           `Preflight failed for student ${candidate.studentNo}: ${safeErrorSummary(error)}`,
@@ -627,8 +816,10 @@ async function main(argv = process.argv.slice(2), environment = process.env) {
     console.log(`Mode: ${options.apply ? 'APPLY' : 'DRY RUN'}`);
     console.log(`Candidate source: ${source}`);
     console.log(`Candidates: ${candidates.length}`);
+    console.log(`Excluded legacy bridges: ${excludedLegacyBridges.length}`);
     console.log(`Create and link: ${summary.create_and_link}`);
-    console.log(`Link existing: ${summary.link_existing}`);
+    console.log(`Sync and link existing: ${summary.sync_and_link}`);
+    console.log(`Sync attributes: ${summary.sync_attributes}`);
     console.log(`Already complete: ${summary.no_op}`);
 
     if (!options.apply) {
@@ -640,7 +831,14 @@ async function main(argv = process.argv.slice(2), environment = process.env) {
     for (const item of plan) {
       if (item.action === 'no_op') continue;
       try {
-        await applyPlan(connection, client, config.poolId, item, config.temporaryPassword);
+        await applyPlan(
+          connection,
+          client,
+          config.poolId,
+          item,
+          config.temporaryPassword,
+          supportsPreferredUsernameAlias,
+        );
         applied += 1;
       } catch (error) {
         throw new Error(
@@ -673,11 +871,14 @@ if (require.main === module) {
 }
 
 module.exports = {
+  enrollmentActiveClause,
   ensureDatabaseLink,
   ensureStagingTestAccount,
   loadCandidates,
   main,
   normalizeCandidates,
   readConfig,
+  supportsCurrentEnrollmentSource,
+  validateCandidateAttributesForPool,
   validateLinks,
 };

@@ -1,6 +1,9 @@
 const { randomInt } = require('node:crypto');
 
 const TEST_STUDENT_NO = 9999;
+const STUDENT_NUMBER_ATTRIBUTE = 'custom:studentNo';
+const LEGACY_BRIDGE_STUDENT_NOS = new Set([9988]);
+const LEGACY_BRIDGE_NAMES = new Set(['강재환']);
 
 function parseArgs(argv) {
   const options = {
@@ -66,6 +69,11 @@ function parseArgs(argv) {
   if (options.studentNo === TEST_STUDENT_NO && !options.includeTestAccount) {
     throw new Error('Student 9999 is a test account; add --include-test-account explicitly.');
   }
+  if (options.studentNo != null && LEGACY_BRIDGE_STUDENT_NOS.has(options.studentNo)) {
+    throw new Error(
+      `Student ${options.studentNo} is a retired legacy bridge and cannot be provisioned.`,
+    );
+  }
 
   if (
     options.ensureTestAccount &&
@@ -84,6 +92,12 @@ function canonicalUsername(studentNo) {
     throw new Error('studentNo must be a positive integer.');
   }
   return String(studentNo);
+}
+
+function isLegacyBridgeCandidate(candidate) {
+  const studentNo = Number(candidate?.studentNo);
+  const name = typeof candidate?.name === 'string' ? candidate.name.trim() : '';
+  return LEGACY_BRIDGE_STUDENT_NOS.has(studentNo) || LEGACY_BRIDGE_NAMES.has(name);
 }
 
 function secureShuffle(values) {
@@ -137,18 +151,20 @@ function attributesToMap(attributes = []) {
 
 function validateCognitoUser(user, candidate) {
   if (!user?.Username) throw new Error(`Cognito user ${candidate.username} has no username.`);
-  if (user.Username !== candidate.username) {
-    throw new Error(`Cognito username conflict for student ${candidate.studentNo}.`);
-  }
 
   const attributes = attributesToMap(user.UserAttributes);
   const subject = attributes.get('sub');
   if (!subject) throw new Error(`Cognito user ${candidate.username} has no sub attribute.`);
   if (
-    attributes.has('preferred_username') &&
+    user.Username !== candidate.username &&
     attributes.get('preferred_username') !== String(candidate.studentNo)
   ) {
-    throw new Error(`Cognito preferred_username conflict for student ${candidate.studentNo}.`);
+    throw new Error(`Cognito username conflict for student ${candidate.studentNo}.`);
+  }
+  if (attributes.get(STUDENT_NUMBER_ATTRIBUTE) !== String(candidate.studentNo)) {
+    throw new Error(
+      `Cognito ${STUDENT_NUMBER_ATTRIBUTE} conflict for student ${candidate.studentNo}.`,
+    );
   }
   return subject;
 }
@@ -161,6 +177,21 @@ function validatePoolSupportsStudentNumberLogin(pool) {
     throw new Error(
       'The user pool must support plain username sign-in or preferred_username aliases before provisioning.',
     );
+  }
+
+  const studentNumberAttribute = (pool?.SchemaAttributes ?? []).find(
+    (attribute) => attribute?.Name === STUDENT_NUMBER_ATTRIBUTE,
+  );
+  if (!studentNumberAttribute) {
+    throw new Error(
+      `The user pool must define the mutable string attribute ${STUDENT_NUMBER_ATTRIBUTE}.`,
+    );
+  }
+  if (
+    studentNumberAttribute.AttributeDataType !== 'String' ||
+    studentNumberAttribute.Mutable !== true
+  ) {
+    throw new Error(`${STUDENT_NUMBER_ATTRIBUTE} must be a mutable string attribute.`);
   }
 }
 
@@ -182,10 +213,14 @@ function safeErrorSummary(error) {
 }
 
 module.exports = {
+  LEGACY_BRIDGE_NAMES,
+  LEGACY_BRIDGE_STUDENT_NOS,
+  STUDENT_NUMBER_ATTRIBUTE,
   TEST_STUDENT_NO,
   attributesToMap,
   canonicalUsername,
   generateTemporaryPassword,
+  isLegacyBridgeCandidate,
   parseArgs,
   safeErrorName,
   safeErrorSummary,

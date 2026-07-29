@@ -1,0 +1,162 @@
+name: Provision Cognito students
+
+run-name: >-
+  Cognito ${{ inputs.apply && 'apply' || 'dry-run' }} /
+  ${{ inputs.scope == 'student' && inputs.student_no || 'all active students' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Provision one student or every active enrollment
+        required: true
+        type: choice
+        default: student
+        options:
+          - student
+          - all-active
+      student_no:
+        description: Required when scope is student
+        required: false
+        type: string
+      apply:
+        description: Create/sync Cognito users and write auth_accounts links
+        required: true
+        type: boolean
+        default: false
+      include_test_account:
+        description: Explicitly include the 9999 test account
+        required: true
+        type: boolean
+        default: false
+
+concurrency:
+  group: cognito-student-provisioning
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  validate-request:
+    name: Validate request
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Enforce the protected branch and input contract
+        shell: bash
+        env:
+          INCLUDE_TEST_ACCOUNT: ${{ inputs.include_test_account }}
+          SCOPE: ${{ inputs.scope }}
+          STUDENT_NO: ${{ inputs.student_no }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_REF" != 'refs/heads/main' ]]; then
+            printf '::error::Cognito provisioning can only run from the main branch.\n' >&2
+            exit 1
+          fi
+
+          case "$SCOPE" in
+            student)
+              if ! [[ "$STUDENT_NO" =~ ^[0-9]+$ ]] || (( STUDENT_NO < 1 )); then
+                printf '::error::student_no must be a positive integer for student scope.\n' >&2
+                exit 1
+              fi
+              if [[ "$STUDENT_NO" == '9999' && "$INCLUDE_TEST_ACCOUNT" != 'true' ]]; then
+                printf '::error::Student 9999 requires include_test_account=true.\n' >&2
+                exit 1
+              fi
+              if [[ "$STUDENT_NO" == '9988' ]]; then
+                printf '::error::Student 9988 is a retired legacy bridge and cannot be provisioned.\n' >&2
+                exit 1
+              fi
+              ;;
+            all-active)
+              if [[ -n "$STUDENT_NO" ]]; then
+                printf '::error::student_no must be empty for all-active scope.\n' >&2
+                exit 1
+              fi
+              ;;
+            *)
+              printf '::error::Unsupported provisioning scope.\n' >&2
+              exit 1
+              ;;
+          esac
+
+  provision:
+    name: Provision from active student enrollments
+    needs: validate-request
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: cognito-provisioning
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'ap-northeast-2' }}
+      COGNITO_USER_POOL_ID: ${{ vars.COGNITO_USER_POOL_ID }}
+      DATABASE_URL: ${{ secrets.COGNITO_PROVISIONING_DATABASE_URL }}
+      DATABASE_SSL_MODE: ${{ vars.DATABASE_SSL_MODE || 'required' }}
+      INCLUDE_TEST_ACCOUNT: ${{ inputs.include_test_account }}
+      PROVISION_APPLY: ${{ inputs.apply }}
+      PROVISION_SCOPE: ${{ inputs.scope }}
+      PROVISION_STUDENT_NO: ${{ inputs.student_no }}
+    steps:
+      - name: Validate protected configuration
+        shell: bash
+        env:
+          ROLE_ARN: ${{ vars.AWS_COGNITO_PROVISIONING_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          [[ "$ROLE_ARN" =~ ^arn:aws:iam::[0-9]{12}:role/[A-Za-z0-9+=,.@_/-]+$ ]]
+          [[ "$COGNITO_USER_POOL_ID" =~ ^ap-northeast-2_[A-Za-z0-9]+$ ]]
+          [[ "$DATABASE_SSL_MODE" == 'required' ]]
+          test -n "$DATABASE_URL"
+
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Enable pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack install --global pnpm@10.30.0
+
+      - name: Install provisioning dependencies
+        run: pnpm install --frozen-lockfile --filter @jshsus/db...
+
+      - name: Assume the Cognito provisioning role
+        uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-duration-seconds: 1800
+          role-to-assume: ${{ vars.AWS_COGNITO_PROVISIONING_ROLE_ARN }}
+          role-session-name: jshsus-cognito-${{ github.run_id }}
+
+      - name: Provision Cognito users and database links
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          arguments=()
+          if [[ "$PROVISION_SCOPE" == 'student' ]]; then
+            arguments+=(--student-no "$PROVISION_STUDENT_NO")
+          fi
+          if [[ "$INCLUDE_TEST_ACCOUNT" == 'true' ]]; then
+            arguments+=(--include-test-account)
+          fi
+          if [[ "$PROVISION_APPLY" == 'true' ]]; then
+            arguments+=(--apply --confirm-pool-id "$COGNITO_USER_POOL_ID")
+          fi
+
+          pnpm --filter @jshsus/db db:provision-cognito-students -- "${arguments[@]}"
