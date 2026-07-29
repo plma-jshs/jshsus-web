@@ -265,6 +265,7 @@ export function CalendarPage() {
 }
 
 function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) {
+  const todayKey = toDateKey(new Date());
   const [visibleMonth, setVisibleMonth] = useState(() => {
     const selected = fromDateKey(initialSelectedDate);
     return new Date(selected.getFullYear(), selected.getMonth(), 1);
