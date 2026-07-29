@@ -299,6 +299,7 @@ export class AccountActivationService {
           password: input.password,
           email: input.email,
           name: input.name,
+          ...(input.identityType === 'student' ? { studentNo: input.identityNumber } : {}),
         });
         await this.assertCognitoLinkAllowed(tx, user.userId, cognitoUser.subject);
         await tx

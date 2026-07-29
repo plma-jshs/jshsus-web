@@ -261,15 +261,21 @@ export class CognitoAuthService {
     password: string;
     email: string;
     name: string;
+    studentNo?: number;
   }): Promise<{ subject: string; username: string; created: boolean }> {
     const username = input.username.trim();
     const client = this.getAdminClient();
     const attributes = [
-      { Name: 'preferred_username', Value: username },
       { Name: 'name', Value: input.name },
       { Name: 'email', Value: input.email },
-      { Name: 'email_verified', Value: 'true' },
     ];
+    if (input.studentNo != null) {
+      const studentNo = String(input.studentNo);
+      attributes.push(
+        { Name: 'preferred_username', Value: studentNo },
+        { Name: 'custom:studentNo', Value: studentNo },
+      );
+    }
     let user = await this.getAdminUser(username);
     let created = false;
 
