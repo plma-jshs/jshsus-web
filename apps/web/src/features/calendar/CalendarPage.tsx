@@ -1,6 +1,6 @@
 import type { AcademicEvent } from '@jshsus/types';
 import type { CSSProperties, KeyboardEvent } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -17,6 +17,9 @@ type CalendarCell = {
   dateKey: string;
   day: number;
   inCurrentMonth: boolean;
+};
+type CalendarPageContentProps = {
+  initialSelectedDate: string;
 };
 
 function toDateKey(date: Date) {
@@ -255,6 +258,13 @@ export function CalendarPage() {
   const search = useSearch({ from: '/calendar' });
   const todayKey = toDateKey(new Date());
   const initialSelectedDate = isDateKey(search.date) ? search.date : todayKey;
+
+  return (
+    <CalendarPageContent key={initialSelectedDate} initialSelectedDate={initialSelectedDate} />
+  );
+}
+
+function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) {
   const [visibleMonth, setVisibleMonth] = useState(() => {
     const selected = fromDateKey(initialSelectedDate);
     return new Date(selected.getFullYear(), selected.getMonth(), 1);
@@ -273,13 +283,6 @@ export function CalendarPage() {
   );
   const events = allEvents;
   const selectedEvents = events.filter((event) => eventTouchesDate(event, selectedDate));
-
-  useEffect(() => {
-    if (!isDateKey(search.date)) return;
-    const nextSelectedDate = fromDateKey(search.date);
-    setVisibleMonth(new Date(nextSelectedDate.getFullYear(), nextSelectedDate.getMonth(), 1));
-    setSelectedDate(search.date);
-  }, [search.date]);
 
   const focusDate = (dateKey: string) => {
     requestAnimationFrame(() => {
