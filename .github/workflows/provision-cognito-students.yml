@@ -159,4 +159,4 @@ jobs:
             arguments+=(--apply --confirm-pool-id "$COGNITO_USER_POOL_ID")
           fi
 
-          pnpm --filter @jshsus/db db:provision-cognito-students -- "${arguments[@]}"
+          node packages/db/scripts/provision-cognito-students.cjs "${arguments[@]}"
