@@ -1,4 +1,5 @@
 import type {
+  AccountActivationBulkIssueResult,
   AccountActivationIdentityType,
   AccountActivationIssueResult,
   AcademicEvent,
@@ -39,6 +40,7 @@ import type {
   RosterImportApplyResult,
   RosterImportPreview,
   RosterImportRowInput,
+  SchoolEventImportResult,
   SessionUser,
   StudentOption,
   LostItemSummary,
@@ -307,6 +309,15 @@ export const api = {
       method: 'POST',
       body: input,
     }),
+  issueStudentActivationBulk: (input: {
+    schoolYear?: number;
+    grade?: number;
+    classNo?: number;
+  }) =>
+    request<AccountActivationBulkIssueResult>('/api/admin/account-activations/bulk', {
+      method: 'POST',
+      body: input,
+    }),
   iamRoles: () => request<AdminRoleSummary[]>('/api/admin/iam/roles'),
   createRole: (input: { name: string; label: string }) =>
     request<{ ok: true; role: AdminRoleSummary }>('/api/admin/iam/roles', {
@@ -360,6 +371,11 @@ export const api = {
   },
   createSchoolEvent: (input: SchoolEventInput) =>
     request<ManagedSchoolEvent>('/api/admin/school-events', {
+      method: 'POST',
+      body: input,
+    }),
+  importSchoolEventsJson: (input: { fileName?: string; replaceRange: boolean; events: unknown[] }) =>
+    request<SchoolEventImportResult>('/api/admin/school-events/import-json', {
       method: 'POST',
       body: input,
     }),

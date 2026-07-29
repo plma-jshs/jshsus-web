@@ -441,6 +441,7 @@
 }
 
 .mini-calendar > span,
+.mini-calendar > a,
 .mini-calendar > button {
   position: relative;
   display: grid;
@@ -452,6 +453,7 @@
   color: inherit;
   background: transparent;
   font-variant-numeric: tabular-nums;
+  text-decoration: none;
 }
 
 .mini-calendar__weekday {
@@ -480,8 +482,16 @@
   opacity: 0.55;
 }
 
-.mini-calendar__day.has-events {
-  cursor: default;
+.mini-calendar__day {
+  cursor: pointer;
+}
+
+.mini-calendar__day:hover {
+  background: var(--j-color-surface-hover);
+}
+
+.mini-calendar__day.is-today:hover {
+  background: var(--j-color-brand);
 }
 
 .calendar-event-dots {

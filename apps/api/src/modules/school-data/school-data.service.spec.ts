@@ -28,10 +28,6 @@ function htmlResponse(html: string): Response {
 
 const fixedNow = new Date('2026-07-12T03:00:00.000Z');
 
-function fetchUrls(fetchMock: ReturnType<typeof vi.fn>): string[] {
-  return fetchMock.mock.calls.map((call) => String(call[0]));
-}
-
 describe('SchoolDataService', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -119,7 +115,7 @@ describe('SchoolDataService', () => {
       to: '2026-07-31',
       events: [],
       available: true,
-      availability: 'partial',
+      availability: 'available',
       homepageAvailable: false,
       schoolEventsAvailable: true,
     });
@@ -129,7 +125,7 @@ describe('SchoolDataService', () => {
     expect(result).toMatchObject({
       availability: 'partial',
       mealAvailability: 'unavailable',
-      calendarAvailability: 'partial',
+      calendarAvailability: 'available',
       homepageCalendarAvailability: 'unavailable',
       schoolEventsAvailability: 'available',
     });
@@ -158,25 +154,8 @@ describe('SchoolDataService', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('combines homepage calendar events and managed school events', async () => {
-    const fetchMock = vi.fn().mockImplementation(() =>
-      Promise.resolve(
-        htmlResponse(`
-        <input type="hidden" id="selectYearMonth" name="selectYearMonth" value="202607" />
-        <table>
-          <tbody>
-            <tr>
-              <td class="selectDay" id="20260720">
-                <p class="calLink btnInfo" data-seq="closing" data-schdulTitle="방학식">
-                  <a>방학식</a>
-                </p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      `),
-      ),
-    );
+  it('returns managed school events without fetching the school homepage calendar', async () => {
+    const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     const service = createService();
     vi.spyOn(service, 'listManagedEvents').mockResolvedValue([
@@ -194,17 +173,17 @@ describe('SchoolDataService', () => {
 
     const result = await service.getCalendar('2026-07-01', '2026-07-31', fixedNow);
 
-    expect(result.homepageAvailable).toBe(true);
+    expect(result.homepageAvailable).toBe(false);
     expect(result.schoolEventsAvailable).toBe(true);
-    expect(result.events).toHaveLength(2);
-    expect(result.events.map((event) => event.source)).toEqual(['school', 'school']);
-    const requestedUrls = fetchUrls(fetchMock);
-    expect(requestedUrls.every((url) => !url.includes('/hub/SchoolSchedule'))).toBe(true);
-    expect(requestedUrls[0]).toContain('mi=52322');
-    expect(requestedUrls[0]).toContain('selectYearMonth=202606');
+    expect(result.events).toHaveLength(1);
+    expect(result.events[0]).toMatchObject({
+      title: '학생회 행사',
+      source: 'school',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('prefers the school homepage calendar and expands homepage range hints', async () => {
+  it('does not use homepage markup when the managed calendar is empty', async () => {
     const fetchMock = vi.fn().mockImplementation(() =>
       Promise.resolve(
         htmlResponse(`
@@ -237,57 +216,14 @@ describe('SchoolDataService', () => {
 
     const result = await service.getCalendar('2026-07-01', '2026-07-31', fixedNow);
 
-    expect(result.homepageAvailable).toBe(true);
-    expect(result.events).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          title: '방과후 수업 시작 1차',
-          startsAt: '2026-07-21T00:00:00.000+09:00',
-          endsAt: '2026-07-24T23:59:59.999+09:00',
-          isHoliday: false,
-          source: 'school',
-        }),
-        expect.objectContaining({
-          title: '제헌절',
-          category: 'observance',
-          isHoliday: false,
-          source: 'school',
-        }),
-        expect.objectContaining({
-          title: '토요휴업일',
-          category: 'holiday',
-          isHoliday: true,
-          source: 'school',
-        }),
-      ]),
-    );
-    expect(
-      fetchUrls(fetchMock).filter((url) => url.includes('schdulCalendarView.do')),
-    ).toHaveLength(3);
+    expect(result.homepageAvailable).toBe(false);
+    expect(result.events).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('returns a unified admin calendar while keeping homepage events read-only and private school events visible', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockImplementation(() =>
-        Promise.resolve(
-          htmlResponse(`
-          <input type="hidden" id="selectYearMonth" name="selectYearMonth" value="202607" />
-          <table>
-            <tbody>
-              <tr>
-                <td class="selectDay" id="20260720">
-                  <p class="calLink btnInfo" data-seq="homepage-1" data-schdulTitle="홈페이지 일정">
-                    <a>홈페이지 일정</a>
-                  </p>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        `),
-        ),
-      ),
-    );
+  it('returns an admin calendar with private managed events visible', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
     const service = createService();
     vi.spyOn(service, 'listManagedEvents').mockResolvedValue([
       {
@@ -304,12 +240,7 @@ describe('SchoolDataService', () => {
 
     const result = await service.getAdminCalendar('2026-07-01', '2026-07-31');
 
-    expect(result.events).toHaveLength(2);
-    expect(result.events.find((event) => event.id === 'school-homepage:homepage-1')).toMatchObject({
-      title: '홈페이지 일정',
-      editable: false,
-      isPublic: true,
-    });
+    expect(result.events).toHaveLength(1);
     expect(result.events.find((event) => event.id === 'school:9')).toMatchObject({
       id: 'school:9',
       managedId: 9,
@@ -317,9 +248,10 @@ describe('SchoolDataService', () => {
       editable: true,
       isPublic: false,
     });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('uses the bundled homepage snapshot instead of NEIS schedules when live homepage access is unavailable', async () => {
+  it('does not fall back to bundled homepage snapshots when the managed calendar is empty', async () => {
     const fetchMock = vi.fn().mockRejectedValue(new Error('homepage unavailable'));
     vi.stubGlobal('fetch', fetchMock);
     const service = createService();
@@ -327,24 +259,14 @@ describe('SchoolDataService', () => {
 
     const result = await service.getCalendar('2026-07-01', '2026-07-31', fixedNow);
 
-    expect(result.events).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          title: '방과후 수업 시작 1차',
-          startsAt: '2026-07-21T00:00:00.000+09:00',
-          endsAt: '2026-07-24T23:59:59.999+09:00',
-          source: 'school',
-        }),
-      ]),
-    );
-    expect(result.homepageAvailable).toBe(true);
+    expect(result.events).toEqual([]);
+    expect(result.homepageAvailable).toBe(false);
     expect(result.schoolEventsAvailable).toBe(true);
     expect(result.availability).toBe('available');
-    const requestedUrls = fetchUrls(fetchMock);
-    expect(requestedUrls.every((url) => !url.includes('/hub/SchoolSchedule'))).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('accepts homepage calendar months with no event links', async () => {
+  it('accepts managed calendar months with no events', async () => {
     const fetchMock = vi.fn().mockImplementation(() =>
       Promise.resolve(
         htmlResponse(`
@@ -364,9 +286,9 @@ describe('SchoolDataService', () => {
     const result = await service.getCalendar('2026-09-01', '2026-09-30', fixedNow);
 
     expect(result.events).toEqual([]);
-    expect(result.homepageAvailable).toBe(true);
+    expect(result.homepageAvailable).toBe(false);
     expect(result.availability).toBe('available');
-    expect(fetchUrls(fetchMock).every((url) => !url.includes('/hub/SchoolSchedule'))).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('keeps the in-process LRU cache bounded across distinct valid dates', async () => {

@@ -335,6 +335,15 @@ export type ManagedSchoolEvent = Omit<AcademicEvent, 'id' | 'source'> & {
   isPublic: boolean;
 };
 
+export type SchoolEventImportResult = {
+  ok: true;
+  importedCount: number;
+  replacedCount: number;
+  replaceRange: boolean;
+  from: string;
+  to: string;
+};
+
 export type HomeDashboard = {
   notices: DashboardNotice[];
   petitions: DashboardPetition[];
@@ -505,6 +514,18 @@ export type AccountActivationIssueResult = {
   identityType: AccountActivationIdentityType;
   identityNumber: number;
   code: string;
+};
+
+export type AccountActivationBulkIssueResult = {
+  ok: true;
+  identityType: 'student';
+  issuedAt: string;
+  total: number;
+  codes: Array<{
+    identityNumber: number;
+    code: string;
+    name?: string;
+  }>;
 };
 
 export type AccountActivationCompleteResult = {

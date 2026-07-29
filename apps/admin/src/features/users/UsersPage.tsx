@@ -2,6 +2,7 @@ import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'reac
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type {
+  AccountActivationBulkIssueResult,
   AccountActivationIssueResult,
   AdminIdentityListQuery,
   AdminSchoolYearSummary,
@@ -285,6 +286,30 @@ async function downloadRosterTemplate() {
   URL.revokeObjectURL(url);
 }
 
+function csvCell(value: unknown) {
+  const text = String(value ?? '');
+  return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+function downloadActivationCodes(result: AccountActivationBulkIssueResult) {
+  const rows = [
+    ['학번', '이름', '인증코드', '발급일시'],
+    ...result.codes.map((item) => [
+      item.identityNumber,
+      item.name ?? '',
+      item.code,
+      result.issuedAt,
+    ]),
+  ];
+  const csv = rows.map((row) => row.map(csvCell).join(',')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `student-activation-codes-${result.issuedAt.slice(0, 10)}.csv`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 export function UsersPage() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -301,6 +326,8 @@ export function UsersPage() {
   const [issuedActivation, setIssuedActivation] = useState<AccountActivationIssueResult | null>(
     null,
   );
+  const [bulkActivationResult, setBulkActivationResult] =
+    useState<AccountActivationBulkIssueResult | null>(null);
   const sessionQuery = useQuery({
     queryKey: ['admin-session'],
     queryFn: api.session,
@@ -411,6 +438,18 @@ export function UsersPage() {
       showToast({ title: '인증코드를 발급했습니다.', tone: 'success' });
     },
     onError: () => showToast({ title: '인증코드를 발급하지 못했습니다.', tone: 'danger' }),
+  });
+  const issueBulkActivation = useMutation({
+    mutationFn: api.issueStudentActivationBulk,
+    onSuccess: (result) => {
+      setBulkActivationResult(result);
+      showToast({
+        title: '학생 인증코드를 일괄 발급했습니다.',
+        description: `${result.total}명`,
+        tone: 'success',
+      });
+    },
+    onError: () => showToast({ title: '학생 인증코드를 일괄 발급하지 못했습니다.', tone: 'danger' }),
   });
   const updateUserStatus = useMutation({
     mutationFn: ({
@@ -718,6 +757,24 @@ export function UsersPage() {
     }
     previewRoster.mutate(rosterPayload());
   };
+  const bulkActivationPayload = () => ({
+    schoolYear: filters.schoolYear,
+    grade: filters.grade,
+    classNo: filters.classNo,
+  });
+  const confirmBulkActivation = () => {
+    const scope = [
+      filters.schoolYear ? `${filters.schoolYear}학년도` : '활성 학년도',
+      filters.grade ? `${filters.grade}학년` : null,
+      filters.classNo ? `${filters.classNo}반` : null,
+    ]
+      .filter(Boolean)
+      .join(' ');
+    const ok = window.confirm(
+      `${scope} 학생 인증코드를 새로 발급합니다. 기존에 발급된 미사용 코드도 새 코드로 바뀝니다.`,
+    );
+    if (ok) issueBulkActivation.mutate(bulkActivationPayload());
+  };
 
   return (
     <div className="identity-page">
@@ -733,9 +790,24 @@ export function UsersPage() {
         />
         <div className="identity-toolbar-actions">
           {tab === 'students' ? (
-            <button className="identity-secondary-button" type="button" onClick={openRosterDialog}>
-              <FileSpreadsheet size={17} /> 명단 업로드
-            </button>
+            <>
+              <button
+                className="identity-secondary-button"
+                type="button"
+                onClick={openRosterDialog}
+              >
+                <FileSpreadsheet size={17} /> 명단 업로드
+              </button>
+              <button
+                className="identity-secondary-button"
+                type="button"
+                disabled={issueBulkActivation.isPending}
+                onClick={confirmBulkActivation}
+              >
+                <KeyRound size={17} />
+                {issueBulkActivation.isPending ? '일괄 발급 중' : '인증코드 일괄 발급'}
+              </button>
+            </>
           ) : null}
           <button
             className="identity-primary-button"
@@ -753,6 +825,18 @@ export function UsersPage() {
         <div className="identity-success" role="status">
           교직원 계정이 생성되었습니다. 발급된 교사번호는 <strong>{issuedStaffNo}</strong>입니다.
           <button type="button" onClick={() => setIssuedStaffNo(null)}>
+            확인
+          </button>
+        </div>
+      ) : null}
+
+      {bulkActivationResult ? (
+        <div className="identity-success" role="status">
+          학생 인증코드 <strong>{bulkActivationResult.total}건</strong>을 발급했습니다.
+          <button type="button" onClick={() => downloadActivationCodes(bulkActivationResult)}>
+            <Download size={15} /> CSV 다운로드
+          </button>
+          <button type="button" onClick={() => setBulkActivationResult(null)}>
             확인
           </button>
         </div>

@@ -6,11 +6,6 @@
   "engines": {
     "node": ">=24 <25"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
-  },
   "scripts": {
     "predev": "pnpm --filter @jshsus/types build && pnpm --filter @jshsus/db build",
     "dev": "turbo dev",
@@ -24,6 +19,7 @@
     "format:check": "prettier --check .",
     "pretest": "pnpm --filter @jshsus/types build && pnpm --filter @jshsus/db build",
     "test": "vitest run",
+    "calendar:crawl": "node scripts/crawl-school-calendar-json.cjs",
     "db:generate": "pnpm --filter @jshsus/db db:generate",
     "db:migrate": "pnpm --filter @jshsus/db db:migrate",
     "local:reset-db": "node scripts/reset-local-db.cjs",

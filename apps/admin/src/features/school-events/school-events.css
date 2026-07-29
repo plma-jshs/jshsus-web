@@ -59,12 +59,27 @@
 }
 
 .school-calendar-actions .primary-button,
+.school-calendar-actions .secondary-button,
 .selected-day-panel button,
 .school-calendar-navigation button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+}
+
+.school-calendar-upload-button {
+  cursor: pointer;
+}
+
+.school-calendar-upload-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .icon-button {
@@ -90,6 +105,38 @@
   margin-left: auto;
   color: var(--j-color-warning, #ad5f00);
   font-style: normal;
+}
+
+.school-calendar-import-panel {
+  display: flex;
+  min-height: 48px;
+  padding: 8px 16px;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--j-color-border, var(--line));
+  background: var(--j-color-surface-subtle, #f8fafb);
+}
+
+.school-calendar-import-panel > div {
+  display: grid;
+  gap: 2px;
+  min-width: 180px;
+}
+
+.school-calendar-import-panel strong {
+  color: var(--j-color-text, #111827);
+  font-size: 13px;
+}
+
+.school-calendar-import-panel span,
+.school-calendar-import-panel .form-error {
+  color: var(--j-color-text-muted, var(--muted));
+  font-size: 12px;
+}
+
+.school-calendar-import-panel .compact-check {
+  min-height: 32px;
+  margin-left: auto;
 }
 
 .source-dot {

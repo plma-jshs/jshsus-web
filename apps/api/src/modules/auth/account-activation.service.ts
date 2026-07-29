@@ -8,11 +8,12 @@ import {
 } from '@nestjs/common';
 import * as schema from '@jshsus/db';
 import type {
+  AccountActivationBulkIssueResult,
   AccountActivationCompleteResult,
   AccountActivationIdentityType,
   AccountActivationIssueResult,
 } from '@jshsus/types';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { DatabaseService, type AppDatabase } from '../database/database.service';
@@ -32,6 +33,13 @@ const MAX_ACTIVATION_ATTEMPTS = 10;
 const activationIdentitySchema = z.object({
   identityType: z.enum(['student', 'staff']),
   identityNumber: z.coerce.number().int().positive(),
+});
+
+const bulkActivationIssueSchema = z.object({
+  identityType: z.literal('student').optional().default('student'),
+  schoolYear: z.coerce.number().int().min(2000).max(2100).optional(),
+  grade: z.coerce.number().int().min(1).max(3).optional(),
+  classNo: z.coerce.number().int().min(1).max(20).optional(),
 });
 
 const genderSchema = z.preprocess(
@@ -122,6 +130,94 @@ export class AccountActivationService {
       identityType: input.identityType,
       identityNumber: input.identityNumber,
       code,
+    };
+  }
+
+  async issueBulkStudents(
+    body: unknown,
+    actorId?: number | null,
+  ): Promise<AccountActivationBulkIssueResult> {
+    const parsed = bulkActivationIssueSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+
+    const schoolYear = parsed.data.schoolYear ?? (await this.resolveActiveSchoolYear());
+    const filters = [
+      eq(schema.studentEnrollments.schoolYear, schoolYear),
+      eq(schema.studentEnrollments.status, 'active'),
+    ];
+    if (parsed.data.grade) filters.push(eq(schema.studentEnrollments.grade, parsed.data.grade));
+    if (parsed.data.classNo) {
+      filters.push(eq(schema.studentEnrollments.classNo, parsed.data.classNo));
+    }
+
+    const students = await this.database.db
+      .select({
+        identityNumber: schema.studentEnrollments.studentNo,
+        name: schema.students.name,
+      })
+      .from(schema.studentEnrollments)
+      .innerJoin(schema.students, eq(schema.studentEnrollments.studentId, schema.students.id))
+      .where(and(...filters))
+      .orderBy(
+        asc(schema.studentEnrollments.grade),
+        asc(schema.studentEnrollments.classNo),
+        asc(schema.studentEnrollments.number),
+      );
+    if (students.length === 0) {
+      throw new BadRequestException('No active students matched the selected criteria.');
+    }
+
+    const issuedAt = new Date();
+    const codes = students.map((student) => ({
+      ...student,
+      code: generateActivationCode(),
+    }));
+
+    await this.database.db.transaction(async (tx) => {
+      for (const item of codes) {
+        const input = {
+          identityType: 'student' as const,
+          identityNumber: item.identityNumber,
+        };
+        await tx
+          .insert(schema.accountActivationCodes)
+          .values({
+            identityType: input.identityType,
+            identityNumber: input.identityNumber,
+            codeHash: this.hashCode(input, item.code),
+            attemptCount: 0,
+            issuedById: actorId && actorId > 0 ? actorId : null,
+            usedById: null,
+            usedAt: null,
+            createdAt: issuedAt,
+            updatedAt: issuedAt,
+          })
+          .onDuplicateKeyUpdate({
+            set: {
+              codeHash: this.hashCode(input, item.code),
+              attemptCount: 0,
+              issuedById: actorId && actorId > 0 ? actorId : null,
+              usedById: null,
+              usedAt: null,
+              updatedAt: issuedAt,
+            },
+          });
+      }
+    });
+
+    await this.database.writeAudit({
+      actorId,
+      action: 'admin.account-activation.bulk-issue',
+      targetType: 'student',
+      targetId: `${schoolYear}:${parsed.data.grade ?? 'all'}:${parsed.data.classNo ?? 'all'}`,
+    });
+
+    return {
+      ok: true,
+      identityType: 'student',
+      issuedAt: issuedAt.toISOString(),
+      total: codes.length,
+      codes,
     };
   }
 
@@ -459,6 +555,10 @@ export class AccountActivationService {
         set: { isActive: true, updatedAt: new Date() },
       });
     return year;
+  }
+
+  private async resolveActiveSchoolYear(): Promise<number> {
+    return this.database.db.transaction((tx) => this.getActiveSchoolYear(tx));
   }
 
   private async ensureRole(tx: AppTransaction, userId: number, roleName: string) {

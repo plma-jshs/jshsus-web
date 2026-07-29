@@ -8,17 +8,13 @@ import type {
   SchoolMeal,
   SchoolMealType,
 } from '@jshsus/types';
-import { and, asc, eq, gte, lte } from 'drizzle-orm';
+import { and, asc, eq, gte, lte, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { env } from '../../shared/config/env';
 import { DatabaseService } from '../database/database.service';
 import { RedisService } from '../redis/redis.service';
-import { schoolHomepageCalendarSnapshot } from './school-homepage-calendar.snapshot';
 
 const NEIS_BASE_URL = 'https://open.neis.go.kr/hub';
-const SCHOOL_HOMEPAGE_CALENDAR_URL =
-  'https://jeonnam-sh.jge.hs.kr/chonnam-sh_hs/schl/sv/schdulView/schdulCalendarView.do';
-const SCHOOL_HOMEPAGE_CALENDAR_MENU_ID = '52322';
 const KOREA_TIME_ZONE = 'Asia/Seoul';
 const MAX_MANAGED_RANGE_DAYS = 366;
 const MAX_PUBLIC_RANGE_DAYS = 93;
@@ -26,6 +22,7 @@ const PUBLIC_PAST_DAYS = 366;
 const PUBLIC_FUTURE_DAYS = 366;
 const NEIS_PAGE_SIZE = 100;
 const MAX_NEIS_MEAL_ROWS = 300;
+const MAX_SCHOOL_EVENT_IMPORT_ROWS = 2000;
 const MAX_MEMORY_CACHE_ENTRIES = 128;
 const MAX_FAILURE_ENTRIES = 128;
 const MAX_IN_FLIGHT_LOADS = 16;
@@ -90,6 +87,30 @@ const managedEventSchema = z
     }
   });
 
+const importManagedEventSchema = z.preprocess((value) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+  const record = value as Record<string, unknown>;
+  const startsAt = record.startsAt ?? record.start ?? record.date;
+  const endsAt = record.endsAt ?? record.end ?? startsAt;
+  return {
+    ...record,
+    startsAt,
+    endsAt,
+    allDay: record.allDay ?? true,
+    isHoliday: record.isHoliday ?? record.holiday ?? false,
+    isPublic: record.isPublic ?? true,
+  };
+}, managedEventSchema);
+
+const managedEventImportSchema = z.preprocess(
+  (value) => (Array.isArray(value) ? { events: value } : value),
+  z.object({
+    fileName: z.string().trim().max(255).optional(),
+    replaceRange: z.boolean().optional().default(false),
+    events: z.array(importManagedEventSchema).min(1).max(MAX_SCHOOL_EVENT_IMPORT_ROWS),
+  }),
+);
+
 const neisMealRowSchema = z.object({
   MMEAL_SC_CODE: z.string(),
   MMEAL_SC_NM: z.string(),
@@ -107,20 +128,6 @@ const schoolMealCacheSchema = z.array(
     dishes: z.array(z.string()),
     calories: z.string().optional(),
     source: z.literal('neis'),
-  }),
-);
-
-const academicEventCacheSchema = z.array(
-  z.object({
-    id: z.string(),
-    title: z.string(),
-    startsAt: z.string(),
-    endsAt: z.string(),
-    allDay: z.boolean(),
-    description: z.string().optional(),
-    category: z.string(),
-    isHoliday: z.boolean(),
-    source: z.literal('school'),
   }),
 );
 
@@ -275,95 +282,33 @@ function fromCompactDate(date: string): string {
   return `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}`;
 }
 
+const basicHtmlEntities: Record<string, string> = {
+  amp: '&',
+  apos: "'",
+  bull: '•',
+  gt: '>',
+  hellip: '…',
+  ldquo: '“',
+  lsquo: '‘',
+  lt: '<',
+  mdash: '—',
+  middot: '·',
+  nbsp: ' ',
+  ndash: '–',
+  quot: '"',
+  rdquo: '”',
+  rsquo: '’',
+};
+
 function decodeBasicEntities(value: string): string {
   return value
-    .replaceAll('&nbsp;', ' ')
-    .replaceAll('&amp;', '&')
-    .replaceAll('&lt;', '<')
-    .replaceAll('&gt;', '>')
-    .replaceAll('&quot;', '"')
-    .replaceAll('&#39;', "'")
-    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, code: string) => String.fromCodePoint(parseInt(code, 16)));
-}
-
-function stripHtml(value: string): string {
-  return decodeBasicEntities(value.replace(/<[^>]*>/g, ' '))
-    .replace(/\s+/g, ' ')
-    .replace(/^\s*·\s*/, '')
-    .trim();
-}
-
-function extractHtmlAttribute(value: string, name: string): string | undefined {
-  const match = new RegExp(`${name}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i').exec(value);
-  const raw = match?.[2] ?? match?.[3] ?? match?.[4];
-  return raw ? decodeBasicEntities(raw) : undefined;
-}
-
-function hasRedBackgroundStyle(attributes: string): boolean {
-  const style = extractHtmlAttribute(attributes, 'style')?.replace(/\s+/g, '').toLowerCase() ?? '';
-  return /background(?:-color)?:#?(?:f00|ff0000)\b/.test(style);
-}
-
-function normalizeSchoolHomepageTitle(value: string): string {
-  return decodeBasicEntities(value)
-    .replace(/\u00a0/g, ' ')
-    .replace(/\s*[(（]\s*~\s*\d{1,2}\s*일\s*[)）]\s*$/, '')
-    .replace(/^\s*·\s*/, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function inferSchoolHomepageEndDate(title: string, startsAt: string): string {
-  const rangeMatch = /[(（]\s*~\s*(\d{1,2})\s*일\s*[)）]/.exec(title);
-  if (!rangeMatch) return startsAt;
-  const [year, month, day] = startsAt.split('-').map(Number);
-  const endDay = Number(rangeMatch[1]);
-  const endMonthOffset = endDay < day ? 1 : 0;
-  const endDate = new Date(Date.UTC(year, month - 1 + endMonthOffset, endDay));
-  return endDate.toISOString().slice(0, 10);
-}
-
-function monthKeysBetween(from: string, to: string): string[] {
-  const [fromYear, fromMonth] = from.split('-').map(Number);
-  const [toYear, toMonth] = to.split('-').map(Number);
-  const current = new Date(Date.UTC(fromYear, fromMonth - 1, 1));
-  const end = new Date(Date.UTC(toYear, toMonth - 1, 1));
-  const keys: string[] = [];
-  while (current <= end) {
-    keys.push(
-      `${String(current.getUTCFullYear()).padStart(4, '0')}${String(
-        current.getUTCMonth() + 1,
-      ).padStart(2, '0')}`,
-    );
-    current.setUTCMonth(current.getUTCMonth() + 1);
-  }
-  return keys;
-}
-
-function monthRangeFromKey(yearMonth: string): { from: string; to: string } {
-  return monthRange(`${yearMonth.slice(0, 4)}-${yearMonth.slice(4, 6)}-01`);
-}
-
-function academicEventOverlapsRange(event: AcademicEvent, from: string, to: string): boolean {
-  const startsAt = formatKoreanDate(new Date(event.startsAt));
-  const endsAt = formatKoreanDate(new Date(event.endsAt));
-  return startsAt <= to && endsAt >= from;
-}
-
-function schoolHomepageSnapshotEvents(
-  from: string,
-  to: string,
-  yearMonths = monthKeysBetween(from, to),
-): AcademicEvent[] {
-  const ranges = yearMonths.map(monthRangeFromKey);
-  return schoolHomepageCalendarSnapshot
-    .filter(
-      (event) =>
-        academicEventOverlapsRange(event, from, to) &&
-        ranges.some((range) => academicEventOverlapsRange(event, range.from, range.to)),
+    .replace(/&#x([0-9a-f]+);?/gi, (_, code: string) =>
+      String.fromCodePoint(parseInt(code, 16)),
     )
-    .map((event) => ({ ...event }));
+    .replace(/&#(\d+);?/g, (_, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&([a-z][a-z0-9]+);?/gi, (match, name: string) => {
+      return basicHtmlEntities[name.toLowerCase()] ?? match;
+    });
 }
 
 function parseDishes(value: string): string[] {
@@ -414,11 +359,7 @@ export class SchoolDataService {
       scheduleTo: range.to,
       meals: meals.meals,
       academicEvents: calendar.events,
-      availability: availability([
-        meals.available,
-        calendar.homepageAvailable,
-        calendar.schoolEventsAvailable,
-      ]),
+      availability: availability([meals.available, calendar.available]),
       mealAvailability: meals.available ? 'available' : 'unavailable',
       calendarAvailability: calendar.availability,
       homepageCalendarAvailability: calendar.homepageAvailable ? 'available' : 'unavailable',
@@ -479,33 +420,17 @@ export class SchoolDataService {
 
     const { from, to } = parsed.data;
     assertPublicCalendarWindow(from, to, now);
-    const cacheRange = adjacentMonthRange(from, to);
-    const [homepage, custom] = await Promise.all([
-      this.cachedLoad<AcademicEvent[]>(
-        `school-homepage:calendar:${cacheRange.from}:${cacheRange.to}`,
-        () => this.loadSchoolHomepageCalendar(cacheRange.from, cacheRange.to),
-        (value): value is AcademicEvent[] => academicEventCacheSchema.safeParse(value).success,
-        [],
-      ),
-      this.safeListManagedEvents(from, to, false),
-    ]);
-    const externalCalendar = homepage;
-
-    const visibleExternalEvents = externalCalendar.value.filter(
-      (event) =>
-        formatKoreanDate(new Date(event.startsAt)) <= to &&
-        formatKoreanDate(new Date(event.endsAt)) >= from,
-    );
-    const events = [...visibleExternalEvents, ...custom.value].sort((left, right) =>
+    const custom = await this.safeListManagedEvents(from, to, false);
+    const events = custom.value.sort((left, right) =>
       left.startsAt.localeCompare(right.startsAt),
     );
     return {
       from,
       to,
       events,
-      available: externalCalendar.available || custom.available,
-      availability: availability([externalCalendar.available, custom.available]),
-      homepageAvailable: externalCalendar.available,
+      available: custom.available,
+      availability: custom.available ? 'available' : 'unavailable',
+      homepageAvailable: false,
       schoolEventsAvailable: custom.available,
     };
   }
@@ -522,29 +447,8 @@ export class SchoolDataService {
     }
 
     const { from, to } = parsed.data;
-    const cacheRange = adjacentMonthRange(from, to);
-    const [homepage, custom] = await Promise.all([
-      this.cachedLoad<AcademicEvent[]>(
-        `school-homepage:calendar:${cacheRange.from}:${cacheRange.to}`,
-        () => this.loadSchoolHomepageCalendar(cacheRange.from, cacheRange.to),
-        (value): value is AcademicEvent[] => academicEventCacheSchema.safeParse(value).success,
-        [],
-      ),
-      this.safeListRawManagedEvents(from, to, true),
-    ]);
-    const externalCalendar = homepage;
-
-    const visibleExternalEvents = externalCalendar.value.filter(
-      (event) =>
-        formatKoreanDate(new Date(event.startsAt)) <= to &&
-        formatKoreanDate(new Date(event.endsAt)) >= from,
-    );
+    const custom = await this.safeListRawManagedEvents(from, to, true);
     const events: AdminSchoolCalendarEvent[] = [
-      ...visibleExternalEvents.map((event) => ({
-        ...event,
-        editable: false,
-        isPublic: true,
-      })),
       ...custom.value.map((event) => ({
         id: `school:${event.id}`,
         managedId: event.id,
@@ -569,8 +473,8 @@ export class SchoolDataService {
       from,
       to,
       events,
-      availability: availability([externalCalendar.available, custom.available]),
-      homepageAvailable: externalCalendar.available,
+      availability: custom.available ? 'available' : 'unavailable',
+      homepageAvailable: false,
       schoolEventsAvailable: custom.available,
     };
   }
@@ -677,6 +581,67 @@ export class SchoolDataService {
     return { ok: true, id };
   }
 
+  async importManagedEventsFromJson(body: unknown, actorId?: number | null) {
+    const parsed = managedEventImportSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    }
+
+    const values = parsed.data.events.map((event) => this.toEventValues(event));
+    const range = values.reduce(
+      (current, event) => ({
+        from:
+          current.from.getTime() <= event.startsAt.getTime()
+            ? current.from
+            : event.startsAt,
+        to: current.to.getTime() >= event.endsAt.getTime() ? current.to : event.endsAt,
+      }),
+      { from: values[0]!.startsAt, to: values[0]!.endsAt },
+    );
+    const now = new Date();
+
+    const result = await this.database.db.transaction(async (tx) => {
+      let replacedCount = 0;
+      if (parsed.data.replaceRange) {
+        const [countRow] = await tx
+          .select({ total: sql<number>`cast(count(*) as unsigned)`.mapWith(Number) })
+          .from(schema.schoolEvents)
+          .where(and(lte(schema.schoolEvents.startsAt, range.to), gte(schema.schoolEvents.endsAt, range.from)));
+        replacedCount = countRow?.total ?? 0;
+        await tx
+          .delete(schema.schoolEvents)
+          .where(and(lte(schema.schoolEvents.startsAt, range.to), gte(schema.schoolEvents.endsAt, range.from)));
+      }
+
+      await tx.insert(schema.schoolEvents).values(
+        values.map((event) => ({
+          ...event,
+          createdById: actorId && actorId > 0 ? actorId : null,
+          createdAt: now,
+          updatedAt: now,
+        })),
+      );
+
+      return { replacedCount };
+    });
+
+    await this.database.writeAudit({
+      actorId,
+      action: parsed.data.replaceRange ? 'school-event.import.replace' : 'school-event.import',
+      targetType: 'school_events',
+      targetId: parsed.data.fileName ?? `${formatKoreanDate(range.from)}:${formatKoreanDate(range.to)}`,
+    });
+
+    return {
+      ok: true as const,
+      importedCount: values.length,
+      replacedCount: result.replacedCount,
+      replaceRange: parsed.data.replaceRange,
+      from: formatKoreanDate(range.from),
+      to: formatKoreanDate(range.to),
+    };
+  }
+
   private async findManagedEvent(id: number): Promise<ManagedSchoolEvent> {
     const [row] = await this.database.db
       .select()
@@ -742,139 +707,6 @@ export class SchoolDataService {
       dishes: parseDishes(row.DDISH_NM),
       calories: row.CAL_INFO?.trim() || undefined,
       source: 'neis' as const,
-    }));
-  }
-
-  private async loadSchoolHomepageCalendar(from: string, to: string): Promise<AcademicEvent[]> {
-    const requestedMonths = monthKeysBetween(from, to);
-    const loadedPages = await Promise.all(
-      requestedMonths.map(async (yearMonth) => {
-        try {
-          return { html: await this.requestSchoolHomepageCalendar(yearMonth), yearMonth };
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          this.logger.warn(`School homepage calendar ${yearMonth} could not be loaded: ${message}`);
-          return null;
-        }
-      }),
-    );
-    const htmlPages = loadedPages.filter(
-      (page): page is { html: string; yearMonth: string } => page !== null,
-    );
-    if (htmlPages.length === 0) {
-      const snapshotEvents = schoolHomepageSnapshotEvents(from, to, requestedMonths);
-      if (snapshotEvents.length > 0) {
-        this.logger.warn(`Using bundled school homepage calendar snapshot for ${from} to ${to}.`);
-        return snapshotEvents;
-      }
-      throw new Error('School homepage calendar could not be loaded for any requested month.');
-    }
-    const eventsById = new Map<string, AcademicEvent>();
-    for (const page of htmlPages) {
-      for (const event of this.parseSchoolHomepageCalendar(page.html)) {
-        const startsAt = formatKoreanDate(new Date(event.startsAt));
-        const endsAt = formatKoreanDate(new Date(event.endsAt));
-        if (startsAt > to || endsAt < from) continue;
-        eventsById.set(event.id, event);
-      }
-    }
-    const loadedMonths = new Set(htmlPages.map((page) => page.yearMonth));
-    const missingMonths = requestedMonths.filter((yearMonth) => !loadedMonths.has(yearMonth));
-    if (missingMonths.length > 0) {
-      for (const event of schoolHomepageSnapshotEvents(from, to, missingMonths)) {
-        eventsById.set(event.id, event);
-      }
-    }
-    return [...eventsById.values()].sort((left, right) =>
-      left.startsAt === right.startsAt
-        ? left.title.localeCompare(right.title, 'ko-KR')
-        : left.startsAt.localeCompare(right.startsAt),
-    );
-  }
-
-  private async requestSchoolHomepageCalendar(yearMonth: string): Promise<string> {
-    const parameters = new URLSearchParams({
-      mi: SCHOOL_HOMEPAGE_CALENDAR_MENU_ID,
-      selectYearMonth: yearMonth,
-      selectType: 'haksa',
-      sysId: 'chonnam-sh_hs',
-    });
-    const response = await fetch(`${SCHOOL_HOMEPAGE_CALENDAR_URL}?${parameters.toString()}`, {
-      headers: {
-        Accept: 'text/html,application/xhtml+xml',
-        'User-Agent': 'jshsus-calendar-sync/1.0',
-      },
-      signal: AbortSignal.timeout(env.SCHOOL_DATA_REQUEST_TIMEOUT_MS),
-    });
-    if (!response.ok) throw new Error(`School homepage returned HTTP ${response.status}.`);
-    const contentType = response.headers.get('content-type') ?? '';
-    if (contentType && !contentType.toLowerCase().includes('text/html')) {
-      throw new Error(`School homepage returned ${contentType}.`);
-    }
-    const html = await response.text();
-    if (!html.includes('selectYearMonth')) {
-      throw new Error('School homepage calendar markup was not found.');
-    }
-    return html;
-  }
-
-  private parseSchoolHomepageCalendar(html: string): AcademicEvent[] {
-    const groupedEvents = new Map<
-      string,
-      {
-        category: string;
-        endsAt: string;
-        id: string;
-        isHoliday: boolean;
-        startsAt: string;
-        title: string;
-      }
-    >();
-    const cellRegex = /<td\b([^>]*)>([\s\S]*?)<\/td>/gi;
-    let cellMatch: RegExpExecArray | null;
-    while ((cellMatch = cellRegex.exec(html))) {
-      const dateId = extractHtmlAttribute(cellMatch[1], 'id');
-      if (!dateId || !/^\d{8}$/.test(dateId)) continue;
-      const date = fromCompactDate(dateId);
-      const cellHtml = cellMatch[2];
-      const eventRegex = /<p\b([^>]*)>([\s\S]*?)<\/p>/gi;
-      let eventMatch: RegExpExecArray | null;
-      while ((eventMatch = eventRegex.exec(cellHtml))) {
-        const attributes = eventMatch[1];
-        const className = extractHtmlAttribute(attributes, 'class') ?? '';
-        if (!className.split(/\s+/).includes('calLink')) continue;
-        const rawTitle =
-          extractHtmlAttribute(attributes, 'data-schdulTitle') ?? stripHtml(eventMatch[2]);
-        const title = normalizeSchoolHomepageTitle(rawTitle);
-        if (!title) continue;
-        const seq = extractHtmlAttribute(attributes, 'data-seq');
-        const isManagedLink = className.split(/\s+/).includes('btnInfo');
-        const isHoliday = !isManagedLink && hasRedBackgroundStyle(attributes);
-        const startDate = date;
-        const endDate = inferSchoolHomepageEndDate(rawTitle, date);
-        const key = seq ? `seq:${seq}:${title}` : `date:${date}:${title}`;
-        const previous = groupedEvents.get(key);
-        groupedEvents.set(key, {
-          category: isHoliday ? 'holiday' : isManagedLink ? 'academic' : 'observance',
-          endsAt: previous?.endsAt && previous.endsAt > endDate ? previous.endsAt : endDate,
-          id: seq ? `school-homepage:${seq}` : `school-homepage:${dateId}:${title}`,
-          isHoliday,
-          startsAt:
-            previous?.startsAt && previous.startsAt < startDate ? previous.startsAt : startDate,
-          title,
-        });
-      }
-    }
-
-    return [...groupedEvents.values()].map((event) => ({
-      id: event.id,
-      title: event.title,
-      startsAt: `${event.startsAt}T00:00:00.000+09:00`,
-      endsAt: `${event.endsAt}T23:59:59.999+09:00`,
-      allDay: true,
-      category: event.category,
-      isHoliday: event.isHoliday,
-      source: 'school' as const,
     }));
   }
 

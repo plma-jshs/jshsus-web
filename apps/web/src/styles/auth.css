@@ -92,6 +92,33 @@
   font: inherit;
 }
 
+.auth-form > label > select,
+.auth-form-grid select {
+  appearance: none;
+  padding-right: 40px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--j-color-text-muted) 50%),
+    linear-gradient(135deg, var(--j-color-text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 20px,
+    calc(100% - 13px) 20px;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.auth-form > label > select:invalid,
+.auth-form-grid select:invalid {
+  color: var(--j-color-text-muted);
+}
+
+.auth-form > label > select option,
+.auth-form-grid select option {
+  color: var(--j-color-text);
+}
+
 .auth-form > label > input:hover,
 .auth-form > label > select:hover,
 .auth-password-field > input:hover {

@@ -1,7 +1,16 @@
-import type { FormEvent } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Pencil,
+  Plus,
+  Trash2,
+  Upload,
+} from 'lucide-react';
 import { Dialog, Drawer, RowActionButton, RowActions, useToast } from '../../components/ui';
 import {
   api,
@@ -22,6 +31,12 @@ type EventForm = {
   allDay: boolean;
   isHoliday: boolean;
   isPublic: boolean;
+};
+
+type JsonImportPreview = {
+  fileName: string;
+  events: unknown[];
+  replaceRange: boolean;
 };
 
 function dateParts(value: Date | string) {
@@ -233,7 +248,6 @@ export function SchoolEventsPage() {
   const today = koreanDate();
   const [month, setMonth] = useState(monthKey(today));
   const [selectedDate, setSelectedDate] = useState(today);
-  const [source, setSource] = useState<'all' | 'homepage' | 'managed'>('all');
   const [visibility, setVisibility] = useState<'all' | 'public' | 'private'>('all');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -241,6 +255,8 @@ export function SchoolEventsPage() {
   const [form, setForm] = useState<EventForm>(() => blankForm(today));
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminSchoolCalendarEvent | null>(null);
+  const [jsonImport, setJsonImport] = useState<JsonImportPreview | null>(null);
+  const [jsonImportError, setJsonImportError] = useState<string | null>(null);
 
   const days = useMemo(() => calendarDays(month), [month]);
   const weeks = useMemo(() => calendarWeeks(days), [days]);
@@ -258,13 +274,11 @@ export function SchoolEventsPage() {
   const visibleEvents = useMemo(
     () =>
       (calendarQuery.data?.events ?? []).filter((event) => {
-        if (source === 'homepage' && event.editable) return false;
-        if (source === 'managed' && !event.editable) return false;
         if (visibility === 'public' && !event.isPublic) return false;
         if (visibility === 'private' && event.isPublic) return false;
         return true;
       }),
-    [calendarQuery.data?.events, source, visibility],
+    [calendarQuery.data?.events, visibility],
   );
   const selectedEvent = visibleEvents.find((event) => event.id === selectedEventId) ?? null;
   const selectedDateEvents = visibleEvents.filter((event) => occursOn(event, selectedDate));
@@ -308,6 +322,27 @@ export function SchoolEventsPage() {
     },
     onError: () => showToast({ title: '일정을 삭제하지 못했습니다.', tone: 'danger' }),
   });
+  const importJsonMutation = useMutation({
+    mutationFn: api.importSchoolEventsJson,
+    onSuccess: async (result) => {
+      setJsonImport(null);
+      setJsonImportError(null);
+      await refresh();
+      showToast({
+        title: '학사일정 JSON을 반영했습니다.',
+        description: `${result.from}~${result.to} / ${result.importedCount}건 추가${
+          result.replacedCount ? `, ${result.replacedCount}건 교체` : ''
+        }`,
+        tone: 'success',
+      });
+    },
+    onError: (error) =>
+      showToast({
+        title: '학사일정 JSON을 반영하지 못했습니다.',
+        description: error instanceof Error ? error.message : undefined,
+        tone: 'danger',
+      }),
+  });
 
   const moveMonth = (offset: number) => {
     const next = shiftMonth(month, offset);
@@ -342,6 +377,31 @@ export function SchoolEventsPage() {
       startsAt: allDay ? current.startsAt.slice(0, 10) : `${current.startsAt.slice(0, 10)}T09:00`,
       endsAt: allDay ? current.endsAt.slice(0, 10) : `${current.endsAt.slice(0, 10)}T10:00`,
     }));
+  const changeJsonImportFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    try {
+      const parsed = JSON.parse(await file.text()) as unknown;
+      const events =
+        Array.isArray(parsed) || !parsed || typeof parsed !== 'object'
+          ? parsed
+          : (parsed as { events?: unknown }).events;
+      if (!Array.isArray(events) || events.length === 0) {
+        throw new Error('events 배열이 있는 JSON 파일을 선택해 주세요.');
+      }
+      setJsonImport({ fileName: file.name, events, replaceRange: false });
+      setJsonImportError(null);
+    } catch (error) {
+      setJsonImport(null);
+      setJsonImportError(error instanceof Error ? error.message : 'JSON 파일을 읽지 못했습니다.');
+    }
+  };
+  const submitJsonImport = () => {
+    if (!jsonImport) return;
+    importJsonMutation.mutate(jsonImport);
+  };
 
   return (
     <div className="school-calendar-page">
@@ -368,17 +428,6 @@ export function SchoolEventsPage() {
           </div>
           <div className="school-calendar-actions">
             <label>
-              <span className="sr-only">일정 출처</span>
-              <select
-                value={source}
-                onChange={(event) => setSource(event.target.value as typeof source)}
-              >
-                <option value="all">모든 일정</option>
-                <option value="homepage">홈페이지 연동</option>
-                <option value="managed">직접 등록</option>
-              </select>
-            </label>
-            <label>
               <span className="sr-only">공개 상태</span>
               <select
                 value={visibility}
@@ -392,6 +441,11 @@ export function SchoolEventsPage() {
             <button className="primary-button" type="button" onClick={() => openCreate()}>
               <Plus size={16} /> 새 일정
             </button>
+            <label className="secondary-button school-calendar-upload-button">
+              <Upload size={16} />
+              JSON 업로드
+              <input accept="application/json,.json" type="file" onChange={changeJsonImportFile} />
+            </label>
           </div>
         </div>
 
@@ -405,9 +459,53 @@ export function SchoolEventsPage() {
             학교 일정
           </span>
           {calendarQuery.data && calendarQuery.data.availability !== 'available' ? (
-            <em>일부 일정 제공처에 연결하지 못했습니다.</em>
+            <em>일정 DB를 조회하지 못했습니다.</em>
           ) : null}
         </div>
+
+        {jsonImport || jsonImportError ? (
+          <div className="school-calendar-import-panel">
+            {jsonImport ? (
+              <>
+                <div>
+                  <strong>{jsonImport.fileName}</strong>
+                  <span>{jsonImport.events.length}건 업로드 대기</span>
+                </div>
+                <label className="checkbox-row compact-check">
+                  <input
+                    type="checkbox"
+                    checked={jsonImport.replaceRange}
+                    onChange={(event) =>
+                      setJsonImport((current) =>
+                        current ? { ...current, replaceRange: event.target.checked } : current,
+                      )
+                    }
+                  />
+                  <span>파일 날짜 범위의 기존 일정을 먼저 삭제하고 교체</span>
+                </label>
+                <button
+                  className="primary-button"
+                  type="button"
+                  disabled={importJsonMutation.isPending}
+                  onClick={submitJsonImport}
+                >
+                  {importJsonMutation.isPending ? '반영 중' : '반영'}
+                </button>
+                <button
+                  className="quiet-button"
+                  type="button"
+                  onClick={() => setJsonImport(null)}
+                >
+                  취소
+                </button>
+              </>
+            ) : (
+              <p className="form-error" role="alert">
+                {jsonImportError}
+              </p>
+            )}
+          </div>
+        ) : null}
 
         <div className="school-calendar-workspace">
           <div className="school-calendar-main">
@@ -546,7 +644,7 @@ export function SchoolEventsPage() {
         description={
           selectedEvent
             ? `${eventCategoryLabel(selectedEvent)} · ${
-                selectedEvent.editable ? '직접 등록' : '홈페이지 연동 · 읽기 전용'
+                selectedEvent.editable ? '관리 일정' : '읽기 전용'
               }`
             : undefined
         }
@@ -601,7 +699,7 @@ export function SchoolEventsPage() {
             </div>
             <div>
               <dt>출처</dt>
-              <dd>{selectedEvent.editable ? '직접 등록' : '홈페이지 연동'}</dd>
+              <dd>{selectedEvent.editable ? '관리 일정' : '읽기 전용'}</dd>
             </div>
             {selectedEvent.editable ? (
               <div>

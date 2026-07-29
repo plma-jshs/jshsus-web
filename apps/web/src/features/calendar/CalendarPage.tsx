@@ -1,7 +1,8 @@
 import type { AcademicEvent } from '@jshsus/types';
 import type { CSSProperties, KeyboardEvent } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearch } from '@tanstack/react-router';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
@@ -28,6 +29,17 @@ function toDateKey(date: Date) {
 function fromDateKey(dateKey: string) {
   const [year, month, day] = dateKey.split('-').map(Number);
   return new Date(year, month - 1, day);
+}
+
+function isDateKey(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
 }
 
 function monthGrid(date: Date): CalendarCell[] {
@@ -105,12 +117,6 @@ function nextDateKey(dateKey: string) {
   return toDateKey(date);
 }
 
-function eventTitleNeedsTwoRows(event: AcademicEvent, columnSpan: number, showLabel: boolean) {
-  if (!showLabel) return false;
-  const title = displayEventTitle(event.title);
-  return title.length > Math.max(8, columnSpan * 9);
-}
-
 function mergeAdjacentEvents(sourceEvents: AcademicEvent[]) {
   const groups = new Map<string, AcademicEvent[]>();
   for (const event of sourceEvents) {
@@ -163,15 +169,10 @@ function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridSt
   const weekStartKey = week[0].dateKey;
   const weekEndKey = week[6].dateKey;
   const lanes: Array<Array<{ end: number; start: number }>> = [];
-  const isLaneRangeFree = (lane: number, rowSpan: number, start: number, end: number) =>
-    Array.from({ length: rowSpan }, (_, offset) => lane + offset).every((targetLane) =>
-      (lanes[targetLane] ?? []).every((occupied) => end < occupied.start || start > occupied.end),
-    );
-  const occupyLaneRange = (lane: number, rowSpan: number, start: number, end: number) => {
-    for (let offset = 0; offset < rowSpan; offset += 1) {
-      const targetLane = lane + offset;
-      lanes[targetLane] = [...(lanes[targetLane] ?? []), { end, start }];
-    }
+  const isLaneFree = (lane: number, start: number, end: number) =>
+    (lanes[lane] ?? []).every((occupied) => end < occupied.start || start > occupied.end);
+  const occupyLane = (lane: number, start: number, end: number) => {
+    lanes[lane] = [...(lanes[lane] ?? []), { end, start }];
   };
   return [...events]
     .sort((left, right) => {
@@ -195,10 +196,9 @@ function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridSt
 
       const firstVisibleStartKey = range.startsAt < gridStartKey ? gridStartKey : range.startsAt;
       const showLabel = segmentStartKey === firstVisibleStartKey;
-      const rowSpan = eventTitleNeedsTwoRows(event, end - start + 1, showLabel) ? 2 : 1;
       let lane = 0;
-      while (!isLaneRangeFree(lane, rowSpan, start, end)) lane += 1;
-      occupyLaneRange(lane, rowSpan, start, end);
+      while (!isLaneFree(lane, start, end)) lane += 1;
+      occupyLane(lane, start, end);
 
       return [
         {
@@ -207,7 +207,6 @@ function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridSt
           endColumn: end + 1,
           event,
           lane,
-          rowSpan,
           showLabel,
           startColumn: start + 1,
         },
@@ -227,7 +226,16 @@ const headingDateFormatter = createKoreanDateFormatter({
   day: 'numeric',
 });
 const weekdayFormatter = createKoreanDateFormatter({ weekday: 'short' });
-const shortDateFormatter = createKoreanDateFormatter({ month: 'numeric', day: 'numeric' });
+const eventDateFormatter = createKoreanDateFormatter({
+  month: 'numeric',
+  day: 'numeric',
+  weekday: 'short',
+});
+const eventTimeFormatter = createKoreanDateFormatter({
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
 
 function formatSelectedDateHeading(date: Date) {
   return `${headingDateFormatter.format(date)} (${weekdayFormatter.format(date)})`;
@@ -236,18 +244,22 @@ function formatSelectedDateHeading(date: Date) {
 function formatEventRange(event: AcademicEvent) {
   const startsAt = fromDateKey(toKoreanDateKey(event.startsAt));
   const endsAt = fromDateKey(toKoreanDateKey(event.endsAt));
-  const startLabel = shortDateFormatter.format(startsAt);
-  const endLabel = shortDateFormatter.format(endsAt);
-  return startLabel === endLabel ? startLabel : `${startLabel} - ${endLabel}`;
+  const startLabel = eventDateFormatter.format(startsAt);
+  const endLabel = eventDateFormatter.format(endsAt);
+  const dateLabel = startLabel === endLabel ? startLabel : `${startLabel} ~ ${endLabel}`;
+  if (event.allDay) return dateLabel;
+  return `${dateLabel} ${eventTimeFormatter.format(new Date(event.startsAt))} ~ ${eventTimeFormatter.format(new Date(event.endsAt))}`;
 }
 
 export function CalendarPage() {
+  const search = useSearch({ from: '/calendar' });
   const todayKey = toDateKey(new Date());
+  const initialSelectedDate = isDateKey(search.date) ? search.date : todayKey;
   const [visibleMonth, setVisibleMonth] = useState(() => {
-    const today = new Date();
-    return new Date(today.getFullYear(), today.getMonth(), 1);
+    const selected = fromDateKey(initialSelectedDate);
+    return new Date(selected.getFullYear(), selected.getMonth(), 1);
   });
-  const [selectedDate, setSelectedDate] = useState(todayKey);
+  const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
   const cells = useMemo(() => monthGrid(visibleMonth), [visibleMonth]);
   const weeks = useMemo(() => calendarWeeks(cells), [cells]);
   const range = { from: cells[0].dateKey, to: cells[cells.length - 1].dateKey };
@@ -261,6 +273,13 @@ export function CalendarPage() {
   );
   const events = allEvents;
   const selectedEvents = events.filter((event) => eventTouchesDate(event, selectedDate));
+
+  useEffect(() => {
+    if (!isDateKey(search.date)) return;
+    const nextSelectedDate = fromDateKey(search.date);
+    setVisibleMonth(new Date(nextSelectedDate.getFullYear(), nextSelectedDate.getMonth(), 1));
+    setSelectedDate(search.date);
+  }, [search.date]);
 
   const focusDate = (dateKey: string) => {
     requestAnimationFrame(() => {
@@ -410,7 +429,7 @@ export function CalendarPage() {
                     </div>
                     <div className="full-calendar__bars" aria-hidden="true">
                       {weekEventSegments(week, events, cells[0].dateKey)
-                        .filter((segment) => segment.lane + segment.rowSpan <= maxVisibleEventBars)
+                        .filter((segment) => segment.lane < maxVisibleEventBars)
                         .map((segment) => (
                           <span
                             className={`full-calendar__event-bar${
@@ -424,7 +443,7 @@ export function CalendarPage() {
                             style={{
                               ...styleForEvent(segment.event),
                               gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
-                              gridRow: `${segment.lane + 1} / span ${segment.rowSpan}`,
+                              gridRow: `${segment.lane + 1}`,
                             }}
                             title={displayEventTitle(segment.event.title)}
                           >
@@ -448,10 +467,9 @@ export function CalendarPage() {
                 <div className="calendar-agenda__list">
                   {selectedEvents.map((event) => (
                     <article key={event.id} style={styleForEvent(event)}>
-                      <span className="calendar-agenda__chip" aria-hidden="true" />
                       <div>
-                        <span className="calendar-agenda__meta">{formatEventRange(event)}</span>
                         <h4>{displayEventTitle(event.title)}</h4>
+                        <span className="calendar-agenda__meta">{formatEventRange(event)}</span>
                         {event.description ? <p>{event.description}</p> : null}
                       </div>
                     </article>

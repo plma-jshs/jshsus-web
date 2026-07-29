@@ -263,20 +263,27 @@ function CalendarDay({
   const isToday = year === today.year && month === today.month && day === today.day;
   const className = `mini-calendar__day${isCurrentMonth ? '' : ' is-outside-month'}${isToday ? ' is-today' : ''}${events.length ? ' has-events' : ''}`;
   const tooltipId = `calendar-events-${year}-${month}-${day}`;
+  const selectedDate = dateKey(year, month, day);
 
   if (!events.length) {
     return (
-      <span className={className} aria-current={isToday ? 'date' : undefined}>
+      <Link
+        className={className}
+        to="/calendar"
+        search={{ date: selectedDate }}
+        aria-current={isToday ? 'date' : undefined}
+      >
         {day}
-      </span>
+      </Link>
     );
   }
 
   return (
-    <span
+    <Link
       role="group"
-      tabIndex={0}
       className={className}
+      to="/calendar"
+      search={{ date: selectedDate }}
       aria-current={isToday ? 'date' : undefined}
       aria-describedby={tooltipId}
       aria-label={`${year}년 ${month}월 ${day}일, 일정 ${events.length}개`}
@@ -296,7 +303,7 @@ function CalendarDay({
         ))}
         {events.length > 3 ? <small>+{events.length - 3}</small> : null}
       </span>
-    </span>
+    </Link>
   );
 }
 

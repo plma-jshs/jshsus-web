@@ -130,16 +130,27 @@ function cleanText(value) {
 }
 
 function decodeHtml(value) {
+  const named = {
+    amp: '&',
+    apos: "'",
+    bull: '•',
+    gt: '>',
+    hellip: '…',
+    ldquo: '“',
+    lsquo: '‘',
+    lt: '<',
+    mdash: '—',
+    middot: '·',
+    nbsp: ' ',
+    ndash: '–',
+    quot: '"',
+    rdquo: '”',
+    rsquo: '’',
+  };
   return String(value ?? '')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#039;/g, "'")
-    .replace(/&#39;/g, "'")
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, decimal) => String.fromCodePoint(Number(decimal)));
+    .replace(/&#x([0-9a-f]+);?/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
+    .replace(/&#(\d+);?/g, (_, decimal) => String.fromCodePoint(Number(decimal)))
+    .replace(/&([a-z][a-z0-9]+);?/gi, (match, name) => named[name.toLowerCase()] ?? match);
 }
 
 function firstMatch(value, pattern) {

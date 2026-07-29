@@ -66,6 +66,12 @@ export class AdminController {
     return this.schoolDataService.createManagedEvent(body, request.authSession?.userId);
   }
 
+  @Post('school-events/import-json')
+  @RequirePermissions('school_events.manage')
+  importSchoolEventsJson(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
+    return this.schoolDataService.importManagedEventsFromJson(body, request.authSession?.userId);
+  }
+
   @Put('school-events/:id')
   @RequirePermissions('school_events.manage')
   updateSchoolEvent(
@@ -158,6 +164,12 @@ export class AdminController {
   @RequirePermissions('users.manage')
   issueAccountActivation(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
     return this.accountActivationService.issue(body, request.authSession?.userId);
+  }
+
+  @Post('account-activations/bulk')
+  @RequirePermissions('users.manage')
+  issueAccountActivationsBulk(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
+    return this.accountActivationService.issueBulkStudents(body, request.authSession?.userId);
   }
 
   @Get('iam/roles')

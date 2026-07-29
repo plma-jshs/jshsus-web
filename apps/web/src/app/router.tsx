@@ -22,6 +22,21 @@ type TableSearch = {
   q?: string;
 };
 
+type CalendarSearch = {
+  date?: string;
+};
+
+function isDateSearch(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
+}
+
 function validateTableSearch(search: Record<string, unknown>): TableSearch {
   const requestedPage = Number(search.page);
   const requestedPageSize = Number(search.pageSize);
@@ -39,6 +54,10 @@ function validateTableSearch(search: Record<string, unknown>): TableSearch {
   }
 
   return result;
+}
+
+function validateCalendarSearch(search: Record<string, unknown>): CalendarSearch {
+  return isDateSearch(search.date) ? { date: search.date } : {};
 }
 
 async function requireSession(location: { href: string }) {
@@ -152,6 +171,7 @@ const noticeDetailRoute = createRoute({
 const calendarRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/calendar',
+  validateSearch: validateCalendarSearch,
   component: lazyRouteComponent(() => import('../features/calendar/CalendarPage'), 'CalendarPage'),
 });
 
