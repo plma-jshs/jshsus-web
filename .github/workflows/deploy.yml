@@ -77,6 +77,59 @@ jobs:
             | tail -n 20 \
             || true
 
+      - name: Verify production Cognito administrator access
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "container_id=\$(docker ps --filter label=com.docker.compose.project=jshsus-v26 --filter label=com.docker.compose.service=api --format '{{.ID}}' | head -n 1); test -n \"\$container_id\"; docker exec -i \"\$container_id\" node --input-type=module" <<'NODE'
+          import {
+            AdminGetUserCommand,
+            CognitoIdentityProviderClient,
+          } from '@aws-sdk/client-cognito-identity-provider';
+
+          const accessKeyId = process.env.COGNITO_AWS_ACCESS_KEY_ID?.trim();
+          const secretAccessKey = process.env.COGNITO_AWS_SECRET_ACCESS_KEY?.trim();
+          const configuration = {
+            credentialsConfigured: Boolean(accessKeyId && secretAccessKey),
+            accessKeyIdLength: accessKeyId?.length ?? 0,
+            secretAccessKeyLength: secretAccessKey?.length ?? 0,
+            regionConfigured: Boolean(process.env.COGNITO_REGION),
+            userPoolConfigured: Boolean(process.env.COGNITO_USER_POOL_ID),
+          };
+
+          try {
+            const client = new CognitoIdentityProviderClient({
+              region: process.env.COGNITO_REGION,
+              credentials:
+                accessKeyId && secretAccessKey
+                  ? { accessKeyId, secretAccessKey }
+                  : undefined,
+            });
+            const user = await client.send(
+              new AdminGetUserCommand({
+                UserPoolId: process.env.COGNITO_USER_POOL_ID,
+                Username: '9999',
+              }),
+            );
+            console.log(JSON.stringify({
+              ...configuration,
+              ok: true,
+              userStatus: user.UserStatus,
+            }));
+          } catch (error) {
+            console.log(JSON.stringify({
+              ...configuration,
+              ok: false,
+              errorName: error?.name ?? 'UnknownError',
+              statusCode: error?.$metadata?.httpStatusCode ?? null,
+            }));
+            process.exitCode = 2;
+          }
+          NODE
+
       - name: Read channel and approved-template metadata from production
         shell: bash
         run: |
