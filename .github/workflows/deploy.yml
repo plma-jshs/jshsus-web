@@ -73,7 +73,7 @@ jobs:
 
           ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
             "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd '$DEPLOY_PATH' && docker compose --env-file .env.production -f docker-compose.release.yml logs --since 1h --no-color api" \
+            "cd '$DEPLOY_PATH' && docker compose --project-directory '$DEPLOY_PATH' --env-file .env --project-name jshsus-v26 --file .compose.yml logs --since 1h --no-color api" \
             | grep 'Sendon password reset delivery' \
             | tail -n 10 \
             || true
@@ -86,7 +86,7 @@ jobs:
 
           ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
             "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd '$DEPLOY_PATH' && docker compose --env-file .env.production -f docker-compose.release.yml exec -T api node --input-type=module" <<'NODE'
+            "cd '$DEPLOY_PATH' && docker compose --project-directory '$DEPLOY_PATH' --env-file .env --project-name jshsus-v26 --file .compose.yml exec -T api node --input-type=module" <<'NODE'
           const auth = Buffer.from(
             `${process.env.SENDON_ACCOUNT_ID}:${process.env.SENDON_API_KEY}`,
           ).toString('base64');
