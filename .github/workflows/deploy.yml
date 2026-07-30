@@ -8,9 +8,15 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      diagnose_sendon:
+        description: Read Sendon channel/template metadata without sending a message
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
-  group: ${{ github.event_name == 'pull_request' && format('jshsus-v26-pr-{0}', github.event.pull_request.number) || 'jshsus-v26-production' }}
+  group: ${{ github.event_name == 'workflow_dispatch' && inputs.diagnose_sendon && 'jshsus-v26-sendon-diagnostic' || github.event_name == 'pull_request' && format('jshsus-v26-pr-{0}', github.event.pull_request.number) || 'jshsus-v26-production' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -20,8 +26,74 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  diagnose-sendon:
+    name: Diagnose Sendon metadata
+    if: github.event_name == 'workflow_dispatch' && inputs.diagnose_sendon
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SENDON_ACCOUNT_ID: ${{ secrets.SENDON_ACCOUNT_ID }}
+      SENDON_API_KEY: ${{ secrets.SENDON_API_KEY }}
+      CONFIGURED_PROFILE_ID: ${{ secrets.SENDON_KAKAO_SEND_PROFILE_ID }}
+      CONFIGURED_TEMPLATE_ID: ${{ secrets.SENDON_PASSWORD_RESET_TEMPLATE_ID }}
+    steps:
+      - name: Read channel and approved-template metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          auth="$(printf '%s:%s' "$SENDON_ACCOUNT_ID" "$SENDON_API_KEY" | base64 -w 0)"
+          profiles="$(curl --fail-with-body --silent --show-error \
+            --header "Authorization: Basic $auth" \
+            https://api.sendon.io/v2/messages/kakao/send-profiles)"
+
+          printf '%s' "$profiles" | jq '{
+            code,
+            message,
+            profiles: [
+              (.data // [])[] | {
+                id,
+                channelId,
+                channelName,
+                status,
+                profileStatus
+              }
+            ]
+          }'
+
+          profile_id="$(printf '%s' "$profiles" | jq -r \
+            --arg configured "$CONFIGURED_PROFILE_ID" \
+            'first((.data // [])[] | select(.id == $configured or .channelId == $configured) | .id) // empty')"
+          if [[ -z "$profile_id" ]]; then
+            printf 'Configured profile did not match a registered Sendon channel.\n' >&2
+            exit 2
+          fi
+
+          templates="$(curl --fail-with-body --silent --show-error \
+            --header "Authorization: Basic $auth" \
+            "https://api.sendon.io/v2/messages/kakao/send-profiles/$profile_id/templates?limit=100")"
+
+          printf '%s' "$templates" | jq \
+            --arg configured "$CONFIGURED_TEMPLATE_ID" \
+            '{
+              code,
+              message,
+              configuredTemplate: first(
+                (.data.templates // [])[]
+                | select(.id == $configured or .templateCode == $configured)
+                | {
+                    id,
+                    templateCode,
+                    templateName,
+                    status,
+                    profileId
+                  }
+              )
+            }'
+
   verify:
     name: Verify
+    if: github.event_name != 'workflow_dispatch' || !inputs.diagnose_sendon
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
