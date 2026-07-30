@@ -40,6 +40,8 @@ const envSchema = z
     COGNITO_WEB_CLIENT_SECRET: z.string().default(''),
     COGNITO_ADMIN_CLIENT_ID: z.string().default(''),
     COGNITO_ADMIN_CLIENT_SECRET: z.string().default(''),
+    COGNITO_AWS_ACCESS_KEY_ID: z.string().trim().default(''),
+    COGNITO_AWS_SECRET_ACCESS_KEY: z.string().trim().default(''),
     COGNITO_FLOW_TTL_SECONDS: z.coerce.number().int().min(120).max(900).default(300),
     COGNITO_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(15_000).default(5_000),
     PASSWORD_RESET_CODE_TTL_SECONDS: z.coerce.number().int().min(120).max(900).default(300),
@@ -229,6 +231,8 @@ const envSchema = z
             | 'COGNITO_WEB_CLIENT_SECRET'
             | 'COGNITO_ADMIN_CLIENT_ID'
             | 'COGNITO_ADMIN_CLIENT_SECRET'
+            | 'COGNITO_AWS_ACCESS_KEY_ID'
+            | 'COGNITO_AWS_SECRET_ACCESS_KEY'
           >,
           string,
         ]
@@ -238,6 +242,8 @@ const envSchema = z
         ['COGNITO_WEB_CLIENT_SECRET', value.COGNITO_WEB_CLIENT_SECRET],
         ['COGNITO_ADMIN_CLIENT_ID', value.COGNITO_ADMIN_CLIENT_ID],
         ['COGNITO_ADMIN_CLIENT_SECRET', value.COGNITO_ADMIN_CLIENT_SECRET],
+        ['COGNITO_AWS_ACCESS_KEY_ID', value.COGNITO_AWS_ACCESS_KEY_ID],
+        ['COGNITO_AWS_SECRET_ACCESS_KEY', value.COGNITO_AWS_SECRET_ACCESS_KEY],
       ];
 
       for (const [key, configuredValue] of requiredCognitoValues) {
@@ -290,6 +296,15 @@ const envSchema = z
         path: ['S3_BUCKET'],
         message:
           'S3_BUCKET, AWS_ACCESS_KEY_ID, and AWS_SECRET_ACCESS_KEY must be configured together.',
+      });
+    }
+
+    if (Boolean(value.COGNITO_AWS_ACCESS_KEY_ID) !== Boolean(value.COGNITO_AWS_SECRET_ACCESS_KEY)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['COGNITO_AWS_ACCESS_KEY_ID'],
+        message:
+          'COGNITO_AWS_ACCESS_KEY_ID and COGNITO_AWS_SECRET_ACCESS_KEY must be configured together.',
       });
     }
   });

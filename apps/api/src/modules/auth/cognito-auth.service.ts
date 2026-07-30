@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   AdminCreateUserCommand,
   AdminGetUserCommand,
@@ -103,6 +103,7 @@ function challengeResponseAttributeName(attribute: string): string {
 
 @Injectable()
 export class CognitoAuthService {
+  private readonly logger = new Logger(CognitoAuthService.name);
   private readonly endpoint = `https://cognito-idp.${env.COGNITO_REGION}.amazonaws.com/`;
   private adminClient?: CognitoIdentityProviderClient;
 
@@ -421,7 +422,15 @@ export class CognitoAuthService {
       );
     }
 
-    this.adminClient ??= new CognitoIdentityProviderClient({ region: env.COGNITO_REGION });
+    this.adminClient ??= new CognitoIdentityProviderClient({
+      region: env.COGNITO_REGION,
+      credentials: env.COGNITO_AWS_ACCESS_KEY_ID
+        ? {
+            accessKeyId: env.COGNITO_AWS_ACCESS_KEY_ID,
+            secretAccessKey: env.COGNITO_AWS_SECRET_ACCESS_KEY,
+          }
+        : undefined,
+    });
     return this.adminClient;
   }
 
@@ -461,6 +470,7 @@ export class CognitoAuthService {
 
   private mapAdminProviderError(error: unknown, operation: string): CognitoAuthError {
     const causeName = this.safeProviderErrorName(error);
+    this.logger.error(`Cognito admin request failed: operation=${operation} cause=${causeName}`);
     return this.mapProviderError(causeName, operation);
   }
 

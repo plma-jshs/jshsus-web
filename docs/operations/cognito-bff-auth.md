@@ -22,6 +22,8 @@ COGNITO_REGION=ap-northeast-2
 COGNITO_USER_POOL_ID=...
 COGNITO_CLIENT_ID=...
 COGNITO_CLIENT_SECRET=...
+COGNITO_AWS_ACCESS_KEY_ID=...
+COGNITO_AWS_SECRET_ACCESS_KEY=...
 COGNITO_FLOW_TTL_SECONDS=300
 COGNITO_REQUEST_TIMEOUT_MS=5000
 CORS_ORIGINS=https://v26.jshsus.kr,https://admin-v26.jshsus.kr
@@ -30,6 +32,11 @@ CORS_ORIGINS=https://v26.jshsus.kr,https://admin-v26.jshsus.kr
 Web/Admin app client를 별도로 나누는 경우에는 `COGNITO_WEB_CLIENT_ID`,
 `COGNITO_WEB_CLIENT_SECRET`, `COGNITO_ADMIN_CLIENT_ID`,
 `COGNITO_ADMIN_CLIENT_SECRET`을 넣으면 단일 client 값보다 우선한다.
+`COGNITO_AWS_ACCESS_KEY_ID`와 `COGNITO_AWS_SECRET_ACCESS_KEY`는 API 서버가
+`AdminGetUser`, `AdminCreateUser`, `AdminSetUserPassword`,
+`AdminUpdateUserAttributes`를 실행할 때만 쓰는 전용 최소 권한 IAM 자격 증명이다.
+파일 업로드용 `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`와 분리하고 두 값은
+반드시 함께 설정한다.
 
 공개 스테이징에서는 기존 서비스의 부모 도메인 쿠키와 충돌하지 않도록 별도 이름을 권장한다.
 
@@ -48,7 +55,12 @@ release compose의 `SESSION_COOKIE_DOMAIN` 기본값은 기존 local 모드를 �
 
 ## 서버 IAM 정책
 
-학생 계정 프로비저닝과 운영자용 계정 관리를 실행하는 AWS IAM user/role에는 최소한 다음 액션이 필요하다. `DescribeUserPool`은 프로비저닝 전에 User Pool이 일반 username 로그인 또는 `preferred_username` 별칭 로그인을 지원하는지 확인하는 읽기 전용 검증에 사용한다.
+학생 계정 프로비저닝 role에는 아래 작업 중 provisioning에 필요한 것만 허용한다.
+API 런타임 IAM 사용자는 `AdminCreateUser`, `AdminGetUser`,
+`AdminSetUserPassword`, `AdminUpdateUserAttributes`만 현재 User Pool ARN에
+허용한다. `DescribeUserPool`은 프로비저닝 전에 User Pool이 일반 username 로그인
+또는 `preferred_username` 별칭 로그인을 지원하는지 확인하는 읽기 전용 검증에
+사용한다.
 
 ```json
 [
@@ -101,8 +113,9 @@ SENDON_SMS_SENDER_NUMBER=
 ```
 
 `SENDON_ACCOUNT_ID`는 센드온 로그인용 영문 계정 ID이고,
-`SENDON_KAKAO_SEND_PROFILE_ID`는 `@`로 시작할 수 있는 카카오 채널 ID다. 두 값을
-혼용하면 안 된다. 템플릿에는 `#{인증번호}` 변수가 있어야 한다. 실제 API 키는
+`SENDON_KAKAO_SEND_PROFILE_ID`는 Sendon API가 반환하는 profile ID이며 카카오
+채널 핸들에 표시되는 선행 `@`를 제외한다. 두 값을 혼용하면 안 된다. 템플릿에는
+`#{인증번호}` 변수가 있어야 한다. 실제 API 키는
 `.env.example`, Git, Actions 로그에 기록하지 않고 GitHub `production` environment
 Secret으로만 관리한다.
 
