@@ -32,13 +32,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     env:
-      SENDON_ACCOUNT_ID: ${{ secrets.SENDON_ACCOUNT_ID }}
-      SENDON_API_KEY: ${{ secrets.SENDON_API_KEY }}
-      CONFIGURED_PROFILE_ID: ${{ secrets.SENDON_KAKAO_SEND_PROFILE_ID }}
-      CONFIGURED_TEMPLATE_ID: ${{ secrets.SENDON_PASSWORD_RESET_TEMPLATE_ID }}
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
     steps:
       - name: Configure pinned SSH identity
         shell: bash
@@ -68,59 +65,97 @@ jobs:
           fi
           printf 'Production egress IPv4: %s\n' "$server_ip"
 
-      - name: Read channel and approved-template metadata
+      - name: Read recent Sendon delivery failures
         shell: bash
         run: |
           set -euo pipefail
+          [[ "$DEPLOY_PATH" =~ ^/[A-Za-z0-9._/-]+$ ]]
 
-          auth="$(printf '%s:%s' "$SENDON_ACCOUNT_ID" "$SENDON_API_KEY" | base64 -w 0)"
-          profiles="$(curl --fail-with-body --silent --show-error \
-            --header "Authorization: Basic $auth" \
-            https://api.sendon.io/v2/messages/kakao/send-profiles)"
+          ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && docker compose --env-file .env.production -f docker-compose.release.yml logs --since 1h --no-color api" \
+            | grep 'Sendon password reset delivery' \
+            | tail -n 10 \
+            || true
 
-          printf '%s' "$profiles" | jq '{
-            code,
-            message,
-            profiles: [
-              (.data // [])[] | {
-                id,
-                channelId,
-                channelName,
-                status,
-                profileStatus
+      - name: Read channel and approved-template metadata from production
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$DEPLOY_PATH" =~ ^/[A-Za-z0-9._/-]+$ ]]
+
+          ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && docker compose --env-file .env.production -f docker-compose.release.yml exec -T api node --input-type=module" <<'NODE'
+          const auth = Buffer.from(
+            `${process.env.SENDON_ACCOUNT_ID}:${process.env.SENDON_API_KEY}`,
+          ).toString('base64');
+          const request = async (path) => {
+            const response = await fetch(
+              `${process.env.SENDON_API_BASE_URL.replace(/\/+$/, '')}${path}`,
+              { headers: { authorization: `Basic ${auth}` } },
+            );
+            return response.json();
+          };
+
+          const profilesResponse = await request('/v2/messages/kakao/send-profiles');
+          const profiles = Array.isArray(profilesResponse.data) ? profilesResponse.data : [];
+          console.log(JSON.stringify({
+            code: profilesResponse.code,
+            message: profilesResponse.message,
+            profiles: profiles.map((profile) => ({
+              id: profile.id,
+              channelId: profile.channelId,
+              channelName: profile.channelName,
+              status: profile.status,
+              profileStatus: profile.profileStatus,
+            })),
+          }, null, 2));
+
+          if (profilesResponse.code !== 200) {
+            process.exitCode = 2;
+          } else {
+            const configuredProfile = profiles.find(
+              (profile) =>
+                profile.id === process.env.SENDON_KAKAO_SEND_PROFILE_ID
+                || profile.channelId === process.env.SENDON_KAKAO_SEND_PROFILE_ID,
+            );
+
+            if (!configuredProfile) {
+              console.error('Configured profile did not match a registered Sendon channel.');
+              process.exitCode = 2;
+            } else {
+              const templatesResponse = await request(
+                `/v2/messages/kakao/send-profiles/${encodeURIComponent(configuredProfile.id)}/templates?limit=100`,
+              );
+              const templates = Array.isArray(templatesResponse.data?.templates)
+                ? templatesResponse.data.templates
+                : [];
+              const configuredTemplate = templates.find(
+                (template) =>
+                  template.id === process.env.SENDON_PASSWORD_RESET_TEMPLATE_ID
+                  || template.templateCode === process.env.SENDON_PASSWORD_RESET_TEMPLATE_ID,
+              );
+              console.log(JSON.stringify({
+                code: templatesResponse.code,
+                message: templatesResponse.message,
+                configuredProfileId: configuredProfile.id,
+                configuredTemplate: configuredTemplate
+                  ? {
+                      id: configuredTemplate.id,
+                      templateCode: configuredTemplate.templateCode,
+                      templateName: configuredTemplate.templateName,
+                      status: configuredTemplate.status,
+                      profileId: configuredTemplate.profileId,
+                    }
+                  : null,
+              }, null, 2));
+              if (templatesResponse.code !== 200 || !configuredTemplate) {
+                process.exitCode = 2;
               }
-            ]
-          }'
-
-          profile_id="$(printf '%s' "$profiles" | jq -r \
-            --arg configured "$CONFIGURED_PROFILE_ID" \
-            'first((.data // [])[] | select(.id == $configured or .channelId == $configured) | .id) // empty')"
-          if [[ -z "$profile_id" ]]; then
-            printf 'Configured profile did not match a registered Sendon channel, or Sendon rejected this runner IP.\n' >&2
-            exit 0
-          fi
-
-          templates="$(curl --fail-with-body --silent --show-error \
-            --header "Authorization: Basic $auth" \
-            "https://api.sendon.io/v2/messages/kakao/send-profiles/$profile_id/templates?limit=100")"
-
-          printf '%s' "$templates" | jq \
-            --arg configured "$CONFIGURED_TEMPLATE_ID" \
-            '{
-              code,
-              message,
-              configuredTemplate: first(
-                (.data.templates // [])[]
-                | select(.id == $configured or .templateCode == $configured)
-                | {
-                    id,
-                    templateCode,
-                    templateName,
-                    status,
-                    profileId
-                  }
-              )
-            }'
+            }
+          }
+          NODE
 
   verify:
     name: Verify
