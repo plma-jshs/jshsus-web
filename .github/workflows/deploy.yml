@@ -479,6 +479,25 @@ jobs:
             mv "$next_file" .env.production
           }
 
+          normalize_aws_credential() {
+            local name="$1"
+            local value="${!name}"
+            value="${value//$'\r'/}"
+            value="${value//$'\n'/}"
+            printf -v "$name" '%s' "$value"
+          }
+
+          normalize_aws_credential COGNITO_AWS_ACCESS_KEY_ID
+          normalize_aws_credential COGNITO_AWS_SECRET_ACCESS_KEY
+          if [[ ! "$COGNITO_AWS_ACCESS_KEY_ID" =~ ^(AKIA|ASIA)[A-Z0-9]{16}$ ]]; then
+            printf '::error::COGNITO_AWS_ACCESS_KEY_ID is not a valid AWS access key ID.\n' >&2
+            exit 1
+          fi
+          if [[ ! "$COGNITO_AWS_SECRET_ACCESS_KEY" =~ ^[A-Za-z0-9/+=]{40}$ ]]; then
+            printf '::error::COGNITO_AWS_SECRET_ACCESS_KEY is not a valid AWS secret access key.\n' >&2
+            exit 1
+          fi
+
           test -n "$PRODUCTION_ENV_FILE"
           for secret_name in \
             NEIS_API_KEY \
