@@ -5,7 +5,7 @@
 비밀번호, Cognito app client secret, 데이터베이스 접속 문자열은 이 문서나
 workflow 로그에 기록하지 않는다.
 
-## 1. 2026-07-29 확인 및 적용 결과
+## 1. 2026-07-30 확인 및 적용 결과
 
 | 항목                 | 현재 값 또는 상태                                                                                            |
 | -------------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -23,14 +23,20 @@ workflow 로그에 기록하지 않는다.
 | GitHub Actions role  | `arn:aws:iam::050314037822:role/jshsus-github-cognito-provisioning`                                          |
 | GitHub environment   | `cognito-provisioning`, 배포 branch `main`만 허용                                                            |
 
-기존 `jshsus-v26` pool(`ap-northeast-2_hqOzDeD5R`)은 전환 중 복구를 위해 삭제하지
-않고 보존한다. 점검 당시 기존 pool에는 명시적인 테스트 사용자 `9999`만 있었고
-`9988` 사용자는 없었다. 기존 내부 app client는 외부 서비스와 공유하지 않는다.
-새 pool에는 Web, Admin, Labs OIDC용 confidential app client를 각각 분리해 만들었다.
-운영 API의 IAM 정책은 전환 중 장애를 피하려고 구·신 pool에 대해 실제 코드가
-사용하는 `AdminCreateUser`, `AdminGetUser`, `AdminSetUserPassword`,
-`AdminUpdateUserAttributes`만 허용한다. 새 pool 배포가 안정화되면 구 pool ARN을
-정책에서 제거한다.
+기존 `jshsus-v26` pool(`ap-northeast-2_hqOzDeD5R`)에는 테스트 사용자 `9999`와
+내부 app client 하나만 남아 있었다. 새 pool 전환, `9999` 비밀번호 재설정,
+실제 로그인 E2E를 확인한 뒤 2026-07-30에 기존 pool과 할당 도메인을 삭제했다.
+새 pool의 과구리 Web·Admin 내부 BFF client와 Labs 외부 OIDC client는 서로
+분리되어 있으며, 외부 OIDC 설정은 Labs client에만 적용한다.
+운영 API의 `jshsus-cognito-backend-policy`도 새 pool ARN에 대해서만
+`AdminCreateUser`, `AdminGetUser`, `AdminSetUserPassword`,
+`AdminUpdateUserAttributes`를 허용하도록 축소했다. 교체 과정에서 만든 구
+액세스 키는 삭제하고 운영에 배포된 키 하나만 남겼다.
+
+전체 active 학생 212명에 대한 apply 후 같은 입력으로 dry-run한 결과는
+`Already complete: 212`였으며 추가 AWS/DB 변경은 없었다. 테스트 계정 `9999`는
+`include_test_account=true`를 명시한 단일 apply로만 생성·연결했고, 새 pool에서
+상태가 `확인됨`인 것과 과구리 학생 포털 로그인까지 확인했다.
 
 ### 학번 변경 대응 적용 결과
 
