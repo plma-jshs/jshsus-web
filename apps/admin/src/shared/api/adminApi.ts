@@ -217,7 +217,7 @@ export const api = {
       csrfTokenCache = null;
       return result;
     }),
-  requestPasswordReset: (input: { username: string }) =>
+  requestPasswordReset: (input: { username: string; delivery: 'phone' | 'email' }) =>
     request<{ ok: true }>('/api/auth/password/forgot', {
       method: 'POST',
       body: input,

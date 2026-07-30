@@ -109,6 +109,50 @@ describe('Cognito authentication routing', () => {
     });
   });
 
+  it('uses Cognito delivery when the user selects a verified email', async () => {
+    const redis = {
+      incrementWithTtl: vi.fn().mockResolvedValue(1),
+      setJson: vi.fn().mockResolvedValue(undefined),
+    };
+    const database = { writeAudit: vi.fn().mockResolvedValue(undefined) };
+    const cognito = { forgotPassword: vi.fn().mockResolvedValue(undefined) };
+    const sendon = { sendPasswordResetCode: vi.fn() };
+    const service = new AuthService(
+      redis as never,
+      database as never,
+      cognito as never,
+      sendon as never,
+    );
+    vi.spyOn(
+      service as unknown as { findPasswordResetTarget: () => Promise<unknown> },
+      'findPasswordResetTarget',
+    ).mockResolvedValue({
+      userId: 1,
+      username: '9999',
+      phone: '01012345678',
+      email: 'student@example.com',
+      status: 'active',
+      cognitoSubject: 'sub-1',
+    });
+
+    await expect(service.requestPasswordReset('9999', 'web', 'email')).resolves.toEqual({
+      ok: true,
+    });
+
+    expect(cognito.forgotPassword).toHaveBeenCalledWith('9999', 'web');
+    expect(sendon.sendPasswordResetCode).not.toHaveBeenCalled();
+    expect(redis.setJson).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        username: '9999',
+        userId: 1,
+        delivery: 'email',
+        surface: 'web',
+      }),
+      expect.any(Number),
+    );
+  });
+
   it('rejects invalid password reset codes before changing the Cognito password', async () => {
     const redis = {
       incrementWithTtl: vi.fn().mockResolvedValue(1),
@@ -179,6 +223,50 @@ describe('Cognito authentication routing', () => {
       }),
     ).resolves.toEqual({ ok: true });
     expect(cognito.setPermanentPassword).toHaveBeenCalledWith('9999', 'NewPassword1!');
+  });
+
+  it('confirms an email-delivered reset code with the same Cognito app client', async () => {
+    const redis = {
+      incrementWithTtl: vi.fn().mockResolvedValue(1),
+      get: vi.fn().mockResolvedValue(
+        JSON.stringify({
+          username: '9999',
+          userId: 1,
+          delivery: 'email',
+          surface: 'web',
+          attemptCount: 0,
+        }),
+      ),
+      delete: vi.fn().mockResolvedValue(undefined),
+      setMembers: vi.fn().mockResolvedValue([]),
+      deleteMany: vi.fn().mockResolvedValue(undefined),
+    };
+    const cognito = {
+      confirmForgotPassword: vi.fn().mockResolvedValue(undefined),
+      setPermanentPassword: vi.fn(),
+    };
+    const service = new AuthService(
+      redis as never,
+      { writeAudit: vi.fn().mockResolvedValue(undefined) } as never,
+      cognito as never,
+    );
+
+    await expect(
+      service.confirmPasswordReset({
+        username: '9999',
+        code: '123456',
+        newPassword: 'NewPassword1!',
+        surface: 'web',
+      }),
+    ).resolves.toEqual({ ok: true });
+
+    expect(cognito.confirmForgotPassword).toHaveBeenCalledWith({
+      username: '9999',
+      code: '123456',
+      newPassword: 'NewPassword1!',
+      surface: 'web',
+    });
+    expect(cognito.setPermanentPassword).not.toHaveBeenCalled();
   });
 
   it('does not allow a web challenge flow to be completed through the admin surface', async () => {

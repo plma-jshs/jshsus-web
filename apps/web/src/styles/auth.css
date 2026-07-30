@@ -278,6 +278,50 @@
   box-shadow: none;
 }
 
+.auth-recovery-method {
+  display: grid;
+  padding: 0;
+  margin: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  border: 0;
+}
+
+.auth-recovery-method legend {
+  padding: 0;
+  margin: 0 0 7px;
+  color: var(--j-color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.auth-recovery-method label {
+  display: flex;
+  min-height: 42px;
+  padding: 0 12px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--j-color-border-strong);
+  border-radius: 8px;
+  color: var(--j-color-text);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-recovery-method label:has(input:checked) {
+  border-color: var(--j-color-brand);
+  background: var(--j-color-surface-selected);
+}
+
+.auth-recovery-method input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--j-color-brand);
+}
+
 .auth-remember input:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--j-color-brand) 48%, transparent);
   outline-offset: 2px;
