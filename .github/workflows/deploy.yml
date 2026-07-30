@@ -65,7 +65,7 @@ jobs:
           fi
           printf 'Production egress IPv4: %s\n' "$server_ip"
 
-      - name: Read recent Sendon delivery failures
+      - name: Read recent authentication delivery and Cognito failures
         shell: bash
         run: |
           set -euo pipefail
@@ -73,8 +73,8 @@ jobs:
           ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
             "$DEPLOY_USER@$DEPLOY_HOST" \
             "container_id=\$(docker ps --filter label=com.docker.compose.project=jshsus-v26 --filter label=com.docker.compose.service=api --format '{{.ID}}' | head -n 1); test -n \"\$container_id\"; docker logs --since 1h \"\$container_id\"" \
-            | grep 'Sendon password reset delivery' \
-            | tail -n 10 \
+            | grep -E 'Sendon password reset delivery|Cognito admin request failed' \
+            | tail -n 20 \
             || true
 
       - name: Read channel and approved-template metadata from production
