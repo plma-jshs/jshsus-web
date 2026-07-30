@@ -1077,7 +1077,7 @@ export function RichTextEditor({
                         aria-label={`선택지 ${index + 1}`}
                         maxLength={80}
                         onChange={(event) => updatePollOption(index, event.target.value)}
-                        placeholder={`선택지 ${index + 1}을 입력하세요`}
+                        placeholder={`선택지 ${index + 1} 내용을 입력하세요`}
                         type="text"
                         value={option}
                       />
