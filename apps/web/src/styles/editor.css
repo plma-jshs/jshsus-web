@@ -141,27 +141,33 @@
   color: var(--j-color-text);
   background: transparent;
   cursor: pointer;
-  transition: background-color var(--j-motion-fast);
+  transition:
+    color var(--j-motion-fast),
+    background-color var(--j-motion-fast);
 }
 
-.rich-text-toolbar-select__trigger:hover,
-.rich-text-toolbar-select.is-open .rich-text-toolbar-select__trigger {
+.rich-text-toolbar-select__trigger:hover {
   background: var(--j-color-surface-hover);
+}
+
+.rich-text-toolbar-select.is-open .rich-text-toolbar-select__trigger {
+  color: var(--j-color-brand-strong);
+  background: var(--j-color-surface-selected);
 }
 
 .rich-text-toolbar-select__trigger:focus-visible {
   background: var(--j-color-surface-hover);
-  box-shadow: inset 0 0 0 1px var(--j-color-border-strong);
-  outline: 0;
+  outline: 2px solid color-mix(in srgb, var(--j-color-brand) 42%, transparent);
+  outline-offset: 1px;
 }
 
 .rich-text-toolbar-select__value {
   display: block;
   overflow: hidden;
   width: 100%;
-  color: var(--j-color-text);
+  color: inherit;
   font-size: 12px;
-  font-weight: var(--j-weight-medium);
+  font-weight: var(--j-weight-regular);
   line-height: 1.25;
   text-align: left;
   text-overflow: ellipsis;

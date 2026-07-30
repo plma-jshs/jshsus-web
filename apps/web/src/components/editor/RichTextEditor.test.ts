@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  getToolbarDropdownOptions,
   getRichTextImageSources,
   hasTemporaryImageSources,
+  isToolbarDropdownOptionSelected,
   plainTextToRichTextDocument,
   resolvePendingImages,
   stripPendingImages,
   type RichTextDocument,
 } from './RichTextEditor';
-import { RICH_TEXT_FONT_FAMILY_OPTIONS } from './richTextMarks';
+import { RICH_TEXT_FONT_FAMILY_OPTIONS, RICH_TEXT_FONT_SIZE_OPTIONS } from './richTextMarks';
 
 const documentWithPendingImage: RichTextDocument = {
   type: 'doc',
@@ -138,7 +140,12 @@ describe('rich-text document persistence', () => {
 
 describe('rich-text toolbar font policy', () => {
   it('keeps the concise cross-platform font set used by the custom menu', () => {
-    expect(RICH_TEXT_FONT_FAMILY_OPTIONS.map((option) => option.label)).toEqual([
+    expect(
+      getToolbarDropdownOptions(RICH_TEXT_FONT_FAMILY_OPTIONS, 'Pretendard').map(
+        (option) => option.label,
+      ),
+    ).toEqual([
+      'Pretendard',
       '굴림',
       '바탕',
       '돋움',
@@ -150,5 +157,33 @@ describe('rich-text toolbar font policy', () => {
       'Noto Sans KR',
       'Noto Serif KR',
     ]);
+  });
+
+  it('marks the default size in its natural numeric position without duplicating it', () => {
+    const options = getToolbarDropdownOptions(RICH_TEXT_FONT_SIZE_OPTIONS, '12');
+
+    expect(options.map((option) => option.label)).toEqual([
+      '8',
+      '9',
+      '10',
+      '11',
+      '12',
+      '14',
+      '16',
+      '18',
+      '20',
+      '22',
+      '24',
+      '28',
+      '30',
+      '36',
+      '50',
+      '72',
+      '96',
+    ]);
+    expect(options.filter((option) => option.label === '12')).toHaveLength(1);
+    expect(options.findIndex((option) => isToolbarDropdownOptionSelected(option, '', '12'))).toBe(
+      4,
+    );
   });
 });

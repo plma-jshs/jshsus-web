@@ -348,6 +348,23 @@ function ToolbarButton({
   );
 }
 
+export function getToolbarDropdownOptions(
+  options: ReadonlyArray<{ value: string; label: string }>,
+  defaultLabel: string,
+) {
+  return options.some((option) => option.label === defaultLabel)
+    ? options
+    : [{ value: '', label: defaultLabel }, ...options];
+}
+
+export function isToolbarDropdownOptionSelected(
+  option: { value: string; label: string },
+  value: string,
+  defaultLabel: string,
+) {
+  return option.value === value || (!value && option.label === defaultLabel);
+}
+
 function ToolbarDropdown({
   className,
   defaultLabel,
@@ -366,10 +383,7 @@ function ToolbarDropdown({
   const [open, setOpen] = useState(false);
   const currentLabel =
     options.find((option) => option.value === value)?.label ?? (value ? value : defaultLabel);
-  const visibleOptions = [
-    { value: '', label: defaultLabel },
-    ...options.filter((option) => option.label !== defaultLabel),
-  ];
+  const visibleOptions = getToolbarDropdownOptions(options, defaultLabel);
 
   return (
     <div
@@ -401,7 +415,7 @@ function ToolbarDropdown({
       {open ? (
         <div aria-label={label} className="rich-text-toolbar-select__menu" role="listbox">
           {visibleOptions.map((option) => {
-            const selected = option.value === value || (!option.value && !value);
+            const selected = isToolbarDropdownOptionSelected(option, value, defaultLabel);
             return (
               <button
                 aria-selected={selected}
