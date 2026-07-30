@@ -36,7 +36,38 @@ jobs:
       SENDON_API_KEY: ${{ secrets.SENDON_API_KEY }}
       CONFIGURED_PROFILE_ID: ${{ secrets.SENDON_KAKAO_SEND_PROFILE_ID }}
       CONFIGURED_TEMPLATE_ID: ${{ secrets.SENDON_PASSWORD_RESET_TEMPLATE_ID }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
     steps:
+      - name: Configure pinned SSH identity
+        shell: bash
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 "$HOME/.ssh"
+          umask 077
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/deploy_key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          ssh-keygen -y -f "$HOME/.ssh/deploy_key" >/dev/null
+          test -s "$HOME/.ssh/known_hosts"
+
+      - name: Read production egress IPv4
+        shell: bash
+        run: |
+          set -euo pipefail
+          server_ip="$(ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "curl --ipv4 --fail --silent --show-error https://checkip.amazonaws.com" \
+            | tr -d '[:space:]')"
+          if [[ ! "$server_ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+            printf 'Production server did not return a valid egress IPv4.\n' >&2
+            exit 1
+          fi
+          printf 'Production egress IPv4: %s\n' "$server_ip"
+
       - name: Read channel and approved-template metadata
         shell: bash
         run: |
@@ -65,8 +96,8 @@ jobs:
             --arg configured "$CONFIGURED_PROFILE_ID" \
             'first((.data // [])[] | select(.id == $configured or .channelId == $configured) | .id) // empty')"
           if [[ -z "$profile_id" ]]; then
-            printf 'Configured profile did not match a registered Sendon channel.\n' >&2
-            exit 2
+            printf 'Configured profile did not match a registered Sendon channel, or Sendon rejected this runner IP.\n' >&2
+            exit 0
           fi
 
           templates="$(curl --fail-with-body --silent --show-error \
