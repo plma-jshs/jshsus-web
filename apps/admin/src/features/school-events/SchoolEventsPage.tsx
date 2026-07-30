@@ -432,9 +432,9 @@ export function SchoolEventsPage() {
             <button className="primary-button" type="button" onClick={() => openCreate()}>
               <Plus size={16} /> 새 일정
             </button>
-            <label className="secondary-button school-calendar-upload-button">
+            <label className="quiet-button school-calendar-upload-button">
               <Upload size={16} />
-              JSON 업로드
+              업로드
               <input accept="application/json,.json" type="file" onChange={changeJsonImportFile} />
             </label>
           </div>
@@ -593,13 +593,6 @@ export function SchoolEventsPage() {
                   <h2>{selectedDate}</h2>
                   <span>{selectedDateEvents.length}건</span>
                 </div>
-                <button
-                  className="quiet-button"
-                  type="button"
-                  onClick={() => openCreate(selectedDate)}
-                >
-                  <Plus size={15} /> 일정 추가
-                </button>
               </div>
               {selectedDateEvents.length ? (
                 <div className="selected-day-list">

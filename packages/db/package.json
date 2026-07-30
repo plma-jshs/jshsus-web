@@ -16,6 +16,8 @@
     "db:prepare-baseline": "node scripts/prepare-baseline-database.cjs",
     "db:deploy": "pnpm db:prepare-baseline && pnpm db:migrate && pnpm db:bootstrap-core",
     "db:backup": "node scripts/backup-database.cjs",
+    "db:migrate-legacy-points": "node scripts/migrate-legacy-points.cjs",
+    "db:normalize-board-content": "node scripts/normalize-board-content.cjs",
     "db:provision-cognito-students": "node scripts/provision-cognito-students.cjs",
     "db:assert-local": "node -e \"require('./scripts/local-seed-safety.cjs').assertLocalSeedAllowed(); console.log('Local database target verified.')\"",
     "db:bootstrap-local": "node scripts/bootstrap-local.cjs"

@@ -37,16 +37,31 @@ function ToastIcon({ tone }: { tone: ToastTone }) {
 
 function ToastItem({ toast, onDismiss }: { toast: ToastRecord; onDismiss: (id: number) => void }) {
   const tone = toast.tone ?? 'info';
+  const [isLeaving, setIsLeaving] = useState(false);
+  const exitTimerRef = useRef<number>();
+
+  const requestDismiss = useCallback(() => {
+    if (exitTimerRef.current !== undefined) return;
+    setIsLeaving(true);
+    exitTimerRef.current = window.setTimeout(() => onDismiss(toast.id), 180);
+  }, [onDismiss, toast.id]);
 
   useEffect(() => {
     if (toast.duration === 0) return;
-    const timer = window.setTimeout(() => onDismiss(toast.id), toast.duration ?? 4200);
+    const timer = window.setTimeout(requestDismiss, toast.duration ?? 4200);
     return () => window.clearTimeout(timer);
-  }, [onDismiss, toast.duration, toast.id]);
+  }, [requestDismiss, toast.duration]);
+
+  useEffect(
+    () => () => {
+      if (exitTimerRef.current !== undefined) window.clearTimeout(exitTimerRef.current);
+    },
+    [],
+  );
 
   return (
     <article
-      className={`web-toast web-toast--${tone}`}
+      className={`web-toast web-toast--${tone}${isLeaving ? ' is-leaving' : ''}`}
       role={tone === 'danger' ? 'alert' : 'status'}
     >
       <ToastIcon tone={tone} />
@@ -58,7 +73,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastRecord; onDismiss: (id: n
         className="web-toast__close"
         type="button"
         aria-label="알림 닫기"
-        onClick={() => onDismiss(toast.id)}
+        onClick={requestDismiss}
       >
         <X size={16} aria-hidden="true" />
       </button>

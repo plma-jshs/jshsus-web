@@ -9,6 +9,7 @@
 const { existsSync, readFileSync } = require('node:fs');
 const { resolve } = require('node:path');
 const mysql = require('mysql2/promise');
+const { decodeHtmlEntities } = require('./html-entities.cjs');
 const { seedConnectionOptions } = require('./seed-connection.cjs');
 
 const ROOT_DIR = resolve(__dirname, '../../..');
@@ -123,34 +124,10 @@ function toInteger(value) {
 }
 
 function cleanText(value) {
-  return decodeHtml(String(value ?? ''))
+  return decodeHtmlEntities(String(value ?? ''))
     .replace(/\u00a0/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-}
-
-function decodeHtml(value) {
-  const named = {
-    amp: '&',
-    apos: "'",
-    bull: '•',
-    gt: '>',
-    hellip: '…',
-    ldquo: '“',
-    lsquo: '‘',
-    lt: '<',
-    mdash: '—',
-    middot: '·',
-    nbsp: ' ',
-    ndash: '–',
-    quot: '"',
-    rdquo: '”',
-    rsquo: '’',
-  };
-  return String(value ?? '')
-    .replace(/&#x([0-9a-f]+);?/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
-    .replace(/&#(\d+);?/g, (_, decimal) => String.fromCodePoint(Number(decimal)))
-    .replace(/&([a-z][a-z0-9]+);?/gi, (match, name) => named[name.toLowerCase()] ?? match);
 }
 
 function firstMatch(value, pattern) {
@@ -161,9 +138,9 @@ function firstMatch(value, pattern) {
 function resolveLegacyUrl(src, baseUrl) {
   if (!src) return '';
   try {
-    return new URL(decodeHtml(src), baseUrl).toString();
+    return new URL(decodeHtmlEntities(src), baseUrl).toString();
   } catch {
-    return decodeHtml(src);
+    return decodeHtmlEntities(src);
   }
 }
 
@@ -192,7 +169,7 @@ function htmlSegmentToTextLines(segment) {
     .replace(/<\/(?:p|div|li|h[1-6]|blockquote)>/gi, '\n')
     .replace(/<li[^>]*>/gi, '\n')
     .replace(/<[^>]+>/g, ' ');
-  return decodeHtml(withBreaks)
+  return decodeHtmlEntities(withBreaks)
     .replace(/\r/g, '')
     .split(/\n+/)
     .map((line) => line.replace(/\s+/g, ' ').trim())

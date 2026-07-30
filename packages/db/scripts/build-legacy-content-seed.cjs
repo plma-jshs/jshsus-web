@@ -1,5 +1,6 @@
 const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('node:fs');
 const { dirname, join, resolve } = require('node:path');
+const { decodeHtmlEntities } = require('./html-entities.cjs');
 
 const ROOT_DIR = resolve(__dirname, '../../..');
 const RICH_NOTICE_PREFIX = 'jshsus-rich-text:v1\n';
@@ -97,18 +98,6 @@ function parseInsertRows(sql, tableName) {
   }
 
   return rows;
-}
-
-function decodeHtmlEntities(value) {
-  return value
-    .replaceAll('&nbsp;', ' ')
-    .replaceAll('&amp;', '&')
-    .replaceAll('&lt;', '<')
-    .replaceAll('&gt;', '>')
-    .replaceAll('&quot;', '"')
-    .replaceAll('&#39;', "'")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(parseInt(code, 16)));
 }
 
 function normalizeLegacyHtml(value) {

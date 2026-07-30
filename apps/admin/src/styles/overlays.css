@@ -190,6 +190,12 @@
   box-shadow: 0 16px 36px rgb(15 23 42 / 24%);
   color: var(--j-color-white, #fff);
   pointer-events: auto;
+  animation: ui-toast-enter 180ms ease-out;
+}
+
+.ui-toast.is-leaving {
+  pointer-events: none;
+  animation: ui-toast-exit 180ms ease-in forwards;
 }
 
 .ui-toast__content {
@@ -252,4 +258,24 @@
 .ui-toast__close:hover {
   background: rgb(255 255 255 / 0.1);
   color: var(--j-color-white, #fff);
+}
+
+@keyframes ui-toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes ui-toast-exit {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-toast {
+    animation: none;
+  }
 }

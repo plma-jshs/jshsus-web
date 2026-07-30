@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Crosshair, RotateCcw, Settings2 } from 'lucide-react';
 import { useToast } from '../../components/feedback/Toast';
 import { PageScaffold } from '../../components/page/PageScaffold';
@@ -30,6 +30,23 @@ export function CannonPage() {
   const [shotKey, setShotKey] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const audio = new Audio('/images/cannon-shot.mp3');
+    audio.preload = 'auto';
+    audio.volume = 0.5;
+    audioRef.current = audio;
+    return () => {
+      audio.pause();
+      audio.removeAttribute('src');
+      audioRef.current = null;
+    };
+  }, []);
+
+  const primeAudio = () => {
+    const audio = audioRef.current;
+    if (audio && audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) audio.load();
+  };
 
   const configure = () => {
     if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end > 999) {
@@ -73,14 +90,16 @@ export function CannonPage() {
 
     const index = Math.floor(Math.random() * pool.length);
     const selected = pool[index];
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.currentTime = 0.03;
+      void audio.play().catch(() => undefined);
+    }
+
     setPool((items) => (items ? items.filter((_, itemIndex) => itemIndex !== index) : items));
     setCurrent(selected);
     setShotKey((value) => value + 1);
-
-    audioRef.current ??= new Audio('/images/cannon-shot.mp3');
-    audioRef.current.volume = 0.5;
-    audioRef.current.currentTime = 0;
-    void audioRef.current.play().catch(() => undefined);
   };
 
   const reset = () => {
@@ -119,7 +138,14 @@ export function CannonPage() {
           >
             <RotateCcw size={16} aria-hidden="true" /> 초기화
           </button>
-          <button className="cannon-fire" type="button" onClick={shoot}>
+          <button
+            className="cannon-fire"
+            type="button"
+            onClick={shoot}
+            onFocus={primeAudio}
+            onPointerDown={primeAudio}
+            onPointerEnter={primeAudio}
+          >
             <Crosshair size={18} aria-hidden="true" /> 발사
           </button>
         </div>
@@ -178,6 +204,9 @@ export function CannonPage() {
           className="cannon-scene-trigger"
           type="button"
           onClick={shoot}
+          onFocus={primeAudio}
+          onPointerDown={primeAudio}
+          onPointerEnter={primeAudio}
           aria-label={'\uB300\uD3EC\uB97C \uB20C\uB7EC \uBC1C\uC0AC'}
           title={'\uB300\uD3EC\uB97C \uB20C\uB7EC \uBC1C\uC0AC'}
         />

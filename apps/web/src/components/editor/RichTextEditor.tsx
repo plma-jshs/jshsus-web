@@ -364,11 +364,7 @@ function ToolbarDropdown({
     options.find((option) => option.value === value)?.label ?? (value ? value : defaultLabel);
 
   return (
-    <label
-      className={`rich-text-toolbar-select${className ? ` ${className}` : ''}${
-        value ? ' is-active' : ''
-      }`}
-    >
+    <label className={`rich-text-toolbar-select${className ? ` ${className}` : ''}`}>
       <span className="sr-only">{label}</span>
       <span className="rich-text-toolbar-select__value" aria-hidden="true">
         {currentLabel}
@@ -408,7 +404,7 @@ function ToolbarPalette({
 
   return (
     <div
-      className={`rich-text-toolbar-palette${value ? ' is-active' : ''}`}
+      className={`rich-text-toolbar-palette${open ? ' is-open' : ''}`}
       onBlur={(event) => {
         const nextTarget = event.relatedTarget;
         if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
@@ -437,18 +433,6 @@ function ToolbarPalette({
       </button>
       {open ? (
         <div className="rich-text-toolbar-palette__menu" role="menu" aria-label={label}>
-          <button
-            className="rich-text-toolbar-palette__clear"
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              onChange('');
-              setHexValue('');
-              setOpen(false);
-            }}
-          >
-            기본
-          </button>
           <div className="rich-text-toolbar-palette__grid">
             {options.map((option) => (
               <button

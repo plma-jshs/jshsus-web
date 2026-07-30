@@ -24,6 +24,11 @@
   animation: web-toast-enter 180ms ease-out;
 }
 
+.web-toast.is-leaving {
+  pointer-events: none;
+  animation: web-toast-exit 180ms ease-in forwards;
+}
+
 .web-toast > svg {
   color: #93c5fd;
 }
@@ -89,7 +94,14 @@
 @keyframes web-toast-enter {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes web-toast-exit {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
   }
 }
 

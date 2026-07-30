@@ -74,16 +74,14 @@ function EagleCheer() {
 
   const primeAudio = () => {
     const audio = audioRef.current;
-    if (audio && audio.networkState === HTMLMediaElement.NETWORK_EMPTY) {
-      audio.load();
-    }
+    if (audio && audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) audio.load();
   };
 
   const launchEagle = () => {
     const audio = audioRef.current;
     if (audio) {
-      audio.volume = 0.08;
-      audio.currentTime = 0;
+      audio.volume = 0.18;
+      audio.currentTime = 0.03;
       void audio.play().catch(() => undefined);
     }
 
@@ -101,6 +99,7 @@ function EagleCheer() {
         type="button"
         onClick={launchEagle}
         onFocus={primeAudio}
+        onPointerDown={primeAudio}
         onPointerEnter={primeAudio}
       >
         나주붉은매 화이팅

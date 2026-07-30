@@ -59,7 +59,7 @@
 }
 
 .school-calendar-actions .primary-button,
-.school-calendar-actions .secondary-button,
+.school-calendar-actions .quiet-button,
 .selected-day-panel button,
 .school-calendar-navigation button {
   display: inline-flex;

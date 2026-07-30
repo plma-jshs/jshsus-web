@@ -17,6 +17,7 @@
   width: min(66vw, 290px);
   height: auto;
   object-fit: contain;
+  translate: 0 -16px;
   animation: jin-ramen-spin 1s linear infinite;
 }
 
