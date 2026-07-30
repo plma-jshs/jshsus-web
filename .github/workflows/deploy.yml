@@ -114,13 +114,38 @@ jobs:
             })),
           }, null, 2));
 
+          const configuredProfileIds = [
+            process.env.SENDON_KAKAO_SEND_PROFILE_ID,
+            process.env.SENDON_KAKAO_SEND_PROFILE_ID?.replace(/^@/, ''),
+          ].filter((value, index, values) => value && values.indexOf(value) === index);
+          const profileDetails = await Promise.all(
+            configuredProfileIds.map(async (profileId) => ({
+              profileId,
+              response: await request(
+                `/v2/messages/kakao/send-profiles/${encodeURIComponent(profileId)}`,
+              ),
+            })),
+          );
+          console.log(JSON.stringify({
+            configuredProfileCandidates: profileDetails.map(({ profileId, response }) => ({
+              profileId,
+              code: response.code,
+              message: response.message,
+              resolvedId: response.data?.id,
+              channelId: response.data?.channelId,
+              status: response.data?.status,
+              profileStatus: response.data?.profileStatus,
+            })),
+          }, null, 2));
+
           if (profilesResponse.code !== 200) {
             process.exitCode = 2;
           } else {
-            const configuredProfile = profiles.find(
-              (profile) =>
-                profile.id === process.env.SENDON_KAKAO_SEND_PROFILE_ID
-                || profile.channelId === process.env.SENDON_KAKAO_SEND_PROFILE_ID,
+            const configuredProfile = profileDetails.find(
+              ({ response }) => response.code === 200 && response.data?.id,
+            )?.response.data ?? profiles.find(
+              (profile) => configuredProfileIds.includes(profile.id)
+                || configuredProfileIds.includes(profile.channelId),
             );
 
             if (!configuredProfile) {
