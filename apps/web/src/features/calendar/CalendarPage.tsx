@@ -3,7 +3,7 @@ import type { CSSProperties, KeyboardEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter, toKoreanDateKey } from '../../shared/lib/date';
@@ -280,6 +280,17 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
   );
   const events = allEvents;
   const selectedEvents = events.filter((event) => eventTouchesDate(event, selectedDate));
+  const monthStartKey = toDateKey(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1));
+  const monthEndKey = toDateKey(
+    new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 0),
+  );
+  const hasCurrentMonthEvents = events.some((event) => {
+    const eventDates = eventRange(event);
+    return eventDates.startsAt <= monthEndKey && eventDates.endsAt >= monthStartKey;
+  });
+  const calendarUnavailable = calendarQuery.isSuccess && !calendarQuery.data.schoolEventsAvailable;
+  const emptyCurrentMonth =
+    calendarQuery.isSuccess && calendarQuery.data.schoolEventsAvailable && !hasCurrentMonthEvents;
 
   const focusDate = (dateKey: string) => {
     requestAnimationFrame(() => {
@@ -349,8 +360,20 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
           </div>
         </header>
 
-        {calendarQuery.isLoading ? (
-          <PageState kind="loading" title="일정을 불러오는 중입니다." variant="section" />
+        {emptyCurrentMonth ? (
+          <div className="calendar-availability-note" role="status">
+            <Info size={16} aria-hidden="true" />
+            <span>
+              {visibleMonth.getFullYear()}년 {visibleMonth.getMonth() + 1}월에는 등록된 학사일정
+              정보가 없습니다.
+            </span>
+          </div>
+        ) : null}
+        {calendarUnavailable ? (
+          <div className="calendar-availability-note is-warning" role="status">
+            <Info size={16} aria-hidden="true" />
+            <span>일정 정보를 확인할 수 없어 날짜만 표시하고 있습니다.</span>
+          </div>
         ) : null}
         {calendarQuery.isError ? (
           <PageState
@@ -370,8 +393,8 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
           />
         ) : null}
 
-        {calendarQuery.isSuccess ? (
-          <div className="calendar-layout">
+        {!calendarQuery.isError ? (
+          <div className="calendar-layout" aria-busy={calendarQuery.isLoading}>
             <div className="full-calendar" aria-label="월간 학사일정">
               <div className="full-calendar__weekdays" aria-hidden="true">
                 {weekdays.map((weekday) => (
@@ -393,12 +416,14 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                           0,
                           dayEvents.length - maxVisibleEventBars,
                         );
-                        const eventSummary = dayEvents.length
-                          ? `, 일정 ${dayEvents.length}개: ${dayEvents
-                              .slice(0, 2)
-                              .map((event) => displayEventTitle(event.title))
-                              .join(', ')}${hiddenEventCount ? ` 외 ${hiddenEventCount}개` : ''}`
-                          : ', 일정 없음';
+                        const eventSummary = calendarQuery.isLoading
+                          ? ', 일정을 불러오는 중'
+                          : dayEvents.length
+                            ? `, 일정 ${dayEvents.length}개: ${dayEvents
+                                .slice(0, 2)
+                                .map((event) => displayEventTitle(event.title))
+                                .join(', ')}${hiddenEventCount ? ` 외 ${hiddenEventCount}개` : ''}`
+                            : ', 일정 없음';
                         return (
                           <button
                             type="button"
@@ -428,28 +453,42 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                       })}
                     </div>
                     <div className="full-calendar__bars" aria-hidden="true">
-                      {weekEventSegments(week, events, cells[0].dateKey)
-                        .filter((segment) => segment.lane < maxVisibleEventBars)
-                        .map((segment) => (
-                          <span
-                            className={`full-calendar__event-bar${
-                              segment.event.isHoliday ? ' is-holiday' : ''
-                            }${segment.endColumn > segment.startColumn ? ' is-multi-day' : ''}${
-                              segment.showLabel ? '' : ' is-continuation'
-                            }${segment.continuesBefore ? ' starts-before' : ''}${
-                              segment.continuesAfter ? ' ends-after' : ''
-                            }${segment.endColumn === 7 ? ' ends-week' : ''}`}
-                            key={`${segment.event.id}-${week[0].dateKey}`}
-                            style={{
-                              ...styleForEvent(segment.event),
-                              gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
-                              gridRow: `${segment.lane + 1}`,
-                            }}
-                            title={displayEventTitle(segment.event.title)}
-                          >
-                            {segment.showLabel ? displayEventTitle(segment.event.title) : null}
-                          </span>
-                        ))}
+                      {calendarQuery.isLoading
+                        ? [
+                            { column: '1 / 4', row: 1 },
+                            { column: '5 / 8', row: 2 },
+                          ].map((placeholder) => (
+                            <span
+                              className="full-calendar__event-skeleton"
+                              key={`${week[0].dateKey}-${placeholder.row}`}
+                              style={{
+                                gridColumn: placeholder.column,
+                                gridRow: placeholder.row,
+                              }}
+                            />
+                          ))
+                        : weekEventSegments(week, events, cells[0].dateKey)
+                            .filter((segment) => segment.lane < maxVisibleEventBars)
+                            .map((segment) => (
+                              <span
+                                className={`full-calendar__event-bar${
+                                  segment.event.isHoliday ? ' is-holiday' : ''
+                                }${segment.endColumn > segment.startColumn ? ' is-multi-day' : ''}${
+                                  segment.showLabel ? '' : ' is-continuation'
+                                }${segment.continuesBefore ? ' starts-before' : ''}${
+                                  segment.continuesAfter ? ' ends-after' : ''
+                                }${segment.endColumn === 7 ? ' ends-week' : ''}`}
+                                key={`${segment.event.id}-${week[0].dateKey}`}
+                                style={{
+                                  ...styleForEvent(segment.event),
+                                  gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
+                                  gridRow: `${segment.lane + 1}`,
+                                }}
+                                title={displayEventTitle(segment.event.title)}
+                              >
+                                {segment.showLabel ? displayEventTitle(segment.event.title) : null}
+                              </span>
+                            ))}
                     </div>
                   </div>
                 ))}
@@ -461,7 +500,13 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                 <CalendarDays size={18} aria-hidden="true" />
                 <h3>{formatSelectedDateHeading(fromDateKey(selectedDate))}</h3>
               </div>
-              {selectedEvents.length === 0 ? (
+              {calendarQuery.isLoading ? (
+                <div className="calendar-agenda__skeleton" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              ) : selectedEvents.length === 0 ? (
                 <p className="calendar-agenda__empty">등록된 일정이 없습니다.</p>
               ) : (
                 <div className="calendar-agenda__list">

@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { ChevronRight, Inbox, LoaderCircle, TriangleAlert } from 'lucide-react';
+import { ChevronRight, Inbox, TriangleAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
 import type { BreadcrumbItem } from './pageHierarchy';
@@ -118,11 +118,7 @@ export function FilterChips<T extends string>({
   );
 }
 
-const stateConfig: Record<
-  'loading' | 'empty' | 'error',
-  { icon: LucideIcon; defaultTitle: string }
-> = {
-  loading: { icon: LoaderCircle, defaultTitle: '불러오고 있습니다.' },
+const stateConfig: Record<'empty' | 'error', { icon: LucideIcon; defaultTitle: string }> = {
   empty: { icon: Inbox, defaultTitle: '표시할 내용이 없습니다.' },
   error: { icon: TriangleAlert, defaultTitle: '내용을 불러오지 못했습니다.' },
 };
@@ -140,17 +136,31 @@ export function PageState({
   action?: ReactNode;
   variant?: 'inline' | 'table' | 'section' | 'page';
 }) {
+  if (kind === 'loading') {
+    const lineCount = variant === 'table' ? 5 : variant === 'inline' ? 1 : 3;
+    return (
+      <div
+        aria-busy="true"
+        className={`page-state page-state--loading page-state--${variant}`}
+        role="status"
+      >
+        <span className="sr-only">{title ?? '불러오고 있습니다.'}</span>
+        <div aria-hidden="true" className={`page-state__skeleton page-state__skeleton--${variant}`}>
+          {Array.from({ length: lineCount }, (_, index) => (
+            <span key={index} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   const { icon: Icon, defaultTitle } = stateConfig[kind];
   return (
     <div
       className={`page-state page-state--${kind} page-state--${variant}`}
       role={kind === 'error' ? 'alert' : 'status'}
     >
-      <Icon
-        className={kind === 'loading' ? 'is-spinning' : undefined}
-        size={22}
-        aria-hidden="true"
-      />
+      <Icon size={22} aria-hidden="true" />
       <strong>{title ?? defaultTitle}</strong>
       {description ? <p>{description}</p> : null}
       {action}

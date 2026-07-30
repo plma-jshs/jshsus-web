@@ -5,7 +5,6 @@ import { Link } from '@tanstack/react-router';
 import type { AccountActivationIdentityType, StudentGender } from '@jshsus/types';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { completeAccountActivation, getAuthErrorMessage } from './api';
-import '../../styles/auth.css';
 
 function PasswordField(props: {
   id: string;

@@ -452,6 +452,9 @@ export function SchoolEventsPage() {
           {calendarQuery.data && calendarQuery.data.availability !== 'available' ? (
             <em>일정 DB를 조회하지 못했습니다.</em>
           ) : null}
+          {calendarQuery.isSuccess && calendarQuery.data.events.length === 0 ? (
+            <em className="is-empty-month">등록된 일정 정보가 없는 달입니다.</em>
+          ) : null}
         </div>
 
         {jsonImport || jsonImportError ? (
@@ -538,40 +541,56 @@ export function SchoolEventsPage() {
                       })}
                     </div>
                     <div className="school-calendar-events">
-                      {weekEventSegments(week, visibleEvents, days[0]!)
-                        .filter((segment) => segment.lane < 3)
-                        .map((segment) => (
-                          <button
-                            className={`school-calendar-event ${eventTone(segment.event)}${
-                              segment.event.isPublic ? '' : ' private'
-                            }${segment.isMultiDay ? ' is-multi-day' : ''}${
-                              segment.showLabel ? '' : ' is-continuation'
-                            }${segment.continuesBefore ? ' starts-before' : ''}${
-                              segment.continuesAfter ? ' ends-after' : ''
-                            }${segment.endColumn === 7 ? ' ends-week' : ''}`}
-                            type="button"
-                            key={`${segment.event.id}-${week[0]}`}
-                            title={segment.event.title}
-                            style={{
-                              gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
-                              gridRow: segment.lane + 1,
-                            }}
-                            onClick={() => {
-                              const range = eventRange(segment.event);
-                              setSelectedDate(range.startsAt);
-                              setSelectedEventId(segment.event.id);
-                            }}
-                          >
-                            {segment.showLabel ? segment.event.title : null}
-                          </button>
-                        ))}
+                      {calendarQuery.isLoading
+                        ? [
+                            { column: '1 / 4', row: 1 },
+                            { column: '5 / 8', row: 2 },
+                          ].map((placeholder) => (
+                            <span
+                              className="school-calendar-event-skeleton"
+                              key={`${week[0]}-${placeholder.row}`}
+                              style={{
+                                gridColumn: placeholder.column,
+                                gridRow: placeholder.row,
+                              }}
+                            />
+                          ))
+                        : weekEventSegments(week, visibleEvents, days[0]!)
+                            .filter((segment) => segment.lane < 3)
+                            .map((segment) => (
+                              <button
+                                className={`school-calendar-event ${eventTone(segment.event)}${
+                                  segment.event.isPublic ? '' : ' private'
+                                }${segment.isMultiDay ? ' is-multi-day' : ''}${
+                                  segment.showLabel ? '' : ' is-continuation'
+                                }${segment.continuesBefore ? ' starts-before' : ''}${
+                                  segment.continuesAfter ? ' ends-after' : ''
+                                }${segment.endColumn === 7 ? ' ends-week' : ''}`}
+                                type="button"
+                                key={`${segment.event.id}-${week[0]}`}
+                                title={segment.event.title}
+                                style={{
+                                  gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
+                                  gridRow: segment.lane + 1,
+                                }}
+                                onClick={() => {
+                                  const range = eventRange(segment.event);
+                                  setSelectedDate(range.startsAt);
+                                  setSelectedEventId(segment.event.id);
+                                }}
+                              >
+                                {segment.showLabel ? segment.event.title : null}
+                              </button>
+                            ))}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
             {calendarQuery.isLoading ? (
-              <p className="calendar-status">달력을 불러오는 중입니다.</p>
+              <p className="sr-only" role="status">
+                달력을 불러오는 중입니다.
+              </p>
             ) : null}
             {calendarQuery.isError ? (
               <div className="calendar-status error" role="alert">
@@ -594,7 +613,13 @@ export function SchoolEventsPage() {
                   <span>{selectedDateEvents.length}건</span>
                 </div>
               </div>
-              {selectedDateEvents.length ? (
+              {calendarQuery.isLoading ? (
+                <div className="selected-day-skeleton" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              ) : selectedDateEvents.length ? (
                 <div className="selected-day-list">
                   {selectedDateEvents.map((event) => (
                     <button

@@ -7,6 +7,7 @@ import {
   stripPendingImages,
   type RichTextDocument,
 } from './RichTextEditor';
+import { RICH_TEXT_FONT_FAMILY_OPTIONS } from './richTextMarks';
 
 const documentWithPendingImage: RichTextDocument = {
   type: 'doc',
@@ -132,5 +133,22 @@ describe('rich-text document persistence', () => {
       },
     });
     expect(getRichTextImageSources(persisted)).toEqual(new Set(['/api/files/17/content']));
+  });
+});
+
+describe('rich-text toolbar font policy', () => {
+  it('keeps the concise cross-platform font set used by the custom menu', () => {
+    expect(RICH_TEXT_FONT_FAMILY_OPTIONS.map((option) => option.label)).toEqual([
+      '굴림',
+      '바탕',
+      '돋움',
+      '궁서',
+      'Arial',
+      'Calibri',
+      'Courier New',
+      'Times New Roman',
+      'Noto Sans KR',
+      'Noto Serif KR',
+    ]);
   });
 });

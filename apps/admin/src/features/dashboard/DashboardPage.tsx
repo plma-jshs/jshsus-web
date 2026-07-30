@@ -6,7 +6,23 @@ export function DashboardPage() {
   const dashboardQuery = useQuery({ queryKey: ['admin-dashboard'], queryFn: api.dashboard });
 
   if (dashboardQuery.isLoading) {
-    return <section className="admin-panel">관리자 대시보드를 불러오는 중입니다.</section>;
+    return (
+      <section className="admin-panel admin-dashboard-skeleton" aria-busy="true">
+        <span className="sr-only" role="status">
+          관리자 대시보드를 불러오는 중입니다.
+        </span>
+        <div className="admin-dashboard-skeleton__heading" aria-hidden="true" />
+        <div className="metric-grid dashboard-today-grid" aria-hidden="true">
+          {Array.from({ length: 3 }, (_, index) => (
+            <div className="admin-dashboard-skeleton__card" key={index}>
+              <span />
+              <span />
+              <span />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
   }
 
   if (dashboardQuery.isError || !dashboardQuery.data) {

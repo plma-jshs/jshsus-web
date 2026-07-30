@@ -9,7 +9,6 @@ import {
   requestPasswordReset,
   type PasswordResetDelivery,
 } from './api';
-import '../../styles/auth.css';
 
 type ResetStep = 'request' | 'confirm' | 'done';
 

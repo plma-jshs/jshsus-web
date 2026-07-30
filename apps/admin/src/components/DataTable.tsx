@@ -266,11 +266,18 @@ export function DataTable<T>({
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td className="admin-data-table__loading-cell" colSpan={visibleColumnCount}>
-                  {loadingText}
-                </td>
-              </tr>
+              Array.from({ length: 6 }, (_, index) => (
+                <tr className="admin-data-table__loading-row" key={index}>
+                  <td className="admin-data-table__loading-cell" colSpan={visibleColumnCount}>
+                    {index === 0 ? <span className="sr-only">{loadingText}</span> : null}
+                    <span
+                      aria-hidden="true"
+                      className="admin-data-table__loading-bar"
+                      style={{ width: `${Math.max(48, 92 - index * 7)}%` }}
+                    />
+                  </td>
+                </tr>
+              ))
             ) : visibleRows.length === 0 ? (
               <tr>
                 <td className="admin-data-table__empty-cell" colSpan={visibleColumnCount}>

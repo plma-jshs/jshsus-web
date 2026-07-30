@@ -8,6 +8,7 @@ const {
   CORE_PERMISSIONS,
   CORE_ROLES,
   CORE_ROLE_PERMISSION_NAMES,
+  findSeededPost,
   resolveActiveSchoolYear,
 } = require('./bootstrap-core-data.cjs') as {
   BUILT_IN_ROLE_NAMES: string[];
@@ -15,6 +16,16 @@ const {
   CORE_PERMISSIONS: Array<[string, string, string]>;
   CORE_ROLES: Array<[string, string]>;
   CORE_ROLE_PERMISSION_NAMES: Record<string, string[]>;
+  findSeededPost: (
+    connection: {
+      execute: (
+        sql: string,
+        parameters: unknown[],
+      ) => Promise<[[{ id: number } | undefined], unknown]>;
+    },
+    boardId: number,
+    post: { authorName?: string | null; createdAt: string },
+  ) => Promise<number | undefined>;
   resolveActiveSchoolYear: (environment?: Record<string, string | undefined>, now?: Date) => number;
 };
 
@@ -78,6 +89,28 @@ describe('core permission bootstrap policy', () => {
         ([, , , visibility, allowAnonymous]) => visibility === 'public' && allowAnonymous === 0,
       ),
     ).toBe(true);
+  });
+
+  it('finds seeded posts by stable legacy identity instead of the mutable public number', async () => {
+    let capturedSql = '';
+    let capturedParameters: unknown[] = [];
+    const connection = {
+      execute: async (sql: string, parameters: unknown[]) => {
+        capturedSql = sql;
+        capturedParameters = parameters;
+        return [[{ id: 41 }], undefined] as [[{ id: number }], undefined];
+      },
+    };
+
+    await expect(
+      findSeededPost(connection, 2, {
+        authorName: '작성자',
+        createdAt: '2024-11-26 11:41:02.000',
+      }),
+    ).resolves.toBe(41);
+    expect(capturedSql).toContain('created_at = ?');
+    expect(capturedSql).not.toContain('public_no');
+    expect(capturedParameters).toEqual([2, '작성자', '2024-11-26 11:41:02.000']);
   });
 
   it('uses a configured active school year when supplied', () => {

@@ -119,6 +119,22 @@ function RouteError({ reset }: ErrorComponentProps) {
   );
 }
 
+function RoutePending() {
+  return (
+    <section className="route-pending" aria-busy="true" aria-label="화면을 불러오는 중">
+      <span className="sr-only" role="status">
+        화면을 불러오는 중입니다.
+      </span>
+      <div className="route-pending__skeleton" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
+    </section>
+  );
+}
+
 const rootRoute = createRootRoute({
   component: AppShell,
   errorComponent: RouteError,
@@ -483,7 +499,11 @@ const routeTree = rootRoute.addChildren([
   accountActivationRoute,
 ]);
 
-export const router = createRouter({ routeTree });
+export const router = createRouter({
+  routeTree,
+  defaultPendingComponent: RoutePending,
+  defaultPreload: 'intent',
+});
 
 declare module '@tanstack/react-router' {
   interface Register {

@@ -5,7 +5,6 @@ import { Link } from '@tanstack/react-router';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { safeInternalReturnTo } from '../../shared/lib/route';
 import { completeNewPassword, getAuthErrorCode, getAuthErrorMessage, login } from './api';
-import '../../styles/auth.css';
 
 type AuthMode = 'login' | 'new-password';
 

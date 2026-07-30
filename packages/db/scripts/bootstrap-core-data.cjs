@@ -310,6 +310,23 @@ async function upsertSeededComment(connection, comment) {
   return result.insertId;
 }
 
+async function findSeededPost(connection, boardId, post) {
+  const [[existing]] = await connection.execute(
+    `SELECT id
+       FROM posts
+      WHERE board_id = ?
+        AND author_id IS NULL
+        AND author_name <=> ?
+        AND post_status = 'published'
+        AND is_anonymous = 0
+        AND created_at = ?
+      ORDER BY id
+      LIMIT 1`,
+    [boardId, post.authorName ?? null, post.createdAt],
+  );
+  return existing?.id;
+}
+
 async function upsertLegacyContent(connection) {
   const seed = loadLegacyContentSeed();
   if (seed.notices.length === 0 && seed.freeBoardPosts.length === 0) return;
@@ -341,13 +358,20 @@ async function upsertLegacyContent(connection) {
   );
   if (!freeBoard) throw new Error('Free board must exist before legacy posts are seeded.');
 
+  const postIdByLegacyId = new Map();
   for (const post of seed.freeBoardPosts) {
-    await connection.execute(
+    let postId = await findSeededPost(connection, freeBoard.id, post);
+    if (postId) {
+      postIdByLegacyId.set(post.legacyId, postId);
+      continue;
+    }
+
+    const [result] = await connection.execute(
       `INSERT INTO posts
        (public_no, board_id, author_id, author_name, title, content, content_json, post_status,
          is_anonymous, is_hidden, view_count, created_at, updated_at)
        VALUES (?, ?, NULL, ?, ?, ?, CAST(? AS JSON), 'published', 0, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE public_no = public_no`,
+       ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`,
       [
         post.publicNo,
         freeBoard.id,
@@ -361,20 +385,11 @@ async function upsertLegacyContent(connection) {
         post.createdAt,
       ],
     );
+    postId = result.insertId;
+    postIdByLegacyId.set(post.legacyId, postId);
   }
 
   if (seed.freeBoardComments.length === 0 && seed.freeBoardCommentReplies.length === 0) return;
-
-  const [postRows] = await connection.execute(
-    'SELECT id, public_no AS publicNo FROM posts WHERE board_id = ?',
-    [freeBoard.id],
-  );
-  const postIdByPublicNo = new Map(postRows.map((row) => [Number(row.publicNo), row.id]));
-  const postIdByLegacyId = new Map();
-  for (const post of seed.freeBoardPosts) {
-    const postId = postIdByPublicNo.get(Number(post.publicNo));
-    if (postId) postIdByLegacyId.set(post.legacyId, postId);
-  }
 
   const commentIdByLegacyKey = new Map();
   for (const comment of seed.freeBoardComments) {
@@ -532,6 +547,7 @@ module.exports = {
   CORE_ROLE_PERMISSION_NAMES,
   LEGACY_JBS_VIDEOS,
   bootstrapCoreData,
+  findSeededPost,
   loadLocalEnv,
   resolveActiveSchoolYear,
 };

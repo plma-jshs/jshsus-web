@@ -11,6 +11,52 @@
   margin-inline: auto;
 }
 
+.route-pending {
+  display: grid;
+  width: min(100%, 880px);
+  min-height: min(52vh, 420px);
+  padding: var(--j-space-6);
+  margin-inline: auto;
+  place-items: center;
+}
+
+.route-pending__skeleton {
+  display: grid;
+  width: min(100%, 560px);
+  gap: 14px;
+}
+
+.route-pending__skeleton span {
+  display: block;
+  height: 20px;
+  border-radius: 7px;
+  background: linear-gradient(
+    100deg,
+    var(--j-color-surface-subtle) 20%,
+    var(--j-color-surface-hover) 42%,
+    var(--j-color-surface-subtle) 64%
+  );
+  background-size: 220% 100%;
+  animation: page-state-skeleton-shimmer 1.25s ease-in-out infinite;
+}
+
+.route-pending__skeleton span:nth-child(2) {
+  width: 82%;
+}
+
+.route-pending__skeleton span:nth-child(3) {
+  width: 92%;
+}
+
+.route-pending__skeleton span:nth-child(4) {
+  width: 68%;
+}
+
+.auth-shell .route-pending {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 .detail-page--reading {
   width: min(100%, 880px);
 }
@@ -203,12 +249,74 @@
   font-size: var(--j-text-sm);
 }
 
+.page-state__skeleton {
+  display: grid;
+  width: min(100%, 560px);
+  gap: 12px;
+}
+
+.page-state__skeleton span {
+  display: block;
+  height: 18px;
+  border-radius: 6px;
+  background: linear-gradient(
+    100deg,
+    var(--j-color-surface-subtle) 20%,
+    var(--j-color-surface-hover) 42%,
+    var(--j-color-surface-subtle) 64%
+  );
+  background-size: 220% 100%;
+  animation: page-state-skeleton-shimmer 1.25s ease-in-out infinite;
+}
+
+.page-state__skeleton span:nth-child(2n) {
+  width: 86%;
+}
+
+.page-state__skeleton span:nth-child(3n) {
+  width: 72%;
+}
+
+.page-state__skeleton--table {
+  width: 100%;
+}
+
+.page-state__skeleton--table span {
+  width: 100%;
+  height: 28px;
+}
+
+.page-state__skeleton--inline {
+  width: min(100%, 220px);
+}
+
+.page-state__skeleton--inline span {
+  width: 100%;
+  height: 12px;
+}
+
+@keyframes page-state-skeleton-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
 .page-state--error > svg {
   color: var(--j-color-danger);
 }
 
 .is-spinning {
   animation: page-state-spin 800ms linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-state__skeleton span,
+  .route-pending__skeleton span {
+    animation: none;
+  }
 }
 
 @keyframes page-state-spin {

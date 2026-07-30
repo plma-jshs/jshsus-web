@@ -10,7 +10,7 @@
 
 .school-calendar-workspace {
   display: grid;
-  min-height: 760px;
+  min-height: 700px;
   grid-template-columns: minmax(0, 1fr) 360px;
   border-top: 1px solid var(--j-color-border, var(--line));
 }
@@ -107,6 +107,10 @@
   font-style: normal;
 }
 
+.school-calendar-legend em.is-empty-month {
+  color: var(--j-color-text-muted, var(--muted));
+}
+
 .school-calendar-import-panel {
   display: flex;
   min-height: 48px;
@@ -189,19 +193,19 @@
 
 .school-calendar-week {
   position: relative;
-  min-height: 118px;
+  min-height: 108px;
 }
 
 .school-calendar-week-days {
   display: grid;
-  min-height: 118px;
+  min-height: 108px;
   grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 .school-calendar-day {
   position: relative;
   min-width: 0;
-  min-height: 118px;
+  min-height: 108px;
   padding: 6px 8px;
   border-right: 1px solid var(--j-color-border, var(--line));
   border-bottom: 1px solid var(--j-color-border, var(--line));
@@ -326,6 +330,20 @@
   margin-right: 5px;
 }
 
+.school-calendar-event-skeleton {
+  height: 14px;
+  margin: 1px 7px;
+  border-radius: 4px;
+  background: linear-gradient(
+    100deg,
+    var(--j-color-surface-subtle, #f8fafb) 20%,
+    var(--j-color-surface-hover, #f3f5f7) 42%,
+    var(--j-color-surface-subtle, #f8fafb) 64%
+  );
+  background-size: 220% 100%;
+  animation: school-calendar-skeleton-shimmer 1.25s ease-in-out infinite;
+}
+
 .school-calendar-more {
   position: absolute;
   right: 8px;
@@ -371,6 +389,35 @@
 .selected-day-list {
   display: grid;
   border-top: 1px solid var(--j-color-border, var(--line));
+}
+
+.selected-day-skeleton {
+  display: grid;
+  padding-top: 4px;
+  gap: 10px;
+}
+
+.selected-day-skeleton span {
+  display: block;
+  height: 56px;
+  border-radius: 8px;
+  background: linear-gradient(
+    100deg,
+    var(--j-color-surface-subtle, #f8fafb) 20%,
+    var(--j-color-surface-hover, #f3f5f7) 42%,
+    var(--j-color-surface-subtle, #f8fafb) 64%
+  );
+  background-size: 220% 100%;
+  animation: school-calendar-skeleton-shimmer 1.25s ease-in-out infinite;
+}
+
+@keyframes school-calendar-skeleton-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
 }
 
 .selected-day-list > button {
@@ -494,7 +541,7 @@
   }
 
   .school-calendar-day {
-    min-height: 96px;
+    min-height: 90px;
     padding: 5px;
   }
 
@@ -510,6 +557,13 @@
   .school-calendar-event {
     padding-inline: 4px;
     font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .school-calendar-event-skeleton,
+  .selected-day-skeleton span {
+    animation: none;
   }
 }
 

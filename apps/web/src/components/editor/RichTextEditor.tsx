@@ -17,6 +17,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import StarterKit from '@tiptap/starter-kit';
 import {
   Bold,
+  Check,
   ChevronDown,
   Code2,
   Ellipsis,
@@ -29,11 +30,13 @@ import {
   List,
   ListOrdered,
   Palette,
+  Plus,
   Quote,
   Redo2,
   Strikethrough,
   Subscript,
   Superscript,
+  Trash2,
   Underline,
   Undo2,
   Unlink,
@@ -360,25 +363,65 @@ function ToolbarDropdown({
   options: ReadonlyArray<{ value: string; label: string }>;
   value: string;
 }) {
+  const [open, setOpen] = useState(false);
   const currentLabel =
     options.find((option) => option.value === value)?.label ?? (value ? value : defaultLabel);
+  const visibleOptions = [
+    { value: '', label: defaultLabel },
+    ...options.filter((option) => option.label !== defaultLabel),
+  ];
 
   return (
-    <label className={`rich-text-toolbar-select${className ? ` ${className}` : ''}`}>
-      <span className="sr-only">{label}</span>
-      <span className="rich-text-toolbar-select__value" aria-hidden="true">
-        {currentLabel}
-      </span>
-      <ChevronDown className="rich-text-toolbar-select__chevron" size={12} aria-hidden="true" />
-      <select aria-label={label} onChange={(event) => onChange(event.target.value)} value={value}>
-        <option value="">{defaultLabel}</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div
+      className={`rich-text-toolbar-select${open ? ' is-open' : ''}${
+        className ? ` ${className}` : ''
+      }`}
+      onBlur={(event) => {
+        const nextTarget = event.relatedTarget;
+        if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
+          setOpen(false);
+        }
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') setOpen(false);
+      }}
+    >
+      <button
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-label={label}
+        className="rich-text-toolbar-select__trigger"
+        onClick={() => setOpen((current) => !current)}
+        title={label}
+        type="button"
+      >
+        <span className="rich-text-toolbar-select__value">{currentLabel}</span>
+        <ChevronDown className="rich-text-toolbar-select__chevron" size={13} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div aria-label={label} className="rich-text-toolbar-select__menu" role="listbox">
+          {visibleOptions.map((option) => {
+            const selected = option.value === value || (!option.value && !value);
+            return (
+              <button
+                aria-selected={selected}
+                className={`rich-text-toolbar-select__option${selected ? ' is-selected' : ''}`}
+                key={option.value || 'default'}
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+                role="option"
+                type="button"
+              >
+                <span>{option.label}</span>
+                {selected ? <Check aria-hidden="true" size={15} /> : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -753,6 +796,12 @@ export function RichTextEditor({
 
   const moreActions = [
     {
+      active: toolbar.blockquote,
+      icon: <Quote size={16} />,
+      label: '인용',
+      onClick: () => editor.chain().focus().toggleBlockquote().run(),
+    },
+    {
       active: toolbar.strike,
       icon: <Strikethrough size={16} />,
       label: '취소선',
@@ -826,13 +875,6 @@ export function RichTextEditor({
             onClick={() => editor.chain().focus().toggleUnderline().run()}
           >
             <Underline size={17} />
-          </ToolbarButton>
-          <ToolbarButton
-            active={toolbar.blockquote}
-            label="인용"
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          >
-            <Quote size={17} />
           </ToolbarButton>
           <ToolbarMore actions={moreActions} active={moreActive} />
         </div>
@@ -928,9 +970,10 @@ export function RichTextEditor({
             role="dialog"
           >
             <header>
-              <strong>링크</strong>
+              <strong>링크 삽입</strong>
               <button
                 aria-label="닫기"
+                className="rich-text-modal__close"
                 onClick={() => setLinkOpen(false)}
                 title="닫기"
                 type="button"
@@ -938,34 +981,45 @@ export function RichTextEditor({
                 <X size={16} />
               </button>
             </header>
-            <label>
-              <span>주소</span>
-              <input
-                autoFocus
-                inputMode="url"
-                onChange={(event) => setLinkValue(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key !== 'Enter') return;
-                  event.preventDefault();
-                  applyLink();
-                }}
-                placeholder="https://example.com"
-                type="text"
-                value={linkValue}
-              />
-            </label>
-            {linkError ? <p className="rich-text-editor__error">{linkError}</p> : null}
+            <div className="rich-text-link-modal__body">
+              <label>
+                <span>주소</span>
+                <input
+                  autoFocus
+                  inputMode="url"
+                  onChange={(event) => setLinkValue(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter') return;
+                    event.preventDefault();
+                    applyLink();
+                  }}
+                  placeholder="https://example.com"
+                  type="text"
+                  value={linkValue}
+                />
+              </label>
+              {linkError ? <p className="rich-text-editor__error">{linkError}</p> : null}
+            </div>
             <div className="rich-text-link-modal__actions">
               {toolbar.link ? (
-                <button onClick={removeLink} title="링크 제거" type="button">
+                <button
+                  className="rich-text-modal__danger"
+                  onClick={removeLink}
+                  title="링크 제거"
+                  type="button"
+                >
                   <Unlink size={16} />
                   링크 제거
                 </button>
               ) : null}
-              <button onClick={() => setLinkOpen(false)} type="button">
+              <button
+                className="rich-text-modal__secondary"
+                onClick={() => setLinkOpen(false)}
+                type="button"
+              >
                 취소
               </button>
-              <button type="button" onClick={applyLink}>
+              <button className="rich-text-modal__primary" type="button" onClick={applyLink}>
                 적용
               </button>
             </div>
@@ -986,9 +1040,10 @@ export function RichTextEditor({
             role="dialog"
           >
             <header>
-              <strong>투표</strong>
+              <strong>투표 삽입</strong>
               <button
                 aria-label="닫기"
+                className="rich-text-modal__close"
                 onClick={() => setPollOpen(false)}
                 title="닫기"
                 type="button"
@@ -996,46 +1051,66 @@ export function RichTextEditor({
                 <X size={16} />
               </button>
             </header>
-            <label>
-              <span>질문</span>
-              <input
-                autoFocus
-                maxLength={160}
-                onChange={(event) => setPollQuestion(event.target.value)}
-                type="text"
-                value={pollQuestion}
-              />
-            </label>
-            <div className="rich-text-poll-modal__options">
-              <span>선택지</span>
-              {pollOptions.map((option, index) => (
-                <label key={index}>
-                  <span className="sr-only">선택지 {index + 1}</span>
-                  <input
-                    maxLength={80}
-                    onChange={(event) => updatePollOption(index, event.target.value)}
-                    type="text"
-                    value={option}
-                  />
-                  <button
-                    aria-label={`선택지 ${index + 1} 삭제`}
-                    disabled={pollOptions.length <= 2}
-                    onClick={() => removePollOption(index)}
-                    type="button"
-                  >
-                    <X size={15} />
-                  </button>
-                </label>
-              ))}
-              <button disabled={pollOptions.length >= 8} onClick={addPollOption} type="button">
-                선택지 추가
-              </button>
+            <div className="rich-text-link-modal__body">
+              <label>
+                <span>질문</span>
+                <input
+                  autoFocus
+                  maxLength={160}
+                  onChange={(event) => setPollQuestion(event.target.value)}
+                  placeholder="투표 질문을 입력하세요"
+                  type="text"
+                  value={pollQuestion}
+                />
+              </label>
+              <div className="rich-text-poll-modal__options">
+                <span>선택지</span>
+                <div className="rich-text-poll-modal__option-list">
+                  {pollOptions.map((option, index) => (
+                    <label className={index >= 2 ? 'has-delete' : undefined} key={index}>
+                      <span className="sr-only">선택지 {index + 1}</span>
+                      <input
+                        maxLength={80}
+                        onChange={(event) => updatePollOption(index, event.target.value)}
+                        placeholder={`선택지 ${index + 1}을 입력하세요`}
+                        type="text"
+                        value={option}
+                      />
+                      {index >= 2 ? (
+                        <button
+                          aria-label={`선택지 ${index + 1} 삭제`}
+                          className="rich-text-modal__delete-option"
+                          onClick={() => removePollOption(index)}
+                          title={`선택지 ${index + 1} 삭제`}
+                          type="button"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      ) : null}
+                    </label>
+                  ))}
+                </div>
+                <button
+                  className="rich-text-modal__add-option"
+                  disabled={pollOptions.length >= 8}
+                  onClick={addPollOption}
+                  type="button"
+                >
+                  <Plus size={16} />
+                  선택지 추가
+                </button>
+              </div>
             </div>
             <div className="rich-text-link-modal__actions">
-              <button onClick={() => setPollOpen(false)} type="button">
+              <button
+                className="rich-text-modal__secondary"
+                onClick={() => setPollOpen(false)}
+                type="button"
+              >
                 취소
               </button>
               <button
+                className="rich-text-modal__primary"
                 disabled={
                   !pollQuestion.trim() ||
                   pollOptions.map(normalizePollOptionText).filter(Boolean).length < 2
@@ -1043,7 +1118,7 @@ export function RichTextEditor({
                 type="button"
                 onClick={insertPoll}
               >
-                삽입
+                투표 삽입
               </button>
             </div>
           </div>

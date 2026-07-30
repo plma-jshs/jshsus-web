@@ -365,6 +365,73 @@
   color: var(--danger);
 }
 
+.admin-dashboard-skeleton {
+  display: grid;
+  min-height: 260px;
+  align-content: start;
+  gap: 28px;
+}
+
+.admin-dashboard-skeleton__heading,
+.admin-dashboard-skeleton__card span {
+  display: block;
+  border-radius: 7px;
+  background: linear-gradient(
+    100deg,
+    var(--j-color-surface-subtle) 20%,
+    var(--j-color-surface-hover) 42%,
+    var(--j-color-surface-subtle) 64%
+  );
+  background-size: 220% 100%;
+  animation: admin-dashboard-skeleton-shimmer 1.25s ease-in-out infinite;
+}
+
+.admin-dashboard-skeleton__heading {
+  width: min(260px, 64%);
+  height: 24px;
+}
+
+.admin-dashboard-skeleton__card {
+  display: grid;
+  min-height: 138px;
+  padding: 20px;
+  align-content: center;
+  gap: 12px;
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-lg);
+}
+
+.admin-dashboard-skeleton__card span {
+  width: 100%;
+  height: 14px;
+}
+
+.admin-dashboard-skeleton__card span:first-child {
+  width: 36px;
+  height: 36px;
+}
+
+.admin-dashboard-skeleton__card span:last-child {
+  width: 58%;
+  height: 22px;
+}
+
+@keyframes admin-dashboard-skeleton-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-dashboard-skeleton__heading,
+  .admin-dashboard-skeleton__card span {
+    animation: none;
+  }
+}
+
 .panel-title {
   display: flex;
   justify-content: space-between;
