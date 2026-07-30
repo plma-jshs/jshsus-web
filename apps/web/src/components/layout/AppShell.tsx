@@ -399,7 +399,9 @@ function PortalShell() {
           <DesktopNavigation />
 
           <div className="portal-header__actions">
-            {session?.isLogined ? (
+            {sessionQuery.isLoading ? (
+              <span className="header-session-skeleton" aria-hidden="true" />
+            ) : session?.isLogined ? (
               <>
                 <NotificationMenu />
                 <UserMenu

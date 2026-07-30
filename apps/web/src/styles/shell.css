@@ -195,6 +195,36 @@
   gap: var(--j-space-2);
 }
 
+.header-session-skeleton {
+  display: block;
+  width: clamp(96px, 15vw, 204px);
+  height: 44px;
+  border-radius: var(--j-radius-md);
+  background: linear-gradient(
+    100deg,
+    var(--j-color-surface-subtle) 20%,
+    var(--j-color-surface-hover) 42%,
+    var(--j-color-surface-subtle) 64%
+  );
+  background-size: 220% 100%;
+  animation: header-session-skeleton-shimmer 1.25s ease-in-out infinite;
+}
+
+@keyframes header-session-skeleton-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-session-skeleton {
+    animation: none;
+  }
+}
+
 .header-login-button,
 .header-user-link {
   display: inline-flex;

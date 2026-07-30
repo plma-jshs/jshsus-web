@@ -1067,9 +1067,14 @@ export function RichTextEditor({
                 <span>선택지</span>
                 <div className="rich-text-poll-modal__option-list">
                   {pollOptions.map((option, index) => (
-                    <label className={index >= 2 ? 'has-delete' : undefined} key={index}>
-                      <span className="sr-only">선택지 {index + 1}</span>
+                    <div
+                      className={`rich-text-poll-modal__option-row${
+                        index >= 2 ? ' has-delete' : ''
+                      }`}
+                      key={index}
+                    >
                       <input
+                        aria-label={`선택지 ${index + 1}`}
                         maxLength={80}
                         onChange={(event) => updatePollOption(index, event.target.value)}
                         placeholder={`선택지 ${index + 1}을 입력하세요`}
@@ -1087,7 +1092,7 @@ export function RichTextEditor({
                           <Trash2 size={16} />
                         </button>
                       ) : null}
-                    </label>
+                    </div>
                   ))}
                 </div>
                 <button

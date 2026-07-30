@@ -583,20 +583,23 @@
   scrollbar-width: thin;
 }
 
-.rich-text-poll-modal__option-list label {
-  grid-template-columns: minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
+.rich-text-poll-modal__option-row {
+  position: relative;
+  display: grid;
 }
 
-.rich-text-poll-modal__option-list label.has-delete {
-  grid-template-columns: minmax(0, 1fr) auto;
+.rich-text-poll-modal__option-row.has-delete input {
+  padding-right: 46px;
 }
 
 .rich-text-poll-modal__dialog .rich-text-modal__delete-option {
-  width: 42px;
-  min-height: 42px;
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  width: 36px;
+  min-height: 36px;
   padding: 0;
+  transform: translateY(-50%);
   border: 0;
   color: var(--j-color-text-muted);
   background: transparent;
