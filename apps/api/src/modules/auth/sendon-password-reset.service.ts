@@ -38,7 +38,7 @@ export class SendonPasswordResetService {
       });
     }
 
-    if (!env.SENDON_API_KEY) {
+    if (!env.SENDON_ACCOUNT_ID || !env.SENDON_API_KEY) {
       throw new ServiceUnavailableException({
         code: 'AUTH_RECOVERY_UNAVAILABLE',
         message: '비밀번호 재설정 발송 설정을 확인해 주세요.',
@@ -112,9 +112,7 @@ export class SendonPasswordResetService {
         method: 'POST',
         headers: {
           authorization: `Basic ${Buffer.from(
-            `${env.SENDON_ACCOUNT_ID || env.SENDON_API_KEY}:${
-              env.SENDON_ACCOUNT_ID ? env.SENDON_API_KEY : ''
-            }`,
+            `${env.SENDON_ACCOUNT_ID}:${env.SENDON_API_KEY}`,
           ).toString('base64')}`,
           'content-type': 'application/json',
         },

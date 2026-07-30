@@ -3,7 +3,12 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { confirmPasswordReset, getAuthErrorMessage, requestPasswordReset } from './api';
+import {
+  confirmPasswordReset,
+  getAuthErrorMessage,
+  requestPasswordReset,
+  type PasswordResetDelivery,
+} from './api';
 import '../../styles/auth.css';
 
 type ResetStep = 'request' | 'confirm' | 'done';
@@ -68,6 +73,7 @@ function initialUsername() {
 export function PasswordResetPage() {
   const [step, setStep] = useState<ResetStep>('request');
   const [username, setUsername] = useState(initialUsername);
+  const [delivery, setDelivery] = useState<PasswordResetDelivery>('phone');
   const [confirmationCode, setConfirmationCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
@@ -82,7 +88,11 @@ export function PasswordResetPage() {
       setNewPassword('');
       setNewPasswordConfirm('');
       setValidationError(null);
-      setNotice('계정에 등록된 휴대폰 번호로 인증 코드를 보냈습니다.');
+      setNotice(
+        delivery === 'phone'
+          ? '계정에 등록된 휴대폰 번호로 인증 코드를 보냈습니다.'
+          : '계정에 등록되고 확인된 이메일로 인증 코드를 보냈습니다.',
+      );
     },
   });
 
@@ -102,7 +112,7 @@ export function PasswordResetPage() {
     event.preventDefault();
     setNotice(null);
     setValidationError(null);
-    requestMutation.mutate(username.trim());
+    requestMutation.mutate({ username: username.trim(), delivery });
   };
 
   const submitConfirm = (event: FormEvent<HTMLFormElement>) => {
@@ -142,7 +152,7 @@ export function PasswordResetPage() {
           <p>
             {step === 'done'
               ? '새 비밀번호로 다시 로그인하면 됩니다.'
-              : '계정에 등록된 휴대폰 번호로 본인 확인 코드를 전송합니다.'}
+              : '계정에 등록된 휴대폰 번호 또는 이메일로 본인 확인 코드를 전송합니다.'}
           </p>
         </header>
 
@@ -160,6 +170,29 @@ export function PasswordResetPage() {
                 required
               />
             </label>
+            <fieldset className="auth-recovery-method">
+              <legend>인증 방법</legend>
+              <label>
+                <input
+                  type="radio"
+                  name="password-reset-delivery"
+                  value="phone"
+                  checked={delivery === 'phone'}
+                  onChange={() => setDelivery('phone')}
+                />
+                <span>카카오톡 또는 문자</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="password-reset-delivery"
+                  value="email"
+                  checked={delivery === 'email'}
+                  onChange={() => setDelivery('email')}
+                />
+                <span>이메일</span>
+              </label>
+            </fieldset>
             {activeError ? <FormMessage>{activeError}</FormMessage> : null}
             <button className="auth-submit" type="submit" disabled={requestMutation.isPending}>
               {requestMutation.isPending ? '전송 중' : '인증 코드 받기'}
@@ -181,7 +214,11 @@ export function PasswordResetPage() {
                 onChange={(event) => setConfirmationCode(event.target.value.replace(/\s/g, ''))}
                 autoComplete="one-time-code"
                 inputMode="numeric"
-                placeholder="휴대폰으로 받은 코드를 입력하세요"
+                placeholder={
+                  delivery === 'phone'
+                    ? '카카오톡 또는 문자로 받은 코드를 입력하세요'
+                    : '이메일로 받은 코드를 입력하세요'
+                }
                 autoFocus
                 required
               />
@@ -211,7 +248,7 @@ export function PasswordResetPage() {
                 className="auth-link-button"
                 type="button"
                 disabled={requestMutation.isPending}
-                onClick={() => requestMutation.mutate(username.trim())}
+                onClick={() => requestMutation.mutate({ username: username.trim(), delivery })}
               >
                 인증 코드 다시 받기
               </button>

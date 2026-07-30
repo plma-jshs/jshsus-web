@@ -321,7 +321,10 @@ jobs:
             COGNITO_WEB_CLIENT_SECRET \
             COGNITO_ADMIN_CLIENT_ID \
             COGNITO_ADMIN_CLIENT_SECRET \
-            SENDON_API_KEY; do
+            SENDON_API_KEY \
+            SENDON_ACCOUNT_ID \
+            SENDON_KAKAO_SEND_PROFILE_ID \
+            SENDON_PASSWORD_RESET_TEMPLATE_ID; do
             require_scalar_secret "$secret_name"
           done
 
@@ -340,10 +343,10 @@ jobs:
           set_env_value COGNITO_ADMIN_CLIENT_ID "$COGNITO_ADMIN_CLIENT_ID"
           set_env_value COGNITO_ADMIN_CLIENT_SECRET "$COGNITO_ADMIN_CLIENT_SECRET"
           set_env_value SENDON_API_KEY "$SENDON_API_KEY"
+          set_env_value SENDON_ACCOUNT_ID "$SENDON_ACCOUNT_ID"
+          set_env_value SENDON_KAKAO_SEND_PROFILE_ID "$SENDON_KAKAO_SEND_PROFILE_ID"
+          set_env_value SENDON_PASSWORD_RESET_TEMPLATE_ID "$SENDON_PASSWORD_RESET_TEMPLATE_ID"
           set_env_value RESET_DATABASE_ON_BASELINE_MISMATCH true
-          set_optional_env_value SENDON_ACCOUNT_ID
-          set_optional_env_value SENDON_KAKAO_SEND_PROFILE_ID
-          set_optional_env_value SENDON_PASSWORD_RESET_TEMPLATE_ID
           set_optional_env_value SENDON_SMS_SENDER_NUMBER
 
       - name: Authenticate the server to GHCR

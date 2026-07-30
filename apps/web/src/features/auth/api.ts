@@ -86,10 +86,12 @@ export function completeNewPassword(input: { flowId: string; newPassword: string
   });
 }
 
-export function requestPasswordReset(username: string) {
+export type PasswordResetDelivery = 'phone' | 'email';
+
+export function requestPasswordReset(input: { username: string; delivery: PasswordResetDelivery }) {
   return request<{ ok: true }>('/api/auth/password/forgot', {
     method: 'POST',
-    body: { username },
+    body: input,
     csrf: false,
   });
 }

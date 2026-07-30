@@ -77,6 +77,35 @@ Web과 Admin app client를 분리하고 두 client 모두 다음 explicit auth f
 
 User Pool이 `email`을 required attribute로 갖는 경우에도 로그인 UI에는 이메일 입력칸을 추가하지 않는다. 최초 비밀번호 변경 시 API가 DB의 사용자 이메일을 Cognito challenge 응답에 넣고, 이메일이 없으면 `학번@jshsus.kr` 형식의 보조값으로 흐름을 완료한다. 이 보조값은 비밀번호 재설정 메일 수신을 보장하지 않으므로 실제 이메일 인증 정책을 켜기 전에는 사용자 이메일 수집·검증 절차를 별도로 준비한다.
 
+## 비밀번호 재설정 전달 채널
+
+Web과 Admin의 비밀번호 찾기는 다음 전달 채널을 제공한다.
+
+- `phone`: DB에 등록된 휴대폰 번호로 Sendon 알림톡을 보내고, 실패 시 발신번호가
+  설정된 환경에서만 SMS로 대체 발송한다. API가 생성한 코드는 Redis에 해시로
+  보관하고 확인 후 `AdminSetUserPassword`로 새 비밀번호를 설정한다.
+- `email`: Cognito에서 이미 `email_verified=true`인 이메일에 한해서
+  `ForgotPassword`와 `ConfirmForgotPassword`를 사용한다. DB에 이메일 문자열만
+  존재하거나 Cognito 이메일이 미인증 상태인 계정에는 이메일을 보냈다고
+  가정하지 않는다.
+
+운영 Sendon 설정:
+
+```dotenv
+SENDON_API_BASE_URL=https://api.sendon.io
+SENDON_ACCOUNT_ID=...
+SENDON_API_KEY=...
+SENDON_KAKAO_SEND_PROFILE_ID=...
+SENDON_PASSWORD_RESET_TEMPLATE_ID=...
+SENDON_SMS_SENDER_NUMBER=
+```
+
+`SENDON_ACCOUNT_ID`는 센드온 로그인용 영문 계정 ID이고,
+`SENDON_KAKAO_SEND_PROFILE_ID`는 `@`로 시작할 수 있는 카카오 채널 ID다. 두 값을
+혼용하면 안 된다. 템플릿에는 `#{인증번호}` 변수가 있어야 한다. 실제 API 키는
+`.env.example`, Git, Actions 로그에 기록하지 않고 GitHub `production` environment
+Secret으로만 관리한다.
+
 ## MySQL 계정 연결
 
 이번 단계에서는 진행 중인 DB 마이그레이션과 충돌하지 않도록 기존 `auth_accounts` 테이블을 재사용한다. 한 User Pool만 인증 원본으로 사용하며 `provider_account_id`에는 변경되지 않는 Cognito `sub`를 저장한다.

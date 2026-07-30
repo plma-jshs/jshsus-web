@@ -249,6 +249,23 @@ const envSchema = z
           });
         }
       }
+
+      const requiredSendonValues = [
+        ['SENDON_ACCOUNT_ID', value.SENDON_ACCOUNT_ID],
+        ['SENDON_API_KEY', value.SENDON_API_KEY],
+        ['SENDON_KAKAO_SEND_PROFILE_ID', value.SENDON_KAKAO_SEND_PROFILE_ID],
+        ['SENDON_PASSWORD_RESET_TEMPLATE_ID', value.SENDON_PASSWORD_RESET_TEMPLATE_ID],
+      ] as const;
+
+      for (const [key, configuredValue] of requiredSendonValues) {
+        if (!configuredValue.trim()) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [key],
+            message: `${key} is required for production password recovery.`,
+          });
+        }
+      }
     }
 
     if (value.DATABASE_SSL_MODE === 'verify_identity' && !value.DATABASE_SSL_CA_PATH) {

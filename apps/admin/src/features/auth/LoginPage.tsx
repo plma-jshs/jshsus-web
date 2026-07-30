@@ -65,6 +65,8 @@ function getAuthErrorMessage(error: unknown, context: LoginMode) {
     case 'AUTH_PASSWORD_RESET_UNAVAILABLE':
     case 'AUTH_RECOVERY_UNAVAILABLE':
       return '이 계정의 비밀번호 재설정은 학교 담당자에게 문의해 주세요.';
+    case 'AUTH_RECOVERY_DELIVERY_FAILED':
+      return '인증 코드 발송에 실패했습니다. 잠시 후 다시 시도해 주세요.';
     default:
       if (error.status === 401) return '학번·교사번호 또는 비밀번호를 확인해 주세요.';
       if (error.status === 429) return '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.';
@@ -85,6 +87,7 @@ export function LoginPage() {
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('');
   const [code, setCode] = useState('');
+  const [resetDelivery, setResetDelivery] = useState<'phone' | 'email'>('phone');
   const [notice, setNotice] = useState('');
   const [validationError, setValidationError] = useState('');
 
@@ -142,7 +145,11 @@ export function LoginPage() {
     mutationFn: api.requestPasswordReset,
     onSuccess: () => {
       setValidationError('');
-      setNotice('입력한 계정에서 이메일 인증을 사용할 수 있다면 인증 코드를 보냈습니다.');
+      setNotice(
+        resetDelivery === 'phone'
+          ? '입력한 계정에 등록된 휴대폰 번호로 인증 코드를 보냈습니다.'
+          : '입력한 계정에 등록되고 확인된 이메일로 인증 코드를 보냈습니다.',
+      );
       setCode('');
       setNewPassword('');
       setNewPasswordConfirmation('');
@@ -199,7 +206,7 @@ export function LoginPage() {
     event.preventDefault();
     setNotice('');
     setValidationError('');
-    forgotMutation.mutate({ username: username.trim() });
+    forgotMutation.mutate({ username: username.trim(), delivery: resetDelivery });
   };
 
   const handleConfirmReset = (event: FormEvent<HTMLFormElement>) => {
@@ -246,7 +253,7 @@ export function LoginPage() {
             <p>처음 로그인하는 계정입니다. 사용할 비밀번호를 설정해 주세요.</p>
           ) : null}
           {mode === 'forgot' ? (
-            <p>계정에 등록된 이메일로 비밀번호 재설정 코드를 보내드립니다.</p>
+            <p>계정에 등록된 휴대폰 번호 또는 이메일로 재설정 코드를 보내드립니다.</p>
           ) : null}
           {mode === 'confirm-reset' ? (
             <p>
@@ -339,6 +346,29 @@ export function LoginPage() {
                 required
               />
             </label>
+            <fieldset className="login-recovery-method">
+              <legend>인증 방법</legend>
+              <label>
+                <input
+                  type="radio"
+                  name="admin-password-reset-delivery"
+                  value="phone"
+                  checked={resetDelivery === 'phone'}
+                  onChange={() => setResetDelivery('phone')}
+                />
+                <span>카카오톡 또는 문자</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="admin-password-reset-delivery"
+                  value="email"
+                  checked={resetDelivery === 'email'}
+                  onChange={() => setResetDelivery('email')}
+                />
+                <span>이메일</span>
+              </label>
+            </fieldset>
 
             {activeError ? (
               <p className="form-error" role="alert">
@@ -406,7 +436,12 @@ export function LoginPage() {
             <button
               className="login-text-button login-resend-button"
               type="button"
-              onClick={() => forgotMutation.mutate({ username: username.trim() })}
+              onClick={() =>
+                forgotMutation.mutate({
+                  username: username.trim(),
+                  delivery: resetDelivery,
+                })
+              }
               disabled={forgotMutation.isPending}
             >
               인증 코드 다시 받기

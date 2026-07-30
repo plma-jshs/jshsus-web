@@ -34,9 +34,11 @@ const newPasswordSchema = z.object({
 
 const forgotPasswordSchema = z.object({
   username: z.string().trim().min(1).max(128),
+  delivery: z.enum(['phone', 'email']).optional().default('phone'),
 });
 
-const confirmPasswordSchema = forgotPasswordSchema.extend({
+const confirmPasswordSchema = z.object({
+  username: z.string().trim().min(1).max(128),
   code: z.string().trim().min(4).max(16),
   newPassword: z.string().min(8).max(256),
 });
@@ -228,7 +230,11 @@ export class AuthController {
   forgotPassword(@Body() body: unknown, @Req() request: Request) {
     assertTrustedCredentialRequest(request);
     const input = parseBody(forgotPasswordSchema, body);
-    return this.authService.requestPasswordReset(input.username, inferCognitoSurface(request));
+    return this.authService.requestPasswordReset(
+      input.username,
+      inferCognitoSurface(request),
+      input.delivery,
+    );
   }
 
   @Post('password/confirm')
