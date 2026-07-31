@@ -303,6 +303,15 @@ export class BoardsService {
           authorName: schema.users.name,
           authorNickname: schema.users.nickname,
           storedAuthorName: schema.posts.authorName,
+          authorProfileImageId: sql<number | null>`(
+            select ${schema.files.id}
+            from ${schema.files}
+            where ${schema.files.targetType} = 'profile'
+              and ${schema.files.targetId} = ${schema.posts.authorId}
+              and ${schema.files.visibility} = 'public'
+            order by ${schema.files.uploadedAt} desc, ${schema.files.id} desc
+            limit 1
+          )`,
           isAnonymous: schema.posts.isAnonymous,
           viewCount: schema.posts.viewCount,
           createdAt: schema.posts.createdAt,
@@ -357,6 +366,10 @@ export class BoardsService {
         authorName: row.isAnonymous
           ? undefined
           : (row.authorNickname ?? row.authorName ?? row.storedAuthorName ?? undefined),
+        authorProfileImageUrl:
+          !row.isAnonymous && row.authorProfileImageId
+            ? `/api/files/${row.authorProfileImageId}/content`
+            : undefined,
         isAnonymous: row.isAnonymous,
         viewCount: row.viewCount + 1,
         commentCount: row.commentCount,
@@ -663,6 +676,15 @@ export class BoardsService {
           authorName: schema.users.name,
           authorNickname: schema.users.nickname,
           storedAuthorName: schema.comments.authorName,
+          authorProfileImageId: sql<number | null>`(
+            select ${schema.files.id}
+            from ${schema.files}
+            where ${schema.files.targetType} = 'profile'
+              and ${schema.files.targetId} = ${schema.comments.authorId}
+              and ${schema.files.visibility} = 'public'
+            order by ${schema.files.uploadedAt} desc, ${schema.files.id} desc
+            limit 1
+          )`,
           content: schema.comments.content,
           isHidden: schema.comments.isHidden,
           createdAt: schema.comments.createdAt,
@@ -694,6 +716,9 @@ export class BoardsService {
           row.authorName ??
           row.storedAuthorName ??
           undefined,
+        authorProfileImageUrl: row.authorProfileImageId
+          ? `/api/files/${row.authorProfileImageId}/content`
+          : undefined,
         content: row.content,
         isHidden: row.isHidden,
         createdAt: row.createdAt.toISOString(),

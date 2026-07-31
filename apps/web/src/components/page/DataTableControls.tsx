@@ -1,6 +1,14 @@
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Search,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 export type DataTableSearchField = 'title_content' | 'title' | 'author';
 export type DataTablePageSize = 20 | 50 | 100;
@@ -29,6 +37,83 @@ const defaultSearchFieldOptions: readonly DataTableSearchFieldOption[] = [
   { value: 'title', label: '제목' },
   { value: 'author', label: '작성자' },
 ];
+
+export type ToolbarSelectOption<TValue extends string | number> = {
+  value: TValue;
+  label: string;
+};
+
+export function ToolbarSelect<TValue extends string | number>({
+  ariaLabel,
+  value,
+  options,
+  onChange,
+}: {
+  ariaLabel: string;
+  value: TValue;
+  options: readonly ToolbarSelectOption<TValue>[];
+  onChange: (value: TValue) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const listboxId = useId();
+  const selected = options.find((option) => option.value === value) ?? options[0];
+
+  return (
+    <div
+      className={`data-table-toolbar-select${open ? ' is-open' : ''}`}
+      onBlur={(event) => {
+        const nextTarget = event.relatedTarget;
+        if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
+          setOpen(false);
+        }
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') setOpen(false);
+      }}
+    >
+      <button
+        aria-controls={listboxId}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-label={`${ariaLabel}: ${selected?.label ?? value}`}
+        className="data-table-toolbar-select__trigger"
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span>{selected?.label ?? value}</span>
+        <ChevronDown size={15} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div
+          aria-label={ariaLabel}
+          className="data-table-toolbar-select__menu"
+          id={listboxId}
+          role="listbox"
+        >
+          {options.map((option) => {
+            const isSelected = option.value === value;
+            return (
+              <button
+                aria-selected={isSelected}
+                className={isSelected ? 'is-selected' : undefined}
+                key={String(option.value)}
+                role="option"
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+              >
+                <span>{option.label}</span>
+                {isSelected ? <Check size={15} aria-hidden="true" /> : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export function DataTableToolbar<TField extends string = DataTableSearchField>({
   total,
@@ -67,33 +152,19 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
         </span>
       </div>
       <div className="data-table-toolbar__controls">
-        <label>
-          <span className="sr-only">페이지당 표시 건수</span>
-          <select
-            value={pageSize}
-            onChange={(event) => onPageSizeChange(Number(event.target.value) as DataTablePageSize)}
-          >
-            {[20, 50, 100].map((size) => (
-              <option value={size} key={size}>
-                {size}건
-              </option>
-            ))}
-          </select>
-        </label>
+        <ToolbarSelect
+          ariaLabel="페이지당 표시 건수"
+          value={pageSize}
+          options={([20, 50, 100] as const).map((size) => ({ value: size, label: `${size}건` }))}
+          onChange={onPageSizeChange}
+        />
         {showSearchField ? (
-          <label>
-            <span className="sr-only">검색 범위</span>
-            <select
-              value={draftField}
-              onChange={(event) => setDraftField(event.target.value as TField)}
-            >
-              {effectiveSearchFieldOptions.map((option) => (
-                <option value={option.value} key={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <ToolbarSelect
+            ariaLabel="검색 범위"
+            value={draftField}
+            options={effectiveSearchFieldOptions}
+            onChange={setDraftField}
+          />
         ) : null}
         {extraControls}
         <label className="data-table-toolbar__query">

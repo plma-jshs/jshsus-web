@@ -546,8 +546,8 @@
 }
 
 .status-profile-inline-form input:focus {
-  border-color: var(--j-color-info);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--j-color-info) 14%, transparent);
+  border-color: var(--j-color-brand);
+  box-shadow: var(--j-shadow-focus);
   outline: 0;
 }
 

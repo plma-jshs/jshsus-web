@@ -6,6 +6,7 @@ import {
   DataTablePagination,
   type DataTablePageSize,
   DataTableToolbar,
+  ToolbarSelect,
 } from '../../components/page/DataTableControls';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
@@ -92,21 +93,20 @@ export function ActivityRequestsPage() {
           }}
           extraControls={
             <>
-              <label>
-                <span className="sr-only">신청 상태</span>
-                <select
-                  value={filter}
-                  onChange={(event) => {
-                    setFilter(event.target.value as ActivityRequestFilter);
-                    setPage(1);
-                  }}
-                >
-                  <option value="all">전체</option>
-                  <option value="submitted">승인 대기</option>
-                  <option value="approved">승인</option>
-                  <option value="completed">완료</option>
-                </select>
-              </label>
+              <ToolbarSelect
+                ariaLabel="신청 상태"
+                value={filter}
+                options={[
+                  { value: 'all', label: '전체' },
+                  { value: 'submitted', label: '승인 대기' },
+                  { value: 'approved', label: '승인' },
+                  { value: 'completed', label: '완료' },
+                ]}
+                onChange={(nextFilter) => {
+                  setFilter(nextFilter as ActivityRequestFilter);
+                  setPage(1);
+                }}
+              />
               <label className="activity-date-control" title="활동 시작일">
                 <span>시작일</span>
                 <input

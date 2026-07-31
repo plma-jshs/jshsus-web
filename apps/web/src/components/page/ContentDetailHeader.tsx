@@ -4,12 +4,14 @@ import { formatKoreanContentDateTime } from '../../shared/lib/date';
 export function ContentDetailHeader({
   title,
   author,
+  authorProfileImageUrl,
   createdAt,
   actions,
   children,
 }: {
   title: string;
   author: string;
+  authorProfileImageUrl?: string;
   createdAt: string;
   actions?: ReactNode;
   children?: ReactNode;
@@ -21,7 +23,12 @@ export function ContentDetailHeader({
         {actions ? <div className="content-detail-header__actions">{actions}</div> : null}
       </div>
       <div className="content-detail-header__meta">
-        <span>{author}</span>
+        <span className="content-detail-header__author">
+          {authorProfileImageUrl ? (
+            <img src={authorProfileImageUrl} alt="" aria-hidden="true" />
+          ) : null}
+          {author}
+        </span>
         <time dateTime={createdAt}>{formatKoreanContentDateTime(createdAt)}</time>
         {children}
       </div>

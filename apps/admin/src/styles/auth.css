@@ -98,7 +98,7 @@
 .login-form > label > input:focus,
 .login-password-field > input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(22, 124, 114, 0.12);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .login-password-field {

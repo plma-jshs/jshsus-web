@@ -571,7 +571,7 @@
 
 .rich-text-poll-modal__dialog input:focus {
   border-color: var(--j-color-brand);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--j-color-brand) 14%, transparent);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .rich-text-poll-modal__options {

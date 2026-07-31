@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as schema from '@jshsus/db';
 import type { ThanksChallengeCreateResult, ThanksChallengeData } from '@jshsus/types';
-import { asc, count, sql } from 'drizzle-orm';
+import { count, desc, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import type { AuthSession } from '../auth/auth.service';
 import { DatabaseService } from '../database/database.service';
@@ -52,7 +52,7 @@ export class ThanksService {
             submittedAt: sql<string>`date_format(${schema.thanksMessages.submittedAt}, '%Y-%m-%d %H:%i:%s')`,
           })
           .from(schema.thanksMessages)
-          .orderBy(asc(schema.thanksMessages.id)),
+          .orderBy(desc(schema.thanksMessages.submittedAt), desc(schema.thanksMessages.id)),
         db
           .select({
             schoolNumber: schema.thanksMessages.schoolNumber,

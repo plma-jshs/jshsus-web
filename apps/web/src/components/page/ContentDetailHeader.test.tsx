@@ -7,15 +7,20 @@ afterEach(cleanup);
 
 describe('ContentDetailHeader', () => {
   it('uses the article title as the page heading', () => {
-    render(
+    const view = render(
       <ContentDetailHeader
         title="게시글 제목"
         author="작성자"
+        authorProfileImageUrl="/api/files/12/content"
         createdAt="2026-07-16T09:00:00+09:00"
       />,
     );
 
     expect(screen.getByRole('heading', { level: 1, name: '게시글 제목' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
+    expect(view.container.querySelector('.content-detail-header__author img')).toHaveAttribute(
+      'src',
+      '/api/files/12/content',
+    );
   });
 });

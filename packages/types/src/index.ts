@@ -168,6 +168,7 @@ export type BoardPostListItem = {
 export type BoardPostDetail = BoardPostListItem & {
   content: string;
   contentDoc?: RichTextDocument;
+  authorProfileImageUrl?: string;
   attachments: UploadedFileSummary[];
   likeCount: number;
   likedByMe: boolean;
@@ -261,6 +262,7 @@ export type BoardCommentSummary = {
   postId: number;
   parentId?: number;
   authorName?: string;
+  authorProfileImageUrl?: string;
   content: string;
   isHidden: boolean;
   createdAt: string;

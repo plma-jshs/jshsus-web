@@ -244,6 +244,7 @@ export function BoardPostDetailPage() {
       <article className="reading-surface">
         <ContentDetailHeader
           title={post.title}
+          authorProfileImageUrl={post.isAnonymous ? undefined : post.authorProfileImageUrl}
           author={post.isAnonymous ? '익명' : (post.authorName ?? '작성자')}
           createdAt={post.createdAt}
           actions={
@@ -371,7 +372,10 @@ export function BoardPostDetailPage() {
           <div className="detail-comment-list">
             {commentsQuery.data.map((item) => (
               <article key={item.id}>
-                <div>
+                <div className="detail-comment-author">
+                  {item.authorProfileImageUrl ? (
+                    <img src={item.authorProfileImageUrl} alt="" aria-hidden="true" />
+                  ) : null}
                   <strong>{item.authorName ?? '작성자'}</strong>
                   <time dateTime={item.createdAt} title={item.createdAt}>
                     {formatKoreanRelativeTime(item.createdAt)}

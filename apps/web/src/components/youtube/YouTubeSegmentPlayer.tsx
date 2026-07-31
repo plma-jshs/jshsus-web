@@ -31,12 +31,17 @@ type YouTubePlayerOptions = {
   width: string;
   height: string;
   host: string;
+  videoId: string;
   playerVars: {
+    cc_load_policy: 0;
     controls: 0 | 1;
     enablejsapi: 1;
+    end: number;
+    iv_load_policy: 3;
     origin: string;
     playsinline: 1;
     rel: 0;
+    start: number;
   };
   events: {
     onError: () => void;
@@ -199,19 +204,26 @@ export function YouTubeSegmentPlayer({
 
   useEffect(() => {
     let disposed = false;
+    const initialSegment = normalizedSegment(startSeconds, endSeconds);
+    const initialVideoId = videoId;
     void loadYouTubeIframeApi()
       .then((api) => {
         if (disposed || !targetRef.current) return;
         const player = new api.Player(targetRef.current, {
           width: '100%',
           height: '100%',
-          host: 'https://www.youtube-nocookie.com',
+          host: 'https://www.youtube.com',
+          videoId: initialVideoId,
           playerVars: {
+            cc_load_policy: 0,
             controls: 1,
             enablejsapi: 1,
+            end: initialSegment.end,
+            iv_load_policy: 3,
             origin: window.location.origin,
             playsinline: 1,
             rel: 0,
+            start: initialSegment.start,
           },
           events: {
             onReady: (event) => {
@@ -220,7 +232,19 @@ export function YouTubeSegmentPlayer({
               readyRef.current = true;
               const iframe = event.target.getIframe?.();
               if (iframe) iframe.title = latestRef.current.title;
-              cueCurrentSegment(event.target);
+              const currentSegment = normalizedSegment(
+                latestRef.current.startSeconds,
+                latestRef.current.endSeconds,
+              );
+              if (
+                latestRef.current.videoId !== initialVideoId ||
+                currentSegment.start !== initialSegment.start ||
+                currentSegment.end !== initialSegment.end
+              ) {
+                cueCurrentSegment(event.target);
+              } else {
+                applyRate(event.target, latestRef.current.playbackRate);
+              }
               setStatus('ready');
             },
             onStateChange: (event) => {

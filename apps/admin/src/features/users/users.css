@@ -123,7 +123,7 @@
 .identity-field input:focus,
 .identity-field select:focus {
   border-color: #168e87;
-  box-shadow: 0 0 0 3px rgb(22 142 135 / 12%);
+  box-shadow: var(--j-shadow-focus);
 }
 .identity-field input[readonly] {
   background: #f5f8f7;

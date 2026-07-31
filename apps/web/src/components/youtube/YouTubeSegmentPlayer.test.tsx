@@ -8,8 +8,14 @@ import {
 } from './YouTubeSegmentPlayer';
 
 type CapturedOptions = {
+  host: string;
+  videoId: string;
   playerVars: {
+    cc_load_policy: 0;
     controls: 0 | 1;
+    end: number;
+    iv_load_policy: 3;
+    start: number;
   };
   events: {
     onReady: (event: { target: FakePlayer }) => void;
@@ -107,12 +113,18 @@ describe('YouTubeSegmentPlayer', () => {
     await waitFor(() => expect(options).toBeDefined());
     act(() => options?.events.onReady({ target: player }));
 
-    expect(options?.playerVars.controls).toBe(1);
-    expect(player.cueVideoById).toHaveBeenLastCalledWith({
+    expect(options).toMatchObject({
+      host: 'https://www.youtube.com',
       videoId: 'dQw4w9WgXcQ',
-      startSeconds: 10,
-      endSeconds: 190,
+      playerVars: {
+        cc_load_policy: 0,
+        controls: 1,
+        end: 190,
+        iv_load_policy: 3,
+        start: 10,
+      },
     });
+    expect(player.cueVideoById).not.toHaveBeenCalled();
     expect(player.setPlaybackRate).toHaveBeenLastCalledWith(1.25);
 
     view.rerender(
@@ -125,7 +137,7 @@ describe('YouTubeSegmentPlayer', () => {
       />,
     );
 
-    expect(player.cueVideoById).toHaveBeenCalledTimes(1);
+    expect(player.cueVideoById).not.toHaveBeenCalled();
     expect(player.seekTo).toHaveBeenLastCalledWith(30, true);
     expect(player.setPlaybackRate).toHaveBeenLastCalledWith(2);
 

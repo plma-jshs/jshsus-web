@@ -57,6 +57,7 @@ describe('BoardsService public comment target authorization', () => {
         postId: 41,
         parentId: null,
         authorName: 'student',
+        authorProfileImageId: 92,
         content: 'comment',
         isHidden: false,
         likeCount: 2,
@@ -74,6 +75,7 @@ describe('BoardsService public comment target authorization', () => {
         id: 7,
         postId: 41,
         content: 'comment',
+        authorProfileImageUrl: '/api/files/92/content',
         likeCount: 2,
         likedByMe: true,
       }),
@@ -159,6 +161,7 @@ describe('BoardsService free-board likes', () => {
         content: 'content',
         contentJson: null,
         authorName: 'student',
+        authorProfileImageId: 91,
         isAnonymous: false,
         viewCount: 5,
         commentCount: 2,
@@ -185,7 +188,11 @@ describe('BoardsService free-board likes', () => {
     const service = new BoardsService(database, files);
 
     await expect(service.getPost('free', 41, 12)).resolves.toEqual(
-      expect.objectContaining({ likeCount: 4, likedByMe: true }),
+      expect.objectContaining({
+        authorProfileImageUrl: '/api/files/91/content',
+        likeCount: 4,
+        likedByMe: true,
+      }),
     );
   });
 

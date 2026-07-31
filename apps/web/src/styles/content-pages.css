@@ -52,6 +52,22 @@
   gap: 4px;
 }
 
+.content-detail-header__author img,
+.detail-comment-author > img {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  border: 1px solid var(--j-color-border);
+  border-radius: 50%;
+  background: var(--j-color-surface-subtle);
+  object-fit: cover;
+}
+
+.content-detail-header__author img {
+  width: 22px;
+  height: 22px;
+}
+
 .content-detail-header__meta > * + *::before {
   margin-inline: 9px;
   color: var(--j-color-border-strong);
@@ -353,6 +369,10 @@
   padding-right: 132px;
   align-items: center;
   gap: var(--j-space-2);
+}
+
+.detail-comment-author {
+  min-height: 24px;
 }
 
 .detail-comment-list strong {
