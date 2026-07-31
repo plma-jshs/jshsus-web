@@ -188,4 +188,27 @@ describe('YouTubeSegmentPlayer', () => {
     fireEvent.click(view.getByRole('button', { name: '영상 일시정지' }));
     expect(player.pauseVideo).toHaveBeenCalledOnce();
   });
+
+  it('falls back safely when YouTube has not exposed playback rates yet', async () => {
+    const player = createPlayer();
+    player.getAvailablePlaybackRates.mockReturnValue(undefined);
+    let options: CapturedOptions | undefined;
+    installPlayerApi(player, (captured) => {
+      options = captured;
+    });
+
+    render(
+      <YouTubeSegmentPlayer
+        videoId="dQw4w9WgXcQ"
+        startSeconds={0}
+        endSeconds={180}
+        playbackRate={1.25}
+        title="테스트 영상"
+      />,
+    );
+    await waitFor(() => expect(options).toBeDefined());
+
+    expect(() => act(() => options?.events.onReady({ target: player }))).not.toThrow();
+    expect(player.setPlaybackRate).toHaveBeenLastCalledWith(1);
+  });
 });

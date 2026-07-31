@@ -18,7 +18,7 @@ type CueVideoOptions = {
 type YouTubePlayer = {
   cueVideoById: (options: CueVideoOptions) => void;
   destroy: () => void;
-  getAvailablePlaybackRates: () => number[];
+  getAvailablePlaybackRates: () => number[] | undefined;
   getCurrentTime: () => number;
   getIframe?: () => HTMLIFrameElement;
   getPlayerState: () => number;
@@ -148,7 +148,7 @@ function fallbackEmbedUrl(videoId: string, startSeconds: number, endSeconds: num
 }
 
 function applyRate(player: YouTubePlayer, requestedRate: number) {
-  const available = player.getAvailablePlaybackRates();
+  const available = player.getAvailablePlaybackRates() ?? [];
   const rate = available.includes(requestedRate) ? requestedRate : 1;
   player.setPlaybackRate(rate);
 }
