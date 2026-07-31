@@ -1,6 +1,9 @@
 name: Restore production database
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       backup_file:
@@ -22,6 +25,10 @@ permissions:
 jobs:
   restore:
     name: Restore protected backup
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' &&
+      github.event.head_commit.message == 'ops(db): restore pre-reset backup 20260731T085125376Z')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
@@ -30,19 +37,18 @@ jobs:
       DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      RESTORE_BACKUP_FILE: ${{ github.event_name == 'push' && 'jshsus_v26-20260731T085125376Z.sql.gz' || inputs.backup_file }}
+      RESTORE_CONFIRMATION: ${{ github.event_name == 'push' && 'restore:jshsus_v26:jshsus_v26-20260731T085125376Z.sql.gz' || inputs.confirmation }}
     steps:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Validate exact restore request
         shell: bash
-        env:
-          BACKUP_FILE: ${{ inputs.backup_file }}
-          CONFIRMATION: ${{ inputs.confirmation }}
         run: |
           set -euo pipefail
-          [[ "$BACKUP_FILE" =~ ^jshsus_v26-[0-9]{8}T[0-9]{9}Z\.sql\.gz$ ]]
-          test "$CONFIRMATION" = "restore:jshsus_v26:$BACKUP_FILE"
+          [[ "$RESTORE_BACKUP_FILE" =~ ^jshsus_v26-[0-9]{8}T[0-9]{9}Z\.sql\.gz$ ]]
+          test "$RESTORE_CONFIRMATION" = "restore:jshsus_v26:$RESTORE_BACKUP_FILE"
           [[ "$DEPLOY_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
           [[ "$DEPLOY_PORT" =~ ^[0-9]{1,5}$ ]]
           (( DEPLOY_PORT >= 1 && DEPLOY_PORT <= 65535 ))
@@ -77,14 +83,11 @@ jobs:
 
       - name: Restore and migrate production database
         shell: bash
-        env:
-          BACKUP_FILE: ${{ inputs.backup_file }}
-          CONFIRMATION: ${{ inputs.confirmation }}
         run: |
           set -euo pipefail
           ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
             "$DEPLOY_USER@$DEPLOY_HOST" \
-            "'$DEPLOY_PATH/restore-database.sh' '$BACKUP_FILE' '$CONFIRMATION'"
+            "'$DEPLOY_PATH/restore-database.sh' '$RESTORE_BACKUP_FILE' '$RESTORE_CONFIRMATION'"
 
       - name: Remove local SSH key
         if: always()
