@@ -141,6 +141,7 @@
 
 .wake-song-player {
   position: relative;
+  width: 100%;
   overflow: hidden;
   aspect-ratio: 16 / 9;
   border-radius: var(--j-radius-md);
