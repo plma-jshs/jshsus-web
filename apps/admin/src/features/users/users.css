@@ -14,6 +14,11 @@
   align-items: center;
   gap: 8px;
 }
+
+.identity-toolbar-actions .identity-primary-button,
+.identity-toolbar-actions .identity-secondary-button {
+  font-size: 13px;
+}
 .identity-primary-button,
 .identity-secondary-button {
   display: inline-flex;

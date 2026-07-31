@@ -161,6 +161,11 @@ function eventTone(event: AdminSchoolCalendarEvent) {
   return event.isHoliday ? 'holiday' : 'schedule';
 }
 
+function isInlineCalendarEvent(event: AdminSchoolCalendarEvent) {
+  const range = eventRange(event);
+  return range.startsAt === range.endsAt && (event.isHoliday || event.category === 'observance');
+}
+
 function eventRange(event: AdminSchoolCalendarEvent) {
   return {
     startsAt: koreanDate(event.startsAt),
@@ -210,6 +215,7 @@ function weekEventSegments(
           endColumn: end + 1,
           event,
           isMultiDay: range.startsAt !== range.endsAt,
+          isInline: isInlineCalendarEvent(event),
           lane,
           showLabel: segmentStart === firstVisibleStart,
           startColumn: start + 1,
@@ -446,7 +452,7 @@ export function SchoolEventsPage() {
             공휴일·휴일
           </span>
           <span>
-            <i className="source-dot schedule" />
+            <i className="source-dot bar" />
             학교 일정
           </span>
           {calendarQuery.data && calendarQuery.data.availability !== 'available' ? (
@@ -523,7 +529,7 @@ export function SchoolEventsPage() {
                             key={date}
                           >
                             <button
-                              className={`school-calendar-date${isToday ? ' today' : ''}`}
+                              className="school-calendar-day-trigger"
                               type="button"
                               onClick={() => {
                                 setSelectedDate(date);
@@ -531,7 +537,9 @@ export function SchoolEventsPage() {
                               }}
                               aria-label={`${date} 선택`}
                             >
-                              {Number(date.slice(-2))}
+                              <span className={`school-calendar-date${isToday ? ' today' : ''}`}>
+                                {Number(date.slice(-2))}
+                              </span>
                             </button>
                             {hiddenEventCount ? (
                               <span className="school-calendar-more">+{hiddenEventCount}</span>
@@ -562,6 +570,8 @@ export function SchoolEventsPage() {
                                 className={`school-calendar-event ${eventTone(segment.event)}${
                                   segment.event.isPublic ? '' : ' private'
                                 }${segment.isMultiDay ? ' is-multi-day' : ''}${
+                                  segment.isInline ? ' is-inline' : ''
+                                }${
                                   segment.showLabel ? '' : ' is-continuation'
                                 }${segment.continuesBefore ? ' starts-before' : ''}${
                                   segment.continuesAfter ? ' ends-after' : ''

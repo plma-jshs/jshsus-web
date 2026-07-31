@@ -83,6 +83,11 @@ function eventRange(event: AcademicEvent) {
   };
 }
 
+function isInlineCalendarEvent(event: AcademicEvent) {
+  const range = eventRange(event);
+  return range.startsAt === range.endsAt && (event.isHoliday || event.category === 'observance');
+}
+
 function styleForEvent(event: AcademicEvent): CSSProperties {
   const { color, background } = eventColor(event);
   return {
@@ -205,6 +210,7 @@ function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridSt
           continuesBefore: range.startsAt < segmentStartKey,
           endColumn: end + 1,
           event,
+          isInline: isInlineCalendarEvent(event),
           lane,
           showLabel,
           startColumn: start + 1,
@@ -335,7 +341,7 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
     <PageScaffold
       breadcrumbs={listBreadcrumbs('calendar')}
       title="학사일정"
-      width="wide"
+      width="full"
       variant="workspace"
     >
       <section className="calendar-workspace" aria-label="학사일정 달력">
@@ -473,6 +479,8 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                               <span
                                 className={`full-calendar__event-bar${
                                   segment.event.isHoliday ? ' is-holiday' : ''
+                                }${
+                                  segment.isInline ? ' is-inline' : ''
                                 }${segment.endColumn > segment.startColumn ? ' is-multi-day' : ''}${
                                   segment.showLabel ? '' : ' is-continuation'
                                 }${segment.continuesBefore ? ' starts-before' : ''}${
@@ -512,6 +520,10 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                 <div className="calendar-agenda__list">
                   {selectedEvents.map((event) => (
                     <article key={event.id} style={styleForEvent(event)}>
+                      <i
+                        className={`calendar-source-dot${event.isHoliday ? ' is-holiday' : ''}`}
+                        aria-hidden="true"
+                      />
                       <div>
                         <h4>{displayEventTitle(event.title)}</h4>
                         <span className="calendar-agenda__meta">{formatEventRange(event)}</span>

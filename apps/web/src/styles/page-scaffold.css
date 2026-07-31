@@ -65,6 +65,10 @@
   width: min(100%, 1280px);
 }
 
+.detail-page--full {
+  width: min(100%, 1480px);
+}
+
 .page-breadcrumbs {
   display: flex;
   min-height: 20px;

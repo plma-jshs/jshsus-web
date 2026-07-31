@@ -56,13 +56,6 @@
   overflow: hidden;
 }
 
-.wake-song-admin-list > .panel-title {
-  min-height: 76px;
-  padding: 14px 18px;
-  margin: 0;
-  border-bottom: 1px solid var(--line);
-}
-
 .wake-song-admin-list > .empty-text,
 .wake-song-admin-list > .admin-panel.error {
   margin: 0;

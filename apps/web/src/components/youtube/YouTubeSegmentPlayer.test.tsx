@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
+import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   loadYouTubeIframeApi,
@@ -8,6 +8,9 @@ import {
 } from './YouTubeSegmentPlayer';
 
 type CapturedOptions = {
+  playerVars: {
+    controls: 0 | 1;
+  };
   events: {
     onReady: (event: { target: FakePlayer }) => void;
     onStateChange: (event: { target: FakePlayer; data: number }) => void;
@@ -104,6 +107,7 @@ describe('YouTubeSegmentPlayer', () => {
     await waitFor(() => expect(options).toBeDefined());
     act(() => options?.events.onReady({ target: player }));
 
+    expect(options?.playerVars.controls).toBe(1);
     expect(player.cueVideoById).toHaveBeenLastCalledWith({
       videoId: 'dQw4w9WgXcQ',
       startSeconds: 10,
@@ -159,34 +163,6 @@ describe('YouTubeSegmentPlayer', () => {
       ),
     );
     expect(view.queryByRole('status')).not.toBeInTheDocument();
-  });
-
-  it('toggles playback when the preview surface is clicked', async () => {
-    const player = createPlayer();
-    let options: CapturedOptions | undefined;
-    installPlayerApi(player, (captured) => {
-      options = captured;
-    });
-
-    const view = render(
-      <YouTubeSegmentPlayer
-        videoId="dQw4w9WgXcQ"
-        startSeconds={10}
-        endSeconds={190}
-        playbackRate={1}
-        title="테스트 영상"
-      />,
-    );
-    await waitFor(() => expect(options).toBeDefined());
-    act(() => options?.events.onReady({ target: player }));
-
-    player.getPlayerState.mockReturnValue(2);
-    fireEvent.click(view.getByRole('button', { name: '영상 재생' }));
-    expect(player.playVideo).toHaveBeenCalledOnce();
-
-    player.getPlayerState.mockReturnValue(1);
-    fireEvent.click(view.getByRole('button', { name: '영상 일시정지' }));
-    expect(player.pauseVideo).toHaveBeenCalledOnce();
   });
 
   it('falls back safely when YouTube has not exposed playback rates yet', async () => {

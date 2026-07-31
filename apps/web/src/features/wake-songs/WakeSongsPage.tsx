@@ -463,12 +463,12 @@ export function WakeSongsPage() {
 
                     <label className="wake-song-note-field">
                       <span>신청 메모</span>
-                      <textarea
+                      <input
+                        type="text"
                         value={form.requestNote}
                         onChange={(event) =>
                           setForm((current) => ({ ...current, requestNote: event.target.value }))
                         }
-                        rows={2}
                         maxLength={500}
                         placeholder="담당자에게 전달할 내용이 있다면 입력해 주세요."
                       />
@@ -479,12 +479,12 @@ export function WakeSongsPage() {
                       type="submit"
                       disabled={submitDisabled}
                     >
-                      <Music2 size={18} aria-hidden="true" />
+                      <Music2 size={16} aria-hidden="true" />
                       {saveMutation.isPending
                         ? '저장 중'
                         : editingId
-                          ? '이 구간으로 신청 내용 저장'
-                          : '이 구간으로 기상곡 신청하기'}
+                          ? '신청 내용 저장'
+                          : '기상곡 신청'}
                     </button>
                   </section>
                 </>

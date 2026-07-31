@@ -121,20 +121,6 @@
   line-height: 1.65;
 }
 
-.point-section-heading {
-  display: flex;
-  margin-bottom: 16px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.point-section-heading h2 {
-  margin: 0;
-  font-size: 17px;
-  letter-spacing: -0.02em;
-}
-
 .point-award-combined {
   display: grid;
   gap: 22px;

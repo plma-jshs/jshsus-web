@@ -28,7 +28,7 @@ type PageScaffoldProps = {
   description?: string;
   action?: ReactNode;
   meta?: ReactNode;
-  width?: 'default' | 'reading' | 'wide';
+  width?: 'default' | 'reading' | 'wide' | 'full';
   variant?: 'list' | 'document' | 'form' | 'workspace';
   children: ReactNode;
 };
