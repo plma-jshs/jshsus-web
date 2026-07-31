@@ -47,9 +47,7 @@ textarea {
   border: 1px solid var(--j-color-border-strong);
   border-radius: var(--j-radius-md);
   background: var(--j-color-surface);
-  transition:
-    border-color var(--j-motion-fast),
-    box-shadow var(--j-motion-fast);
+  transition: border-color var(--j-motion-fast);
 }
 
 select:not([multiple]) {

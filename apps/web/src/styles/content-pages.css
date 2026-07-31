@@ -52,20 +52,39 @@
   gap: 4px;
 }
 
-.content-detail-header__author img,
-.detail-comment-author > img {
+.user-avatar {
+  display: inline-grid;
   width: 24px;
   height: 24px;
   flex: 0 0 auto;
+  overflow: hidden;
+  place-items: center;
   border: 1px solid var(--j-color-border);
   border-radius: 50%;
-  background: var(--j-color-surface-subtle);
+  color: var(--j-color-brand-strong);
+  background: var(--j-color-brand-subtle);
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
-.content-detail-header__author img {
+.user-avatar svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.65;
+}
+
+.user-avatar--header {
   width: 22px;
   height: 22px;
+}
+
+.user-avatar--header svg {
+  width: 16px;
+  height: 16px;
 }
 
 .content-detail-header__meta > * + *::before {

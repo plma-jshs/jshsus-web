@@ -10,6 +10,7 @@ import { ContentDetailHeader } from '../../components/page/ContentDetailHeader';
 import { ContentLikeButton } from '../../components/page/ContentLikeButton';
 import { ContentMoreMenu } from '../../components/page/ContentMoreMenu';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
+import { UserAvatar } from '../../components/page/UserAvatar';
 import { detailBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createContentReport } from '../../shared/api/reports';
 import { ApiError } from '../../shared/api/http';
@@ -373,9 +374,7 @@ export function BoardPostDetailPage() {
             {commentsQuery.data.map((item) => (
               <article key={item.id}>
                 <div className="detail-comment-author">
-                  {item.authorProfileImageUrl ? (
-                    <img src={item.authorProfileImageUrl} alt="" aria-hidden="true" />
-                  ) : null}
+                  <UserAvatar imageUrl={item.authorProfileImageUrl} />
                   <strong>{item.authorName ?? '작성자'}</strong>
                   <time dateTime={item.createdAt} title={item.createdAt}>
                     {formatKoreanRelativeTime(item.createdAt)}

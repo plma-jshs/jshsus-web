@@ -18,9 +18,22 @@ describe('ContentDetailHeader', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: '게시글 제목' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
-    expect(view.container.querySelector('.content-detail-header__author img')).toHaveAttribute(
-      'src',
-      '/api/files/12/content',
+    expect(
+      view.container.querySelector('.content-detail-header__author .user-avatar img'),
+    ).toHaveAttribute('src', '/api/files/12/content');
+  });
+
+  it('shows the shared default avatar when the author has no profile image', () => {
+    const view = render(
+      <ContentDetailHeader
+        title="프로필 없는 글"
+        author="작성자"
+        createdAt="2026-07-16T09:00:00+09:00"
+      />,
     );
+
+    expect(
+      view.container.querySelector('.content-detail-header__author .user-avatar svg'),
+    ).toBeInTheDocument();
   });
 });

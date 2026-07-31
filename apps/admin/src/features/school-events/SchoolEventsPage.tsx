@@ -182,16 +182,29 @@ function validateEvent(form: EventForm) {
   return null;
 }
 
+function formatCalendarDate(date: string) {
+  const [year, month, day] = date.split('-');
+  const weekday = WEEKDAYS[weekdayOf(date)];
+  return `${year}. ${month}. ${day} (${weekday})`;
+}
+
 function formatPeriod(event: AdminSchoolCalendarEvent) {
   const start = koreanDate(event.startsAt);
   const end = koreanDate(event.endsAt);
-  if (event.allDay) return start === end ? `${start} 종일` : `${start} – ${end}`;
-  const formatter = new Intl.DateTimeFormat('ko-KR', {
+  const dateTimeFormatter = new Intl.DateTimeFormat('ko-KR', {
     timeZone: KOREA_TIME_ZONE,
-    dateStyle: 'medium',
-    timeStyle: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
   });
-  return `${formatter.format(new Date(event.startsAt))} – ${formatter.format(new Date(event.endsAt))}`;
+  if (event.allDay) {
+    return start === end
+      ? `${formatCalendarDate(start)} 종일`
+      : `${formatCalendarDate(start)} 〜 ${formatCalendarDate(end)} 종일`;
+  }
+  return start === end
+    ? `${formatCalendarDate(start)} ${dateTimeFormatter.format(new Date(event.startsAt))} 〜 ${dateTimeFormatter.format(new Date(event.endsAt))}`
+    : `${formatCalendarDate(start)} ${dateTimeFormatter.format(new Date(event.startsAt))} 〜 ${formatCalendarDate(end)} ${dateTimeFormatter.format(new Date(event.endsAt))}`;
 }
 
 function occursOn(event: AdminSchoolCalendarEvent, date: string) {
@@ -725,7 +738,7 @@ export function SchoolEventsPage() {
             <section className="selected-day-panel">
               <div className="panel-title">
                 <div>
-                  <h2>{selectedDate}</h2>
+                  <h2>{formatCalendarDate(selectedDate)}</h2>
                   <span>{selectedDateEvents.length}건</span>
                 </div>
               </div>

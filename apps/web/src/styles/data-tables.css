@@ -245,7 +245,6 @@
   white-space: nowrap;
   transition:
     border-color var(--j-motion-fast),
-    box-shadow var(--j-motion-fast),
     background-color var(--j-motion-fast);
 }
 

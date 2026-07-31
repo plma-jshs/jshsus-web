@@ -529,6 +529,7 @@ export class ActivityRequestsService {
         const [applicant] = await tx
           .select({
             id: schema.students.id,
+            userId: schema.students.userId,
             studentNo: schema.students.studentNo,
             name: schema.students.name,
           })
@@ -539,6 +540,7 @@ export class ActivityRequestsService {
         const [representative] = await tx
           .select({
             id: schema.students.id,
+            userId: schema.students.userId,
             studentNo: schema.students.studentNo,
             name: schema.students.name,
           })
@@ -598,6 +600,30 @@ export class ActivityRequestsService {
           },
           tx,
         );
+
+        const studentRecipients = new Set(
+          [applicant.userId, representative.userId].filter(
+            (userId): userId is number =>
+              typeof userId === 'number' && Number.isSafeInteger(userId) && userId > 0,
+          ),
+        );
+        for (const userId of studentRecipients) {
+          await this.notifications.createForUser(
+            {
+              userId,
+              type: 'activity_request_submitted',
+              title: '탐구활동서 신청이 생성되었습니다.',
+              body: `${parsed.data.location} · 승인 대기`,
+              link: `/activity-requests/${result.id}`,
+              metadata: {
+                activityRequestId: result.id,
+                representativeStudentId: representative.id,
+              },
+              dedupeKey: `activity-request:${result.id}:created-for-student`,
+            },
+            tx,
+          );
+        }
 
         return {
           ok: true,

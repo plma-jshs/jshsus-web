@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { formatKoreanContentDateTime } from '../../shared/lib/date';
+import { UserAvatar } from './UserAvatar';
 
 export function ContentDetailHeader({
   title,
@@ -24,9 +25,7 @@ export function ContentDetailHeader({
       </div>
       <div className="content-detail-header__meta">
         <span className="content-detail-header__author">
-          {authorProfileImageUrl ? (
-            <img src={authorProfileImageUrl} alt="" aria-hidden="true" />
-          ) : null}
+          <UserAvatar imageUrl={authorProfileImageUrl} className="user-avatar--header" />
           {author}
         </span>
         <time dateTime={createdAt}>{formatKoreanContentDateTime(createdAt)}</time>

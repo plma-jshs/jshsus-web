@@ -30,17 +30,27 @@
 
 .activity-date-control {
   position: relative;
-  display: grid;
+  display: block;
   flex: 0 0 auto;
-  gap: 5px;
-  align-items: end;
 }
 
-.activity-date-control > span {
+.activity-date-control::before {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 11px;
   color: var(--j-color-text-muted);
-  font-size: 12px;
-  font-weight: 600;
+  content: attr(data-placeholder);
+  font-size: 13px;
+  font-weight: 400;
+  pointer-events: none;
+  transform: translateY(-50%);
   white-space: nowrap;
+}
+
+.activity-date-control.has-value::before,
+.activity-date-control:focus-within::before {
+  display: none;
 }
 
 .activity-date-control input {
@@ -51,16 +61,21 @@
   font-size: 13px;
 }
 
+.activity-date-control:not(.has-value):not(:focus-within) input::-webkit-datetime-edit {
+  color: transparent;
+}
+
 .activity-date-control::after {
   position: absolute;
   right: 11px;
-  bottom: 12px;
+  top: 50%;
   width: 16px;
   height: 16px;
   background: center / 16px 16px no-repeat
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 2v4M16 2v4M3 10h18'/%3E%3Crect width='18' height='18' x='3' y='4' rx='2'/%3E%3C/svg%3E");
   content: '';
   pointer-events: none;
+  transform: translateY(-50%);
 }
 
 .activity-date-control input::-webkit-calendar-picker-indicator {
@@ -71,6 +86,17 @@
   margin: 0;
   opacity: 0;
   cursor: pointer;
+}
+
+.activity-date-separator {
+  display: inline-grid;
+  width: 18px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--j-color-text-muted);
+  font-size: 17px;
+  line-height: 1;
 }
 
 .activity-table-section .data-table-toolbar__query {
@@ -812,11 +838,15 @@
 
   .activity-date-control {
     width: 100%;
-    justify-content: space-between;
   }
 
   .activity-date-control input {
     width: 100%;
+  }
+
+  .activity-date-separator {
+    width: 100%;
+    height: 18px;
   }
 
   .activity-list-controls .page-search-field {

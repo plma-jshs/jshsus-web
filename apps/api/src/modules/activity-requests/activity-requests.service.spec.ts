@@ -170,8 +170,10 @@ describe('ActivityRequestsService student create authorization', () => {
       select: vi
         .fn()
         .mockReturnValueOnce(selectChain([{ id: 9 }]))
-        .mockReturnValueOnce(selectChain([{ id: 9, studentNo: 9999, name: '테스트' }]))
-        .mockReturnValueOnce(selectChain([{ id: 10, studentNo: 1101, name: '대표학생' }]))
+        .mockReturnValueOnce(selectChain([{ id: 9, userId: 20, studentNo: 9999, name: '테스트' }]))
+        .mockReturnValueOnce(
+          selectChain([{ id: 10, userId: 21, studentNo: 1101, name: '대표학생' }]),
+        )
         .mockReturnValueOnce(
           selectChain([
             { id: 9, studentNo: 9999 },
@@ -223,7 +225,8 @@ describe('ActivityRequestsService student create authorization', () => {
       { activityRequestId: 14, studentId: 10 },
     ]);
     expect(result.request.studentId).toBe(10);
-    expect(notifications.createForUser).toHaveBeenCalledWith(
+    expect(notifications.createForUser).toHaveBeenNthCalledWith(
+      1,
       {
         userId: 30,
         type: 'activity_request_submitted',
@@ -236,6 +239,39 @@ describe('ActivityRequestsService student create authorization', () => {
       },
       transactionDb,
     );
+    expect(notifications.createForUser).toHaveBeenNthCalledWith(
+      2,
+      {
+        userId: 20,
+        type: 'activity_request_submitted',
+        title: '탐구활동서 신청이 생성되었습니다.',
+        body: '과학관 · 승인 대기',
+        link: '/activity-requests/14',
+        metadata: {
+          activityRequestId: 14,
+          representativeStudentId: 10,
+        },
+        dedupeKey: 'activity-request:14:created-for-student',
+      },
+      transactionDb,
+    );
+    expect(notifications.createForUser).toHaveBeenNthCalledWith(
+      3,
+      {
+        userId: 21,
+        type: 'activity_request_submitted',
+        title: '탐구활동서 신청이 생성되었습니다.',
+        body: '과학관 · 승인 대기',
+        link: '/activity-requests/14',
+        metadata: {
+          activityRequestId: 14,
+          representativeStudentId: 10,
+        },
+        dedupeKey: 'activity-request:14:created-for-student',
+      },
+      transactionDb,
+    );
+    expect(notifications.createForUser).toHaveBeenCalledTimes(3);
   });
 });
 

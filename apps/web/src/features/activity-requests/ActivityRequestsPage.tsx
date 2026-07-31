@@ -107,9 +107,14 @@ export function ActivityRequestsPage() {
                   setPage(1);
                 }}
               />
-              <label className="activity-date-control" title="활동 시작일">
-                <span>시작일</span>
+              <label
+                className={`activity-date-control${startDate ? ' has-value' : ''}`}
+                data-placeholder="시작일"
+                title="활동 시작일"
+              >
+                <span className="sr-only">시작일</span>
                 <input
+                  aria-label="활동 시작일"
                   type="date"
                   value={startDate}
                   max={endDate || undefined}
@@ -119,9 +124,17 @@ export function ActivityRequestsPage() {
                   }}
                 />
               </label>
-              <label className="activity-date-control" title="활동 마감일">
-                <span>마감일</span>
+              <span className="activity-date-separator" aria-hidden="true">
+                〜
+              </span>
+              <label
+                className={`activity-date-control${endDate ? ' has-value' : ''}`}
+                data-placeholder="종료일"
+                title="활동 종료일"
+              >
+                <span className="sr-only">종료일</span>
                 <input
+                  aria-label="활동 종료일"
                   type="date"
                   value={endDate}
                   min={startDate || undefined}

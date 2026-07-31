@@ -73,7 +73,7 @@ function eventTouchesDate(event: AcademicEvent, dateKey: string) {
 function eventColor(event: AcademicEvent) {
   if (event.isHoliday) return { color: '#ffffff', background: '#e34242' };
   if (event.category === 'observance') return { color: '#0c43b7', background: 'transparent' };
-  return { color: '#000000', background: '#d8f5e6' };
+  return { color: '#185b46', background: '#ddf5ea' };
 }
 
 function eventRange(event: AcademicEvent) {
@@ -232,19 +232,24 @@ const eventTimeFormatter = createKoreanDateFormatter({
   hourCycle: 'h23',
 });
 
+export function formatCalendarDate(dateKey: string) {
+  const [year, month, day] = dateKey.split('-');
+  return `${year}. ${month}. ${day} (${weekdayFormatter.format(fromDateKey(dateKey))})`;
+}
+
 function formatEventRange(event: AcademicEvent) {
   const startKey = toKoreanDateKey(event.startsAt);
   const endKey = toKoreanDateKey(event.endsAt);
-  const startLabel = `${startKey}(${weekdayFormatter.format(fromDateKey(startKey))})`;
-  const endLabel = `${endKey}(${weekdayFormatter.format(fromDateKey(endKey))})`;
+  const startLabel = formatCalendarDate(startKey);
+  const endLabel = formatCalendarDate(endKey);
   if (event.allDay) {
-    return startKey === endKey ? `${startLabel} 종일` : `${startLabel} ~ ${endLabel} 종일`;
+    return startKey === endKey ? `${startLabel} 종일` : `${startLabel} 〜 ${endLabel} 종일`;
   }
   const startTime = eventTimeFormatter.format(new Date(event.startsAt));
   const endTime = eventTimeFormatter.format(new Date(event.endsAt));
   return startKey === endKey
-    ? `${startLabel} ${startTime} ~ ${endTime}`
-    : `${startLabel} ${startTime} ~ ${endLabel} ${endTime}`;
+    ? `${startLabel} ${startTime} 〜 ${endTime}`
+    : `${startLabel} ${startTime} 〜 ${endLabel} ${endTime}`;
 }
 
 export function CalendarPage() {
@@ -277,6 +282,7 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
   );
   const events = allEvents;
   const selectedEvents = events.filter((event) => eventTouchesDate(event, selectedDate));
+  const selectedDateLabel = formatCalendarDate(selectedDate);
   const monthStartKey = toDateKey(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1));
   const monthEndKey = toDateKey(
     new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 0),
@@ -337,23 +343,22 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
     >
       <section className="calendar-workspace" aria-label="학사일정 달력">
         <header className="calendar-toolbar">
-          <div className="calendar-month-control">
-            <button type="button" onClick={() => moveMonth(-1)} aria-label="이전 달">
-              <ChevronLeft size={19} aria-hidden="true" />
-            </button>
-            <h2 aria-live="polite">
-              {visibleMonth.getFullYear()}년 {visibleMonth.getMonth() + 1}월
-            </h2>
-            <button type="button" onClick={() => moveMonth(1)} aria-label="다음 달">
-              <ChevronRight size={19} aria-hidden="true" />
-            </button>
-            {/* <button
-              className="calendar-today-button"
-              type="button"
-              onClick={() => selectDate(new Date())}
-            >
-              오늘
-            </button> */}
+          <div className="calendar-toolbar__calendar">
+            <div className="calendar-month-control">
+              <button type="button" onClick={() => moveMonth(-1)} aria-label="이전 달">
+                <ChevronLeft size={19} aria-hidden="true" />
+              </button>
+              <h2 aria-live="polite">
+                {visibleMonth.getFullYear()}년 {visibleMonth.getMonth() + 1}월
+              </h2>
+              <button type="button" onClick={() => moveMonth(1)} aria-label="다음 달">
+                <ChevronRight size={19} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+          <div className="calendar-toolbar__agenda" aria-live="polite">
+            <strong>{selectedDateLabel}</strong>
+            <span>{selectedEvents.length}건</span>
           </div>
         </header>
 
@@ -449,7 +454,7 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                         );
                       })}
                     </div>
-                    <div className="full-calendar__bars" aria-hidden="true">
+                    <div className="full-calendar__bars">
                       {calendarQuery.isLoading
                         ? [
                             { column: '1 / 4', row: 1 },
@@ -467,7 +472,9 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                         : weekEventSegments(week, events, cells[0].dateKey)
                             .filter((segment) => segment.lane < maxVisibleEventBars)
                             .map((segment) => (
-                              <span
+                              <button
+                                type="button"
+                                aria-label={displayEventTitle(segment.event.title)}
                                 className={`full-calendar__event-bar${
                                   segment.event.isHoliday ? ' is-holiday' : ''
                                 }${
@@ -484,11 +491,20 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                                   gridRow: segment.lane + 1,
                                 }}
                                 title={displayEventTitle(segment.event.title)}
+                                onClick={() =>
+                                  selectDate(
+                                    fromDateKey(
+                                      eventRange(segment.event).startsAt < week[0].dateKey
+                                        ? week[0].dateKey
+                                        : eventRange(segment.event).startsAt,
+                                    ),
+                                  )
+                                }
                               >
                                 {segment.showLabel ? (
                                   <span>{displayEventTitle(segment.event.title)}</span>
                                 ) : null}
-                              </span>
+                              </button>
                             ))}
                     </div>
                   </div>
@@ -497,12 +513,6 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
             </div>
 
             <aside className="calendar-agenda" aria-live="polite">
-              <div className="calendar-agenda__heading">
-                <div>
-                  <h3>{selectedDate}</h3>
-                  <span>{selectedEvents.length}건</span>
-                </div>
-              </div>
               {calendarQuery.isLoading ? (
                 <div className="calendar-agenda__skeleton" aria-hidden="true">
                   <span />
