@@ -35,8 +35,15 @@
   align-items: center;
 }
 
+.activity-date-control > span {
+  color: var(--j-color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .activity-date-control input {
-  width: 142px;
+  width: 132px;
   min-height: 40px;
   padding-inline: 10px;
   font-size: 13px;
@@ -77,9 +84,15 @@
 }
 
 .activity-table__participants {
+  display: -webkit-box;
   overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  line-height: 1.4;
   text-align: left !important;
   text-overflow: ellipsis;
+  white-space: normal;
 }
 
 .activity-table__participants.is-dense {
@@ -105,6 +118,13 @@
 .activity-table__period span {
   color: var(--j-color-text-muted);
   font-size: 11px;
+}
+
+.activity-table__advisor {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .activity-document {
@@ -713,6 +733,7 @@
 
   .activity-date-control {
     width: 100%;
+    justify-content: space-between;
   }
 
   .activity-date-control input {
@@ -740,54 +761,51 @@
 
   .activity-table tbody tr {
     display: grid;
-    min-height: 112px;
     padding: 14px 4px;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-rows: auto auto auto;
-    align-items: center;
-    gap: 9px 10px;
+    grid-template-columns: 1fr;
+    gap: 8px;
     border-bottom: 1px solid var(--j-color-border);
   }
 
   .activity-table td {
-    display: block;
+    display: grid;
     height: auto;
     min-height: 0;
     padding: 0;
+    grid-template-columns: 72px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
     border: 0;
     text-align: left;
   }
 
-  .activity-table td:first-child {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .activity-table__purpose {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .activity-table__created {
-    grid-column: 1;
-    grid-row: 2;
+  .activity-table td::before {
     color: var(--j-color-text-muted);
+    content: attr(data-label);
     font-size: 12px;
+    font-weight: 600;
   }
 
-  .activity-table__location {
-    grid-column: 2;
-    grid-row: 2;
-    color: var(--j-color-text-muted);
-    font-size: 12px;
+  .activity-table__purpose a,
+  .activity-table__location,
+  .activity-table__advisor {
+    white-space: normal;
   }
 
   .activity-table__period {
-    grid-column: 1 / -1;
-    grid-row: 3;
-    overflow: hidden;
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
     font-size: 12px;
-    text-overflow: ellipsis;
+  }
+
+  .activity-table__period::before {
+    grid-row: 1 / span 2;
+  }
+
+  .activity-table__participants {
+    display: grid;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
   }
 
   .activity-definition-list > div {

@@ -66,6 +66,20 @@ export function formatActivityTimeRange(startsAt: string, endsAt: string) {
   return `${timeFormatter.format(new Date(startsAt))}~${timeFormatter.format(new Date(endsAt))}`;
 }
 
+export function formatActivityTimeRanges(
+  date: string,
+  startsAt: string,
+  endsAt: string,
+  savedSlotIds?: ActivityTimeSlotId[],
+) {
+  const slotIds = inferActivityTimeSlotIds(date, startsAt, endsAt, savedSlotIds);
+  const ranges = slotIds
+    .map((slotId) => activityTimeSlots.find((slot) => slot.id === slotId))
+    .filter((slot): slot is (typeof activityTimeSlots)[number] => Boolean(slot))
+    .map((slot) => `${slot.startsAt}~${slot.endsAt}`);
+  return ranges.length ? ranges.join(', ') : formatActivityTimeRange(startsAt, endsAt);
+}
+
 export function formatActivityPeriodLabel(
   date: string,
   startsAt: string,

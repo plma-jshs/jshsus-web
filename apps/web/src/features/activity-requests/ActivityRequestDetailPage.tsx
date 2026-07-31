@@ -12,7 +12,7 @@ import { getSession } from '../auth/api';
 import { deleteActivityRequest, getActivityRequest } from './api';
 import {
   formatActivityPeriodLabel,
-  formatActivityTimeRange,
+  formatActivityTimeRanges,
   koreaDateInput,
 } from './activitySchedule';
 import { activityStatusLabels, formatActivityParticipants } from './presentation';
@@ -222,7 +222,14 @@ export function ActivityRequestDetailPage() {
                     request.activitySlotIds,
                   )}
                 </strong>
-                <small>{formatActivityTimeRange(request.startsAt, request.endsAt)}</small>
+                <small>
+                  {formatActivityTimeRanges(
+                    koreaDateInput(new Date(request.startsAt)),
+                    request.startsAt,
+                    request.endsAt,
+                    request.activitySlotIds,
+                  )}
+                </small>
               </dd>
             </div>
             <div>

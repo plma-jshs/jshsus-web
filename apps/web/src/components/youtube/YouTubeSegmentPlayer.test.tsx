@@ -119,13 +119,12 @@ describe('YouTubeSegmentPlayer', () => {
       />,
     );
 
-    expect(player.cueVideoById).toHaveBeenLastCalledWith({
-      videoId: 'dQw4w9WgXcQ',
-      startSeconds: 30,
-      endSeconds: 120,
-    });
+    expect(player.cueVideoById).toHaveBeenCalledTimes(1);
+    expect(player.seekTo).toHaveBeenLastCalledWith(30, true);
     expect(player.setPlaybackRate).toHaveBeenLastCalledWith(2);
 
+    player.pauseVideo.mockClear();
+    player.seekTo.mockClear();
     player.getCurrentTime.mockReturnValue(121);
     vi.useFakeTimers();
     act(() => options?.events.onStateChange({ target: player, data: 1 }));

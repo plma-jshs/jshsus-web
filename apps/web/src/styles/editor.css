@@ -416,7 +416,7 @@
   padding: var(--j-space-5);
   color: var(--j-color-text);
   font-size: var(--j-text-md);
-  line-height: 1.75;
+  line-height: 1.65;
   outline: 0;
 }
 
@@ -567,6 +567,11 @@
 
 .rich-text-poll-modal__dialog input {
   font-size: var(--j-text-sm);
+}
+
+.rich-text-poll-modal__dialog input:focus {
+  border-color: var(--j-color-brand);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--j-color-brand) 14%, transparent);
 }
 
 .rich-text-poll-modal__options {

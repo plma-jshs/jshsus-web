@@ -13,7 +13,7 @@ import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { getMyActivityRequests } from './api';
 import {
   formatActivityPeriodLabel,
-  formatActivityTimeRange,
+  formatActivityTimeRanges,
   koreaDateInput,
 } from './activitySchedule';
 import {
@@ -37,7 +37,8 @@ export function ActivityRequestsPage() {
   });
   const [filter, setFilter] = useState<ActivityRequestFilter>('all');
   const [query, setQuery] = useState('');
-  const [activityDate, setActivityDate] = useState(() => koreaDateInput());
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<DataTablePageSize>(20);
   const requests = useMemo(() => requestsQuery.data ?? [], [requestsQuery.data]);
@@ -47,9 +48,10 @@ export function ActivityRequestsPage() {
         (request) =>
           matchesActivityFilter(request, filter) &&
           matchesActivityQuery(request, query, 'activity_location') &&
-          (!activityDate || koreaDateInput(new Date(request.startsAt)) === activityDate),
+          (!startDate || koreaDateInput(new Date(request.startsAt)) >= startDate) &&
+          (!endDate || koreaDateInput(new Date(request.startsAt)) <= endDate),
       ),
-    [activityDate, filter, query, requests],
+    [endDate, filter, query, requests, startDate],
   );
   const totalPages = Math.ceil(filtered.length / pageSize);
   const safePage = Math.min(page, Math.max(totalPages, 1));
@@ -59,6 +61,7 @@ export function ActivityRequestsPage() {
     <PageScaffold
       breadcrumbs={listBreadcrumbs('activityRequests')}
       title="탐구활동서"
+      width="wide"
       action={
         <Link className="detail-primary-button" to="/activity-requests/new">
           <FilePlus2 size={16} aria-hidden="true" /> 신규 신청
@@ -78,6 +81,7 @@ export function ActivityRequestsPage() {
           field="activity_location"
           query={query}
           showSearchField={false}
+          searchPlaceholder="활동 내용, 활동 인원, 장소, 지도교사 검색"
           onPageSizeChange={(nextPageSize) => {
             setPageSize(nextPageSize);
             setPage(1);
@@ -100,17 +104,29 @@ export function ActivityRequestsPage() {
                   <option value="all">전체</option>
                   <option value="submitted">승인 대기</option>
                   <option value="approved">승인</option>
-                  <option value="rejected">반려</option>
-                  <option value="finished">완료·취소</option>
+                  <option value="completed">완료</option>
                 </select>
               </label>
-              <label className="activity-date-control">
-                <span className="sr-only">활동 날짜</span>
+              <label className="activity-date-control" title="활동 시작일">
+                <span>시작일</span>
                 <input
                   type="date"
-                  value={activityDate}
+                  value={startDate}
+                  max={endDate || undefined}
                   onChange={(event) => {
-                    setActivityDate(event.target.value);
+                    setStartDate(event.target.value);
+                    setPage(1);
+                  }}
+                />
+              </label>
+              <label className="activity-date-control" title="활동 마감일">
+                <span>마감일</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  min={startDate || undefined}
+                  onChange={(event) => {
+                    setEndDate(event.target.value);
                     setPage(1);
                   }}
                 />
@@ -152,7 +168,8 @@ export function ActivityRequestsPage() {
                   onClick={() => {
                     setFilter('all');
                     setQuery('');
-                    setActivityDate('');
+                    setStartDate('');
+                    setEndDate('');
                     setPage(1);
                   }}
                 >
@@ -168,19 +185,21 @@ export function ActivityRequestsPage() {
             <table className="data-table activity-table">
               <colgroup>
                 <col style={{ width: 88 }} />
-                <col style={{ width: '26%' }} />
-                <col style={{ width: 220 }} />
-                <col style={{ width: 128 }} />
-                <col style={{ width: 150 }} />
-                <col style={{ width: 112 }} />
+                <col style={{ width: 210 }} />
+                <col style={{ width: 130 }} />
+                <col style={{ width: '28%' }} />
+                <col style={{ width: 230 }} />
+                <col style={{ width: 108 }} />
+                <col style={{ width: 96 }} />
               </colgroup>
               <thead>
                 <tr>
-                  <th scope="col">활동일</th>
-                  <th scope="col">활동 내용</th>
-                  <th scope="col">활동 인원</th>
+                  <th scope="col">날짜</th>
+                  <th scope="col">시간</th>
                   <th scope="col">장소</th>
-                  <th scope="col">활동 기간</th>
+                  <th scope="col">내용</th>
+                  <th scope="col">인원</th>
+                  <th scope="col">지도교사</th>
                   <th scope="col">상태</th>
                 </tr>
               </thead>
@@ -189,12 +208,33 @@ export function ActivityRequestsPage() {
                   const participantCount = Math.max(1, request.participants?.length ?? 0);
                   return (
                     <tr key={request.id}>
-                      <td className="activity-table__day" data-label="활동일">
+                      <td className="activity-table__day" data-label="날짜">
                         <time dateTime={request.startsAt}>
                           {activityDayFormatter.format(new Date(request.startsAt))}
                         </time>
                       </td>
-                      <td className="activity-table__purpose" data-label="활동 내용">
+                      <td className="activity-table__period" data-label="시간">
+                        <strong>
+                          {formatActivityPeriodLabel(
+                            koreaDateInput(new Date(request.startsAt)),
+                            request.startsAt,
+                            request.endsAt,
+                            request.activitySlotIds,
+                          )}
+                        </strong>
+                        <span>
+                          {formatActivityTimeRanges(
+                            koreaDateInput(new Date(request.startsAt)),
+                            request.startsAt,
+                            request.endsAt,
+                            request.activitySlotIds,
+                          )}
+                        </span>
+                      </td>
+                      <td className="activity-table__location" data-label="장소">
+                        {request.location}
+                      </td>
+                      <td className="activity-table__purpose" data-label="내용">
                         <Link
                           to="/activity-requests/$requestId"
                           params={{ requestId: String(request.id) }}
@@ -206,23 +246,12 @@ export function ActivityRequestsPage() {
                         className={`activity-table__participants${
                           participantCount >= 3 ? ' is-dense' : ''
                         }`}
-                        data-label="활동 인원"
+                        data-label="인원"
                       >
                         {formatActivityParticipants(request.participants, request)}
                       </td>
-                      <td className="activity-table__location" data-label="장소">
-                        {request.location}
-                      </td>
-                      <td className="activity-table__period" data-label="활동 기간">
-                        <strong>
-                          {formatActivityPeriodLabel(
-                            koreaDateInput(new Date(request.startsAt)),
-                            request.startsAt,
-                            request.endsAt,
-                            request.activitySlotIds,
-                          )}
-                        </strong>
-                        <span>{formatActivityTimeRange(request.startsAt, request.endsAt)}</span>
+                      <td className="activity-table__advisor" data-label="지도교사">
+                        {request.advisorTeacherName ?? request.teacherName ?? '-'}
                       </td>
                       <td data-label="상태">
                         <span className={`activity-status is-${request.status}`}>

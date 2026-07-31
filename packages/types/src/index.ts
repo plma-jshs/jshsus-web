@@ -789,6 +789,8 @@ export type ActivityRequestAdminListQuery = {
   pageSize?: 20 | 50 | 100;
   search?: string;
   date?: string;
+  startDate?: string;
+  endDate?: string;
   status?: ActivityRequestAdminStatus;
   assignedToMe?: boolean;
   sortBy?:

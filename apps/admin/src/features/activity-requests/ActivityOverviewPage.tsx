@@ -13,7 +13,6 @@ import {
   formatActivityDateTime,
   useActivityRequests,
 } from './activityRequests';
-import { koreaDateInput } from './activitySchedule';
 import './operations.css';
 
 const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
@@ -79,7 +78,8 @@ const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
 export function ActivityOverviewPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [date, setDate] = useState(() => koreaDateInput());
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [status, setStatus] = useState<'all' | ActivityRequestAdminStatus>('all');
   const [pageSize, setPageSize] = useState(20);
   const [sorting, setSorting] = useState<SortingState>([{ id: 'issuedNumber', desc: true }]);
@@ -88,7 +88,8 @@ export function ActivityOverviewPage() {
     page,
     pageSize: pageSize as 20 | 50 | 100,
     search: search || undefined,
-    date: date || undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
     status: status === 'all' ? undefined : status,
     sortBy: (sort?.id as ActivityRequestAdminListQuery['sortBy']) ?? 'issuedNumber',
     sortOrder: sort ? (sort.desc ? 'desc' : 'asc') : 'desc',
@@ -111,17 +112,31 @@ export function ActivityOverviewPage() {
                 setSearch(event.target.value);
                 resetPage();
               }}
-              placeholder="학생, 담당 교사, 장소, 활동 목적 검색"
+              placeholder="학생·활동 인원, 지도교사, 장소, 활동 내용 검색"
               aria-label="탐구활동서 검색"
             />
             <input
               type="date"
-              value={date}
+              value={startDate}
+              max={endDate || undefined}
               onChange={(event) => {
-                setDate(event.target.value);
+                setStartDate(event.target.value);
                 resetPage();
               }}
-              aria-label="활동 날짜 필터"
+              aria-label="활동 시작일 필터"
+              title="활동 시작일"
+            />
+            <span aria-hidden="true">–</span>
+            <input
+              type="date"
+              value={endDate}
+              min={startDate || undefined}
+              onChange={(event) => {
+                setEndDate(event.target.value);
+                resetPage();
+              }}
+              aria-label="활동 마감일 필터"
+              title="활동 마감일"
             />
             <select
               value={status}

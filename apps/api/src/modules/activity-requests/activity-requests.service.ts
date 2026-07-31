@@ -26,9 +26,11 @@ import {
   eq,
   gt,
   inArray,
+  gte,
   like,
   lt,
   ne,
+  notInArray,
   or,
   sql,
   type SQL,
@@ -104,6 +106,14 @@ const adminListSchema = z.object({
     .default(20),
   search: z.string().trim().max(100).optional().default(''),
   date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  endDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
@@ -240,7 +250,12 @@ export class ActivityRequestsService {
           schema.students,
           eq(schema.activityRequests.representativeStudentId, schema.students.id),
         )
-        .where(inArray(schema.activityRequests.id, requestIds))
+        .where(
+          and(
+            inArray(schema.activityRequests.id, requestIds),
+            notInArray(schema.activityRequests.status, ['rejected', 'canceled']),
+          ),
+        )
         .orderBy(desc(schema.activityRequests.startsAt), desc(schema.activityRequests.id));
 
       return this.toPublicSummaries(db, rows);
@@ -274,7 +289,12 @@ export class ActivityRequestsService {
           schema.students,
           eq(schema.activityRequests.representativeStudentId, schema.students.id),
         )
-        .where(eq(schema.activityRequests.id, id))
+        .where(
+          and(
+            eq(schema.activityRequests.id, id),
+            notInArray(schema.activityRequests.status, ['rejected', 'canceled']),
+          ),
+        )
         .limit(1);
 
       if (!row) {
@@ -294,13 +314,29 @@ export class ActivityRequestsService {
     if (!parsed.success) {
       throw new BadRequestException(parsed.error.flatten().fieldErrors);
     }
-    const { page, pageSize, search, date, status, assignedToMe, sortBy, sortOrder } = parsed.data;
+    const {
+      page,
+      pageSize,
+      search,
+      date,
+      startDate,
+      endDate,
+      status,
+      assignedToMe,
+      sortBy,
+      sortOrder,
+    } = parsed.data;
+    if (startDate && endDate && startDate > endDate) {
+      throw new BadRequestException('시작일은 마감일보다 늦을 수 없습니다.');
+    }
     if (assignedToMe && (!actorId || actorId <= 0)) {
       throw new BadRequestException('담당 교사 계정을 확인할 수 없습니다.');
     }
 
     return this.database.query('activity-requests.admin-list', async (db) => {
-      const conditions: SQL[] = [];
+      const conditions: SQL[] = [
+        notInArray(schema.activityRequests.status, ['rejected', 'canceled']),
+      ];
       if (search) {
         const pattern = `%${search}%`;
         conditions.push(
@@ -338,12 +374,18 @@ export class ActivityRequestsService {
           )!,
         );
       }
+      if (startDate) {
+        conditions.push(
+          gte(schema.activityRequests.startsAt, activityDateRange(startDate).startsAt),
+        );
+      }
+      if (endDate) {
+        conditions.push(lt(schema.activityRequests.startsAt, activityDateRange(endDate).endsAt));
+      }
       if (status === 'pending') {
         conditions.push(inArray(schema.activityRequests.status, ['draft', 'submitted']));
       } else if (status === 'approved') {
         conditions.push(inArray(schema.activityRequests.status, ['approved', 'completed']));
-      } else if (status === 'rejected') {
-        conditions.push(inArray(schema.activityRequests.status, ['rejected', 'canceled']));
       }
       if (assignedToMe) {
         conditions.push(eq(schema.activityRequests.advisorTeacherId, actorId!));

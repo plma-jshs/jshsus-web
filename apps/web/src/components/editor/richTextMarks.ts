@@ -18,12 +18,14 @@ export const RICH_TEXT_FONT_FAMILY_OPTIONS: ReadonlyArray<{
   value: RichTextFontFamily;
   label: string;
 }> = [
+  { value: 'malgun-gothic', label: '맑은 고딕' },
   { value: 'gulim', label: '굴림' },
   { value: 'batang', label: '바탕' },
   { value: 'dotum', label: '돋움' },
   { value: 'gungsuh', label: '궁서' },
   { value: 'arial', label: 'Arial' },
   { value: 'calibri', label: 'Calibri' },
+  { value: 'cambria', label: 'Cambria' },
   { value: 'courier-new', label: 'Courier New' },
   { value: 'times-new-roman', label: 'Times New Roman' },
   { value: 'noto-sans-kr', label: 'Noto Sans KR' },

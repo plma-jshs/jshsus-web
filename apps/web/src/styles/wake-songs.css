@@ -22,7 +22,7 @@
 }
 
 .wake-song-section-title span,
-.wake-song-media-meta span {
+.wake-song-track-summary > span {
   display: block;
   margin-bottom: 2px;
   color: var(--j-color-brand-strong);
@@ -103,6 +103,8 @@
 
 .wake-song-studio.has-preview {
   padding: var(--j-space-5);
+  grid-template-columns: minmax(0, 1.2fr) minmax(380px, 0.8fr);
+  align-items: start;
   gap: var(--j-space-5);
   border-style: solid;
   background: var(--j-color-surface-subtle);
@@ -122,15 +124,12 @@
 }
 
 .wake-song-player-card {
+  align-self: start;
   overflow: hidden;
   border: 1px solid var(--j-color-border);
   border-radius: var(--j-radius-lg);
   background: var(--j-color-surface);
   box-shadow: 0 18px 42px rgb(15 23 42 / 8%);
-}
-
-.wake-song-player-wrap {
-  padding: var(--j-space-4) var(--j-space-4) 0;
 }
 
 .wake-song-player {
@@ -151,6 +150,14 @@
   border: 0;
 }
 
+.wake-song-player .youtube-segment-player__fallback {
+  z-index: 1;
+}
+
+.wake-song-player .youtube-segment-player__target {
+  z-index: 2;
+}
+
 .wake-song-player .youtube-segment-player__target:empty {
   pointer-events: none;
 }
@@ -159,6 +166,7 @@
   position: absolute;
   right: var(--j-space-3);
   bottom: var(--j-space-3);
+  z-index: 3;
   display: grid;
   padding: 6px 10px;
   place-items: center;
@@ -167,36 +175,27 @@
   background: rgb(15 23 42 / 76%);
   font-size: var(--j-text-xs);
   text-align: center;
+  pointer-events: none;
 }
 
-.wake-song-media-meta {
+.wake-song-track-summary {
   display: grid;
-  padding: var(--j-space-4);
-  grid-template-columns: 132px minmax(0, 1fr);
-  gap: var(--j-space-4);
-  align-items: center;
+  min-width: 0;
+  gap: 3px;
 }
 
-.wake-song-media-meta img {
-  width: 132px;
-  aspect-ratio: 16 / 9;
-  border-radius: var(--j-radius-md);
-  object-fit: cover;
-  background: var(--j-color-surface-subtle);
-}
-
-.wake-song-media-meta h3 {
+.wake-song-track-summary h3 {
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   color: var(--j-color-text);
-  font-size: var(--j-text-xl);
+  font-size: var(--j-text-lg);
   line-height: var(--j-leading-tight);
 }
 
-.wake-song-media-meta p {
+.wake-song-track-summary p {
   margin: var(--j-space-1) 0 0;
   color: var(--j-color-text-muted);
   font-size: var(--j-text-sm);
@@ -283,8 +282,8 @@
 
 .wake-song-timeline__track {
   position: absolute;
-  right: 0;
-  left: 0;
+  right: 11px;
+  left: 11px;
   height: 10px;
   border-radius: var(--j-radius-pill);
   background:
@@ -295,8 +294,14 @@
 
 .wake-song-timeline__range {
   position: absolute;
-  width: 100%;
+  right: 11px;
+  left: 11px;
+  width: calc(100% - 22px);
+  height: 22px;
+  min-height: 22px;
   margin: 0;
+  padding: 0;
+  border: 0;
   appearance: none;
   background: transparent;
   pointer-events: none;
@@ -322,6 +327,11 @@
   pointer-events: auto;
 }
 
+.wake-song-timeline__range::-webkit-slider-runnable-track {
+  height: 10px;
+  background: transparent;
+}
+
 .wake-song-timeline__range::-moz-range-thumb {
   width: 18px;
   height: 18px;
@@ -333,10 +343,19 @@
   pointer-events: auto;
 }
 
+.wake-song-timeline__range::-moz-range-track {
+  height: 10px;
+  background: transparent;
+}
+
 .wake-song-segment-readout {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--j-space-3);
+}
+
+.wake-song-segment-readout > label:last-child {
+  grid-column: 1 / -1;
 }
 
 .wake-song-note-field textarea {
@@ -475,12 +494,8 @@
 }
 
 @media (max-width: 900px) {
-  .wake-song-media-meta {
-    grid-template-columns: 112px minmax(0, 1fr);
-  }
-
-  .wake-song-media-meta img {
-    width: 112px;
+  .wake-song-studio.has-preview {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -503,13 +518,12 @@
     min-height: 48px;
   }
 
-  .wake-song-media-meta,
   .wake-song-segment-readout {
     grid-template-columns: 1fr;
   }
 
-  .wake-song-media-meta img {
-    display: none;
+  .wake-song-segment-readout > label:last-child {
+    grid-column: auto;
   }
 
   .wake-song-submit {

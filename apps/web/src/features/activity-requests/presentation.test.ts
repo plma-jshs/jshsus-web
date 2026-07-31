@@ -21,10 +21,11 @@ const request: ActivityRequestSummary = {
 };
 
 describe('activity request presentation', () => {
-  it('groups completed and canceled requests in the finished filter', () => {
-    expect(matchesActivityFilter(request, 'finished')).toBe(true);
-    expect(matchesActivityFilter({ ...request, status: 'canceled' }, 'finished')).toBe(true);
-    expect(matchesActivityFilter({ ...request, status: 'approved' }, 'finished')).toBe(false);
+  it('hides rejected and canceled requests as archived records', () => {
+    expect(matchesActivityFilter(request, 'completed')).toBe(true);
+    expect(matchesActivityFilter({ ...request, status: 'canceled' }, 'all')).toBe(false);
+    expect(matchesActivityFilter({ ...request, status: 'rejected' }, 'all')).toBe(false);
+    expect(matchesActivityFilter({ ...request, status: 'approved' }, 'completed')).toBe(false);
   });
 
   it('searches purpose, location, teacher, representative, and public id', () => {

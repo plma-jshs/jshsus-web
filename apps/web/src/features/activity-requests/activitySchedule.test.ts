@@ -3,6 +3,7 @@ import {
   activitySlotDateTimes,
   activitySlotsDateTimes,
   availableActivityTimeSlots,
+  formatActivityTimeRanges,
 } from './activitySchedule';
 
 describe('activity schedule options', () => {
@@ -30,5 +31,16 @@ describe('activity schedule options', () => {
       startsAt: '2026-07-15T10:10:00.000Z',
       endsAt: '2026-07-15T14:30:00.000Z',
     });
+  });
+
+  it('formats non-contiguous periods as separate time ranges', () => {
+    expect(
+      formatActivityTimeRanges(
+        '2026-07-15',
+        '2026-07-15T10:10:00.000Z',
+        '2026-07-15T14:30:00.000Z',
+        ['evening-1', 'evening-3'],
+      ),
+    ).toBe('19:10~20:20, 21:50~23:30');
   });
 });

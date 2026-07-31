@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   effectiveDuration,
   formatDuration,
+  formatPlaybackRate,
   parseDuration,
   wakeSongStatusPresentation,
 } from './presentation';
@@ -21,6 +22,11 @@ describe('wake-song time helpers', () => {
 
   it('calculates duration after playback rate', () => {
     expect(effectiveDuration(10, 190, 1.25)).toBe(144);
+  });
+
+  it('formats playback rates with an explicit multiplier', () => {
+    expect(formatPlaybackRate(1)).toBe('1.0x');
+    expect(formatPlaybackRate(0.75)).toBe('0.75x');
   });
 });
 

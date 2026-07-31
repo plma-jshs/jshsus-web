@@ -23,6 +23,10 @@ export function formatDuration(totalSeconds: number) {
   return `${String(minutes).padStart(2, '0')}:${String(rest).padStart(2, '0')}`;
 }
 
+export function formatPlaybackRate(rate: number) {
+  return `${Number.isInteger(rate) ? rate.toFixed(1) : rate}x`;
+}
+
 export function parseDuration(value: string): number | null {
   const parts = value.trim().split(':');
   if (parts.length < 2 || parts.length > 3 || parts.some((part) => !/^\d+$/.test(part))) {

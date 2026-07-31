@@ -41,7 +41,7 @@ function PetitionEditForm({ petition }: { petition: PetitionDetail }) {
 
     if (!normalizedTitle) next.title = '제안 제목을 입력해 주세요.';
     else if (normalizedTitle.length < 5) next.title = '제안 제목을 5자 이상 입력해 주세요.';
-    if (bodyLength < 20) next.content = '문제와 제안 내용을 합해 20자 이상 작성해 주세요.';
+    if (bodyLength < 20) next.content = '제안 내용을 20자 이상 작성해 주세요.';
     return next;
   }, [editorValue.plainText, title]);
 
@@ -85,8 +85,7 @@ function PetitionEditForm({ petition }: { petition: PetitionDetail }) {
         <div className="petition-form-section__heading">
           <span>1</span>
           <div>
-            <h2 id="petition-basic-title">제안 기본 정보</h2>
-            <p>학생들이 내용을 바로 이해할 수 있는 제목을 적어 주세요.</p>
+            <h2 id="petition-basic-title">제안 정보</h2>
           </div>
         </div>
         <div className="petition-form-field">
@@ -118,7 +117,6 @@ function PetitionEditForm({ petition }: { petition: PetitionDetail }) {
           <span>2</span>
           <div>
             <h2 id="petition-content-title">제안 내용</h2>
-            <p>현재 문제, 제안 내용, 기대 효과 순서로 작성해 주세요.</p>
           </div>
         </div>
         <div className={`petition-rich-editor${attempted && errors.content ? ' is-invalid' : ''}`}>

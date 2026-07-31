@@ -16,7 +16,9 @@ export const activityStatusLabels: Record<ActivityRequestAdminStatus, string> = 
 
 export const activityStatusOptions = (
   Object.entries(activityStatusLabels) as Array<[ActivityRequestAdminStatus, string]>
-).map(([value, label]) => ({ value, label }));
+)
+  .filter(([value]) => value !== 'rejected')
+  .map(([value, label]) => ({ value, label }));
 
 export function useActivityRequests(query: ActivityRequestAdminListQuery = {}) {
   return useQuery({

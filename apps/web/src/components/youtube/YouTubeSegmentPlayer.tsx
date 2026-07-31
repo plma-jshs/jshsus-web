@@ -270,7 +270,18 @@ export function YouTubeSegmentPlayer({
     if (readyRef.current && player && VIDEO_ID_PATTERN.test(videoId)) {
       cueCurrentSegment(player);
     }
-  }, [videoId, startSeconds, endSeconds]);
+  }, [videoId]);
+
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!readyRef.current || !player) return;
+    const segment = normalizedSegment(startSeconds, endSeconds);
+    const currentTime = player.getCurrentTime();
+    if (currentTime < segment.start || currentTime >= segment.end) {
+      player.pauseVideo();
+      player.seekTo(segment.start, true);
+    }
+  }, [startSeconds, endSeconds]);
 
   useEffect(() => {
     const player = playerRef.current;
@@ -283,7 +294,7 @@ export function YouTubeSegmentPlayer({
   }, [title]);
 
   const displayedStatus = VIDEO_ID_PATTERN.test(videoId) ? status : 'error';
-  const showFallback = displayedStatus !== 'ready' && VIDEO_ID_PATTERN.test(videoId);
+  const showFallback = displayedStatus === 'error' && VIDEO_ID_PATTERN.test(videoId);
 
   return (
     <div

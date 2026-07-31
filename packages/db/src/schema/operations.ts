@@ -363,6 +363,41 @@ export const activityRequestStatusEnum = mysqlEnum('activity_request_status', [
   'completed',
 ]);
 
+/**
+ * Read-only preservation copy of the PHP-era activity request ledger.
+ *
+ * Historical four-digit student numbers are reused, so records live here even when they
+ * cannot be linked safely to a current student. Exact student-number + name matches are
+ * additionally copied into activityRequests by the legacy migration script.
+ */
+export const legacyActivityRequests = mysqlTable(
+  'legacy_activity_requests',
+  {
+    id,
+    sourceId: varchar('source_id', { length: 64 }).notNull(),
+    activityDate: date('activity_date', { mode: 'date' }).notNull(),
+    timeText: varchar('time_text', { length: 255 }).notNull(),
+    timeRanges: json('time_ranges').$type<Array<{ startsAt: string; endsAt: string }>>().notNull(),
+    location: varchar('location', { length: 255 }).notNull(),
+    purpose: text('purpose').notNull(),
+    representativeText: varchar('representative_text', { length: 255 }).notNull(),
+    participantsText: text('participants_text').notNull(),
+    advisorTeacherName: varchar('advisor_teacher_name', { length: 128 }),
+    supportText: varchar('support_text', { length: 255 }),
+    submittedLabel: varchar('submitted_label', { length: 128 }),
+    sourcePayloadHash: varchar('source_payload_hash', { length: 64 }).notNull(),
+    importedAt: datetime('imported_at', { mode: 'date', fsp: 3 }).notNull().default(now),
+  },
+  (table) => ({
+    sourceIdx: uniqueIndex('legacy_activity_requests_source_idx').on(table.sourceId),
+    activityDateIdx: index('legacy_activity_requests_date_idx').on(table.activityDate),
+    advisorIdx: index('legacy_activity_requests_advisor_idx').on(
+      table.advisorTeacherName,
+      table.activityDate,
+    ),
+  }),
+);
+
 export const activityRequests = mysqlTable(
   'activity_requests',
   {

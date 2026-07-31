@@ -18,6 +18,7 @@ import {
 import {
   effectiveDuration,
   formatDuration,
+  formatPlaybackRate,
   parseDuration,
   wakeSongStatusPresentation,
   WAKE_SONG_PLAYBACK_RATES,
@@ -347,42 +348,34 @@ export function WakeSongsPage() {
               {preview ? (
                 <>
                   <div className="wake-song-player-card">
-                    <div className="wake-song-player-wrap">
-                      <YouTubeSegmentPlayer
-                        className="wake-song-player"
-                        videoId={preview.videoId}
-                        startSeconds={safeStartSeconds}
-                        endSeconds={safeEndSeconds}
-                        playbackRate={form.playbackRate}
-                        title={`${preview.title} 미리보기`}
-                      />
-                    </div>
-                    <div className="wake-song-media-meta">
-                      <img
-                        src={`https://i.ytimg.com/vi/${preview.videoId}/hqdefault.jpg`}
-                        alt=""
-                        loading="lazy"
-                      />
-                      <div>
-                        <span>확인한 영상</span>
-                        <h3>{preview.title}</h3>
-                        {preview.channelTitle ? <p>{preview.channelTitle}</p> : null}
-                        <div className="wake-song-media-badges">
-                          {preview.durationSeconds ? (
-                            <span>전체 {formatDuration(preview.durationSeconds)}</span>
-                          ) : (
-                            <span>길이 확인 중</span>
-                          )}
-                          <span>{form.playbackRate}배속</span>
-                          <a href={preview.canonicalUrl} target="_blank" rel="noreferrer">
-                            YouTube에서 보기 <ExternalLink size={13} aria-hidden="true" />
-                          </a>
-                        </div>
-                      </div>
-                    </div>
+                    <YouTubeSegmentPlayer
+                      className="wake-song-player"
+                      videoId={preview.videoId}
+                      startSeconds={safeStartSeconds}
+                      endSeconds={safeEndSeconds}
+                      playbackRate={form.playbackRate}
+                      title={`${preview.title} 미리보기`}
+                    />
                   </div>
 
                   <section className="wake-song-segment-card" aria-label="재생 구간">
+                    <div className="wake-song-track-summary">
+                      <span>확인한 영상</span>
+                      <h3>{preview.title}</h3>
+                      {preview.channelTitle ? <p>{preview.channelTitle}</p> : null}
+                      <div className="wake-song-media-badges">
+                        {preview.durationSeconds ? (
+                          <span>전체 {formatDuration(preview.durationSeconds)}</span>
+                        ) : (
+                          <span>길이 확인 중</span>
+                        )}
+                        <span>재생 속도: {formatPlaybackRate(form.playbackRate)}</span>
+                        <a href={preview.canonicalUrl} target="_blank" rel="noreferrer">
+                          YouTube에서 보기 <ExternalLink size={13} aria-hidden="true" />
+                        </a>
+                      </div>
+                    </div>
+
                     <div
                       className={`wake-song-duration-chip ${
                         selectedDuration > MAX_WAKE_SONG_DURATION_SECONDS ? 'is-over' : ''
@@ -400,7 +393,7 @@ export function WakeSongsPage() {
                       <input
                         aria-label="시작 시각"
                         className="wake-song-timeline__range is-start"
-                        max={Math.max(1, timelineMax - 1)}
+                        max={timelineMax}
                         min={0}
                         onChange={(event) => updateSegmentStart(Number(event.target.value))}
                         step={1}
@@ -411,7 +404,7 @@ export function WakeSongsPage() {
                         aria-label="종료 시각"
                         className="wake-song-timeline__range is-end"
                         max={timelineMax}
-                        min={1}
+                        min={0}
                         onChange={(event) => updateSegmentEnd(Number(event.target.value))}
                         step={1}
                         type="range"
@@ -445,7 +438,7 @@ export function WakeSongsPage() {
                         />
                       </label>
                       <label>
-                        <span>속도</span>
+                        <span>재생 속도</span>
                         <select
                           value={form.playbackRate}
                           onChange={(event) =>
@@ -457,7 +450,7 @@ export function WakeSongsPage() {
                         >
                           {WAKE_SONG_PLAYBACK_RATES.map((rate) => (
                             <option value={rate} key={rate}>
-                              {rate}배
+                              {formatPlaybackRate(rate)}
                             </option>
                           ))}
                         </select>
@@ -582,7 +575,7 @@ export function WakeSongsPage() {
                       <td data-label="재생 구간">
                         {formatDuration(request.startSeconds)}–{formatDuration(request.endSeconds)}
                         <small className="wake-song-table-subline">
-                          {request.playbackRate}배 · 실제{' '}
+                          {formatPlaybackRate(request.playbackRate)} · 실제{' '}
                           {formatDuration(request.effectiveDurationSeconds)}
                         </small>
                       </td>

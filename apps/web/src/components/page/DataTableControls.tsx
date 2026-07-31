@@ -18,6 +18,7 @@ type DataTableToolbarProps<TField extends string = DataTableSearchField> = {
   query: string;
   extraControls?: ReactNode;
   showSearchField?: boolean;
+  searchPlaceholder?: string;
   onPageSizeChange: (pageSize: DataTablePageSize) => void;
   onSearch: (field: TField, query: string) => void;
   searchFieldOptions?: readonly DataTableSearchFieldOption<TField>[];
@@ -38,6 +39,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
   query,
   extraControls,
   showSearchField = true,
+  searchPlaceholder = '검색어를 입력하세요',
   onPageSizeChange,
   onSearch,
   searchFieldOptions,
@@ -100,7 +102,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
             type="search"
             value={draftQuery}
             onChange={(event) => setDraftQuery(event.target.value)}
-            placeholder="검색어를 입력하세요"
+            placeholder={searchPlaceholder}
           />
         </label>
         <button className="data-table-toolbar__submit" type="submit">
