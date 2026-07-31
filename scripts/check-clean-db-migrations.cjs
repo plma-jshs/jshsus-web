@@ -24,6 +24,27 @@ function cleanup() {
   containerId = '';
 }
 
+function pullImageWithRetry(attempts = 3) {
+  let lastError = '';
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const result = spawnSync('docker', ['pull', image], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'inherit', 'pipe'],
+    });
+    if (result.status === 0) return;
+
+    lastError = result.stderr.trim();
+    if (attempt < attempts) {
+      const delayMs = attempt * 5_000;
+      console.warn(
+        `MySQL image pull attempt ${attempt}/${attempts} failed; retrying in ${delayMs / 1_000}s.`,
+      );
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delayMs);
+    }
+  }
+  throw new Error(`Could not pull ${image} after ${attempts} attempts. ${lastError}`);
+}
+
 process.on('exit', cleanup);
 process.on('SIGINT', () => {
   cleanup();
@@ -167,9 +188,11 @@ function seedPrivacyRetentionFixture() {
 
 function main() {
   console.log(`Starting clean MySQL migration check with ${image}...`);
+  pullImageWithRetry();
   containerId = run('docker', [
     'run',
     '--rm',
+    '--pull=never',
     '--name',
     containerName,
     '-e',
