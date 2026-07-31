@@ -795,6 +795,7 @@ export type ActivityRequestAdminListQuery = {
   status?: ActivityRequestAdminStatus;
   assignedToMe?: boolean;
   sortBy?:
+    | 'id'
     | 'issuedNumber'
     | 'representative'
     | 'participantCount'

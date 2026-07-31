@@ -142,6 +142,16 @@ export function WakeSongsPage() {
     '--wake-start': `${timelineStartPercent}%`,
     '--wake-end': `${timelineEndPercent}%`,
   } as CSSProperties;
+  const segmentIsValid =
+    startSeconds !== null &&
+    endSeconds !== null &&
+    endSeconds > startSeconds &&
+    endSeconds <= timelineMax &&
+    selectedDuration <= MAX_WAKE_SONG_DURATION_SECONDS;
+  const pendingLimitReached =
+    !editingId && (requestsQuery.data?.pendingCount ?? 0) >= (requestsQuery.data?.maxPending ?? 3);
+  const submitDisabled =
+    saveMutation.isPending || !preview || !segmentIsValid || pendingLimitReached;
   const pageSize = 20;
   const totalPages = Math.max(1, Math.ceil(requests.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -290,29 +300,21 @@ export function WakeSongsPage() {
       title="기상곡 신청"
       width="wide"
       variant="workspace"
-      meta={
-        <span>
-          대기 {requestsQuery.data?.pendingCount ?? 0} / {requestsQuery.data?.maxPending ?? 3}건
-        </span>
-      }
     >
-      <section className="wake-song-builder" aria-labelledby="wake-song-form-title">
+      <section className="wake-song-builder" aria-label="기상곡 신청 입력">
         <div className="wake-song-card">
-          <div className="wake-song-section-title">
-            <div>
-              <span>{editingId ? '신청 수정' : '새 신청'}</span>
-              <h2 id="wake-song-form-title">기상곡 구간 만들기</h2>
-            </div>
-            {editingId ? (
+          {editingId ? (
+            <div className="wake-song-edit-bar">
+              <strong>신청 내용을 수정하고 있습니다.</strong>
               <button className="detail-text-button" type="button" onClick={stopEditing}>
-                <RotateCcw size={15} aria-hidden="true" /> 새 신청으로 돌아가기
+                <RotateCcw size={15} aria-hidden="true" /> 수정 취소
               </button>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
 
           <form className="wake-song-form" onSubmit={handleSubmit}>
             <label className="wake-song-url-field wake-song-url-field--hero">
-              <span>YouTube URL</span>
+              <span className="sr-only">YouTube URL</span>
               <div>
                 <input
                   type="url"
@@ -369,7 +371,6 @@ export function WakeSongsPage() {
                         ) : (
                           <span>길이 확인 중</span>
                         )}
-                        <span>재생 속도: {formatPlaybackRate(form.playbackRate)}</span>
                         <a href={preview.canonicalUrl} target="_blank" rel="noreferrer">
                           YouTube에서 보기 <ExternalLink size={13} aria-hidden="true" />
                         </a>
@@ -410,6 +411,10 @@ export function WakeSongsPage() {
                         type="range"
                         value={safeEndSeconds}
                       />
+                      <div className="wake-song-timeline__labels" aria-hidden="true">
+                        <span>00:00</span>
+                        <span>{formatDuration(timelineMax)}</span>
+                      </div>
                     </div>
 
                     <div className="wake-song-segment-readout">
@@ -473,7 +478,7 @@ export function WakeSongsPage() {
                     <button
                       className="detail-primary-button wake-song-submit"
                       type="submit"
-                      disabled={saveMutation.isPending}
+                      disabled={submitDisabled}
                     >
                       <Music2 size={18} aria-hidden="true" />
                       {saveMutation.isPending

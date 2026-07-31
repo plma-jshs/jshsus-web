@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   loadYouTubeIframeApi,
@@ -22,6 +22,7 @@ type FakePlayer = {
   getIframe: ReturnType<typeof vi.fn>;
   getPlayerState: ReturnType<typeof vi.fn>;
   pauseVideo: ReturnType<typeof vi.fn>;
+  playVideo: ReturnType<typeof vi.fn>;
   seekTo: ReturnType<typeof vi.fn>;
   setPlaybackRate: ReturnType<typeof vi.fn>;
 };
@@ -46,6 +47,7 @@ function createPlayer(): FakePlayer {
     getIframe: vi.fn(() => document.createElement('iframe')),
     getPlayerState: vi.fn(() => 1),
     pauseVideo: vi.fn(),
+    playVideo: vi.fn(),
     seekTo: vi.fn(),
     setPlaybackRate: vi.fn(),
   };
@@ -157,5 +159,33 @@ describe('YouTubeSegmentPlayer', () => {
       ),
     );
     expect(view.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('toggles playback when the preview surface is clicked', async () => {
+    const player = createPlayer();
+    let options: CapturedOptions | undefined;
+    installPlayerApi(player, (captured) => {
+      options = captured;
+    });
+
+    const view = render(
+      <YouTubeSegmentPlayer
+        videoId="dQw4w9WgXcQ"
+        startSeconds={10}
+        endSeconds={190}
+        playbackRate={1}
+        title="테스트 영상"
+      />,
+    );
+    await waitFor(() => expect(options).toBeDefined());
+    act(() => options?.events.onReady({ target: player }));
+
+    player.getPlayerState.mockReturnValue(2);
+    fireEvent.click(view.getByRole('button', { name: '영상 재생' }));
+    expect(player.playVideo).toHaveBeenCalledOnce();
+
+    player.getPlayerState.mockReturnValue(1);
+    fireEvent.click(view.getByRole('button', { name: '영상 일시정지' }));
+    expect(player.pauseVideo).toHaveBeenCalledOnce();
   });
 });

@@ -10,58 +10,110 @@ import { AdminListPanel, PageSizeSelect, TableToolbar } from '../../components/u
 import {
   ActivityStatusBadge,
   activityStatusOptions,
-  formatActivityDateTime,
   useActivityRequests,
 } from './activityRequests';
+import {
+  formatActivityPeriodLabel,
+  formatActivityTimeRanges,
+  koreaDateInput,
+} from './activitySchedule';
 import './operations.css';
+
+const activityDayFormatter = new Intl.DateTimeFormat('ko-KR', {
+  timeZone: 'Asia/Seoul',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+function formatParticipants(request: ActivityRequestAdminSummary) {
+  const participants = request.participants.length
+    ? request.participants
+    : [
+        {
+          studentNo: request.studentNo,
+          studentName: request.studentName,
+          isRepresentative: true,
+        },
+      ];
+  return participants
+    .map(
+      (student) =>
+        `${student.studentNo}${student.studentName}${student.isRepresentative ? '(대표)' : ''}`,
+    )
+    .join(', ');
+}
 
 const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
   {
-    accessorKey: 'issuedNumber',
+    accessorKey: 'id',
     header: '번호',
     cell: ({ row }) => `#${row.original.id}`,
     meta: { widthPreset: 'index' },
   },
   {
-    id: 'representative',
-    accessorFn: (request) => `${request.studentNo} ${request.studentName}`,
-    header: '대표 학생',
-    cell: ({ row }) => (
-      <strong className="operation-student-name">
-        {row.original.studentNo} {row.original.studentName}
-      </strong>
-    ),
-    meta: { minWidth: 145 },
+    id: 'date',
+    accessorFn: (request) => request.startsAt,
+    header: '날짜',
+    enableSorting: false,
+    cell: ({ row }) => activityDayFormatter.format(new Date(row.original.startsAt)),
+    meta: { width: 88, align: 'center' },
   },
   {
-    id: 'participantCount',
-    accessorFn: (request) => request.participants.length,
-    header: '참여 인원',
+    id: 'time',
+    accessorFn: (request) => request.startsAt,
+    header: '시간',
     enableSorting: false,
-    cell: ({ getValue }) => `${getValue<number>()}명`,
-    meta: { width: 92, align: 'center' },
-  },
-  {
-    accessorKey: 'purpose',
-    header: '활동 목적',
-    enableSorting: false,
-    meta: { minWidth: 220, maxWidth: 420, truncate: true },
+    cell: ({ row }) => {
+      const request = row.original;
+      const date = koreaDateInput(new Date(request.startsAt));
+      return (
+        <span className="operation-activity-time">
+          <strong>
+            {formatActivityPeriodLabel(
+              date,
+              request.startsAt,
+              request.endsAt,
+              request.activitySlotIds,
+            )}
+          </strong>
+          <span>
+            {formatActivityTimeRanges(
+              date,
+              request.startsAt,
+              request.endsAt,
+              request.activitySlotIds,
+            )}
+          </span>
+        </span>
+      );
+    },
+    meta: { minWidth: 164, align: 'center' },
   },
   {
     accessorKey: 'location',
     header: '장소',
     enableSorting: false,
-    meta: { minWidth: 120, maxWidth: 190, truncate: true },
+    meta: { minWidth: 120, maxWidth: 180, truncate: true },
   },
   {
-    accessorKey: 'startsAt',
-    header: '활동 일시',
-    cell: ({ getValue }) => formatActivityDateTime(getValue<string>()),
-    meta: { width: 175, align: 'center' },
+    accessorKey: 'purpose',
+    header: '내용',
+    enableSorting: false,
+    meta: { minWidth: 240, maxWidth: 440, truncate: true },
+  },
+  {
+    id: 'participants',
+    accessorFn: formatParticipants,
+    header: '인원',
+    enableSorting: false,
+    cell: ({ row }) => (
+      <span className="operation-activity-participants">{formatParticipants(row.original)}</span>
+    ),
+    meta: { minWidth: 180, maxWidth: 260 },
   },
   {
     accessorKey: 'advisorTeacherName',
-    header: '담당 교사',
+    header: '지도교사',
     enableSorting: false,
     cell: ({ getValue }) => getValue<string | undefined>() ?? '-',
     meta: { width: 110, align: 'center' },
@@ -82,7 +134,7 @@ export function ActivityOverviewPage() {
   const [endDate, setEndDate] = useState('');
   const [status, setStatus] = useState<'all' | ActivityRequestAdminStatus>('all');
   const [pageSize, setPageSize] = useState(20);
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'issuedNumber', desc: true }]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'id', desc: true }]);
   const sort = sorting[0];
   const requestsQuery = useActivityRequests({
     page,
@@ -91,7 +143,7 @@ export function ActivityOverviewPage() {
     startDate: startDate || undefined,
     endDate: endDate || undefined,
     status: status === 'all' ? undefined : status,
-    sortBy: (sort?.id as ActivityRequestAdminListQuery['sortBy']) ?? 'issuedNumber',
+    sortBy: (sort?.id as ActivityRequestAdminListQuery['sortBy']) ?? 'id',
     sortOrder: sort ? (sort.desc ? 'desc' : 'asc') : 'desc',
   });
   const resetPage = () => setPage(1);

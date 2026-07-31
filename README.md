@@ -69,6 +69,12 @@ JBS·기상곡·세특 바이트 계산기의 확정 정책은
 관리자 화면의 정보 구조와 UI 구현 기준은
 [`docs/admin-design-system.md`](docs/admin-design-system.md)를 따릅니다.
 
+학교 공개 학사일정의 지정 월 범위를 JSON 파일로 정리할 때는 다음 명령을 사용합니다.
+
+```bash
+pnpm calendar:crawl -- --from 2026-03 --to 2027-02 --out school-calendar-2026.json
+```
+
 API는 도메인별 Nest 모듈로 나뉘며, DB 오류를 mock 데이터로 대체하지 않습니다. 관리자 권한은 역할과 세부 permission을 분리해서 검사하고, 상벌점·청원·탐활서의 상태 변경은 트랜잭션으로 처리합니다.
 
 ## 품질 검사

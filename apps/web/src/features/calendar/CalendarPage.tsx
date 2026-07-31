@@ -364,7 +364,7 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
           <div className="calendar-availability-note" role="status">
             <Info size={16} aria-hidden="true" />
             <span>
-              {visibleMonth.getFullYear()}년 {visibleMonth.getMonth() + 1}월에는 등록된 학사일정
+              {visibleMonth.getFullYear()}년 {visibleMonth.getMonth() + 1}월에 등록된 학사일정
               정보가 없습니다.
             </span>
           </div>

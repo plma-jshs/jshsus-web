@@ -124,6 +124,7 @@ const adminListSchema = z.object({
   ),
   sortBy: z
     .enum([
+      'id',
       'issuedNumber',
       'representative',
       'participantCount',
@@ -402,21 +403,23 @@ export class ActivityRequestsService {
         where advisor.id = ${schema.activityRequests.advisorTeacherId}
       ), '')`;
       const sortExpression =
-        sortBy === 'issuedNumber'
-          ? schema.activityRequests.issuedNumber
-          : sortBy === 'representative'
-            ? schema.students.studentNo
-            : sortBy === 'participantCount'
-              ? participantCount
-              : sortBy === 'purpose'
-                ? schema.activityRequests.purpose
-                : sortBy === 'location'
-                  ? schema.activityRequests.location
-                  : sortBy === 'advisorTeacherName'
-                    ? advisorTeacherName
-                    : sortBy === 'status'
-                      ? schema.activityRequests.status
-                      : schema.activityRequests.startsAt;
+        sortBy === 'id'
+          ? schema.activityRequests.id
+          : sortBy === 'issuedNumber'
+            ? schema.activityRequests.issuedNumber
+            : sortBy === 'representative'
+              ? schema.students.studentNo
+              : sortBy === 'participantCount'
+                ? participantCount
+                : sortBy === 'purpose'
+                  ? schema.activityRequests.purpose
+                  : sortBy === 'location'
+                    ? schema.activityRequests.location
+                    : sortBy === 'advisorTeacherName'
+                      ? advisorTeacherName
+                      : sortBy === 'status'
+                        ? schema.activityRequests.status
+                        : schema.activityRequests.startsAt;
       const orderExpression = sortOrder === 'asc' ? asc(sortExpression) : desc(sortExpression);
 
       const [{ total }] = await db

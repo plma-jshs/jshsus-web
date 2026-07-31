@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Pause, Play } from 'lucide-react';
 
 const YOUTUBE_IFRAME_API_URL = 'https://www.youtube.com/iframe_api';
 const YOUTUBE_SCRIPT_SELECTOR = 'script[data-jshsus-youtube-iframe-api="true"]';
@@ -22,6 +23,7 @@ type YouTubePlayer = {
   getIframe?: () => HTMLIFrameElement;
   getPlayerState: () => number;
   pauseVideo: () => void;
+  playVideo: () => void;
   seekTo: (seconds: number, allowSeekAhead: boolean) => void;
   setPlaybackRate: (rate: number) => void;
 };
@@ -165,6 +167,8 @@ export function YouTubeSegmentPlayer({
   const monitorRef = useRef<number | null>(null);
   const latestRef = useRef({ videoId, startSeconds, endSeconds, playbackRate, title });
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [playerReady, setPlayerReady] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const stopMonitoring = () => {
     if (monitorRef.current !== null) {
@@ -217,7 +221,7 @@ export function YouTubeSegmentPlayer({
           height: '100%',
           host: 'https://www.youtube-nocookie.com',
           playerVars: {
-            controls: 1,
+            controls: 0,
             enablejsapi: 1,
             origin: window.location.origin,
             playsinline: 1,
@@ -228,12 +232,14 @@ export function YouTubeSegmentPlayer({
               if (disposed) return;
               playerRef.current = event.target;
               readyRef.current = true;
+              setPlayerReady(true);
               const iframe = event.target.getIframe?.();
               if (iframe) iframe.title = latestRef.current.title;
               cueCurrentSegment(event.target);
               setStatus('ready');
             },
             onStateChange: (event) => {
+              setIsPlaying(event.data === PLAYING_STATE);
               if (event.data === PLAYING_STATE) {
                 applyRate(event.target, latestRef.current.playbackRate);
                 startMonitoring(event.target);
@@ -243,7 +249,11 @@ export function YouTubeSegmentPlayer({
             },
             onError: () => {
               stopMonitoring();
-              if (!disposed) setStatus('error');
+              if (!disposed) {
+                setPlayerReady(false);
+                setIsPlaying(false);
+                setStatus('error');
+              }
             },
           },
         });
@@ -300,10 +310,32 @@ export function YouTubeSegmentPlayer({
   const displayedStatus = VIDEO_ID_PATTERN.test(videoId) ? status : 'error';
   const showFallback = displayedStatus === 'error' && VIDEO_ID_PATTERN.test(videoId);
 
+  const togglePlayback = () => {
+    const player = playerRef.current;
+    if (!readyRef.current || !player) return;
+    if (player.getPlayerState() === PLAYING_STATE) {
+      player.pauseVideo();
+      setIsPlaying(false);
+      return;
+    }
+
+    const segment = normalizedSegment(startSeconds, endSeconds);
+    const currentTime = player.getCurrentTime();
+    if (currentTime < segment.start || currentTime >= segment.end) {
+      player.seekTo(segment.start, true);
+    }
+    applyRate(player, playbackRate);
+    player.playVideo();
+    setIsPlaying(true);
+  };
+
   return (
     <div
-      className={['youtube-segment-player', className].filter(Boolean).join(' ')}
+      className={['youtube-segment-player', playerReady ? 'has-toggle' : '', className]
+        .filter(Boolean)
+        .join(' ')}
       data-player-status={displayedStatus}
+      data-playing={isPlaying ? 'true' : 'false'}
     >
       {showFallback ? (
         <iframe
@@ -315,6 +347,23 @@ export function YouTubeSegmentPlayer({
         />
       ) : null}
       <div className="youtube-segment-player__target" ref={targetRef} />
+      {displayedStatus === 'ready' && playerReady ? (
+        <button
+          className="youtube-segment-player__toggle"
+          type="button"
+          onClick={togglePlayback}
+          aria-label={isPlaying ? '영상 일시정지' : '영상 재생'}
+          aria-pressed={isPlaying}
+        >
+          <span aria-hidden="true">
+            {isPlaying ? (
+              <Pause size={28} fill="currentColor" />
+            ) : (
+              <Play size={28} fill="currentColor" />
+            )}
+          </span>
+        </button>
+      ) : null}
       {displayedStatus === 'loading' ? (
         <span className="youtube-segment-player__state" role="status">
           미리보기를 준비하는 중입니다.

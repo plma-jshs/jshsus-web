@@ -78,6 +78,33 @@
   white-space: nowrap;
 }
 
+.operation-activity-time {
+  display: grid;
+  gap: 2px;
+  line-height: 1.35;
+}
+
+.operation-activity-time strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.operation-activity-time span {
+  color: var(--j-color-text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: normal;
+}
+
+.operation-activity-participants {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.45;
+  white-space: normal;
+}
+
 .operation-list-toolbar .admin-table-toolbar__controls {
   flex-wrap: nowrap;
 }
