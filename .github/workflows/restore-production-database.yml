@@ -1,0 +1,92 @@
+name: Restore production database
+
+on:
+  workflow_dispatch:
+    inputs:
+      backup_file:
+        description: Exact server backup filename (for example, jshsus_v26-20260731T085125376Z.sql.gz)
+        required: true
+        type: string
+      confirmation:
+        description: Exact value restore:jshsus_v26:<backup_file>
+        required: true
+        type: string
+
+concurrency:
+  group: jshsus-v26-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  restore:
+    name: Restore protected backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Validate exact restore request
+        shell: bash
+        env:
+          BACKUP_FILE: ${{ inputs.backup_file }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          [[ "$BACKUP_FILE" =~ ^jshsus_v26-[0-9]{8}T[0-9]{9}Z\.sql\.gz$ ]]
+          test "$CONFIRMATION" = "restore:jshsus_v26:$BACKUP_FILE"
+          [[ "$DEPLOY_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
+          [[ "$DEPLOY_PORT" =~ ^[0-9]{1,5}$ ]]
+          (( DEPLOY_PORT >= 1 && DEPLOY_PORT <= 65535 ))
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ "$DEPLOY_PATH" =~ ^/[A-Za-z0-9._/-]+$ ]]
+
+      - name: Configure pinned SSH identity
+        shell: bash
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 "$HOME/.ssh"
+          umask 077
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/deploy_key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          ssh-keygen -y -f "$HOME/.ssh/deploy_key" >/dev/null
+          test -s "$HOME/.ssh/known_hosts"
+
+      - name: Upload audited restore script
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" "install -d -m 700 '$DEPLOY_PATH'"
+          scp -i "$HOME/.ssh/deploy_key" -P "$DEPLOY_PORT" \
+            deploy/restore-database.sh \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/restore-database.sh"
+          ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" "chmod 700 '$DEPLOY_PATH/restore-database.sh'"
+
+      - name: Restore and migrate production database
+        shell: bash
+        env:
+          BACKUP_FILE: ${{ inputs.backup_file }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "'$DEPLOY_PATH/restore-database.sh' '$BACKUP_FILE' '$CONFIRMATION'"
+
+      - name: Remove local SSH key
+        if: always()
+        shell: bash
+        run: rm -f "$HOME/.ssh/deploy_key"

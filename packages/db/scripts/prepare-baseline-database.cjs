@@ -2,6 +2,7 @@
 const { readdirSync, readFileSync } = require('node:fs');
 const path = require('node:path');
 const mysql = require('mysql2/promise');
+const { classifyMigrationTimeline, isLoopbackDatabaseHost } = require('./baseline-safety.cjs');
 
 const MIGRATIONS_TABLE = '__drizzle_migrations';
 
@@ -83,14 +84,6 @@ async function currentMigrationTimeline(connection, database) {
   return rows.map((row) => Number(row.createdAt));
 }
 
-function timelinesMatch(databaseTimeline, migrationTimeline) {
-  const expected = migrationTimeline.map((entry) => entry.when);
-  return (
-    databaseTimeline.length === expected.length &&
-    databaseTimeline.every((value, index) => value === expected[index])
-  );
-}
-
 async function dropDatabaseObjects(connection, objects) {
   const views = objects.filter((object) => object.type === 'VIEW');
   const tables = objects.filter((object) => object.type !== 'VIEW');
@@ -140,8 +133,15 @@ async function main() {
     }
 
     const databaseTimeline = await currentMigrationTimeline(connection, database);
-    if (timelinesMatch(databaseTimeline, migrationTimeline)) {
+    const timelineState = classifyMigrationTimeline(databaseTimeline, migrationTimeline);
+    if (timelineState === 'current') {
       console.log('Baseline compatibility check passed: database migration journal is current.');
+      return;
+    }
+    if (timelineState === 'behind') {
+      console.log(
+        `Baseline compatibility check passed: database is ${migrationTimeline.length - databaseTimeline.length} migration(s) behind and can migrate forward.`,
+      );
       return;
     }
 
@@ -154,6 +154,11 @@ async function main() {
     if (!allowBaselineReset) {
       throw new Error(
         `${message} Set RESET_DATABASE_ON_BASELINE_MISMATCH=true after confirming a backup to reset this development database before migration.`,
+      );
+    }
+    if (!isLoopbackDatabaseHost(url.hostname)) {
+      throw new Error(
+        `${message} Refusing destructive baseline reset for remote database host ${url.hostname}.`,
       );
     }
 
