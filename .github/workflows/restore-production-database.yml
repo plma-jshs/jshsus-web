@@ -28,7 +28,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' &&
-      github.event.head_commit.message == 'ops(db): restore pre-reset backup 20260731T085125376Z')
+      github.event.head_commit.message == 'ops(db): retry pre-reset backup 20260731T085125376Z')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production

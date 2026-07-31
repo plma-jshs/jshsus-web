@@ -14,9 +14,13 @@ const sslMode = process.env.DATABASE_SSL_MODE ?? 'required';
 const expectedHost = process.env.RESTORE_EXPECTED_HOST ?? 'iam.jshsus.kr';
 const expectedDatabase = process.env.RESTORE_EXPECTED_DATABASE ?? 'jshsus_v26';
 const restoreRoot = path.resolve(process.env.RESTORE_ROOT ?? '/restore');
+const allowedExpectedHosts = new Set(['iam.jshsus.kr', 'host.docker.internal']);
 
 if (!databaseUrl) throw new Error('DATABASE_URL is required.');
 if (!process.env.RESTORE_BACKUP_PATH) throw new Error('RESTORE_BACKUP_PATH is required.');
+if (!allowedExpectedHosts.has(expectedHost)) {
+  throw new Error(`RESTORE_EXPECTED_HOST is not an approved production endpoint: ${expectedHost}.`);
+}
 
 const url = new URL(databaseUrl);
 const database = decodeURIComponent(url.pathname.replace(/^\//, ''));

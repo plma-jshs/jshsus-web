@@ -88,6 +88,8 @@ compose --profile tools run --rm \
   --volume "$checksum_path:/restore/$BACKUP_FILE.sha256:ro" \
   --env "RESTORE_BACKUP_PATH=/restore/$BACKUP_FILE" \
   --env "RESTORE_CONFIRMATION=$CONFIRMATION" \
+  --env "RESTORE_EXPECTED_HOST=host.docker.internal" \
+  --env "RESTORE_EXPECTED_DATABASE=jshsus_v26" \
   migrate node scripts/restore-database.cjs
 
 echo 'Applying forward-only migrations to the restored database'
