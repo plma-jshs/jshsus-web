@@ -88,15 +88,6 @@ function isInlineCalendarEvent(event: AcademicEvent) {
   return range.startsAt === range.endsAt && event.category === 'observance';
 }
 
-function shouldWrapCalendarEvent(event: AcademicEvent) {
-  const range = eventRange(event);
-  return (
-    range.startsAt === range.endsAt &&
-    !isInlineCalendarEvent(event) &&
-    Array.from(displayEventTitle(event.title)).length > 16
-  );
-}
-
 function styleForEvent(event: AcademicEvent): CSSProperties {
   const { color, background } = eventColor(event);
   return {
@@ -209,18 +200,9 @@ function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridSt
 
       const firstVisibleStartKey = range.startsAt < gridStartKey ? gridStartKey : range.startsAt;
       const showLabel = segmentStartKey === firstVisibleStartKey;
-      const rowSpan = shouldWrapCalendarEvent(event) ? 2 : 1;
       let lane = 0;
-      while (
-        Array.from({ length: rowSpan }, (_, offset) => lane + offset).some(
-          (candidateLane) => !isLaneFree(candidateLane, start, end),
-        )
-      ) {
-        lane += 1;
-      }
-      for (let offset = 0; offset < rowSpan; offset += 1) {
-        occupyLane(lane + offset, start, end);
-      }
+      while (!isLaneFree(lane, start, end)) lane += 1;
+      occupyLane(lane, start, end);
 
       return [
         {
@@ -230,7 +212,6 @@ function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridSt
           event,
           isInline: isInlineCalendarEvent(event),
           lane,
-          rowSpan,
           showLabel,
           startColumn: start + 1,
         },
@@ -484,9 +465,7 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                             />
                           ))
                         : weekEventSegments(week, events, cells[0].dateKey)
-                            .filter(
-                              (segment) => segment.lane + segment.rowSpan <= maxVisibleEventBars,
-                            )
+                            .filter((segment) => segment.lane < maxVisibleEventBars)
                             .map((segment) => (
                               <span
                                 className={`full-calendar__event-bar${
@@ -495,16 +474,14 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                                   segment.isInline ? ' is-inline' : ''
                                 }${segment.endColumn > segment.startColumn ? ' is-multi-day' : ''}${
                                   segment.showLabel ? '' : ' is-continuation'
-                                }${segment.rowSpan === 2 ? ' is-wrapped' : ''}${
-                                  segment.continuesBefore ? ' starts-before' : ''
-                                }${segment.continuesAfter ? ' ends-after' : ''}${
-                                  segment.endColumn === 7 ? ' ends-week' : ''
-                                }`}
+                                }${segment.continuesBefore ? ' starts-before' : ''}${
+                                  segment.continuesAfter ? ' ends-after' : ''
+                                }${segment.endColumn === 7 ? ' ends-week' : ''}`}
                                 key={`${segment.event.id}-${week[0].dateKey}`}
                                 style={{
                                   ...styleForEvent(segment.event),
                                   gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
-                                  gridRow: `${segment.lane + 1} / span ${segment.rowSpan}`,
+                                  gridRow: segment.lane + 1,
                                 }}
                                 title={displayEventTitle(segment.event.title)}
                               >
@@ -539,7 +516,13 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                   {selectedEvents.map((event) => (
                     <article key={event.id} style={styleForEvent(event)}>
                       <i
-                        className={`calendar-source-dot${event.isHoliday ? ' is-holiday' : ''}`}
+                        className={`calendar-source-dot is-${
+                          event.isHoliday || event.category === 'holiday'
+                            ? 'holiday'
+                            : event.category === 'observance'
+                              ? 'observance'
+                              : 'school'
+                        }`}
                         aria-hidden="true"
                       />
                       <div>

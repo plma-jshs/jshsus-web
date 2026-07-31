@@ -30,9 +30,10 @@
 
 .activity-date-control {
   position: relative;
-  display: flex;
+  display: grid;
   flex: 0 0 auto;
-  align-items: center;
+  gap: 5px;
+  align-items: end;
 }
 
 .activity-date-control > span {
@@ -43,10 +44,15 @@
 }
 
 .activity-date-control input {
-  width: 132px;
+  width: 142px;
   min-height: 40px;
   padding-inline: 10px;
   font-size: 13px;
+}
+
+.activity-table-section .data-table-toolbar__query {
+  width: min(30vw, 320px);
+  min-width: 260px;
 }
 
 .activity-table__purpose {
@@ -787,8 +793,7 @@
   }
 
   .activity-date-control input {
-    width: auto;
-    flex: 1;
+    width: 100%;
   }
 
   .activity-list-controls .page-search-field {

@@ -199,21 +199,14 @@ function occursOn(event: AdminSchoolCalendarEvent, date: string) {
 }
 
 function eventTone(event: AdminSchoolCalendarEvent) {
-  return event.isHoliday ? 'holiday' : 'schedule';
+  const category = normalizeCategory(event.category, event.isHoliday);
+  if (category === 'holiday') return 'holiday';
+  return category === 'observance' ? 'schedule' : 'bar';
 }
 
 function isInlineCalendarEvent(event: AdminSchoolCalendarEvent) {
   const range = eventRange(event);
   return range.startsAt === range.endsAt && event.category === 'observance';
-}
-
-function shouldWrapCalendarEvent(event: AdminSchoolCalendarEvent) {
-  const range = eventRange(event);
-  return (
-    range.startsAt === range.endsAt &&
-    !isInlineCalendarEvent(event) &&
-    Array.from(event.title.trim()).length > 16
-  );
 }
 
 function eventRange(event: AdminSchoolCalendarEvent) {
@@ -253,18 +246,9 @@ function weekEventSegments(
 
       const isLaneFree = (lane: number) =>
         (lanes[lane] ?? []).every((occupied) => end < occupied.start || start > occupied.end);
-      const rowSpan = shouldWrapCalendarEvent(event) ? 2 : 1;
       let lane = 0;
-      while (
-        Array.from({ length: rowSpan }, (_, offset) => lane + offset).some(
-          (candidateLane) => !isLaneFree(candidateLane),
-        )
-      ) {
-        lane += 1;
-      }
-      for (let offset = 0; offset < rowSpan; offset += 1) {
-        lanes[lane + offset] = [...(lanes[lane + offset] ?? []), { end, start }];
-      }
+      while (!isLaneFree(lane)) lane += 1;
+      lanes[lane] = [...(lanes[lane] ?? []), { end, start }];
       const firstVisibleStart = range.startsAt < gridStartDate ? gridStartDate : range.startsAt;
 
       return [
@@ -276,7 +260,6 @@ function weekEventSegments(
           isMultiDay: range.startsAt !== range.endsAt,
           isInline: isInlineCalendarEvent(event),
           lane,
-          rowSpan,
           showLabel: segmentStart === firstVisibleStart,
           startColumn: start + 1,
         },
@@ -687,7 +670,7 @@ export function SchoolEventsPage() {
                             />
                           ))
                         : weekEventSegments(week, visibleEvents, days[0]!)
-                            .filter((segment) => segment.lane + segment.rowSpan <= 3)
+                            .filter((segment) => segment.lane < 3)
                             .map((segment) => (
                               <button
                                 className={`school-calendar-event ${eventTone(segment.event)}${
@@ -696,17 +679,15 @@ export function SchoolEventsPage() {
                                   segment.isInline ? ' is-inline' : ''
                                 }${
                                   segment.showLabel ? '' : ' is-continuation'
-                                }${segment.rowSpan === 2 ? ' is-wrapped' : ''}${
-                                  segment.continuesBefore ? ' starts-before' : ''
-                                }${segment.continuesAfter ? ' ends-after' : ''}${
-                                  segment.endColumn === 7 ? ' ends-week' : ''
-                                }`}
+                                }${segment.continuesBefore ? ' starts-before' : ''}${
+                                  segment.continuesAfter ? ' ends-after' : ''
+                                }${segment.endColumn === 7 ? ' ends-week' : ''}`}
                                 type="button"
                                 key={`${segment.event.id}-${week[0]}`}
                                 title={segment.event.title}
                                 style={{
                                   gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
-                                  gridRow: `${segment.lane + 1} / span ${segment.rowSpan}`,
+                                  gridRow: segment.lane + 1,
                                 }}
                                 onClick={() => {
                                   const range = eventRange(segment.event);

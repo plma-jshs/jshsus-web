@@ -81,7 +81,7 @@ export function ActivityRequestsPage() {
           field="activity_location"
           query={query}
           showSearchField={false}
-          searchPlaceholder="활동 내용, 활동 인원, 장소, 지도교사 검색"
+          searchPlaceholder="내용, 인원, 장소, 지도교사 검색"
           onPageSizeChange={(nextPageSize) => {
             setPageSize(nextPageSize);
             setPage(1);
@@ -184,11 +184,11 @@ export function ActivityRequestsPage() {
           <div className="data-table-viewport activity-table-viewport">
             <table className="data-table activity-table">
               <colgroup>
-                <col style={{ width: 88 }} />
-                <col style={{ width: 210 }} />
-                <col style={{ width: 130 }} />
-                <col style={{ width: '28%' }} />
-                <col style={{ width: 230 }} />
+                <col style={{ width: 76 }} />
+                <col style={{ width: 200 }} />
+                <col style={{ width: 180 }} />
+                <col style={{ width: '24%' }} />
+                <col style={{ width: 220 }} />
                 <col style={{ width: 108 }} />
                 <col style={{ width: 96 }} />
               </colgroup>

@@ -194,10 +194,11 @@
 .data-table-toolbar__summary,
 .data-table-toolbar__controls {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
 }
 
 .data-table-toolbar__summary {
+  align-items: center;
   gap: var(--j-space-3);
   color: var(--j-color-text-secondary);
   font-size: var(--j-text-sm);
@@ -220,10 +221,10 @@
 }
 
 .data-table-toolbar select,
-.data-table-toolbar input,
-.data-table-toolbar__submit {
+.data-table-toolbar input {
+  height: 40px;
   min-height: 40px;
-  border-radius: var(--j-radius-sm);
+  border-radius: 8px;
   font-size: var(--j-text-sm);
 }
 
@@ -239,21 +240,22 @@
 }
 
 .data-table-toolbar__query {
+  position: relative;
   width: min(28vw, 260px);
 }
 
-.data-table-toolbar__submit {
-  padding-inline: 18px;
-  border: 1px solid var(--j-color-info);
-  border-radius: var(--j-radius-md);
-  color: var(--j-color-text-inverse);
-  background: var(--j-color-info);
-  font-weight: var(--j-weight-semibold);
+.data-table-toolbar__query > svg {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 12px;
+  color: var(--j-color-text-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
 }
 
-.data-table-toolbar__submit:hover {
-  border-color: color-mix(in srgb, var(--j-color-info) 86%, black);
-  background: color-mix(in srgb, var(--j-color-info) 86%, black);
+.data-table-toolbar__query input {
+  padding-left: 36px;
 }
 
 .data-table-viewport {

@@ -1,4 +1,6 @@
 .calendar-workspace {
+  width: min(100%, 1480px);
+  margin-inline: auto;
   overflow: hidden;
   border: 1px solid var(--j-color-border);
   border-radius: var(--j-radius-lg);
@@ -215,7 +217,7 @@
   left: 0;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-auto-rows: 18px;
+  grid-template-rows: repeat(3, minmax(18px, auto));
   gap: 2px 0;
   overflow: hidden;
   pointer-events: none;
@@ -223,52 +225,44 @@
 
 .full-calendar__event-bar {
   display: flex;
-  height: 16px;
-  min-height: 0;
+  min-height: 16px;
+  max-height: 36px;
   min-width: 0;
   overflow: hidden;
   margin-inline: 6px;
-  padding: 0 7px;
+  padding: 1px 7px;
   border-radius: 4px;
   box-shadow: none;
   color: var(--event-color);
   background: var(--event-bg);
   font-size: 11px;
   font-weight: 600;
-  line-height: 1;
-  text-overflow: ellipsis;
-  align-items: center;
-  white-space: nowrap;
+  line-height: 1.28;
+  align-items: flex-start;
+  align-self: start;
 }
 
 .full-calendar__event-bar > span {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.full-calendar__event-bar.is-inline {
-  padding-inline: 2px;
-  color: #1769aa;
-  background: transparent;
-}
-
-.full-calendar__event-bar.is-wrapped {
-  height: 36px;
-  padding-block: 3px;
-  align-items: flex-start;
-  line-height: 1.28;
-  white-space: normal;
-}
-
-.full-calendar__event-bar.is-wrapped > span {
   display: -webkit-box;
+  min-width: 0;
   overflow: hidden;
   white-space: normal;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.full-calendar__event-bar.is-inline {
+  height: 16px;
+  padding-inline: 2px;
+  align-items: center;
+  color: #1769aa;
+  background: transparent;
+}
+
+.full-calendar__event-bar.is-inline > span {
+  display: block;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .full-calendar__event-bar.is-multi-day {
@@ -409,8 +403,17 @@
 .calendar-source-dot {
   width: 7px;
   height: 7px;
-  margin-top: 0;
+  margin-top: 7px;
+  align-self: start;
   border-radius: 50%;
+  background: #d8f5e6;
+}
+
+.calendar-source-dot.is-school {
+  background: #4ac58b;
+}
+
+.calendar-source-dot.is-observance {
   background: #2779bd;
 }
 

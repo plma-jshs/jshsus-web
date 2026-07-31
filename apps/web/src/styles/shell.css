@@ -332,7 +332,7 @@
 }
 
 .main-panel:has(.detail-page--full) {
-  width: min(calc(100% - 5rem), 1600px);
+  width: min(calc(100% - 5rem), 1480px);
 }
 
 .main-panel:focus-visible {

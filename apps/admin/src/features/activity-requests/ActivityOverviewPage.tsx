@@ -5,6 +5,7 @@ import type {
   ActivityRequestAdminSummary,
 } from '@jshsus/types';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
+import { Search } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import { AdminListPanel, PageSizeSelect, TableToolbar } from '../../components/ui';
 import {
@@ -56,7 +57,7 @@ const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
     header: '날짜',
     enableSorting: false,
     cell: ({ row }) => activityDayFormatter.format(new Date(row.original.startsAt)),
-    meta: { width: 88, align: 'center' },
+    meta: { width: 76, align: 'center' },
   },
   {
     id: 'time',
@@ -93,13 +94,13 @@ const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
     accessorKey: 'location',
     header: '장소',
     enableSorting: false,
-    meta: { minWidth: 120, maxWidth: 180, truncate: true },
+    meta: { minWidth: 160, maxWidth: 250, truncate: true },
   },
   {
     accessorKey: 'purpose',
     header: '내용',
     enableSorting: false,
-    meta: { minWidth: 240, maxWidth: 440, truncate: true },
+    meta: { minWidth: 220, maxWidth: 380, truncate: true },
   },
   {
     id: 'participants',
@@ -156,39 +157,46 @@ export function ActivityOverviewPage() {
             summary={requestsQuery.data ? `총 ${requestsQuery.data.total}건` : undefined}
             className="operation-list-toolbar"
           >
-            <input
-              type="search"
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                resetPage();
-              }}
-              placeholder="학생·활동 인원, 지도교사, 장소, 활동 내용 검색"
-              aria-label="탐구활동서 검색"
-            />
-            <input
-              type="date"
-              value={startDate}
-              max={endDate || undefined}
-              onChange={(event) => {
-                setStartDate(event.target.value);
-                resetPage();
-              }}
-              aria-label="활동 시작일 필터"
-              title="활동 시작일"
-            />
-            <span aria-hidden="true">–</span>
-            <input
-              type="date"
-              value={endDate}
-              min={startDate || undefined}
-              onChange={(event) => {
-                setEndDate(event.target.value);
-                resetPage();
-              }}
-              aria-label="활동 마감일 필터"
-              title="활동 마감일"
-            />
+            <label className="operation-search-field">
+              <span className="sr-only">탐구활동서 검색</span>
+              <Search size={15} aria-hidden="true" />
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  resetPage();
+                }}
+                placeholder="내용, 인원, 장소, 지도교사 검색"
+              />
+            </label>
+            <label className="operation-date-filter">
+              <span>시작일</span>
+              <input
+                type="date"
+                value={startDate}
+                max={endDate || undefined}
+                onChange={(event) => {
+                  setStartDate(event.target.value);
+                  resetPage();
+                }}
+              />
+            </label>
+            <span className="operation-date-separator" aria-hidden="true">
+              ~
+            </span>
+            <label className="operation-date-filter">
+              <span>마감일</span>
+              <input
+                type="date"
+                value={endDate}
+                min={startDate || undefined}
+                onChange={(event) => {
+                  setEndDate(event.target.value);
+                  resetPage();
+                }}
+              />
+            </label>
             <select
               value={status}
               onChange={(event) => {

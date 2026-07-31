@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
@@ -98,6 +98,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
         {extraControls}
         <label className="data-table-toolbar__query">
           <span className="sr-only">검색어</span>
+          <Search size={15} aria-hidden="true" />
           <input
             type="search"
             value={draftQuery}
@@ -105,7 +106,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
             placeholder={searchPlaceholder}
           />
         </label>
-        <button className="data-table-toolbar__submit" type="submit">
+        <button className="sr-only" type="submit">
           검색
         </button>
       </div>
