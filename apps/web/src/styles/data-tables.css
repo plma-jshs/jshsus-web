@@ -365,6 +365,10 @@
   border-radius: 8px;
 }
 
+.data-table-toolbar .data-table-toolbar__controls .activity-date-control input {
+  padding: 0 36px 0 10px;
+}
+
 .data-table-toolbar .data-table-toolbar__controls .data-table-toolbar__query input {
   padding-left: 36px;
 }
