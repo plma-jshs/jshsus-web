@@ -304,6 +304,7 @@
   grid-auto-rows: 18px;
   gap: 2px 0;
   overflow: hidden;
+  pointer-events: none;
 }
 
 .school-calendar-event {
@@ -324,6 +325,7 @@
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
+  pointer-events: auto;
 }
 
 .school-calendar-event.holiday {
