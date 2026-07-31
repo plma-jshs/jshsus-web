@@ -248,6 +248,10 @@ export function YouTubeSegmentPlayer({
           },
         });
         playerRef.current = player;
+        // The IFrame API can mount its interactive player before dispatching
+        // onReady (and in some embedded browsers that callback can be delayed).
+        // Do not leave the loading label covering an already usable player.
+        setStatus('ready');
       })
       .catch(() => {
         if (!disposed) setStatus('error');

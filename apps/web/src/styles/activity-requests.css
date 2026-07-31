@@ -84,18 +84,21 @@
 }
 
 .activity-table__participants {
+  text-align: left !important;
+}
+
+.activity-table__participants > span {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   line-height: 1.4;
-  text-align: left !important;
   text-overflow: ellipsis;
   white-space: normal;
 }
 
-.activity-table__participants.is-dense {
+.activity-table__participants.is-dense > span {
   font-size: 11px;
   line-height: 1.35;
 }
@@ -804,8 +807,10 @@
 
   .activity-table__participants {
     display: grid;
-    -webkit-line-clamp: unset;
-    line-clamp: unset;
+  }
+
+  .activity-table__participants > span {
+    min-width: 0;
   }
 
   .activity-definition-list > div {

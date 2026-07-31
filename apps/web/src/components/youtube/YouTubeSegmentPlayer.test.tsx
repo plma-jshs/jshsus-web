@@ -135,4 +135,27 @@ describe('YouTubeSegmentPlayer', () => {
     view.unmount();
     expect(player.destroy).toHaveBeenCalledOnce();
   });
+
+  it('removes the loading cover as soon as the iframe player mounts', async () => {
+    const player = createPlayer();
+    installPlayerApi(player, () => undefined);
+
+    const view = render(
+      <YouTubeSegmentPlayer
+        videoId="dQw4w9WgXcQ"
+        startSeconds={0}
+        endSeconds={180}
+        playbackRate={1}
+        title="테스트 영상"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(view.container.querySelector('.youtube-segment-player')).toHaveAttribute(
+        'data-player-status',
+        'ready',
+      ),
+    );
+    expect(view.queryByRole('status')).not.toBeInTheDocument();
+  });
 });

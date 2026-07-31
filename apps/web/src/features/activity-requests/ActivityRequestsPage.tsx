@@ -248,7 +248,7 @@ export function ActivityRequestsPage() {
                         }`}
                         data-label="인원"
                       >
-                        {formatActivityParticipants(request.participants, request)}
+                        <span>{formatActivityParticipants(request.participants, request)}</span>
                       </td>
                       <td className="activity-table__advisor" data-label="지도교사">
                         {request.advisorTeacherName ?? request.teacherName ?? '-'}
