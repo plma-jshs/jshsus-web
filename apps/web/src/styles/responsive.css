@@ -1,6 +1,7 @@
 @media (max-width: 1199px) {
   .portal-header__inner,
-  .main-panel {
+  .main-panel,
+  .main-panel:has(.detail-page--full) {
     width: min(calc(100% - 3rem), 1280px);
   }
   .home-primary-grid {

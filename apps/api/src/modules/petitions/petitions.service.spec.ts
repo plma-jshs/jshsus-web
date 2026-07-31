@@ -41,7 +41,7 @@ describe('PetitionsService detail contract', () => {
       {
         title: '문서 청원',
         contentDoc,
-        endsAt: '2026-08-01T00:00:00+09:00',
+        endsAt: '2099-08-01T00:00:00+09:00',
       },
       10,
     );

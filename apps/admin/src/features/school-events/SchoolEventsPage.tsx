@@ -1,7 +1,18 @@
 import type { ChangeEvent, FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Pencil, Plus, Trash2, Upload } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Pencil,
+  Plus,
+  Trash2,
+  Upload,
+} from 'lucide-react';
 import { Dialog, Drawer, RowActionButton, RowActions, useToast } from '../../components/ui';
 import {
   api,
@@ -16,13 +27,40 @@ const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 type EventForm = {
   title: string;
   description: string;
-  category: string;
+  category: CalendarEventCategory;
   startsAt: string;
   endsAt: string;
   allDay: boolean;
-  isHoliday: boolean;
   isPublic: boolean;
 };
+
+type CalendarEventCategory = 'school' | 'observance' | 'holiday';
+
+const CALENDAR_EVENT_CATEGORIES: ReadonlyArray<{
+  value: CalendarEventCategory;
+  label: string;
+  description: string;
+  tone: string;
+}> = [
+  {
+    value: 'school',
+    label: '학사 일정',
+    description: '기말고사, 입시설명회, 방학, 귀가 등',
+    tone: 'school',
+  },
+  {
+    value: 'observance',
+    label: '기념일·절기',
+    description: '제헌절, 국군의 날, 과학의 날, 절기 등',
+    tone: 'observance',
+  },
+  {
+    value: 'holiday',
+    label: '공휴일·휴업일',
+    description: '광복절, 추석, 재량휴업일, 개교기념일 등',
+    tone: 'holiday',
+  },
+];
 
 type JsonImportPreview = {
   fileName: string;
@@ -98,20 +136,23 @@ function blankForm(date = koreanDate()): EventForm {
     startsAt: date,
     endsAt: date,
     allDay: true,
-    isHoliday: false,
     isPublic: true,
   };
+}
+
+function normalizeCategory(category: string, isHoliday: boolean): CalendarEventCategory {
+  if (isHoliday || category === 'holiday') return 'holiday';
+  return category === 'observance' ? 'observance' : 'school';
 }
 
 function formFromEvent(event: AdminSchoolCalendarEvent): EventForm {
   return {
     title: event.title,
     description: event.description ?? '',
-    category: event.category,
+    category: normalizeCategory(event.category, event.isHoliday),
     startsAt: event.allDay ? koreanDate(event.startsAt) : koreanDateTime(event.startsAt),
     endsAt: event.allDay ? koreanDate(event.endsAt) : koreanDateTime(event.endsAt),
     allDay: event.allDay,
-    isHoliday: event.isHoliday,
     isPublic: event.isPublic,
   };
 }
@@ -129,7 +170,7 @@ function eventInput(form: EventForm): SchoolEventInput {
     startsAt: apiDate(form.startsAt, form.allDay),
     endsAt: apiDate(form.endsAt, form.allDay),
     allDay: form.allDay,
-    isHoliday: form.isHoliday,
+    isHoliday: form.category === 'holiday',
     isPublic: form.isPublic,
   };
 }
@@ -163,7 +204,16 @@ function eventTone(event: AdminSchoolCalendarEvent) {
 
 function isInlineCalendarEvent(event: AdminSchoolCalendarEvent) {
   const range = eventRange(event);
-  return range.startsAt === range.endsAt && (event.isHoliday || event.category === 'observance');
+  return range.startsAt === range.endsAt && event.category === 'observance';
+}
+
+function shouldWrapCalendarEvent(event: AdminSchoolCalendarEvent) {
+  const range = eventRange(event);
+  return (
+    range.startsAt === range.endsAt &&
+    !isInlineCalendarEvent(event) &&
+    Array.from(event.title.trim()).length > 16
+  );
 }
 
 function eventRange(event: AdminSchoolCalendarEvent) {
@@ -201,11 +251,20 @@ function weekEventSegments(
       const end = week.indexOf(segmentEnd);
       if (start < 0 || end < 0) return [];
 
-      const laneIndex = lanes.findIndex((lane) =>
-        lane.every((occupied) => end < occupied.start || start > occupied.end),
-      );
-      const lane = laneIndex >= 0 ? laneIndex : lanes.length;
-      lanes[lane] = [...(lanes[lane] ?? []), { end, start }];
+      const isLaneFree = (lane: number) =>
+        (lanes[lane] ?? []).every((occupied) => end < occupied.start || start > occupied.end);
+      const rowSpan = shouldWrapCalendarEvent(event) ? 2 : 1;
+      let lane = 0;
+      while (
+        Array.from({ length: rowSpan }, (_, offset) => lane + offset).some(
+          (candidateLane) => !isLaneFree(candidateLane),
+        )
+      ) {
+        lane += 1;
+      }
+      for (let offset = 0; offset < rowSpan; offset += 1) {
+        lanes[lane + offset] = [...(lanes[lane + offset] ?? []), { end, start }];
+      }
       const firstVisibleStart = range.startsAt < gridStartDate ? gridStartDate : range.startsAt;
 
       return [
@@ -217,6 +276,7 @@ function weekEventSegments(
           isMultiDay: range.startsAt !== range.endsAt,
           isInline: isInlineCalendarEvent(event),
           lane,
+          rowSpan,
           showLabel: segmentStart === firstVisibleStart,
           startColumn: start + 1,
         },
@@ -225,14 +285,73 @@ function weekEventSegments(
 }
 
 function eventCategoryLabel(event: AdminSchoolCalendarEvent) {
-  if (event.isHoliday) return '공휴일·휴일';
-  const labels: Record<string, string> = {
-    school: '학교 일정',
-    academic: '학사 일정',
-    exam: '시험',
-    event: '행사',
-  };
-  return labels[event.category] ?? '학교 일정';
+  return CALENDAR_EVENT_CATEGORIES.find(
+    (category) => category.value === normalizeCategory(event.category, event.isHoliday),
+  )!.label;
+}
+
+function CalendarCategorySelect({
+  value,
+  onChange,
+}: {
+  value: CalendarEventCategory;
+  onChange: (value: CalendarEventCategory) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = CALENDAR_EVENT_CATEGORIES.find((category) => category.value === value)!;
+
+  return (
+    <div
+      className={`calendar-category-select${open ? ' is-open' : ''}`}
+      onBlur={(event) => {
+        const nextTarget = event.relatedTarget;
+        if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
+          setOpen(false);
+        }
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') setOpen(false);
+      }}
+    >
+      <button
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        className="calendar-category-select__trigger"
+        onClick={() => setOpen((current) => !current)}
+        type="button"
+      >
+        <span>
+          <i className={`calendar-category-dot is-${selected.tone}`} aria-hidden="true" />
+          {selected.label}
+        </span>
+        <ChevronDown size={16} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="calendar-category-select__menu" role="listbox" aria-label="일정 분류">
+          {CALENDAR_EVENT_CATEGORIES.map((category) => (
+            <button
+              aria-selected={category.value === value}
+              className={category.value === value ? 'is-selected' : undefined}
+              key={category.value}
+              onClick={() => {
+                onChange(category.value);
+                setOpen(false);
+              }}
+              role="option"
+              type="button"
+            >
+              <i className={`calendar-category-dot is-${category.tone}`} aria-hidden="true" />
+              <span>
+                <strong>{category.label}</strong>
+                <small>{category.description}</small>
+              </span>
+              {category.value === value ? <Check size={16} aria-hidden="true" /> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function weekdayOf(date: string) {
@@ -449,11 +568,15 @@ export function SchoolEventsPage() {
         <div className="school-calendar-legend" aria-label="일정 범례">
           <span>
             <i className="source-dot holiday" />
-            공휴일·휴일
+            공휴일·휴업일
+          </span>
+          <span>
+            <i className="source-dot schedule" />
+            기념일·절기
           </span>
           <span>
             <i className="source-dot bar" />
-            학교 일정
+            학사 일정
           </span>
           {calendarQuery.data && calendarQuery.data.availability !== 'available' ? (
             <em>일정 DB를 조회하지 못했습니다.</em>
@@ -564,7 +687,7 @@ export function SchoolEventsPage() {
                             />
                           ))
                         : weekEventSegments(week, visibleEvents, days[0]!)
-                            .filter((segment) => segment.lane < 3)
+                            .filter((segment) => segment.lane + segment.rowSpan <= 3)
                             .map((segment) => (
                               <button
                                 className={`school-calendar-event ${eventTone(segment.event)}${
@@ -573,15 +696,17 @@ export function SchoolEventsPage() {
                                   segment.isInline ? ' is-inline' : ''
                                 }${
                                   segment.showLabel ? '' : ' is-continuation'
-                                }${segment.continuesBefore ? ' starts-before' : ''}${
-                                  segment.continuesAfter ? ' ends-after' : ''
-                                }${segment.endColumn === 7 ? ' ends-week' : ''}`}
+                                }${segment.rowSpan === 2 ? ' is-wrapped' : ''}${
+                                  segment.continuesBefore ? ' starts-before' : ''
+                                }${segment.continuesAfter ? ' ends-after' : ''}${
+                                  segment.endColumn === 7 ? ' ends-week' : ''
+                                }`}
                                 type="button"
                                 key={`${segment.event.id}-${week[0]}`}
                                 title={segment.event.title}
                                 style={{
                                   gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
-                                  gridRow: segment.lane + 1,
+                                  gridRow: `${segment.lane + 1} / span ${segment.rowSpan}`,
                                 }}
                                 onClick={() => {
                                   const range = eventRange(segment.event);
@@ -589,7 +714,7 @@ export function SchoolEventsPage() {
                                   setSelectedEventId(segment.event.id);
                                 }}
                               >
-                                {segment.showLabel ? segment.event.title : null}
+                                {segment.showLabel ? <span>{segment.event.title}</span> : null}
                               </button>
                             ))}
                     </div>
@@ -754,85 +879,82 @@ export function SchoolEventsPage() {
         }
       >
         <form className="calendar-event-form" id="school-event-form" onSubmit={submit}>
-          <label className="full">
-            <span>제목</span>
-            <input
-              autoFocus
-              value={form.title}
-              maxLength={160}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, title: event.target.value }))
-              }
-              required
-            />
-          </label>
-          <label>
-            <span>분류</span>
-            <select
-              value={form.category}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, category: event.target.value }))
-              }
-            >
-              <option value="school">학교</option>
-              <option value="academic">학사</option>
-              <option value="exam">시험</option>
-              <option value="event">행사</option>
-              <option value="holiday">휴일</option>
-            </select>
-          </label>
-          <label className="checkbox-row compact-check">
-            <input
-              type="checkbox"
-              checked={form.allDay}
-              onChange={(event) => changeAllDay(event.target.checked)}
-            />
-            <span>종일 일정</span>
-          </label>
-          <label>
-            <span>시작{form.allDay ? '일' : ' 시각'}</span>
-            <input
-              type={form.allDay ? 'date' : 'datetime-local'}
-              value={form.startsAt}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, startsAt: event.target.value }))
-              }
-              required
-            />
-          </label>
-          <label>
-            <span>종료{form.allDay ? '일' : ' 시각'}</span>
-            <input
-              type={form.allDay ? 'date' : 'datetime-local'}
-              value={form.endsAt}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, endsAt: event.target.value }))
-              }
-              required
-            />
-          </label>
+          <div className="calendar-event-identity full">
+            <div className="calendar-event-field">
+              <span>분류</span>
+              <CalendarCategorySelect
+                value={form.category}
+                onChange={(category) => setForm((current) => ({ ...current, category }))}
+              />
+            </div>
+            <label>
+              <span>제목</span>
+              <input
+                autoFocus
+                value={form.title}
+                maxLength={160}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, title: event.target.value }))
+                }
+                placeholder="일정 제목을 입력하세요"
+                required
+              />
+            </label>
+          </div>
+          <fieldset className="calendar-event-datetime full">
+            <div className="calendar-event-datetime__heading">
+              <legend>일시</legend>
+              <label className="checkbox-row compact-check">
+                <input
+                  type="checkbox"
+                  checked={form.allDay}
+                  onChange={(event) => changeAllDay(event.target.checked)}
+                />
+                <span>종일</span>
+              </label>
+            </div>
+            <div className="calendar-event-datetime__range">
+              <label>
+                <span className="sr-only">시작{form.allDay ? '일' : ' 시각'}</span>
+                <input
+                  aria-label={`시작${form.allDay ? '일' : ' 시각'}`}
+                  type={form.allDay ? 'date' : 'datetime-local'}
+                  value={form.startsAt}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, startsAt: event.target.value }))
+                  }
+                  required
+                />
+              </label>
+              <span className="calendar-event-datetime__separator" aria-hidden="true">
+                ~
+              </span>
+              <label>
+                <span className="sr-only">종료{form.allDay ? '일' : ' 시각'}</span>
+                <input
+                  aria-label={`종료${form.allDay ? '일' : ' 시각'}`}
+                  type={form.allDay ? 'date' : 'datetime-local'}
+                  value={form.endsAt}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, endsAt: event.target.value }))
+                  }
+                  required
+                />
+              </label>
+            </div>
+          </fieldset>
           <label className="full">
             <span>설명</span>
-            <textarea
+            <input
               value={form.description}
               maxLength={5000}
-              rows={4}
               onChange={(event) =>
                 setForm((current) => ({ ...current, description: event.target.value }))
               }
+              placeholder="설명을 입력하세요"
             />
           </label>
           <div className="calendar-event-options full">
-            <label className="checkbox-row compact-check">
-              <input
-                type="checkbox"
-                checked={form.isHoliday}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, isHoliday: event.target.checked }))
-                }
-              />
-              <span>휴일로 표시</span>
-            </label>
             <label className="checkbox-row compact-check">
               <input
                 type="checkbox"

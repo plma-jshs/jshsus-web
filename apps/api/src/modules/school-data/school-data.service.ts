@@ -27,6 +27,14 @@ const MAX_MEMORY_CACHE_ENTRIES = 128;
 const MAX_FAILURE_ENTRIES = 128;
 const MAX_IN_FLIGHT_LOADS = 16;
 
+export function normalizeManagedEventCategory(
+  category: string,
+  isHoliday: boolean,
+): 'school' | 'observance' | 'holiday' {
+  if (isHoliday || category === 'holiday') return 'holiday';
+  return category === 'observance' ? 'observance' : 'school';
+}
+
 const dateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must use YYYY-MM-DD.')
@@ -943,14 +951,15 @@ export class SchoolDataService {
   }
 
   private toEventValues(input: z.infer<typeof managedEventSchema>) {
+    const category = normalizeManagedEventCategory(input.category, input.isHoliday);
     return {
       title: input.title,
       description: input.description || null,
-      category: input.category,
+      category,
       startsAt: parseEventDate(input.startsAt)!,
       endsAt: parseEventDate(input.endsAt, true)!,
       allDay: input.allDay,
-      isHoliday: input.isHoliday,
+      isHoliday: category === 'holiday',
       isPublic: input.isPublic,
     };
   }
@@ -968,6 +977,7 @@ export class SchoolDataService {
   }
 
   private toManagedEvent(row: typeof schema.schoolEvents.$inferSelect): ManagedSchoolEvent {
+    const category = normalizeManagedEventCategory(row.category, row.isHoliday);
     return {
       id: row.id,
       title: row.title,
@@ -975,8 +985,8 @@ export class SchoolDataService {
       endsAt: row.endsAt.toISOString(),
       allDay: row.allDay,
       description: row.description ?? undefined,
-      category: row.category,
-      isHoliday: row.isHoliday,
+      category,
+      isHoliday: category === 'holiday',
       isPublic: row.isPublic,
     };
   }

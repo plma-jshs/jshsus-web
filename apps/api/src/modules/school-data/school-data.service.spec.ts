@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DatabaseService } from '../database/database.service';
 import type { RedisService } from '../redis/redis.service';
-import { SchoolDataService } from './school-data.service';
+import { normalizeManagedEventCategory, SchoolDataService } from './school-data.service';
 
 function createService() {
   const redis = {
@@ -32,6 +32,13 @@ describe('SchoolDataService', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+  });
+
+  it('normalizes managed calendar categories to the three supported values', () => {
+    expect(normalizeManagedEventCategory('academic', false)).toBe('school');
+    expect(normalizeManagedEventCategory('observance', false)).toBe('observance');
+    expect(normalizeManagedEventCategory('school', true)).toBe('holiday');
+    expect(normalizeManagedEventCategory('holiday', false)).toBe('holiday');
   });
 
   it('normalizes a NEIS meal and caches the result', async () => {
@@ -165,7 +172,7 @@ describe('SchoolDataService', () => {
         startsAt: '2026-07-21T00:00:00.000Z',
         endsAt: '2026-07-21T23:59:59.999Z',
         allDay: true,
-        category: 'student-council',
+        category: 'school',
         isHoliday: false,
         isPublic: true,
       },

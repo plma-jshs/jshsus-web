@@ -304,6 +304,8 @@ export type SchoolMeal = {
   source: 'neis';
 };
 
+export type SchoolEventCategory = 'school' | 'observance' | 'holiday';
+
 export type AcademicEvent = {
   id: string;
   title: string;
@@ -311,7 +313,7 @@ export type AcademicEvent = {
   endsAt: string;
   allDay: boolean;
   description?: string;
-  category: string;
+  category: SchoolEventCategory;
   isHoliday: boolean;
   source: 'school';
 };

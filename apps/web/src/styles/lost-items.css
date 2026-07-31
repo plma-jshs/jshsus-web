@@ -587,7 +587,7 @@
   border: 1px solid var(--j-color-border-strong);
   border-radius: var(--j-radius-sm);
   color: var(--j-color-text);
-  background: var(--j-color-surface);
+  background-color: var(--j-color-surface);
   font: inherit;
   font-weight: 400;
 }
@@ -597,6 +597,11 @@
 .lost-item-owner-edit select {
   min-height: 42px;
   padding: 0 12px;
+}
+
+.lost-item-owner select,
+.lost-item-owner-edit select {
+  padding-right: 36px;
 }
 
 .lost-item-owner select {

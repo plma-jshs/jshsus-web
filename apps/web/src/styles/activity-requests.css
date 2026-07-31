@@ -431,7 +431,7 @@
   border: 1px solid var(--j-color-border-strong);
   border-radius: 8px;
   color: var(--j-color-text);
-  background: var(--j-color-surface);
+  background-color: var(--j-color-surface);
 }
 
 .activity-form-field input {

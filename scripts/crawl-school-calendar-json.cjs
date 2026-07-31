@@ -110,7 +110,7 @@ function parseEvents(html) {
         startsAt: previous?.startsAt && previous.startsAt < startsAt ? previous.startsAt : startsAt,
         endsAt: previous?.endsAt && previous.endsAt > endsAt ? previous.endsAt : endsAt,
         allDay: true,
-        category: isHoliday ? 'holiday' : isManagedLink ? 'academic' : 'observance',
+        category: isHoliday ? 'holiday' : isManagedLink ? 'school' : 'observance',
         isHoliday,
         isPublic: true,
       });

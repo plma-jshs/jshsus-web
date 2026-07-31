@@ -1,7 +1,16 @@
 import type { CSSProperties, FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Clock3, ExternalLink, Music2, Pencil, RotateCcw, X } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  Clock3,
+  ExternalLink,
+  Music2,
+  Pencil,
+  RotateCcw,
+  X,
+} from 'lucide-react';
 import { YouTubeSegmentPlayer } from '../../components/youtube/YouTubeSegmentPlayer';
 import { DataTablePagination } from '../../components/page/DataTableControls';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
@@ -49,6 +58,66 @@ const initialForm: FormState = {
 };
 
 const MAX_WAKE_SONG_DURATION_SECONDS = 180;
+
+function PlaybackRateSelect({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className={`wake-song-rate-select${open ? ' is-open' : ''}`}
+      onBlur={(event) => {
+        const nextTarget = event.relatedTarget;
+        if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
+          setOpen(false);
+        }
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') setOpen(false);
+      }}
+    >
+      <button
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-label={`재생 속도 ${formatPlaybackRate(value)}`}
+        className="wake-song-rate-select__trigger"
+        onClick={() => setOpen((current) => !current)}
+        type="button"
+      >
+        <span>{formatPlaybackRate(value)}</span>
+        <ChevronDown size={15} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div aria-label="재생 속도" className="wake-song-rate-select__menu" role="listbox">
+          {WAKE_SONG_PLAYBACK_RATES.map((rate) => {
+            const selected = rate === value;
+            return (
+              <button
+                aria-selected={selected}
+                className={selected ? 'is-selected' : undefined}
+                key={rate}
+                onClick={() => {
+                  onChange(rate);
+                  setOpen(false);
+                }}
+                role="option"
+                type="button"
+              >
+                <span>{formatPlaybackRate(rate)}</span>
+                {selected ? <Check size={15} aria-hidden="true" /> : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -441,24 +510,18 @@ export function WakeSongsPage() {
                           required
                         />
                       </label>
-                      <label>
+                      <div className="wake-song-field">
                         <span>재생 속도</span>
-                        <select
+                        <PlaybackRateSelect
                           value={form.playbackRate}
-                          onChange={(event) =>
+                          onChange={(playbackRate) =>
                             setForm((current) => ({
                               ...current,
-                              playbackRate: Number(event.target.value),
+                              playbackRate,
                             }))
                           }
-                        >
-                          {WAKE_SONG_PLAYBACK_RATES.map((rate) => (
-                            <option value={rate} key={rate}>
-                              {formatPlaybackRate(rate)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                        />
+                      </div>
                     </div>
 
                     <label className="wake-song-note-field">

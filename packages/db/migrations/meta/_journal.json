@@ -43,6 +43,13 @@
       "when": 1785503227268,
       "tag": "0005_demonic_wraith",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1785510694713,
+      "tag": "0006_calendar_event_categories",
+      "breakpoints": true
     }
   ]
 }

@@ -3,7 +3,7 @@ import type { CSSProperties, KeyboardEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
-import { CalendarDays, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter, toKoreanDateKey } from '../../shared/lib/date';
@@ -85,7 +85,16 @@ function eventRange(event: AcademicEvent) {
 
 function isInlineCalendarEvent(event: AcademicEvent) {
   const range = eventRange(event);
-  return range.startsAt === range.endsAt && (event.isHoliday || event.category === 'observance');
+  return range.startsAt === range.endsAt && event.category === 'observance';
+}
+
+function shouldWrapCalendarEvent(event: AcademicEvent) {
+  const range = eventRange(event);
+  return (
+    range.startsAt === range.endsAt &&
+    !isInlineCalendarEvent(event) &&
+    Array.from(displayEventTitle(event.title)).length > 16
+  );
 }
 
 function styleForEvent(event: AcademicEvent): CSSProperties {
@@ -200,9 +209,18 @@ function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridSt
 
       const firstVisibleStartKey = range.startsAt < gridStartKey ? gridStartKey : range.startsAt;
       const showLabel = segmentStartKey === firstVisibleStartKey;
+      const rowSpan = shouldWrapCalendarEvent(event) ? 2 : 1;
       let lane = 0;
-      while (!isLaneFree(lane, start, end)) lane += 1;
-      occupyLane(lane, start, end);
+      while (
+        Array.from({ length: rowSpan }, (_, offset) => lane + offset).some(
+          (candidateLane) => !isLaneFree(candidateLane, start, end),
+        )
+      ) {
+        lane += 1;
+      }
+      for (let offset = 0; offset < rowSpan; offset += 1) {
+        occupyLane(lane + offset, start, end);
+      }
 
       return [
         {
@@ -212,6 +230,7 @@ function weekEventSegments(week: CalendarCell[], events: AcademicEvent[], gridSt
           event,
           isInline: isInlineCalendarEvent(event),
           lane,
+          rowSpan,
           showLabel,
           startColumn: start + 1,
         },
@@ -225,35 +244,26 @@ const ariaDateFormatter = createKoreanDateFormatter({
   day: 'numeric',
   weekday: 'short',
 });
-const headingDateFormatter = createKoreanDateFormatter({
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-});
 const weekdayFormatter = createKoreanDateFormatter({ weekday: 'short' });
-const eventDateFormatter = createKoreanDateFormatter({
-  month: 'numeric',
-  day: 'numeric',
-  weekday: 'short',
-});
 const eventTimeFormatter = createKoreanDateFormatter({
   hour: '2-digit',
   minute: '2-digit',
   hourCycle: 'h23',
 });
 
-function formatSelectedDateHeading(date: Date) {
-  return `${headingDateFormatter.format(date)} (${weekdayFormatter.format(date)})`;
-}
-
 function formatEventRange(event: AcademicEvent) {
-  const startsAt = fromDateKey(toKoreanDateKey(event.startsAt));
-  const endsAt = fromDateKey(toKoreanDateKey(event.endsAt));
-  const startLabel = eventDateFormatter.format(startsAt);
-  const endLabel = eventDateFormatter.format(endsAt);
-  const dateLabel = startLabel === endLabel ? startLabel : `${startLabel} ~ ${endLabel}`;
-  if (event.allDay) return dateLabel;
-  return `${dateLabel} ${eventTimeFormatter.format(new Date(event.startsAt))} ~ ${eventTimeFormatter.format(new Date(event.endsAt))}`;
+  const startKey = toKoreanDateKey(event.startsAt);
+  const endKey = toKoreanDateKey(event.endsAt);
+  const startLabel = `${startKey}(${weekdayFormatter.format(fromDateKey(startKey))})`;
+  const endLabel = `${endKey}(${weekdayFormatter.format(fromDateKey(endKey))})`;
+  if (event.allDay) {
+    return startKey === endKey ? `${startLabel} 종일` : `${startLabel} ~ ${endLabel} 종일`;
+  }
+  const startTime = eventTimeFormatter.format(new Date(event.startsAt));
+  const endTime = eventTimeFormatter.format(new Date(event.endsAt));
+  return startKey === endKey
+    ? `${startLabel} ${startTime} ~ ${endTime}`
+    : `${startLabel} ${startTime} ~ ${endLabel} ${endTime}`;
 }
 
 export function CalendarPage() {
@@ -474,7 +484,9 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                             />
                           ))
                         : weekEventSegments(week, events, cells[0].dateKey)
-                            .filter((segment) => segment.lane < maxVisibleEventBars)
+                            .filter(
+                              (segment) => segment.lane + segment.rowSpan <= maxVisibleEventBars,
+                            )
                             .map((segment) => (
                               <span
                                 className={`full-calendar__event-bar${
@@ -483,18 +495,22 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                                   segment.isInline ? ' is-inline' : ''
                                 }${segment.endColumn > segment.startColumn ? ' is-multi-day' : ''}${
                                   segment.showLabel ? '' : ' is-continuation'
-                                }${segment.continuesBefore ? ' starts-before' : ''}${
-                                  segment.continuesAfter ? ' ends-after' : ''
-                                }${segment.endColumn === 7 ? ' ends-week' : ''}`}
+                                }${segment.rowSpan === 2 ? ' is-wrapped' : ''}${
+                                  segment.continuesBefore ? ' starts-before' : ''
+                                }${segment.continuesAfter ? ' ends-after' : ''}${
+                                  segment.endColumn === 7 ? ' ends-week' : ''
+                                }`}
                                 key={`${segment.event.id}-${week[0].dateKey}`}
                                 style={{
                                   ...styleForEvent(segment.event),
                                   gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
-                                  gridRow: `${segment.lane + 1}`,
+                                  gridRow: `${segment.lane + 1} / span ${segment.rowSpan}`,
                                 }}
                                 title={displayEventTitle(segment.event.title)}
                               >
-                                {segment.showLabel ? displayEventTitle(segment.event.title) : null}
+                                {segment.showLabel ? (
+                                  <span>{displayEventTitle(segment.event.title)}</span>
+                                ) : null}
                               </span>
                             ))}
                     </div>
@@ -505,8 +521,10 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
 
             <aside className="calendar-agenda" aria-live="polite">
               <div className="calendar-agenda__heading">
-                <CalendarDays size={18} aria-hidden="true" />
-                <h3>{formatSelectedDateHeading(fromDateKey(selectedDate))}</h3>
+                <div>
+                  <h3>{selectedDate}</h3>
+                  <span>{selectedEvents.length}건</span>
+                </div>
               </div>
               {calendarQuery.isLoading ? (
                 <div className="calendar-agenda__skeleton" aria-hidden="true">

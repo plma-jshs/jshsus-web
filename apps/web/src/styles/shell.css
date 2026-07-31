@@ -331,6 +331,10 @@
   flex: 1;
 }
 
+.main-panel:has(.detail-page--full) {
+  width: min(calc(100% - 5rem), 1600px);
+}
+
 .main-panel:focus-visible {
   outline: none;
 }
