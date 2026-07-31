@@ -329,14 +329,17 @@ export const api = {
       method: 'PUT',
       body: { ids },
     }),
-  updateUserStatus: (userId: number, status: Exclude<AdminUserStatus, 'deleted'>) =>
-    request<{ ok: true; userId: number; status: Exclude<AdminUserStatus, 'deleted'> }>(
-      `/api/admin/users/${userId}/status`,
-      {
-        method: 'PUT',
-        body: { status },
-      },
-    ),
+  updateUserStatus: (userId: number, status: AdminUserStatus) =>
+    request<{
+      ok: true;
+      userId: number;
+      status: AdminUserStatus;
+      cognitoPending?: boolean;
+      cleanupPending?: boolean;
+    }>(`/api/admin/users/${userId}/status`, {
+      method: 'PUT',
+      body: { status },
+    }),
   rolePermissions: (roleId: number) =>
     request<number[]>(`/api/admin/iam/roles/${roleId}/permissions`),
   assignRolePermissions: (roleId: number, ids: number[]) =>

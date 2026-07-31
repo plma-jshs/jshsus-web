@@ -15,8 +15,8 @@ import { SendonPasswordResetService } from './sendon-password-reset.service';
   controllers: [AuthController],
   providers: [
     AuthService,
-    AccountActivationService,
     CognitoAuthService,
+    AccountActivationService,
     SendonPasswordResetService,
     SessionGuard,
     OptionalSessionGuard,
@@ -26,6 +26,7 @@ import { SendonPasswordResetService } from './sendon-password-reset.service';
   ],
   exports: [
     AuthService,
+    CognitoAuthService,
     AccountActivationService,
     SendonPasswordResetService,
     SessionGuard,

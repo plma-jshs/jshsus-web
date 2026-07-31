@@ -14,7 +14,7 @@ const path = require('node:path');
 const databaseUrl = process.env.DATABASE_URL;
 const backupDir = path.resolve(process.env.BACKUP_DIR ?? '/backups');
 const sslMode = process.env.DATABASE_SSL_MODE ?? 'required';
-const retentionCount = Number.parseInt(process.env.BACKUP_RETENTION_COUNT ?? '14', 10);
+const retentionCount = Number.parseInt(process.env.BACKUP_RETENTION_COUNT ?? '30', 10);
 
 if (!databaseUrl) {
   throw new Error('DATABASE_URL is required.');

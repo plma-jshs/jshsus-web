@@ -5,7 +5,7 @@ const identityListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(10).max(100).default(20),
   q: z.string().trim().max(100).optional().default(''),
-  status: z.enum(['active', 'restricted', 'graduated', 'deleted']).optional(),
+  status: z.enum(['active', 'graduated', 'deleted']).optional(),
   schoolYear: z.coerce.number().int().min(2000).max(2100).optional(),
   grade: z.coerce.number().int().min(1).max(3).optional(),
   classNo: z.coerce.number().int().min(1).max(4).optional(),

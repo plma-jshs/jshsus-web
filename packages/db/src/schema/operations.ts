@@ -54,8 +54,6 @@ export const schoolYears = mysqlTable(
 export const studentEnrollmentStatusEnum = mysqlEnum('student_enrollment_status', [
   'active',
   'graduated',
-  'transferred',
-  'withdrawn',
 ]);
 
 export const studentEnrollments = mysqlTable(
@@ -73,6 +71,7 @@ export const studentEnrollments = mysqlTable(
     classNo: int('class_no').notNull(),
     number: int('number').notNull(),
     status: studentEnrollmentStatusEnum.notNull().default('active'),
+    statusChangedAt: datetime('status_changed_at', { mode: 'date', fsp: 3 }).notNull().default(now),
     ...timestamps,
   },
   (table) => ({
@@ -86,6 +85,11 @@ export const studentEnrollments = mysqlTable(
     ),
     studentIdx: index('student_enrollments_student_idx').on(table.studentId, table.schoolYear),
     statusIdx: index('student_enrollments_status_idx').on(table.schoolYear, table.status),
+    statusChangedIdx: index('student_enrollments_status_changed_idx').on(
+      table.schoolYear,
+      table.status,
+      table.statusChangedAt,
+    ),
   }),
 );
 
@@ -370,8 +374,8 @@ export const activityRequestStatusEnum = mysqlEnum('activity_request_status', [
  * cannot be linked safely to a current student. Exact student-number + name matches are
  * additionally copied into activityRequests by the legacy migration script.
  */
-export const legacyActivityRequests = mysqlTable(
-  'legacy_activity_requests',
+export const legacyActivityArchives = mysqlTable(
+  'legacy_activity_archives',
   {
     id,
     sourceId: varchar('source_id', { length: 64 }).notNull(),
@@ -397,6 +401,9 @@ export const legacyActivityRequests = mysqlTable(
     ),
   }),
 );
+
+/** @deprecated Use legacyActivityArchives. */
+export const legacyActivityRequests = legacyActivityArchives;
 
 export const activityRequests = mysqlTable(
   'activity_requests',

@@ -29,6 +29,13 @@
       "when": 1785468000000,
       "tag": "0003_legacy_activity_archive",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1785483036236,
+      "tag": "0004_sturdy_madrox",
+      "breakpoints": true
     }
   ]
 }

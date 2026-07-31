@@ -453,19 +453,20 @@ export function UsersPage() {
       showToast({ title: '학생 인증코드를 일괄 발급하지 못했습니다.', tone: 'danger' }),
   });
   const updateUserStatus = useMutation({
-    mutationFn: ({
-      userId,
-      status,
-    }: {
-      userId: number;
-      status: Exclude<AdminUserStatus, 'deleted'>;
-    }) => api.updateUserStatus(userId, status),
+    mutationFn: ({ userId, status }: { userId: number; status: AdminUserStatus }) =>
+      api.updateUserStatus(userId, status),
     onSuccess: async (result) => {
       await refresh();
       showToast({
         title:
-          result.status === 'restricted' ? '학생을 제재했습니다.' : '학생 제재를 해제했습니다.',
-        tone: 'success',
+          result.status === 'graduated'
+            ? '학생 학적을 종료했습니다.'
+            : '교직원 계정을 비활성화했습니다.',
+        description:
+          result.cognitoPending || result.cleanupPending
+            ? '외부 개인정보 정리는 재시도 대기 중입니다.'
+            : '로그인 차단과 개인정보 정리를 완료했습니다.',
+        tone: result.cognitoPending || result.cleanupPending ? 'warning' : 'success',
       });
     },
     onError: () => showToast({ title: '학생 상태를 변경하지 못했습니다.', tone: 'danger' }),
@@ -531,6 +532,13 @@ export function UsersPage() {
       enableSorting: false,
       cell: ({ row }) => contactText(row.original.email, row.original.phone),
       meta: { minWidth: 180, maxWidth: 280, truncate: true },
+    },
+    {
+      id: 'status',
+      accessorKey: 'status',
+      header: '상태',
+      cell: ({ row }) => (row.original.status === 'deleted' ? '전근·퇴직' : '재직·휴직'),
+      meta: { align: 'center', width: 112 },
     },
     {
       id: 'lastLoginAt',
@@ -1313,14 +1321,16 @@ function IdentityActions({
   canManageStatus: boolean;
   statusPending: boolean;
   onOpen: (state: DialogState) => void;
-  onUpdateStatus: (
-    identity: Identity,
-    status: Exclude<AdminUserStatus, 'deleted' | 'graduated'>,
-  ) => void;
+  onUpdateStatus: (identity: Identity, status: AdminUserStatus) => void;
   onOpenActivation: (identity: Identity) => void;
 }) {
   const disabled = !identity.value.userId;
-  const isRestricted = identity.kind === 'student' && identity.value.status === 'restricted';
+  const inactive =
+    identity.kind === 'student'
+      ? identity.value.status === 'graduated'
+      : identity.value.status === 'deleted';
+  const nextStatus: AdminUserStatus = identity.kind === 'student' ? 'graduated' : 'deleted';
+  const deactivateLabel = identity.kind === 'student' ? '학적 종료' : '전근·퇴직 처리';
   return (
     <RowActions className="identity-row-actions">
       <RowActionButton
@@ -1341,14 +1351,24 @@ function IdentityActions({
           onClick={() => onOpen({ type: 'roles', identity })}
         />
       ) : null}
-      {identity.kind === 'student' && canManageStatus ? (
+      {canManageStatus && !inactive ? (
         <RowActionButton
-          icon={
-            isRestricted ? <ShieldCheck aria-hidden="true" /> : <ShieldAlert aria-hidden="true" />
-          }
-          label={isRestricted ? '제재 해제' : '제재'}
+          icon={<ShieldAlert aria-hidden="true" />}
+          label={deactivateLabel}
           disabled={disabled || statusPending}
-          onClick={() => onUpdateStatus(identity, isRestricted ? 'active' : 'restricted')}
+          onClick={() => {
+            const subject =
+              identity.kind === 'student'
+                ? `${identity.value.studentNo} ${identity.value.name}`
+                : `${identity.value.staffNo} ${identity.value.name}`;
+            if (
+              window.confirm(
+                `${subject} 계정을 비활성화하고 연락처·프로필·인증정보를 즉시 파기하시겠습니까?`,
+              )
+            ) {
+              onUpdateStatus(identity, nextStatus);
+            }
+          }}
         />
       ) : null}
     </RowActions>

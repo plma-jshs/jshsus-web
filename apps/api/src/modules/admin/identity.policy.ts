@@ -90,13 +90,13 @@ export function assertStudentNumberPartsMatch(
 export function assertUserStatusChangeAllowed(input: {
   actorIsTarget: boolean;
   currentStatus: AdminUserStatus;
-  nextStatus: Exclude<AdminUserStatus, 'deleted'>;
+  nextStatus: AdminUserStatus;
   currentRoleNames: ReadonlySet<string>;
   activeSystemAdminCount: number;
 }) {
   if (input.nextStatus === 'active') return;
   if (input.actorIsTarget) {
-    throw new ForbiddenException('You cannot restrict your own account.');
+    throw new ForbiddenException('You cannot deactivate your own account.');
   }
   if (
     input.currentStatus === 'active' &&

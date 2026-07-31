@@ -1,0 +1,131 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Encrypted JSHSUS database backups and GitHub OIDC privacy operations.
+
+Parameters:
+  GitHubOrg:
+    Type: String
+    Default: plma-jshs
+  GitHubRepository:
+    Type: String
+    Default: jshsus-web
+  BackupBucketName:
+    Type: String
+    Default: jshsus-v26-db-backups-050314037822
+  CognitoUserPoolId:
+    Type: String
+
+Resources:
+  DatabaseBackupBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Ref BackupBucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - BucketKeyEnabled: true
+            ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: alias/aws/s3
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteBackupsAfter30Days
+            Status: Enabled
+            ExpirationInDays: 30
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 1
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        # Unique timestamped object names do not need version history. Suspending
+        # versioning ensures an expired backup is not recoverable as a noncurrent
+        # version after the approved 30-day window.
+        Status: Suspended
+
+  DatabaseBackupBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DatabaseBackupBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource:
+              - !GetAtt DatabaseBackupBucket.Arn
+              - !Sub '${DatabaseBackupBucket.Arn}/*'
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+  GitHubPrivacyOperationsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: JshsusGitHubPrivacyOperationsRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com'
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub:
+                  - !Sub 'repo:${GitHubOrg}/${GitHubRepository}:environment:database-backup'
+                  - !Sub 'repo:${GitHubOrg}/${GitHubRepository}:environment:privacy-operations'
+      Policies:
+        - PolicyName: JshsusBackupAndPrivacyOperations
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: UploadEncryptedBackups
+                Effect: Allow
+                Action:
+                  - s3:GetBucketLocation
+                  - s3:ListBucket
+                Resource: !GetAtt DatabaseBackupBucket.Arn
+              - Sid: WriteBackupObjects
+                Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:PutObject
+                Resource: !Sub '${DatabaseBackupBucket.Arn}/database/*'
+              - Sid: RetireCognitoAccounts
+                Effect: Allow
+                Action:
+                  - cognito-idp:AdminDeleteUser
+                  - cognito-idp:AdminDeleteUserAttributes
+                  - cognito-idp:AdminDisableUser
+                  - cognito-idp:AdminGetUser
+                  - cognito-idp:AdminUpdateUserAttributes
+                  - cognito-idp:ListUsers
+                Resource: !Sub 'arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolId}'
+              - Sid: ApplyCloudWatchRetention
+                Effect: Allow
+                Action:
+                  - logs:PutRetentionPolicy
+                Resource: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:*'
+              - Sid: ApplyEcrLifecycle
+                Effect: Allow
+                Action:
+                  - ecr:PutLifecyclePolicy
+                Resource: !Sub 'arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/*'
+
+Outputs:
+  BackupBucketName:
+    Value: !Ref DatabaseBackupBucket
+  OperationsRoleArn:
+    Value: !GetAtt GitHubPrivacyOperationsRole.Arn

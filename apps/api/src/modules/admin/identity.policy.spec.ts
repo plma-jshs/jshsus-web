@@ -92,18 +92,18 @@ describe('assertUserStatusChangeAllowed', () => {
   const statusBase = {
     actorIsTarget: false,
     currentStatus: 'active' as const,
-    nextStatus: 'restricted' as const,
+    nextStatus: 'graduated' as const,
     currentRoleNames: new Set(['student']),
     activeSystemAdminCount: 2,
   };
 
-  it('prevents restricting your own account', () => {
+  it('prevents deactivating your own account', () => {
     expect(() => assertUserStatusChangeAllowed({ ...statusBase, actorIsTarget: true })).toThrow(
       ForbiddenException,
     );
   });
 
-  it('prevents restricting the final active system administrator', () => {
+  it('prevents deactivating the final active system administrator', () => {
     expect(() =>
       assertUserStatusChangeAllowed({
         ...statusBase,

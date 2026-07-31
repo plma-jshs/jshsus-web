@@ -34,7 +34,8 @@ Web/Admin app client를 별도로 나누는 경우에는 `COGNITO_WEB_CLIENT_ID`
 `COGNITO_ADMIN_CLIENT_SECRET`을 넣으면 단일 client 값보다 우선한다.
 `COGNITO_AWS_ACCESS_KEY_ID`와 `COGNITO_AWS_SECRET_ACCESS_KEY`는 API 서버가
 `AdminGetUser`, `AdminCreateUser`, `AdminSetUserPassword`,
-`AdminUpdateUserAttributes`를 실행할 때만 쓰는 전용 최소 권한 IAM 자격 증명이다.
+`AdminUpdateUserAttributes` 및 승인된 계정 비활성화·파기를 실행할 때만 쓰는 전용
+최소 권한 IAM 자격 증명이다.
 파일 업로드용 `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`와 분리하고 두 값은
 반드시 함께 설정한다.
 
@@ -56,9 +57,9 @@ release compose의 `SESSION_COOKIE_DOMAIN` 기본값은 기존 local 모드를 �
 ## 서버 IAM 정책
 
 학생 계정 프로비저닝 role에는 아래 작업 중 provisioning에 필요한 것만 허용한다.
-API 런타임 IAM 사용자는 `AdminCreateUser`, `AdminGetUser`,
-`AdminSetUserPassword`, `AdminUpdateUserAttributes`만 현재 User Pool ARN에
-허용한다. `DescribeUserPool`은 프로비저닝 전에 User Pool이 일반 username 로그인
+API 런타임 IAM 사용자는 계정 생성·조회·비밀번호 설정과 계정 생명주기에 필요한
+`AdminDisableUser`, `AdminDeleteUserAttributes`, `AdminDeleteUser`,
+`ListUsers`를 현재 User Pool ARN에만 허용한다. `DescribeUserPool`은 프로비저닝 전에 User Pool이 일반 username 로그인
 또는 `preferred_username` 별칭 로그인을 지원하는지 확인하는 읽기 전용 검증에
 사용한다.
 
@@ -69,6 +70,9 @@ API 런타임 IAM 사용자는 `AdminCreateUser`, `AdminGetUser`,
   "cognito-idp:AdminRespondToAuthChallenge",
   "cognito-idp:AdminGetUser",
   "cognito-idp:AdminCreateUser",
+  "cognito-idp:AdminDeleteUser",
+  "cognito-idp:AdminDeleteUserAttributes",
+  "cognito-idp:AdminDisableUser",
   "cognito-idp:AdminSetUserPassword",
   "cognito-idp:AdminUpdateUserAttributes",
   "cognito-idp:ListUsers",

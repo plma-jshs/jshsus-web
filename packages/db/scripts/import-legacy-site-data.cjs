@@ -329,7 +329,7 @@ async function importLegacyPeople(target, legacy) {
           cleanText(iam?.email) || null,
           normalizePhone(iam?.phone || row.phone_number),
           normalizeGender(iam?.gender || row.gender),
-          Number(iam?.restricted ?? 0) ? 'restricted' : 'active',
+          'active',
         ],
       );
       user = { id: result.insertId };
@@ -348,7 +348,7 @@ async function importLegacyPeople(target, legacy) {
           cleanText(iam?.email) || null,
           normalizePhone(iam?.phone || row.phone_number),
           normalizeGender(iam?.gender || row.gender),
-          Number(iam?.restricted ?? 0) ? 'restricted' : 'active',
+          'active',
           user.id,
         ],
       );
@@ -411,7 +411,7 @@ async function importLegacyPeople(target, legacy) {
           cleanText(iam?.email) || null,
           normalizePhone(iam?.phone),
           normalizeGender(iam?.gender),
-          Number(iam?.restricted ?? 0) ? 'restricted' : 'active',
+          'active',
         ],
       );
       user = { id: result.insertId };
@@ -425,7 +425,7 @@ async function importLegacyPeople(target, legacy) {
           cleanText(iam?.email) || null,
           normalizePhone(iam?.phone),
           normalizeGender(iam?.gender),
-          Number(iam?.restricted ?? 0) ? 'restricted' : 'active',
+          'active',
           user.id,
         ],
       );

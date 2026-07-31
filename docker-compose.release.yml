@@ -176,7 +176,7 @@ services:
       DATABASE_SSL_MODE: ${DATABASE_SSL_MODE:-required}
       DATABASE_SSL_CA_PATH: ${DATABASE_SSL_CA_PATH:-}
       BACKUP_DIR: /backups
-      BACKUP_RETENTION_COUNT: ${BACKUP_RETENTION_COUNT:-14}
+      BACKUP_RETENTION_COUNT: ${BACKUP_RETENTION_COUNT:-30}
       NODE_OPTIONS: --max-old-space-size=128
     extra_hosts:
       - host.docker.internal:host-gateway

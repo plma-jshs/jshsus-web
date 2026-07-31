@@ -360,11 +360,21 @@ jobs:
             fi
           done
 
+  pre-deploy-backup:
+    name: Back up production database
+    needs: verify
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/database-backup.yml
+    permissions:
+      contents: read
+      id-token: write
+
   deploy:
     name: Deploy staging
     needs:
       - verify
       - prepare-images
+      - pre-deploy-backup
     runs-on: ubuntu-latest
     environment: production
     permissions:
@@ -546,6 +556,8 @@ jobs:
         run: |
           set -euo pipefail
           ghcr_auth="$(printf '%s:%s' '${{ github.actor }}' "$GHCR_TOKEN" | base64 | tr -d '\n')"
+          # The local runner must expand ghcr_auth before the script is sent.
+          # shellcheck disable=SC2087
           ssh -i "$HOME/.ssh/deploy_key" -p "$DEPLOY_PORT" \
             "$DEPLOY_USER@$DEPLOY_HOST" \
             "bash -s -- '$DEPLOY_PATH'" <<REMOTE_GHCR_AUTH
@@ -689,26 +701,30 @@ jobs:
     needs: deploy
     if: github.ref == 'refs/heads/main' && (vars.ECR_REPOSITORIES != '' || vars.CLOUDWATCH_LOG_GROUPS != '')
     runs-on: ubuntu-latest
+    environment: privacy-operations
     permissions:
       contents: read
+      id-token: write
     env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: ${{ vars.AWS_REGION || 'ap-northeast-2' }}
       ECR_REPOSITORIES: ${{ vars.ECR_REPOSITORIES }}
       ECR_KEEP_LAST: ${{ vars.ECR_KEEP_LAST || '30' }}
       CLOUDWATCH_LOG_GROUPS: ${{ vars.CLOUDWATCH_LOG_GROUPS }}
-      CLOUDWATCH_LOG_RETENTION_DAYS: ${{ vars.CLOUDWATCH_LOG_RETENTION_DAYS || '30' }}
+      CLOUDWATCH_LOG_RETENTION_DAYS: ${{ vars.CLOUDWATCH_LOG_RETENTION_DAYS || '90' }}
     steps:
+      - name: Assume the privacy operations role
+        uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
+        with:
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+          role-duration-seconds: 900
+          role-to-assume: ${{ vars.AWS_OPERATIONS_ROLE_ARN }}
+          role-session-name: jshsus-retention-${{ github.run_id }}
+
       - name: Apply ECR lifecycle and CloudWatch log retention
         shell: bash
         run: |
           set -euo pipefail
 
-          if [[ -z "$AWS_ACCESS_KEY_ID" || -z "$AWS_SECRET_ACCESS_KEY" ]]; then
-            printf '::error::AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are required when AWS retention vars are configured.\n' >&2
-            exit 1
-          fi
           if ! [[ "$ECR_KEEP_LAST" =~ ^[0-9]+$ ]] || (( ECR_KEEP_LAST < 2 || ECR_KEEP_LAST > 1000 )); then
             printf '::error::ECR_KEEP_LAST must be between 2 and 1000.\n' >&2
             exit 1
@@ -756,7 +772,7 @@ jobs:
                 --repository-name "$repository" \
                 --lifecycle-policy-text "file://$policy_file"
               printf 'Applied ECR lifecycle policy: %s\n' "$repository"
-            done < <(tr ', ' '\n\n' <<< "$ECR_REPOSITORIES")
+            done < <(tr ', ' '\n' <<< "$ECR_REPOSITORIES")
           fi
 
           if [[ -n "$CLOUDWATCH_LOG_GROUPS" ]]; then
@@ -767,7 +783,7 @@ jobs:
                 --retention-in-days "$CLOUDWATCH_LOG_RETENTION_DAYS"
               printf 'Applied CloudWatch retention: %s days=%s\n' \
                 "$log_group" "$CLOUDWATCH_LOG_RETENTION_DAYS"
-            done < <(tr ', ' '\n\n' <<< "$CLOUDWATCH_LOG_GROUPS")
+            done < <(tr ', ' '\n' <<< "$CLOUDWATCH_LOG_GROUPS")
           fi
 
   promote-images:

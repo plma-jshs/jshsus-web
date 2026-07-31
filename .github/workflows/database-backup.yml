@@ -1,0 +1,102 @@
+name: Database backup
+
+on:
+  schedule:
+    # 03:30 KST every day.
+    - cron: '30 18 * * *'
+  workflow_call:
+  workflow_dispatch:
+
+concurrency:
+  group: production-database-backup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  backup:
+    name: Encrypted S3 backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: database-backup
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'ap-northeast-2' }}
+      BACKUP_BUCKET: ${{ vars.DATABASE_BACKUP_BUCKET }}
+      DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+      DATABASE_SSL_MODE: ${{ vars.DATABASE_SSL_MODE || 'required' }}
+    steps:
+      - name: Validate protected configuration
+        shell: bash
+        env:
+          ROLE_ARN: ${{ vars.AWS_OPERATIONS_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          [[ "$ROLE_ARN" =~ ^arn:aws:iam::[0-9]{12}:role/[A-Za-z0-9+=,.@_/-]+$ ]]
+          [[ "$BACKUP_BUCKET" =~ ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$ ]]
+          [[ "$DATABASE_SSL_MODE" == 'required' ]]
+          test -n "$DATABASE_URL"
+
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Enable pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack install --global pnpm@10.30.0
+
+      - name: Install backup dependencies
+        run: pnpm install --frozen-lockfile --filter @jshsus/db...
+
+      - name: Assume the backup role
+        uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-duration-seconds: 1800
+          role-to-assume: ${{ vars.AWS_OPERATIONS_ROLE_ARN }}
+          role-session-name: jshsus-backup-${{ github.run_id }}
+
+      - name: Create a consistent compressed backup
+        shell: bash
+        env:
+          BACKUP_DIR: ${{ runner.temp }}/jshsus-backup
+          BACKUP_RETENTION_COUNT: 100
+        run: node packages/db/scripts/backup-database.cjs
+
+      - name: Upload with KMS encryption
+        shell: bash
+        env:
+          BACKUP_DIR: ${{ runner.temp }}/jshsus-backup
+        run: |
+          set -euo pipefail
+          backup_file="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name '*.sql.gz' -print -quit)"
+          checksum_file="${backup_file}.sha256"
+          test -s "$backup_file"
+          test -s "$checksum_file"
+          base_name="$(basename "$backup_file")"
+          digest="$(cut -d ' ' -f 1 "$checksum_file")"
+          aws s3 cp "$backup_file" "s3://${BACKUP_BUCKET}/database/${base_name}" \
+            --only-show-errors \
+            --sse aws:kms \
+            --metadata "sha256=${digest}"
+          aws s3 cp "$checksum_file" "s3://${BACKUP_BUCKET}/database/${base_name}.sha256" \
+            --only-show-errors \
+            --sse aws:kms
+
+      - name: Remove runner backup files
+        if: always()
+        shell: bash
+        run: rm -rf -- "${{ runner.temp }}/jshsus-backup"

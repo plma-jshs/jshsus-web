@@ -1,12 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   AdminCreateUserCommand,
+  AdminDeleteUserAttributesCommand,
+  AdminDeleteUserCommand,
+  AdminDisableUserCommand,
   AdminGetUserCommand,
   AdminSetUserPasswordCommand,
   AdminUpdateUserAttributesCommand,
   CognitoIdentityProviderClient,
+  ListUsersCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
-import { createHmac } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 import { env } from '../../shared/config/env';
 
 export type CognitoSurface = 'web' | 'admin';
@@ -257,6 +261,77 @@ export class CognitoAuthService {
     return this.subjectFromUser(user, username);
   }
 
+  async disableAndScrubUser(input: {
+    subject: string;
+    fallbackUsername: string;
+  }): Promise<{ found: boolean; username?: string }> {
+    const username = await this.findUsernameBySubject(input.subject, input.fallbackUsername.trim());
+    if (!username) return { found: false };
+
+    const client = this.getAdminClient();
+    const retiredEmail = `retired+${createHash('sha256')
+      .update(input.subject)
+      .digest('hex')
+      .slice(0, 24)}@jshsus.invalid`;
+
+    await client
+      .send(
+        new AdminDisableUserCommand({
+          UserPoolId: env.COGNITO_USER_POOL_ID,
+          Username: username,
+        }),
+      )
+      .catch((error) => {
+        throw this.mapAdminProviderError(error, 'AdminDisableUser');
+      });
+    await client
+      .send(
+        new AdminUpdateUserAttributesCommand({
+          UserPoolId: env.COGNITO_USER_POOL_ID,
+          Username: username,
+          UserAttributes: [
+            { Name: 'email', Value: retiredEmail },
+            { Name: 'email_verified', Value: 'false' },
+          ],
+        }),
+      )
+      .catch((error) => {
+        throw this.mapAdminProviderError(error, 'AdminUpdateUserAttributes');
+      });
+    await client
+      .send(
+        new AdminDeleteUserAttributesCommand({
+          UserPoolId: env.COGNITO_USER_POOL_ID,
+          Username: username,
+          UserAttributeNames: ['name'],
+        }),
+      )
+      .catch((error) => {
+        throw this.mapAdminProviderError(error, 'AdminDeleteUserAttributes');
+      });
+
+    return { found: true, username };
+  }
+
+  async deleteUserBySubject(input: {
+    subject: string;
+    fallbackUsername: string;
+  }): Promise<{ deleted: boolean }> {
+    const username = await this.findUsernameBySubject(input.subject, input.fallbackUsername.trim());
+    if (!username) return { deleted: false };
+    await this.getAdminClient()
+      .send(
+        new AdminDeleteUserCommand({
+          UserPoolId: env.COGNITO_USER_POOL_ID,
+          Username: username,
+        }),
+      )
+      .catch((error) => {
+        throw this.mapAdminProviderError(error, 'AdminDeleteUser');
+      });
+    return { deleted: true };
+  }
+
   async createOrUpdatePermanentPasswordUser(input: {
     username: string;
     password: string;
@@ -448,6 +523,35 @@ export class CognitoAuthService {
       if (this.safeProviderErrorName(error) === 'UserNotFoundException') return null;
       throw this.mapAdminProviderError(error, 'AdminGetUser');
     }
+  }
+
+  private async findUsernameBySubject(
+    subject: string,
+    fallbackUsername: string,
+  ): Promise<string | null> {
+    const escapedSubject = subject.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const result = await this.getAdminClient()
+      .send(
+        new ListUsersCommand({
+          UserPoolId: env.COGNITO_USER_POOL_ID,
+          Filter: `sub = "${escapedSubject}"`,
+          Limit: 2,
+        }),
+      )
+      .catch((error) => {
+        throw this.mapAdminProviderError(error, 'ListUsers');
+      });
+    if ((result.Users?.length ?? 0) > 1) {
+      throw new CognitoAuthError(
+        'AUTH_PROVIDER_UNAVAILABLE',
+        '통합로그인 계정 연결이 중복되었습니다.',
+      );
+    }
+    const bySubject = result.Users?.[0]?.Username;
+    if (bySubject) return bySubject;
+    if (!fallbackUsername) return null;
+    const fallback = await this.getAdminUser(fallbackUsername);
+    return fallback?.Username ?? null;
   }
 
   private subjectFromUser(user: CognitoUserResponse, fallbackUsername: string): string {

@@ -6,4 +6,5 @@ export * from './files';
 export * from './jbs';
 export * from './notifications';
 export * from './operations';
+export * from './privacy';
 export * from './school';

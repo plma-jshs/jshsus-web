@@ -26,6 +26,7 @@ import { DatabaseService } from '../database/database.service';
 import { DeviceCasesService } from '../device-cases/device-cases.service';
 import { PointsService } from '../points/points.service';
 import { AuthService } from '../auth/auth.service';
+import { AccountLifecycleService, type ManagedUserStatus } from './account-lifecycle.service';
 import {
   assertRoleAssignmentAllowed,
   assertStudentGradeUpdateAllowed,
@@ -122,7 +123,7 @@ const idListSchema = z.object({
 });
 
 const userStatusSchema = z.object({
-  status: z.enum(['active', 'restricted', 'graduated']),
+  status: z.enum(['active', 'graduated', 'deleted']),
 });
 
 const BUILT_IN_ROLE_NAMES = new Set([
@@ -235,6 +236,7 @@ export class AdminService {
     private readonly activityRequestsService: ActivityRequestsService,
     private readonly database: DatabaseService,
     private readonly authService: AuthService,
+    private readonly accountLifecycle: AccountLifecycleService,
   ) {}
 
   async dashboard(actorId?: number | null): Promise<AdminDashboard> {
@@ -1123,6 +1125,7 @@ export class AdminService {
     }
 
     const affectedUserIds = new Set<number>();
+    const graduatedUserIds = new Set<number>();
     const result = await this.database.db.transaction(async (tx) => {
       const now = new Date();
       if (parsed.data.activateYear) {
@@ -1225,6 +1228,9 @@ export class AdminService {
               email: normalized.email,
               phone: normalized.phone,
               status: 'active',
+              statusChangedAt: existing.status === 'active' ? undefined : now,
+              deactivatedAt: null,
+              cognitoDeleteAfter: null,
               updatedAt: now,
             })
             .where(eq(schema.users.id, existing.userId));
@@ -1247,6 +1253,7 @@ export class AdminService {
                 classNo: normalized.classNo,
                 number: normalized.number,
                 status: 'active',
+                statusChangedAt: now,
                 updatedAt: now,
               },
             });
@@ -1257,7 +1264,7 @@ export class AdminService {
         if (row.action === 'graduate' && row.existing?.userId && row.matchedStudentId) {
           await tx
             .update(schema.studentEnrollments)
-            .set({ status: 'graduated', updatedAt: now })
+            .set({ status: 'graduated', statusChangedAt: now, updatedAt: now })
             .where(
               and(
                 eq(schema.studentEnrollments.studentId, row.matchedStudentId),
@@ -1267,9 +1274,10 @@ export class AdminService {
             );
           await tx
             .update(schema.users)
-            .set({ status: 'graduated', updatedAt: now })
+            .set({ status: 'graduated', statusChangedAt: now, updatedAt: now })
             .where(eq(schema.users.id, row.existing.userId));
           affectedUserIds.add(row.existing.userId);
+          graduatedUserIds.add(row.existing.userId);
         }
       }
 
@@ -1291,8 +1299,17 @@ export class AdminService {
     });
 
     await Promise.all(
-      [...affectedUserIds].map((userId) => this.authService.invalidateUserSessions(userId)),
+      [...affectedUserIds]
+        .filter((userId) => !graduatedUserIds.has(userId))
+        .map((userId) => this.authService.invalidateUserSessions(userId)),
     );
+    for (const userId of graduatedUserIds) {
+      await this.accountLifecycle.changeStatus({
+        userId,
+        nextStatus: 'graduated',
+        actorId,
+      });
+    }
     await this.database.writeAudit({
       actorId,
       action: 'admin.student-roster.apply',
@@ -1348,6 +1365,7 @@ export class AdminService {
           managedClasses: schema.staffProfiles.managedClasses,
           email: schema.users.email,
           phone: schema.users.phone,
+          status: schema.users.status,
           lastLoginAt: schema.users.lastLoginAt,
         })
         .from(schema.staffProfiles)
@@ -1367,6 +1385,7 @@ export class AdminService {
           managedClasses: row.managedClasses ?? [],
           email: row.email ?? undefined,
           phone: row.phone ?? undefined,
+          status: row.status === 'deleted' ? 'deleted' : 'active',
           roles: roles.get(row.userId) ?? [],
           lastLoginAt: row.lastLoginAt?.toISOString(),
         })),
@@ -1547,18 +1566,11 @@ export class AdminService {
       activeSystemAdminCount,
     });
 
-    await this.database.db
-      .update(schema.users)
-      .set({ status: parsed.data.status, updatedAt: new Date() })
-      .where(eq(schema.users.id, userId));
-    await this.authService.invalidateUserSessions(userId);
-    await this.database.writeAudit({
+    return this.accountLifecycle.changeStatus({
+      userId,
+      nextStatus: parsed.data.status as ManagedUserStatus,
       actorId,
-      action: 'admin.user.status.update',
-      targetType: 'users',
-      targetId: userId,
     });
-    return { ok: true, userId, status: parsed.data.status };
   }
 
   async roles(): Promise<AdminRoleSummary[]> {

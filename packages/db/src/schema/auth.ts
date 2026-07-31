@@ -11,12 +11,7 @@ import {
 } from 'drizzle-orm/mysql-core';
 import { id, now, timestamps } from './common';
 
-export const userStatusEnum = mysqlEnum('user_status', [
-  'active',
-  'restricted',
-  'graduated',
-  'deleted',
-]);
+export const userStatusEnum = mysqlEnum('user_status', ['active', 'graduated', 'deleted']);
 
 export const users = mysqlTable(
   'users',
@@ -34,12 +29,21 @@ export const users = mysqlTable(
     phone: varchar('phone', { length: 32 }),
     gender: mysqlEnum('gender', ['0', '1']),
     status: userStatusEnum.notNull().default('active'),
+    statusChangedAt: datetime('status_changed_at', { mode: 'date', fsp: 3 }).notNull().default(now),
+    deactivatedAt: datetime('deactivated_at', { mode: 'date', fsp: 3 }),
+    cognitoDeleteAfter: datetime('cognito_delete_after', { mode: 'date', fsp: 3 }),
+    personalDataErasedAt: datetime('personal_data_erased_at', { mode: 'date', fsp: 3 }),
     lastLoginAt: datetime('last_login_at', { mode: 'date', fsp: 3 }),
     ...timestamps,
   },
   (table) => ({
     studentNoIdx: uniqueIndex('users_student_no_idx').on(table.studentNo),
     nicknameIdx: uniqueIndex('users_nickname_idx').on(table.nickname),
+    statusChangedIdx: index('users_status_changed_idx').on(table.status, table.statusChangedAt),
+    cognitoDeleteIdx: index('users_cognito_delete_idx').on(
+      table.cognitoDeleteAfter,
+      table.personalDataErasedAt,
+    ),
   }),
 );
 

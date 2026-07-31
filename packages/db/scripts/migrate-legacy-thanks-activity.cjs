@@ -404,7 +404,7 @@ function thanksKey(record) {
 
 async function readTargetState(connection) {
   const [archiveRows] = await connection.execute(
-    'SELECT source_id AS sourceId, source_payload_hash AS sourcePayloadHash FROM legacy_activity_requests',
+    'SELECT source_id AS sourceId, source_payload_hash AS sourcePayloadHash FROM legacy_activity_archives',
   );
   const [thanksRows] = await connection.execute(
     `SELECT school_number AS schoolNumber,
@@ -435,7 +435,7 @@ async function assertTargetReady(connection, databaseName) {
     `SELECT table_name AS tableName
        FROM information_schema.tables
       WHERE table_schema = ?
-        AND table_name IN ('legacy_activity_requests', 'thanks_messages', 'activity_requests')`,
+        AND table_name IN ('legacy_activity_archives', 'thanks_messages', 'activity_requests')`,
     [databaseName],
   );
   if (rows.length !== 3) {
@@ -471,7 +471,7 @@ async function upsertActivityArchive(connection, records) {
       record.sourcePayloadHash,
     ]);
     await connection.execute(
-      `INSERT INTO legacy_activity_requests
+      `INSERT INTO legacy_activity_archives
         (source_id, activity_date, time_text, time_ranges, location, purpose,
          representative_text, participants_text, advisor_teacher_name, support_text,
          submitted_label, source_payload_hash)
@@ -680,7 +680,7 @@ async function main() {
 
     const [[totals]] = await connection.execute(
       `SELECT
-         (SELECT COUNT(*) FROM legacy_activity_requests) AS archivedActivities,
+         (SELECT COUNT(*) FROM legacy_activity_archives) AS archivedActivities,
          (SELECT COUNT(*) FROM activity_requests WHERE issued_number LIKE 'LEGACY-SSAM-%')
            AS linkedActivities,
          (SELECT COUNT(*) FROM thanks_messages) AS thanksMessages`,

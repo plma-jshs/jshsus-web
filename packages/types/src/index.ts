@@ -490,11 +490,12 @@ export type AdminStaffSummary = {
   managedClasses?: Array<{ grade: number; classNo: number }>;
   email?: string;
   phone?: string;
+  status: Extract<AdminUserStatus, 'active' | 'deleted'>;
   roles: UserRole[];
   lastLoginAt?: string;
 };
 
-export type AdminUserStatus = 'active' | 'restricted' | 'graduated' | 'deleted';
+export type AdminUserStatus = 'active' | 'graduated' | 'deleted';
 
 export type AdminIdentityListQuery = {
   page?: number;
@@ -535,7 +536,7 @@ export type AccountActivationCompleteResult = {
   identityNumber: number;
 };
 
-export type StudentEnrollmentStatus = 'active' | 'graduated' | 'transferred' | 'withdrawn';
+export type StudentEnrollmentStatus = 'active' | 'graduated';
 
 export type AdminSchoolYearSummary = {
   id: number;
