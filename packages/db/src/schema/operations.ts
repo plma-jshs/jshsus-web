@@ -414,6 +414,7 @@ export const activityRequests = mysqlTable(
       .references(() => students.id),
     createdById: int('created_by_id').references(() => users.id),
     advisorTeacherId: int('teacher_id').references(() => users.id),
+    advisorTeacherNameSnapshot: varchar('advisor_teacher_name_snapshot', { length: 128 }),
     reviewedById: int('reviewed_by_id').references(() => users.id),
     location: varchar('location', { length: 160 }).notNull(),
     startsAt: datetime('starts_at', { mode: 'date', fsp: 3 }).notNull(),

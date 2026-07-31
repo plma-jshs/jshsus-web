@@ -850,6 +850,8 @@ export type ActivityRequestSummary = {
   issuedNumber?: string;
   issuedAt?: string;
   rejectionReason?: string;
+  /** Whether the signed-in student created and may still manage this request. */
+  canManage?: boolean;
 };
 
 export type ActivityRequestDetail = ActivityRequestSummary & {

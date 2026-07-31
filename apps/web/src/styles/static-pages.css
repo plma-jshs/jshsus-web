@@ -283,7 +283,7 @@
   color: #c1121f;
   background: transparent;
   font-family: 'Gungsuh', '궁서', serif;
-  font-size: 6px;
+  font-size: 12px;
   font-style: italic;
   font-weight: 800;
   line-height: 1.2;
@@ -300,8 +300,8 @@
   position: fixed;
   z-index: 120;
   top: 22vh;
-  left: -220px;
-  width: min(24vw, 180px);
+  left: -300px;
+  width: min(31vw, 260px);
   height: auto;
   pointer-events: none;
   animation: about-eagle-fly 2s linear forwards;
@@ -402,7 +402,7 @@
   }
 
   .about-flying-eagle {
-    width: 150px;
+    width: 200px;
   }
 
   .about-tab-list {

@@ -46,6 +46,23 @@ describe('AboutPage', () => {
     expect(kim).toBeInTheDocument();
     expect(kang.compareDocumentPosition(kim) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole('button', { name: '나주붉은매 화이팅' })).toBeInTheDocument();
-    expect(screen.getAllByText('- 2025 과구리 개발')).toHaveLength(2);
+    expect(screen.getAllByText('- 2025/2026 과구리 개발')).toHaveLength(2);
+  });
+
+  it('restarts the eagle flight when the cheer is pressed again', async () => {
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined);
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    const { container } = render(<AboutPage />);
+    await user.click(screen.getByRole('tab', { name: '개발자' }));
+    const cheer = screen.getByRole('button', { name: '나주붉은매 화이팅' });
+
+    await user.click(cheer);
+    const firstFlight = container.querySelector('.about-flying-eagle');
+    expect(firstFlight).toBeInTheDocument();
+
+    await user.click(cheer);
+    expect(container.querySelector('.about-flying-eagle')).not.toBe(firstFlight);
   });
 });

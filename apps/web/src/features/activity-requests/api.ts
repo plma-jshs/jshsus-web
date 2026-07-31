@@ -28,6 +28,7 @@ export function getActivityRequestTeacherOptions() {
 }
 
 export function createActivityRequest(input: {
+  representativeStudentNo: number;
   participantStudentNos: number[];
   advisorTeacherId: number;
   location: string;
@@ -57,6 +58,7 @@ export function updateActivityRequest(
   id: number,
   input: {
     participantStudentNos: number[];
+    representativeStudentNo: number;
     advisorTeacherId: number;
     location: string;
     startsAt: string;

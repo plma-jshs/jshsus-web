@@ -2,7 +2,7 @@ import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { ArrowLeft, Save, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Save, X } from 'lucide-react';
 import { useToast } from '../../components/feedback/Toast';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { taskBreadcrumbs } from '../../components/page/pageHierarchy';
@@ -17,8 +17,10 @@ import {
 } from './api';
 import {
   activitySlotsDateTimes,
+  activityTimeSlots,
   availableActivityTimeSlots,
   inferActivityTimeSlotIds,
+  isWeekendActivityDate,
   koreaDateInput,
   type ActivityTimeSlotId,
 } from './activitySchedule';
@@ -29,7 +31,15 @@ import {
 } from './presentation';
 import '../../styles/activity-requests.css';
 
-function EditForm({ request }: { request: EditableActivityRequestDetail }) {
+function EditForm({
+  request,
+  applicantStudentNo,
+  applicantName,
+}: {
+  request: EditableActivityRequestDetail;
+  applicantStudentNo: number;
+  applicantName: string;
+}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -62,6 +72,10 @@ function EditForm({ request }: { request: EditableActivityRequestDetail }) {
   }));
   const [activityDate, setActivityDate] = useState(initialDate);
   const [activitySlotIds, setActivitySlotIds] = useState<ActivityTimeSlotId[]>(initialSlotIds);
+  const [showExtendedSlots, setShowExtendedSlots] = useState(() =>
+    initialSlotIds.some((slotId) => !activityTimeSlots.find((slot) => slot.id === slotId)?.weekday),
+  );
+  const [representativeStudentNo, setRepresentativeStudentNo] = useState(request.studentNo);
   const [participantStudentNos, setParticipantStudentNos] = useState<number[]>(() =>
     request.participants
       .filter((student) => !student.isRepresentative)
@@ -78,12 +92,17 @@ function EditForm({ request }: { request: EditableActivityRequestDetail }) {
     () => searchActivityRequestStudents(studentsQuery.data ?? [], studentSearch),
     [studentSearch, studentsQuery.data],
   );
-  const availableSlots = useMemo(() => availableActivityTimeSlots(activityDate), [activityDate]);
+  const availableSlots = useMemo(
+    () => availableActivityTimeSlots(activityDate, showExtendedSlots),
+    [activityDate, showExtendedSlots],
+  );
+  const selectedStudentNos = new Set([representativeStudentNo, ...participantStudentNos]);
 
   const mutation = useMutation({
     mutationFn: () => {
       if (!form.advisorTeacherId) throw new Error('담당 교사를 선택해 주세요.');
       return updateActivityRequest(request.id, {
+        representativeStudentNo,
         participantStudentNos,
         activitySlotIds,
         advisorTeacherId: form.advisorTeacherId,
@@ -129,6 +148,15 @@ function EditForm({ request }: { request: EditableActivityRequestDetail }) {
       ? activitySlotIds.filter((id) => id !== slotId)
       : [...activitySlotIds, slotId];
     if (next.length) applySchedule(activityDate, next);
+  };
+  const selectRepresentative = (studentNo: number) => {
+    setRepresentativeStudentNo((current) => {
+      if (current === studentNo) return current;
+      setParticipantStudentNos((participants) =>
+        [...new Set([current, ...participants])].filter((value) => value !== studentNo),
+      );
+      return studentNo;
+    });
   };
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -189,12 +217,12 @@ function EditForm({ request }: { request: EditableActivityRequestDetail }) {
             <div className="activity-participant-results" aria-label="학생 검색 결과">
               {filteredStudents.length ? (
                 filteredStudents.map((student) => {
-                  const selected = participantStudentNos.includes(student.studentNo);
+                  const selected = selectedStudentNos.has(student.studentNo);
                   return (
                     <button
                       key={student.studentId}
                       type="button"
-                      disabled={selected || participantStudentNos.length >= 29}
+                      disabled={selected || selectedStudentNos.size >= 30}
                       onClick={() => {
                         setParticipantStudentNos((current) => [...current, student.studentNo]);
                         setStudentSearch('');
@@ -217,31 +245,59 @@ function EditForm({ request }: { request: EditableActivityRequestDetail }) {
           <strong>참여 학생 {participantStudentNos.length + 1}명</strong>
           <div>
             <span className="activity-participant-chip is-representative">
-              {request.studentNo} {request.studentName} · 대표
+              <button
+                type="button"
+                className="activity-participant-chip__select"
+                aria-pressed="true"
+                title="현재 대표 학생"
+              >
+                {representativeStudentNo}{' '}
+                {studentByNo.get(representativeStudentNo)?.studentName ??
+                  request.participants.find(
+                    (student) => student.studentNo === representativeStudentNo,
+                  )?.studentName ??
+                  (representativeStudentNo === applicantStudentNo ? applicantName : '')}{' '}
+                · 대표
+              </button>
             </span>
             {participantStudentNos.map((studentNo) => {
               const existing = request.participants.find(
                 (student) => student.studentNo === studentNo,
               );
+              const isApplicant = studentNo === applicantStudentNo;
               return (
                 <span className="activity-participant-chip" key={studentNo}>
-                  {studentNo}{' '}
-                  {studentByNo.get(studentNo)?.studentName ?? existing?.studentName ?? ''}
                   <button
                     type="button"
-                    aria-label={`${studentNo} 참여 학생 제거`}
-                    onClick={() =>
-                      setParticipantStudentNos((current) =>
-                        current.filter((value) => value !== studentNo),
-                      )
-                    }
+                    className="activity-participant-chip__select"
+                    aria-label={`${studentNo} ${studentByNo.get(studentNo)?.studentName ?? existing?.studentName ?? ''} 대표 학생으로 지정`}
+                    aria-pressed="false"
+                    onClick={() => selectRepresentative(studentNo)}
                   >
-                    <X size={14} aria-hidden="true" />
+                    {studentNo}{' '}
+                    {studentByNo.get(studentNo)?.studentName ??
+                      existing?.studentName ??
+                      (isApplicant ? applicantName : '')}
                   </button>
+                  {!isApplicant ? (
+                    <button
+                      type="button"
+                      className="activity-participant-chip__remove"
+                      aria-label={`${studentNo} 참여 학생 제거`}
+                      onClick={() =>
+                        setParticipantStudentNos((current) =>
+                          current.filter((value) => value !== studentNo),
+                        )
+                      }
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  ) : null}
                 </span>
               );
             })}
           </div>
+          <small>학생 배지를 누르면 대표 학생을 변경할 수 있습니다.</small>
         </div>
       </section>
 
@@ -301,7 +357,7 @@ function EditForm({ request }: { request: EditableActivityRequestDetail }) {
               value={activityDate}
               min={koreaDateInput()}
               onChange={(event) => {
-                const slots = availableActivityTimeSlots(event.target.value);
+                const slots = availableActivityTimeSlots(event.target.value, showExtendedSlots);
                 const nextIds = activitySlotIds.filter((id) =>
                   slots.some((slot) => slot.id === id),
                 );
@@ -335,6 +391,14 @@ function EditForm({ request }: { request: EditableActivityRequestDetail }) {
                 );
               })}
             </div>
+            {!isWeekendActivityDate(activityDate) && !showExtendedSlots ? (
+              <div className="activity-slot-selector__more">
+                <button type="button" onClick={() => setShowExtendedSlots(true)}>
+                  오전·오후 면학 더보기
+                  <ChevronDown size={15} aria-hidden="true" />
+                </button>
+              </div>
+            ) : null}
           </fieldset>
         </div>
       </section>
@@ -372,10 +436,11 @@ export function EditActivityRequestPage() {
     enabled: id !== null,
   });
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
-  const canEdit =
-    requestQuery.data !== undefined &&
-    sessionQuery.data?.isLogined === true &&
-    Number(sessionQuery.data.stuid ?? sessionQuery.data.identifier) === requestQuery.data.studentNo;
+  const canEdit = requestQuery.data?.canManage === true;
+  const applicantStudentNo =
+    sessionQuery.data?.isLogined === true
+      ? Number(sessionQuery.data.stuid ?? sessionQuery.data.identifier)
+      : 0;
 
   return (
     <PageScaffold
@@ -434,7 +499,12 @@ export function EditActivityRequestPage() {
         />
       ) : null}
       {requestQuery.data?.status === 'submitted' && canEdit ? (
-        <EditForm key={requestQuery.data.id} request={requestQuery.data} />
+        <EditForm
+          key={requestQuery.data.id}
+          request={requestQuery.data}
+          applicantStudentNo={applicantStudentNo}
+          applicantName={sessionQuery.data?.isLogined ? (sessionQuery.data.name ?? '') : ''}
+        />
       ) : null}
     </PageScaffold>
   );

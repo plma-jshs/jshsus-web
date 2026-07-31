@@ -2,7 +2,7 @@ import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, Send, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Send, X } from 'lucide-react';
 import { useToast } from '../../components/feedback/Toast';
 import { PageScaffold } from '../../components/page/PageScaffold';
 import { taskBreadcrumbs } from '../../components/page/pageHierarchy';
@@ -15,6 +15,7 @@ import {
 import {
   activitySlotsDateTimes,
   availableActivityTimeSlots,
+  isWeekendActivityDate,
   koreaDateInput,
   type ActivityTimeSlotId,
 } from './activitySchedule';
@@ -51,7 +52,11 @@ export function NewActivityRequestPage() {
   const [touched, setTouched] = useState<Partial<Record<keyof ActivityRequestForm, boolean>>>({});
   const [attempted, setAttempted] = useState(false);
   const [studentSearch, setStudentSearch] = useState('');
+  const [selectedRepresentativeStudentNo, setSelectedRepresentativeStudentNo] = useState<
+    number | null
+  >(null);
   const [participantStudentNos, setParticipantStudentNos] = useState<number[]>([]);
+  const [showExtendedSlots, setShowExtendedSlots] = useState(false);
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
   const studentsQuery = useQuery({
     queryKey: ['activity-request-student-options'],
@@ -71,14 +76,25 @@ export function NewActivityRequestPage() {
     () => searchActivityRequestStudents(studentsQuery.data ?? [], studentSearch),
     [studentSearch, studentsQuery.data],
   );
+  const applicantStudentNo =
+    sessionQuery.data?.isLogined === true
+      ? Number(sessionQuery.data.stuid ?? sessionQuery.data.identifier)
+      : 0;
+  const representativeStudentNo =
+    selectedRepresentativeStudentNo ?? (applicantStudentNo > 0 ? applicantStudentNo : null);
   const errors = useMemo(() => validateActivityRequestForm(form), [form]);
-  const availableSlots = useMemo(() => availableActivityTimeSlots(activityDate), [activityDate]);
+  const availableSlots = useMemo(
+    () => availableActivityTimeSlots(activityDate, showExtendedSlots),
+    [activityDate, showExtendedSlots],
+  );
   const mutation = useMutation({
     mutationFn: () => {
       if (!form.advisorTeacherId) throw new Error('담당 교사를 선택해 주세요.');
+      if (!representativeStudentNo) throw new Error('대표 학생을 선택해 주세요.');
       return createActivityRequest({
         ...form,
         advisorTeacherId: form.advisorTeacherId,
+        representativeStudentNo,
         participantStudentNos,
         activitySlotIds,
         location: form.location.trim(),
@@ -132,6 +148,28 @@ export function NewActivityRequestPage() {
       : [...activitySlotIds, slotId];
     if (next.length) applySchedule(activityDate, next);
   };
+  const selectRepresentative = (studentNo: number) => {
+    if (representativeStudentNo === studentNo) return;
+    setSelectedRepresentativeStudentNo(studentNo);
+    setParticipantStudentNos((participants) =>
+      [
+        ...new Set([
+          ...(representativeStudentNo ? [representativeStudentNo] : []),
+          ...participants,
+        ]),
+      ].filter((value) => value !== studentNo),
+    );
+  };
+  const selectedStudentNos = new Set([
+    ...(representativeStudentNo ? [representativeStudentNo] : []),
+    ...participantStudentNos,
+  ]);
+  const representativeName = representativeStudentNo
+    ? (studentByNo.get(representativeStudentNo)?.studentName ??
+      (representativeStudentNo === applicantStudentNo && sessionQuery.data?.isLogined
+        ? sessionQuery.data.name
+        : ''))
+    : '';
 
   return (
     <PageScaffold
@@ -206,12 +244,12 @@ export function NewActivityRequestPage() {
                   <p>검색 결과가 없습니다.</p>
                 ) : null}
                 {filteredStudents.map((student) => {
-                  const selected = participantStudentNos.includes(student.studentNo);
+                  const selected = selectedStudentNos.has(student.studentNo);
                   return (
                     <button
                       key={student.studentId}
                       type="button"
-                      disabled={selected || participantStudentNos.length >= 29}
+                      disabled={selected || selectedStudentNos.size >= 30}
                       onClick={() => {
                         setParticipantStudentNos((current) => [...current, student.studentNo]);
                         setStudentSearch('');
@@ -231,28 +269,49 @@ export function NewActivityRequestPage() {
             <strong>참여 학생 {participantStudentNos.length + 1}명</strong>
             <div>
               <span className="activity-participant-chip is-representative">
-                {sessionQuery.data?.isLogined
-                  ? `${sessionQuery.data.stuid ?? sessionQuery.data.identifier ?? ''} ${sessionQuery.data.name ?? '신청자'}`.trim()
-                  : '신청자'}{' '}
-                · 대표
+                <button
+                  type="button"
+                  className="activity-participant-chip__select"
+                  aria-pressed="true"
+                  title="현재 대표 학생"
+                >
+                  {representativeStudentNo} {representativeName} · 대표
+                </button>
               </span>
-              {participantStudentNos.map((studentNo) => (
-                <span className="activity-participant-chip" key={studentNo}>
-                  {studentNo} {studentByNo.get(studentNo)?.studentName}
-                  <button
-                    type="button"
-                    aria-label={`${studentNo} 참여 학생 제거`}
-                    onClick={() =>
-                      setParticipantStudentNos((current) =>
-                        current.filter((value) => value !== studentNo),
-                      )
-                    }
-                  >
-                    <X size={14} aria-hidden="true" />
-                  </button>
-                </span>
-              ))}
+              {participantStudentNos.map((studentNo) => {
+                const isApplicant = studentNo === applicantStudentNo;
+                return (
+                  <span className="activity-participant-chip" key={studentNo}>
+                    <button
+                      type="button"
+                      className="activity-participant-chip__select"
+                      aria-label={`${studentNo} ${studentByNo.get(studentNo)?.studentName ?? ''} 대표 학생으로 지정`}
+                      aria-pressed="false"
+                      onClick={() => selectRepresentative(studentNo)}
+                    >
+                      {studentNo}{' '}
+                      {studentByNo.get(studentNo)?.studentName ??
+                        (isApplicant && sessionQuery.data?.isLogined ? sessionQuery.data.name : '')}
+                    </button>
+                    {!isApplicant ? (
+                      <button
+                        type="button"
+                        className="activity-participant-chip__remove"
+                        aria-label={`${studentNo} 참여 학생 제거`}
+                        onClick={() =>
+                          setParticipantStudentNos((current) =>
+                            current.filter((value) => value !== studentNo),
+                          )
+                        }
+                      >
+                        <X size={14} aria-hidden="true" />
+                      </button>
+                    ) : null}
+                  </span>
+                );
+              })}
             </div>
+            <small>학생 배지를 누르면 대표 학생을 변경할 수 있습니다.</small>
           </div>
         </section>
 
@@ -327,7 +386,10 @@ export function NewActivityRequestPage() {
                 value={activityDate}
                 min={koreaDateInput()}
                 onChange={(event) => {
-                  const nextSlots = availableActivityTimeSlots(event.target.value);
+                  const nextSlots = availableActivityTimeSlots(
+                    event.target.value,
+                    showExtendedSlots,
+                  );
                   const nextIds = activitySlotIds.filter((id) =>
                     nextSlots.some((slot) => slot.id === id),
                   );
@@ -361,6 +423,14 @@ export function NewActivityRequestPage() {
                   );
                 })}
               </div>
+              {!isWeekendActivityDate(activityDate) && !showExtendedSlots ? (
+                <div className="activity-slot-selector__more">
+                  <button type="button" onClick={() => setShowExtendedSlots(true)}>
+                    오전·오후 면학 더보기
+                    <ChevronDown size={15} aria-hidden="true" />
+                  </button>
+                </div>
+              ) : null}
             </fieldset>
           </div>
         </section>

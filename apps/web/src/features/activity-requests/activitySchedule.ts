@@ -19,19 +19,22 @@ export function koreaDateInput(date = new Date()) {
   }).format(date);
 }
 
-export function availableActivityTimeSlots(date: string) {
+export function isWeekendActivityDate(date: string) {
   const [year, month, day] = date.split('-').map(Number);
-  if (!year || !month || !day) return [];
+  if (!year || !month || !day) return false;
   const dayOfWeek = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-  return activityTimeSlots.filter((slot) => isWeekend || slot.weekday);
+  return dayOfWeek === 0 || dayOfWeek === 6;
+}
+
+export function availableActivityTimeSlots(date: string, includeDaytime = false) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return [];
+  const showAll = includeDaytime || isWeekendActivityDate(date);
+  return activityTimeSlots.filter((slot) => showAll || slot.weekday);
 }
 
 export function activitySlotsDateTimes(date: string, slotIds: ActivityTimeSlotId[]) {
-  const availableIds = new Set(availableActivityTimeSlots(date).map((slot) => slot.id));
-  const selected = activityTimeSlots.filter(
-    (slot) => slotIds.includes(slot.id) && availableIds.has(slot.id),
-  );
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const selected = activityTimeSlots.filter((slot) => slotIds.includes(slot.id));
   if (selected.length === 0 || selected.length !== new Set(slotIds).size) return null;
 
   return {
@@ -100,13 +103,13 @@ export function inferActivityTimeSlotIds(
   endsAt: string,
   savedSlotIds?: ActivityTimeSlotId[],
 ) {
-  const availableIds = new Set(availableActivityTimeSlots(date).map((slot) => slot.id));
-  const saved = (savedSlotIds ?? []).filter((id) => availableIds.has(id));
+  const allIds = new Set(activityTimeSlots.map((slot) => slot.id));
+  const saved = (savedSlotIds ?? []).filter((id) => allIds.has(id));
   if (saved.length) return saved;
 
   const start = new Date(startsAt).toISOString();
   const end = new Date(endsAt).toISOString();
-  const availableSlots = activityTimeSlots.filter((slot) => availableIds.has(slot.id));
+  const availableSlots = activityTimeSlots;
   for (let startIndex = 0; startIndex < availableSlots.length; startIndex += 1) {
     for (let endIndex = startIndex; endIndex < availableSlots.length; endIndex += 1) {
       const slotIds = availableSlots

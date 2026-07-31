@@ -83,6 +83,7 @@ const activityRow = {
   studentNo: 9999,
   studentName: '테스트',
   advisorTeacherId: null,
+  advisorTeacherNameSnapshot: '기존 지도교사',
   reviewedById: null,
   location: '과학관',
   startsAt: new Date('2026-07-14T00:00:00Z'),
@@ -137,6 +138,7 @@ describe('ActivityRequestsService participant contract', () => {
       id: 14,
       studentNo: 9999,
       participants: [{ studentNo: 9999, isRepresentative: true }],
+      advisorTeacherName: '기존 지도교사',
     });
   });
 
@@ -160,7 +162,7 @@ describe('ActivityRequestsService participant contract', () => {
 });
 
 describe('ActivityRequestsService student create authorization', () => {
-  it('uses the signed-in student as representative and persists all participants atomically', async () => {
+  it('lets the signed-in student submit with another participant as representative', async () => {
     const requestInsert = returningInsertChain(14);
     const participantInsert = { values: vi.fn().mockResolvedValue(undefined) };
     const eventInsert = { values: vi.fn().mockResolvedValue(undefined) };
@@ -168,14 +170,15 @@ describe('ActivityRequestsService student create authorization', () => {
       select: vi
         .fn()
         .mockReturnValueOnce(selectChain([{ id: 9 }]))
-        .mockReturnValueOnce(selectChain([{ studentNo: 9999, name: '테스트' }]))
+        .mockReturnValueOnce(selectChain([{ id: 9, studentNo: 9999, name: '테스트' }]))
+        .mockReturnValueOnce(selectChain([{ id: 10, studentNo: 1101, name: '대표학생' }]))
         .mockReturnValueOnce(
           selectChain([
             { id: 9, studentNo: 9999 },
             { id: 10, studentNo: 1101 },
           ]),
         )
-        .mockReturnValueOnce(selectChain([{ userId: 30 }])),
+        .mockReturnValueOnce(selectChain([{ userId: 30, name: '담당 교사' }])),
       insert: vi
         .fn()
         .mockReturnValueOnce(requestInsert)
@@ -197,8 +200,9 @@ describe('ActivityRequestsService student create authorization', () => {
     const result = await new ActivityRequestsService(database, notifications).create(
       {
         studentId: 999_999,
+        representativeStudentNo: 1101,
         advisorTeacherId: 30,
-        participantStudentNos: [1101],
+        participantStudentNos: [],
         location: '과학관',
         startsAt: '2026-07-18T09:00:00+09:00',
         endsAt: '2026-07-18T10:40:00+09:00',
@@ -208,13 +212,17 @@ describe('ActivityRequestsService student create authorization', () => {
     );
 
     expect(requestInsert.values).toHaveBeenCalledWith(
-      expect.objectContaining({ representativeStudentId: 9, createdById: 20 }),
+      expect.objectContaining({
+        representativeStudentId: 10,
+        createdById: 20,
+        advisorTeacherNameSnapshot: '담당 교사',
+      }),
     );
     expect(participantInsert.values).toHaveBeenCalledWith([
       { activityRequestId: 14, studentId: 9 },
       { activityRequestId: 14, studentId: 10 },
     ]);
-    expect(result.request.studentId).toBe(9);
+    expect(result.request.studentId).toBe(10);
     expect(notifications.createForUser).toHaveBeenCalledWith(
       {
         userId: 30,
@@ -222,7 +230,7 @@ describe('ActivityRequestsService student create authorization', () => {
         title: '9999 테스트 님이 새로운 탐구활동서를 제출했습니다.',
         metadata: {
           activityRequestId: 14,
-          representativeStudentId: 9,
+          representativeStudentId: 10,
         },
         dedupeKey: 'activity-request:14:submitted',
       },
@@ -232,7 +240,7 @@ describe('ActivityRequestsService student create authorization', () => {
 });
 
 describe('ActivityRequestsService pending request updates', () => {
-  it('lets the representative replace pending request details and participants atomically', async () => {
+  it('lets the creator replace the representative and pending request details atomically', async () => {
     const requestUpdate = updateChain();
     const participantDelete = deleteChain();
     const participantInsert = { values: vi.fn().mockResolvedValue(undefined) };
@@ -241,16 +249,19 @@ describe('ActivityRequestsService pending request updates', () => {
         .fn()
         .mockReturnValueOnce(selectChain([{ id: 9 }]))
         .mockReturnValueOnce(
-          lockingSelectChain([{ id: 14, status: 'submitted', representativeStudentId: 9 }]),
+          lockingSelectChain([
+            { id: 14, status: 'submitted', createdById: 20, representativeStudentId: 9 },
+          ]),
         )
         .mockReturnValueOnce(selectChain([{ studentNo: 9999 }]))
+        .mockReturnValueOnce(selectChain([{ id: 10, studentNo: 1101 }]))
         .mockReturnValueOnce(
           selectChain([
             { id: 9, studentNo: 9999 },
             { id: 10, studentNo: 1101 },
           ]),
         )
-        .mockReturnValueOnce(selectChain([{ userId: 30 }])),
+        .mockReturnValueOnce(selectChain([{ userId: 30, name: '담당 교사' }])),
       update: vi.fn().mockReturnValue(requestUpdate),
       delete: vi.fn().mockReturnValue(participantDelete),
       insert: vi.fn().mockReturnValue(participantInsert),
@@ -271,7 +282,8 @@ describe('ActivityRequestsService pending request updates', () => {
         14,
         {
           advisorTeacherId: 30,
-          participantStudentNos: [1101],
+          representativeStudentNo: 1101,
+          participantStudentNos: [],
           location: '생명과학실',
           startsAt: '2026-07-11T09:00:00+09:00',
           endsAt: '2026-07-11T10:40:00+09:00',
@@ -283,7 +295,9 @@ describe('ActivityRequestsService pending request updates', () => {
 
     expect(requestUpdate.set).toHaveBeenCalledWith(
       expect.objectContaining({
+        representativeStudentId: 10,
         advisorTeacherId: 30,
+        advisorTeacherNameSnapshot: '담당 교사',
         location: '생명과학실',
         purpose: '수정한 연구 활동',
       }),
@@ -312,7 +326,7 @@ describe('ActivityRequestsService staff issuance', () => {
           ]),
         )
         .mockReturnValueOnce(selectChain([{ id: 9, userId: 120 }]))
-        .mockReturnValueOnce(selectChain([{ userId: 20 }])),
+        .mockReturnValueOnce(selectChain([{ userId: 20, name: '담당 교사' }])),
       insert: vi
         .fn()
         .mockReturnValueOnce(requestInsert)
@@ -350,6 +364,7 @@ describe('ActivityRequestsService staff issuance', () => {
       expect.objectContaining({
         createdById: 20,
         advisorTeacherId: 20,
+        advisorTeacherNameSnapshot: '담당 교사',
         reviewedById: 20,
         status: 'approved',
       }),
@@ -637,7 +652,7 @@ describe('ActivityRequestsService today print batch', () => {
           id: 14,
           status: 'approved',
           creatorName: '작성 교사',
-          advisorTeacherName: '담당 교사',
+          advisorTeacherName: '기존 지도교사',
           reviewerName: '승인 교사',
           participants: [
             { studentNo: 9999, isRepresentative: true },

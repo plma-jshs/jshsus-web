@@ -51,8 +51,6 @@ export function resolveActivityTimeSlot(startsAt: Date, endsAt: Date) {
   );
   if (!slot) return null;
 
-  const isWeekend = start.dayOfWeek === 0 || start.dayOfWeek === 6;
-  if (!isWeekend && !slot.weekday) return null;
   return slot;
 }
 
@@ -65,7 +63,6 @@ function resolveSelectedActivityTimeSlots(
   const end = koreaDateTimeParts(endsAt);
   if (start.date !== end.date) return null;
 
-  const isWeekend = start.dayOfWeek === 0 || start.dayOfWeek === 6;
   const uniqueIds = [...new Set(slotIds)];
   if (uniqueIds.length === 0 || uniqueIds.length !== slotIds.length) return null;
 
@@ -75,7 +72,6 @@ function resolveSelectedActivityTimeSlots(
     .sort((left, right) => left.startsAt.localeCompare(right.startsAt));
   if (
     selected.length !== uniqueIds.length ||
-    selected.some((slot) => !isWeekend && !slot.weekday) ||
     selected[0]?.startsAt !== start.time ||
     selected.at(-1)?.endsAt !== end.time
   ) {

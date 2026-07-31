@@ -611,9 +611,6 @@ export function PointAwardPage() {
   return (
     <div className="admin-stack point-award-page">
       <section className="admin-panel point-panel point-award-form">
-        <div className="point-section-heading">
-          <h2>상벌점 부여</h2>
-        </div>
         {feedback ? <p className="point-feedback point-feedback--form">{feedback}</p> : null}
         <form className="point-award-combined" onSubmit={addToQueue}>
           <div className="point-student-picker-section">

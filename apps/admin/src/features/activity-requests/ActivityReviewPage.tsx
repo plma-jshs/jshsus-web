@@ -424,7 +424,7 @@ export function ActivityReviewPage() {
   return (
     <div className="admin-stack operation-page operation-review-layout">
       <AdminListPanel
-        title="탐구활동서 승인"
+        // title="탐구활동서 승인"
         toolbar={
           <TableToolbar
             summary={

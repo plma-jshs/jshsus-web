@@ -313,6 +313,10 @@ function koreaToday() {
   }).format(new Date());
 }
 
+function koreaLocalDatabaseTime(date, time) {
+  return new Date(`${date}T${time}:00+09:00`).toISOString().replace('T', ' ').replace('Z', '');
+}
+
 function createLinkPlan(records, students, staff) {
   const studentByKey = new Map(
     students.map((student) => [
@@ -385,14 +389,15 @@ function createLinkPlan(records, students, staff) {
       representativeStudentId: representativeStudent.id,
       createdById: representativeStudent.userId,
       advisorTeacherId: teacherIds.length === 1 ? teacherIds[0] : null,
+      advisorTeacherNameSnapshot: record.advisorTeacherName || null,
       participantStudentIds: [...new Set(resolved.map((student) => student.id))],
       location: record.location,
       purpose: record.purpose,
-      startsAt: `${record.activityDate} ${record.timeRanges[0].startsAt}:00.000`,
-      endsAt: `${record.activityDate} ${record.timeRanges.at(-1).endsAt}:00.000`,
+      startsAt: koreaLocalDatabaseTime(record.activityDate, record.timeRanges[0].startsAt),
+      endsAt: koreaLocalDatabaseTime(record.activityDate, record.timeRanges.at(-1).endsAt),
       activitySlotIds: slotIds.every(Boolean) ? slotIds : null,
       status: record.activityDate < today ? 'completed' : 'approved',
-      timestamp: `${record.activityDate} 00:00:00.000`,
+      timestamp: koreaLocalDatabaseTime(record.activityDate, '00:00'),
     });
   }
   return { linked, skipped };
@@ -515,11 +520,12 @@ async function insertThanks(connection, records) {
 
 async function insertLinkedActivities(connection, records) {
   for (const batch of chunks(records, 100)) {
-    const placeholders = batch.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
+    const placeholders = batch.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
     const values = batch.flatMap((record) => [
       record.representativeStudentId,
       record.createdById,
       record.advisorTeacherId,
+      record.advisorTeacherNameSnapshot,
       record.location,
       record.startsAt,
       record.endsAt,
@@ -533,7 +539,7 @@ async function insertLinkedActivities(connection, records) {
     ]);
     await connection.execute(
       `INSERT INTO activity_requests
-        (student_id, created_by_id, teacher_id, location, starts_at, ends_at,
+        (student_id, created_by_id, teacher_id, advisor_teacher_name_snapshot, location, starts_at, ends_at,
          activity_slot_ids, purpose, activity_request_status, issued_number, issued_at,
          created_at, updated_at)
        VALUES ${placeholders}`,

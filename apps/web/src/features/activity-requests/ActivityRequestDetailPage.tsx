@@ -8,7 +8,6 @@ import { detailBreadcrumbs } from '../../components/page/pageHierarchy';
 import { ApiError } from '../../shared/api/http';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { parsePositiveRouteId } from '../../shared/lib/route';
-import { getSession } from '../auth/api';
 import { deleteActivityRequest, getActivityRequest } from './api';
 import {
   formatActivityPeriodLabel,
@@ -85,7 +84,6 @@ export function ActivityRequestDetailPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
   const requestQuery = useQuery({
     queryKey: ['activity-requests', 'detail', id],
     queryFn: () => getActivityRequest(id),
@@ -146,9 +144,7 @@ export function ActivityRequestDetailPage() {
   }
 
   const request = requestQuery.data;
-  const canEdit =
-    sessionQuery.data?.isLogined === true &&
-    Number(sessionQuery.data.stuid ?? sessionQuery.data.identifier) === request.studentNo;
+  const canEdit = request.canManage === true;
   const activityDate = koreaDateInput(new Date(request.startsAt));
   return (
     <PageScaffold

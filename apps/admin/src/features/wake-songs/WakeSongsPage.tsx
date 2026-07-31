@@ -2,7 +2,7 @@ import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Check, ExternalLink, Music2, Search, X } from 'lucide-react';
+import { Check, ExternalLink, Search, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   Drawer,
@@ -242,15 +242,6 @@ export function WakeSongsPage() {
       </section>
 
       <section className="admin-panel wake-song-admin-list">
-        <div className="panel-title">
-          <div className="panel-title-copy">
-            <Music2 size={20} aria-hidden="true" />
-            <div>
-              <h2>기상곡 신청</h2>
-            </div>
-          </div>
-        </div>
-
         {requestsQuery.isError ? (
           <div className="admin-panel error compact-empty">
             목록을 불러오지 못했습니다. API 연결과 권한을 확인해 주세요.

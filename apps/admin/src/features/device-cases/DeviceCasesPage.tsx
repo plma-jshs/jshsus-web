@@ -283,9 +283,6 @@ export function DeviceCasesPage() {
   return (
     <div className="admin-stack device-cases-page">
       <section className="admin-panel">
-        <div className="panel-title">
-          <h2>휴대폰 보관함</h2>
-        </div>
         {casesQuery.isError ? (
           <p className="form-error">{describeAdminApiError(casesQuery.error, '휴대폰 보관함')}</p>
         ) : null}

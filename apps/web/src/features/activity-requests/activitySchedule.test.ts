@@ -15,6 +15,10 @@ describe('activity schedule options', () => {
     ]);
   });
 
+  it('reveals daytime study periods on weekdays when requested', () => {
+    expect(availableActivityTimeSlots('2026-07-15', true)).toHaveLength(7);
+  });
+
   it('shows all study periods on weekends', () => {
     expect(availableActivityTimeSlots('2026-07-18')).toHaveLength(7);
   });
@@ -24,7 +28,10 @@ describe('activity schedule options', () => {
       startsAt: '2026-07-15T10:10:00.000Z',
       endsAt: '2026-07-15T11:20:00.000Z',
     });
-    expect(activitySlotDateTimes('2026-07-15', 'morning-1')).toBeNull();
+    expect(activitySlotDateTimes('2026-07-15', 'morning-1')).toEqual({
+      startsAt: '2026-07-15T00:00:00.000Z',
+      endsAt: '2026-07-15T01:40:00.000Z',
+    });
   });
   it('builds one range while preserving multiple selected periods separately', () => {
     expect(activitySlotsDateTimes('2026-07-15', ['evening-1', 'evening-2', 'evening-3'])).toEqual({

@@ -29,7 +29,6 @@ import {
   gte,
   like,
   lt,
-  ne,
   notInArray,
   or,
   sql,
@@ -71,6 +70,7 @@ const activityFieldsSchema = z.object({
 });
 
 const createActivityRequestSchema = activityFieldsSchema.extend({
+  representativeStudentNo: z.coerce.number().int().positive().optional(),
   participantStudentNos: z.array(z.coerce.number().int().positive()).max(29).optional().default([]),
 });
 
@@ -147,6 +147,7 @@ type ActivityRow = {
   studentNo: number;
   studentName: string;
   advisorTeacherId: number | null;
+  advisorTeacherNameSnapshot: string | null;
   reviewedById: number | null;
   location: string;
   startsAt: Date;
@@ -178,6 +179,7 @@ const activitySelection = {
   studentNo: schema.students.studentNo,
   studentName: schema.students.name,
   advisorTeacherId: schema.activityRequests.advisorTeacherId,
+  advisorTeacherNameSnapshot: schema.activityRequests.advisorTeacherNameSnapshot,
   reviewedById: schema.activityRequests.reviewedById,
   location: schema.activityRequests.location,
   startsAt: schema.activityRequests.startsAt,
@@ -259,7 +261,7 @@ export class ActivityRequestsService {
         )
         .orderBy(desc(schema.activityRequests.startsAt), desc(schema.activityRequests.id));
 
-      return this.toPublicSummaries(db, rows);
+      return this.toPublicSummaries(db, rows, session?.userId);
     });
   }
 
@@ -302,7 +304,7 @@ export class ActivityRequestsService {
         throw new NotFoundException('Activity request does not exist.');
       }
 
-      const [summary] = await this.toPublicSummaries(db, [row]);
+      const [summary] = await this.toPublicSummaries(db, [row], session?.userId);
       return summary as ActivityRequestDetail;
     });
   }
@@ -347,6 +349,7 @@ export class ActivityRequestsService {
             like(schema.activityRequests.location, pattern),
             like(schema.activityRequests.purpose, pattern),
             like(schema.activityRequests.issuedNumber, pattern),
+            like(schema.activityRequests.advisorTeacherNameSnapshot, pattern),
             sql`exists (
               select 1
               from users advisor_search
@@ -401,7 +404,8 @@ export class ActivityRequestsService {
         select advisor.name
         from users advisor
         where advisor.id = ${schema.activityRequests.advisorTeacherId}
-      ), '')`;
+          and advisor.user_status <> 'deleted'
+      ), ${schema.activityRequests.advisorTeacherNameSnapshot}, '')`;
       const sortExpression =
         sortBy === 'id'
           ? schema.activityRequests.id
@@ -489,7 +493,7 @@ export class ActivityRequestsService {
 
   async participantStudentOptions(session?: AuthSession): Promise<ActivityRequestStudentOption[]> {
     return this.database.query('activity-requests.participant-students', async (db) => {
-      const representativeStudentId = await this.resolveStudentId(session, db);
+      await this.resolveStudentId(session, db);
       return db
         .select({
           studentId: schema.students.id,
@@ -500,7 +504,8 @@ export class ActivityRequestsService {
           number: schema.students.number,
         })
         .from(schema.students)
-        .where(ne(schema.students.id, representativeStudentId))
+        .innerJoin(schema.users, eq(schema.students.userId, schema.users.id))
+        .where(eq(schema.users.status, 'active'))
         .orderBy(asc(schema.students.studentNo))
         .limit(500);
     });
@@ -520,21 +525,36 @@ export class ActivityRequestsService {
 
     return this.database.query('activity-requests.create', async (db) =>
       db.transaction(async (tx) => {
-        const representativeStudentId = await this.resolveStudentId(session, tx);
-        const [representative] = await tx
+        const applicantStudentId = await this.resolveStudentId(session, tx);
+        const [applicant] = await tx
           .select({
+            id: schema.students.id,
             studentNo: schema.students.studentNo,
             name: schema.students.name,
           })
           .from(schema.students)
-          .where(eq(schema.students.id, representativeStudentId))
+          .where(eq(schema.students.id, applicantStudentId))
           .limit(1);
+        const representativeStudentNo = parsed.data.representativeStudentNo ?? applicant.studentNo;
+        const [representative] = await tx
+          .select({
+            id: schema.students.id,
+            studentNo: schema.students.studentNo,
+            name: schema.students.name,
+          })
+          .from(schema.students)
+          .where(eq(schema.students.studentNo, representativeStudentNo))
+          .limit(1);
+        if (!representative) {
+          throw new BadRequestException('대표 학생 계정을 찾을 수 없습니다.');
+        }
         const participantStudentNos = [
           representative.studentNo,
+          applicant.studentNo,
           ...parsed.data.participantStudentNos,
         ];
         const participantIds = await this.resolveParticipantIds(participantStudentNos, tx);
-        const advisorTeacherId = await this.resolveAdvisorTeacherId(
+        const advisorTeacher = await this.resolveAdvisorTeacher(
           parsed.data.advisorTeacherId ?? parsed.data.teacherId,
           tx,
         );
@@ -542,9 +562,10 @@ export class ActivityRequestsService {
         const [result] = await tx
           .insert(schema.activityRequests)
           .values({
-            representativeStudentId,
+            representativeStudentId: representative.id,
             createdById: session?.userId && session.userId > 0 ? session.userId : null,
-            advisorTeacherId,
+            advisorTeacherId: advisorTeacher.userId,
+            advisorTeacherNameSnapshot: advisorTeacher.name,
             location: parsed.data.location,
             startsAt: parsed.data.startsAt,
             endsAt: parsed.data.endsAt,
@@ -566,12 +587,12 @@ export class ActivityRequestsService {
         });
         await this.notifications.createForUser(
           {
-            userId: advisorTeacherId,
+            userId: advisorTeacher.userId,
             type: 'activity_request_submitted',
-            title: `${representative.studentNo} ${representative.name} 님이 새로운 탐구활동서를 제출했습니다.`,
+            title: `${applicant.studentNo} ${applicant.name} 님이 새로운 탐구활동서를 제출했습니다.`,
             metadata: {
               activityRequestId: result.id,
-              representativeStudentId,
+              representativeStudentId: representative.id,
             },
             dedupeKey: `activity-request:${result.id}:submitted`,
           },
@@ -583,7 +604,7 @@ export class ActivityRequestsService {
           request: {
             id: result.id,
             status: 'submitted' as const,
-            studentId: representativeStudentId,
+            studentId: representative.id,
           },
         };
       }),
@@ -605,11 +626,12 @@ export class ActivityRequestsService {
 
     return this.database.query('activity-requests.update', async (db) =>
       db.transaction(async (tx) => {
-        const representativeStudentId = await this.resolveStudentId(session, tx);
+        const applicantStudentId = await this.resolveStudentId(session, tx);
         const [request] = await tx
           .select({
             id: schema.activityRequests.id,
             status: schema.activityRequests.status,
+            createdById: schema.activityRequests.createdById,
             representativeStudentId: schema.activityRequests.representativeStudentId,
           })
           .from(schema.activityRequests)
@@ -617,23 +639,32 @@ export class ActivityRequestsService {
           .limit(1)
           .for('update');
 
-        if (!request || request.representativeStudentId !== representativeStudentId) {
+        if (!request || !this.canStudentManage(request, applicantStudentId, session)) {
           throw new NotFoundException('Activity request does not exist.');
         }
         if (request.status !== 'submitted') {
           throw new ConflictException('Only pending activity requests can be updated.');
         }
 
-        const [representative] = await tx
+        const [applicant] = await tx
           .select({ studentNo: schema.students.studentNo })
           .from(schema.students)
-          .where(eq(schema.students.id, representativeStudentId))
+          .where(eq(schema.students.id, applicantStudentId))
           .limit(1);
+        const representativeStudentNo = parsed.data.representativeStudentNo ?? applicant.studentNo;
+        const [representative] = await tx
+          .select({ id: schema.students.id, studentNo: schema.students.studentNo })
+          .from(schema.students)
+          .where(eq(schema.students.studentNo, representativeStudentNo))
+          .limit(1);
+        if (!representative) {
+          throw new BadRequestException('대표 학생 계정을 찾을 수 없습니다.');
+        }
         const participantIds = await this.resolveParticipantIds(
-          [representative.studentNo, ...parsed.data.participantStudentNos],
+          [representative.studentNo, applicant.studentNo, ...parsed.data.participantStudentNos],
           tx,
         );
-        const advisorTeacherId = await this.resolveAdvisorTeacherId(
+        const advisorTeacher = await this.resolveAdvisorTeacher(
           parsed.data.advisorTeacherId ?? parsed.data.teacherId,
           tx,
         );
@@ -641,7 +672,9 @@ export class ActivityRequestsService {
         await tx
           .update(schema.activityRequests)
           .set({
-            advisorTeacherId,
+            representativeStudentId: representative.id,
+            advisorTeacherId: advisorTeacher.userId,
+            advisorTeacherNameSnapshot: advisorTeacher.name,
             location: parsed.data.location,
             startsAt: parsed.data.startsAt,
             endsAt: parsed.data.endsAt,
@@ -693,7 +726,7 @@ export class ActivityRequestsService {
           .where(eq(schema.students.studentNo, parsed.data.representativeStudentNo))
           .limit(1);
         const advisorTeacherId = actorId;
-        await this.assertStaffAccount(advisorTeacherId, tx);
+        const advisorTeacher = await this.resolveAdvisorTeacher(advisorTeacherId, tx);
         const issuedAt = new Date();
 
         const [result] = await tx
@@ -701,7 +734,8 @@ export class ActivityRequestsService {
           .values({
             representativeStudentId: representative.id,
             createdById: actorId,
-            advisorTeacherId,
+            advisorTeacherId: advisorTeacher.userId,
+            advisorTeacherNameSnapshot: advisorTeacher.name,
             reviewedById: actorId,
             location: parsed.data.location,
             startsAt: parsed.data.startsAt,
@@ -767,6 +801,7 @@ export class ActivityRequestsService {
           .select({
             id: schema.activityRequests.id,
             status: schema.activityRequests.status,
+            createdById: schema.activityRequests.createdById,
             representativeStudentId: schema.activityRequests.representativeStudentId,
           })
           .from(schema.activityRequests)
@@ -774,7 +809,7 @@ export class ActivityRequestsService {
           .limit(1)
           .for('update');
 
-        if (!request || request.representativeStudentId !== studentId) {
+        if (!request || !this.canStudentManage(request, studentId, session)) {
           throw new NotFoundException('Activity request does not exist.');
         }
         if (request.status !== 'submitted') {
@@ -805,6 +840,7 @@ export class ActivityRequestsService {
           .select({
             id: schema.activityRequests.id,
             status: schema.activityRequests.status,
+            createdById: schema.activityRequests.createdById,
             representativeStudentId: schema.activityRequests.representativeStudentId,
           })
           .from(schema.activityRequests)
@@ -812,7 +848,7 @@ export class ActivityRequestsService {
           .limit(1)
           .for('update');
 
-        if (!request || request.representativeStudentId !== studentId) {
+        if (!request || !this.canStudentManage(request, studentId, session)) {
           throw new NotFoundException('Activity request does not exist.');
         }
         if (request.status !== 'submitted') {
@@ -1040,9 +1076,13 @@ export class ActivityRequestsService {
   private async toPublicSummaries(
     db: SelectDatabase,
     rows: ActivityRow[],
+    viewerUserId?: number,
   ): Promise<ActivityRequestSummary[]> {
     const related = await this.relatedData(db, rows);
-    return rows.map((row) => this.baseSummary(row, related));
+    return rows.map((row) => ({
+      ...this.baseSummary(row, related),
+      canManage: Boolean(viewerUserId && row.createdById === viewerUserId),
+    }));
   }
 
   private async toAdminSummaries(
@@ -1064,9 +1104,10 @@ export class ActivityRequestsService {
     related: RelatedActivityData,
   ): EditableActivityRequestSummary {
     const creatorName = row.createdById ? related.userNames.get(row.createdById) : undefined;
-    const advisorTeacherName = row.advisorTeacherId
-      ? related.userNames.get(row.advisorTeacherId)
-      : undefined;
+    const advisorTeacherName =
+      row.advisorTeacherNameSnapshot ??
+      (row.advisorTeacherId ? related.userNames.get(row.advisorTeacherId) : undefined) ??
+      undefined;
     const reviewerName = row.reviewedById ? related.userNames.get(row.reviewedById) : undefined;
     return {
       id: row.id,
@@ -1160,7 +1201,13 @@ export class ActivityRequestsService {
     const rows = await db
       .select({ id: schema.students.id, studentNo: schema.students.studentNo })
       .from(schema.students)
-      .where(inArray(schema.students.studentNo, uniqueStudentNos));
+      .innerJoin(schema.users, eq(schema.students.userId, schema.users.id))
+      .where(
+        and(
+          inArray(schema.students.studentNo, uniqueStudentNos),
+          eq(schema.users.status, 'active'),
+        ),
+      );
     if (rows.length !== uniqueStudentNos.length) {
       const found = new Set(rows.map((row) => row.studentNo));
       const missing = uniqueStudentNos.filter((studentNo) => !found.has(studentNo));
@@ -1169,12 +1216,12 @@ export class ActivityRequestsService {
     return rows.map((row) => row.id);
   }
 
-  private async resolveAdvisorTeacherId(candidateId: number | undefined, db: SelectDatabase) {
+  private async resolveAdvisorTeacher(candidateId: number | undefined, db: SelectDatabase) {
     if (!candidateId) {
       throw new BadRequestException('담당 교사를 선택해 주세요.');
     }
     const [staff] = await db
-      .select({ userId: schema.staffProfiles.userId })
+      .select({ userId: schema.staffProfiles.userId, name: schema.staffProfiles.name })
       .from(schema.staffProfiles)
       .where(
         or(
@@ -1186,18 +1233,7 @@ export class ActivityRequestsService {
     if (!staff) {
       throw new BadRequestException('선택한 담당 교사 계정을 찾을 수 없습니다.');
     }
-    return staff.userId;
-  }
-
-  private async assertStaffAccount(userId: number, db: SelectDatabase) {
-    const [staff] = await db
-      .select({ userId: schema.staffProfiles.userId })
-      .from(schema.staffProfiles)
-      .where(eq(schema.staffProfiles.userId, userId))
-      .limit(1);
-    if (!staff) {
-      throw new BadRequestException('선택한 담당 교사 계정을 찾을 수 없습니다.');
-    }
+    return staff;
   }
 
   private async resolveStudentId(session: AuthSession | undefined, db: SelectDatabase) {
@@ -1215,6 +1251,16 @@ export class ActivityRequestsService {
       throw new BadRequestException('Student profile is not linked to this session.');
     }
     return student.id;
+  }
+
+  private canStudentManage(
+    request: { createdById: number | null; representativeStudentId: number },
+    studentId: number,
+    session?: AuthSession,
+  ) {
+    return request.createdById
+      ? request.createdById === session?.userId
+      : request.representativeStudentId === studentId;
   }
 
   private assertId(id: number) {

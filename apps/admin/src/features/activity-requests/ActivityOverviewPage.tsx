@@ -151,7 +151,7 @@ export function ActivityOverviewPage() {
   return (
     <div className="admin-stack operation-page">
       <AdminListPanel
-        title="탐구활동서 현황"
+        // title="탐구활동서 현황"
         toolbar={
           <TableToolbar
             summary={requestsQuery.data ? `총 ${requestsQuery.data.total}건` : undefined}

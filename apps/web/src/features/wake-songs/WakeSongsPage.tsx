@@ -362,7 +362,6 @@ export function WakeSongsPage() {
 
                   <section className="wake-song-segment-card" aria-label="재생 구간">
                     <div className="wake-song-track-summary">
-                      <span>확인한 영상</span>
                       <h3>{preview.title}</h3>
                       {preview.channelTitle ? <p>{preview.channelTitle}</p> : null}
                       <div className="wake-song-media-badges">

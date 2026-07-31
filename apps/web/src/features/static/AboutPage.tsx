@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PageScaffold } from '../../components/page/PageScaffold';
+import { useInstantAudio } from '../../shared/lib/instantAudio';
 import '../../styles/static-pages.css';
 
 type AboutTab = 'developer' | 'jshsus';
@@ -69,27 +70,22 @@ function DeveloperProfile({
 }
 
 function EagleCheer() {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isFlying, setIsFlying] = useState(false);
+  const { play: playCry, prime: primeAudio } = useInstantAudio('/audio/eagle-cry.mp3', 0.32, 0.03);
+  const [flightId, setFlightId] = useState<number | null>(null);
+  const flightTimerRef = useRef<number | null>(null);
 
-  const primeAudio = () => {
-    const audio = audioRef.current;
-    if (audio && audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) audio.load();
-  };
+  useEffect(
+    () => () => {
+      if (flightTimerRef.current !== null) window.clearTimeout(flightTimerRef.current);
+    },
+    [],
+  );
 
   const launchEagle = () => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.volume = 0.18;
-      audio.currentTime = 0.03;
-      void audio.play().catch(() => undefined);
-    }
-
-    setIsFlying(false);
-    window.requestAnimationFrame(() => {
-      setIsFlying(true);
-      window.setTimeout(() => setIsFlying(false), 2100);
-    });
+    playCry();
+    setFlightId((current) => (current ?? 0) + 1);
+    if (flightTimerRef.current !== null) window.clearTimeout(flightTimerRef.current);
+    flightTimerRef.current = window.setTimeout(() => setFlightId(null), 2100);
   };
 
   return (
@@ -104,9 +100,9 @@ function EagleCheer() {
       >
         나주붉은매 화이팅
       </button>
-      <audio ref={audioRef} src="/audio/eagle-cry.mp3" preload="auto" />
-      {isFlying ? (
+      {flightId !== null ? (
         <img
+          key={flightId}
           className="about-flying-eagle"
           src="/images/about-eagle.png"
           alt=""
@@ -447,7 +443,7 @@ function DeveloperIntroduce() {
           imageSrc="/images/introduce/kang_jae_hwan.png"
           name="강재환"
           role="Developer"
-          contribution={<>- 2025 과구리 개발</>}
+          contribution={<>- 2025/2026 과구리 개발</>}
         >
           안녕하세요, <b>32기 IT부 강재환</b>입니다.
         </DeveloperProfile>
@@ -458,7 +454,7 @@ function DeveloperIntroduce() {
           role="Developer"
           contribution={
             <>
-              - 2025 과구리 개발
+              - 2025/2026 과구리 개발
               <br />
               <EagleCheer />
             </>

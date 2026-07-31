@@ -24,13 +24,13 @@ describe('activity time policy', () => {
     expect(slot?.id).toBe('evening-1');
   });
 
-  it('rejects class and after-school periods on weekdays', () => {
-    expect(() =>
+  it('allows daytime study periods on weekdays during vacations or special schedules', () => {
+    expect(
       assertAllowedActivityTime(
         new Date('2026-07-15T14:00:00+09:00'),
         new Date('2026-07-15T15:40:00+09:00'),
-      ),
-    ).toThrow(BadRequestException);
+      ).id,
+    ).toBe('afternoon-1');
   });
 
   it('accepts multiple selected evening study periods as one request', () => {
