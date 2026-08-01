@@ -168,13 +168,11 @@ export class BoardsService {
         .from(schema.posts)
         .leftJoin(schema.users, eq(schema.posts.authorId, schema.users.id))
         .where(
-          includeHidden
-            ? eq(schema.posts.boardId, board.id)
-            : and(
-                eq(schema.posts.boardId, board.id),
-                or(eq(schema.posts.status, 'published'), isNull(schema.posts.status)),
-                eq(schema.posts.isHidden, false),
-              ),
+          and(
+            eq(schema.posts.boardId, board.id),
+            or(eq(schema.posts.status, 'published'), isNull(schema.posts.status)),
+            includeHidden ? undefined : eq(schema.posts.isHidden, false),
+          ),
         )
         .orderBy(desc(schema.posts.createdAt), desc(schema.posts.id))
         .limit(limit);

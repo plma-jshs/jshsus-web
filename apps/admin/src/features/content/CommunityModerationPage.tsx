@@ -43,6 +43,25 @@ type CommunityModerationPageProps = {
   initialBoardSlug?: string;
 };
 
+export type CommunityPostVisibility = 'all' | 'published' | 'hidden';
+
+export function filterCommunityPosts(
+  posts: readonly BoardPostSummary[],
+  visibility: CommunityPostVisibility,
+  search: string,
+) {
+  const keyword = search.trim().toLocaleLowerCase('ko-KR');
+  return posts.filter((post) => {
+    if (post.status !== 'published') return false;
+    if (visibility === 'published' && post.isHidden) return false;
+    if (visibility === 'hidden' && !post.isHidden) return false;
+    if (!keyword) return true;
+    return [post.title, post.authorName, post.content]
+      .filter(Boolean)
+      .some((value) => value?.toLocaleLowerCase('ko-KR').includes(keyword));
+  });
+}
+
 const reportStatusLabel: Record<string, string> = {
   open: '접수',
   reviewing: '검토 중',
@@ -68,9 +87,7 @@ export function CommunityModerationPage({
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [postSearch, setPostSearch] = useState('');
-  const [postVisibility, setPostVisibility] = useState<'all' | 'published' | 'draft' | 'hidden'>(
-    'all',
-  );
+  const [postVisibility, setPostVisibility] = useState<CommunityPostVisibility>('all');
   const [reportStatus, setReportStatus] = useState('all');
   const [postPageSize, setPostPageSize] = useState(20);
   const [commentPageSize, setCommentPageSize] = useState(20);
@@ -135,18 +152,7 @@ export function CommunityModerationPage({
     onError: () => showToast({ title: '댓글 상태를 변경하지 못했습니다.', tone: 'danger' }),
   });
   const filteredPosts = useMemo(() => {
-    const keyword = postSearch.trim().toLocaleLowerCase('ko-KR');
-    return (postsQuery.data ?? []).filter((post) => {
-      if (postVisibility === 'published' && (post.isHidden || post.status !== 'published')) {
-        return false;
-      }
-      if (postVisibility === 'draft' && (post.isHidden || post.status !== 'draft')) return false;
-      if (postVisibility === 'hidden' && !post.isHidden) return false;
-      if (!keyword) return true;
-      return [post.title, post.authorName, post.content]
-        .filter(Boolean)
-        .some((value) => value?.toLocaleLowerCase('ko-KR').includes(keyword));
-    });
+    return filterCommunityPosts(postsQuery.data ?? [], postVisibility, postSearch);
   }, [postSearch, postVisibility, postsQuery.data]);
 
   const communityReports = useMemo(
@@ -241,16 +247,8 @@ export function CommunityModerationPage({
         accessorKey: 'isHidden',
         header: '상태',
         cell: ({ row }) => {
-          const tone = row.original.isHidden
-            ? 'danger'
-            : row.original.status === 'draft'
-              ? 'neutral'
-              : 'success';
-          const label = row.original.isHidden
-            ? '숨김'
-            : row.original.status === 'draft'
-              ? '임시 저장'
-              : '공개';
+          const tone = row.original.isHidden ? 'danger' : 'success';
+          const label = row.original.isHidden ? '숨김' : '공개';
           return <span className={`status-chip ${tone}`}>{label}</span>;
         },
         enableSorting: false,
@@ -480,7 +478,6 @@ export function CommunityModerationPage({
               >
                 <option value="all">전체 상태</option>
                 <option value="published">공개</option>
-                <option value="draft">임시 저장</option>
                 <option value="hidden">숨김</option>
               </AdminSelect>
             </label>
