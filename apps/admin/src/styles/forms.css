@@ -144,6 +144,7 @@ select.ui-control:not([multiple]) {
 }
 
 .admin-select__menu {
+  position: fixed;
   z-index: 90;
   display: grid;
   min-width: 120px;
