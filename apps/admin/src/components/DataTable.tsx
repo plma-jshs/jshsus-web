@@ -209,8 +209,9 @@ export function DataTable<T>({
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const alignment = header.column.columnDef.meta?.headerAlign ?? 'center';
                   const meta = header.column.columnDef.meta;
+                  const alignment =
+                    meta?.headerAlign ?? meta?.align ?? (meta?.widthPreset ? 'center' : 'left');
                   const presetWidth = widthForPreset(meta?.widthPreset);
                   const sortDirection = header.column.getIsSorted();
                   const canSort = header.column.getCanSort();

@@ -255,7 +255,7 @@ export function DeviceCasesPage() {
       accessorKey: 'actorName',
       header: '실행자',
       enableSorting: false,
-      meta: { align: 'center', width: 130 },
+      meta: { align: 'left', width: 130 },
     },
     {
       accessorKey: 'status',

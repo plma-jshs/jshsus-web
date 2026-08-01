@@ -123,7 +123,7 @@ const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
     header: '지도교사',
     enableSorting: false,
     cell: ({ getValue }) => getValue<string | undefined>() ?? '-',
-    meta: { width: 110, align: 'center' },
+    meta: { width: 110, align: 'left' },
   },
   {
     accessorKey: 'status',

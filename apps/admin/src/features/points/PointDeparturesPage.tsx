@@ -226,18 +226,17 @@ export function PointDeparturesPage() {
       {
         accessorKey: 'name',
         header: '이름',
-        cell: ({ row }) => <strong>{row.original.name}</strong>,
-        meta: { align: 'center', width: 130 },
+        meta: { align: 'left', width: 130 },
       },
       {
         accessorKey: 'meritPoint',
         header: '상점 합계',
-        meta: { align: 'center', width: 130 },
+        meta: { align: 'right', width: 130 },
       },
       {
         accessorKey: 'penaltyPoint',
         header: '벌점 합계',
-        meta: { align: 'center', width: 130 },
+        meta: { align: 'right', width: 130 },
       },
       {
         accessorKey: 'currentPoint',
@@ -245,7 +244,7 @@ export function PointDeparturesPage() {
         cell: ({ row }) => (
           <strong className="point-value--danger">{row.original.currentPoint}</strong>
         ),
-        meta: { align: 'center', width: 120 },
+        meta: { align: 'right', width: 120 },
       },
       {
         id: 'actions',
@@ -291,7 +290,7 @@ export function PointDeparturesPage() {
         ),
         meta: { align: 'center', width: 120 },
       },
-      { accessorKey: 'name', header: '이름', meta: { align: 'center', width: 130 } },
+      { accessorKey: 'name', header: '이름', meta: { align: 'left', width: 130 } },
       {
         accessorKey: 'handledAt',
         header: '처리일시',
@@ -317,24 +316,24 @@ export function PointDeparturesPage() {
   const previewColumns = useMemo<ColumnDef<SemesterHalfPreviewItem>[]>(
     () => [
       { accessorKey: 'studentNo', header: '학번', meta: { align: 'center', width: 110 } },
-      { accessorKey: 'name', header: '이름', meta: { align: 'center', width: 120 } },
+      { accessorKey: 'name', header: '이름', meta: { align: 'left', width: 120 } },
       {
         id: 'merit',
         header: '상점',
         cell: ({ row }) => `${row.original.meritBefore} → ${row.original.meritAfter}`,
-        meta: { align: 'center' },
+        meta: { align: 'right' },
       },
       {
         id: 'penalty',
         header: '벌점',
         cell: ({ row }) => `${row.original.penaltyBefore} → ${row.original.penaltyAfter}`,
-        meta: { align: 'center' },
+        meta: { align: 'right' },
       },
       {
         id: 'net',
         header: '순합계',
         cell: ({ row }) => `${row.original.currentPoint} → ${row.original.afterPoint}`,
-        meta: { align: 'center' },
+        meta: { align: 'right' },
       },
     ],
     [],

@@ -200,7 +200,7 @@ export function PointRecordsPage() {
       {
         accessorKey: 'studentName',
         header: '이름',
-        meta: { align: 'center', width: 120 },
+        meta: { align: 'left', width: 120 },
       },
       {
         accessorKey: 'reasonType',
@@ -220,17 +220,17 @@ export function PointRecordsPage() {
         accessorKey: 'point',
         header: '점수',
         cell: ({ row }) => (
-          <strong className={row.original.point < 0 ? 'point-value--danger' : ''}>
+          <span className={row.original.point < 0 ? 'point-value--danger' : ''}>
             {row.original.point > 0 ? '+' : ''}
             {row.original.point}
-          </strong>
+          </span>
         ),
-        meta: { align: 'center', width: 90 },
+        meta: { align: 'right', width: 90 },
       },
       {
         accessorKey: 'teacherName',
         header: '처리자',
-        meta: { align: 'center', width: 140 },
+        meta: { align: 'left', width: 140 },
       },
     ],
     [

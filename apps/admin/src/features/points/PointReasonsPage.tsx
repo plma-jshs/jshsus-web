@@ -145,7 +145,7 @@ export function PointReasonsPage() {
         accessorKey: 'point',
         header: '점수',
         cell: ({ row }) => `${row.original.point > 0 ? '+' : ''}${row.original.point}`,
-        meta: { align: 'center', width: 120 },
+        meta: { align: 'right', width: 120 },
       },
       {
         id: 'actions',

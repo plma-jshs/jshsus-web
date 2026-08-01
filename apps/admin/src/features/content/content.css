@@ -202,6 +202,10 @@ a.content-table-primary:focus-visible {
   border-bottom: 0;
 }
 
+.content-detail-list > div:nth-last-child(2):nth-child(odd) {
+  border-bottom: 0;
+}
+
 .content-detail-list dt,
 .content-detail-list dd {
   min-width: 0;
@@ -358,6 +362,7 @@ a.content-table-primary:focus-visible {
 
   .content-detail-list > div,
   .content-detail-list > div:nth-child(odd),
+  .content-detail-list > div:nth-last-child(2):nth-child(odd),
   .content-detail-list > div:last-child {
     border-right: 0;
     border-bottom: 1px solid var(--line);

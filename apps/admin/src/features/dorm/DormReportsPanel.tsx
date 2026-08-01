@@ -86,7 +86,7 @@ export function DormReportsPanel({
         accessorKey: 'studentName',
         header: '신고 학생',
         enableSorting: false,
-        meta: { width: 120, align: 'center' },
+        meta: { width: 120, align: 'left' },
       },
       {
         accessorKey: 'description',

@@ -119,7 +119,7 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
         accessorKey: 'studentName',
         header: '이름',
         enableSorting: false,
-        meta: { width: 120, align: 'center' },
+        meta: { width: 120, align: 'left' },
       },
       {
         id: 'point',
@@ -141,7 +141,7 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
           />
         ),
         enableSorting: false,
-        meta: { width: 110, align: 'center' },
+        meta: { width: 110, align: 'right' },
       },
       {
         id: 'reason',

@@ -79,7 +79,7 @@ export function DormOverviewPage() {
         header: '미처리 민원',
         cell: ({ getValue }) => `${getValue<number>() ?? 0}건`,
         enableSorting: true,
-        meta: { width: 110, align: 'center' },
+        meta: { width: 110, align: 'right' },
       },
       {
         id: 'actions',

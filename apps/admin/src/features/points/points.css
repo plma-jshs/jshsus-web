@@ -2,6 +2,15 @@
   min-width: 0;
 }
 
+.point-overview-panel {
+  width: min(100%, 880px);
+}
+
+.point-overview-panel .admin-data-table tbody td:last-child,
+.point-overview-panel .admin-data-table tbody td:last-child > strong {
+  font-weight: var(--j-weight-semibold);
+}
+
 .point-filter {
   display: grid;
   min-width: 112px;
@@ -65,7 +74,7 @@
 }
 
 .point-value--positive {
-  color: #1d4ed8;
+  color: var(--primary-dark);
 }
 
 .point-status {

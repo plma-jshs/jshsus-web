@@ -197,7 +197,7 @@ export function LostItemsManagementPage() {
         header: '등록자',
         cell: ({ row }) => row.original.authorName || '알 수 없음',
         enableSorting: false,
-        meta: { align: 'center', width: 116 },
+        meta: { align: 'left', width: 116 },
       },
       {
         accessorKey: 'occurredAt',
@@ -213,7 +213,7 @@ export function LostItemsManagementPage() {
             ? `${row.original.attachments.length.toLocaleString('ko-KR')}개`
             : '-',
         enableSorting: false,
-        meta: { align: 'center', width: 72 },
+        meta: { align: 'right', width: 72 },
       },
       {
         accessorKey: 'status',

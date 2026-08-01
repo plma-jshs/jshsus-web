@@ -92,7 +92,7 @@ export function NoticeManagementPage() {
         accessorKey: 'department',
         header: '작성자',
         enableSorting: false,
-        meta: { align: 'center', width: 150 },
+        meta: { align: 'left', width: 150 },
       },
       {
         accessorKey: 'publishedAt',
@@ -104,7 +104,7 @@ export function NoticeManagementPage() {
         accessorKey: 'viewCount',
         header: '조회',
         cell: ({ row }) => row.original.viewCount.toLocaleString('ko-KR'),
-        meta: { align: 'center', width: 84 },
+        meta: { align: 'right', width: 84 },
       },
       {
         id: 'attachment',

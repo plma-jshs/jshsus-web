@@ -64,6 +64,7 @@ export function AdminSelect({
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [menuStyle, setMenuStyle] = useState<CSSProperties>();
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const selectRef = useRef<HTMLSelectElement>(null);
@@ -168,6 +169,7 @@ export function AdminSelect({
             options.findIndex((option) => option.value === selectedValue),
           );
           setActiveIndex(selectedIndex);
+          setPortalTarget(triggerRef.current?.closest('dialog[open]') ?? document.body);
           setOpen((current) => !current);
         }}
         onKeyDown={(event) => {
@@ -177,7 +179,10 @@ export function AdminSelect({
           }
           if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
             event.preventDefault();
-            if (!open) setOpen(true);
+            if (!open) {
+              setPortalTarget(triggerRef.current?.closest('dialog[open]') ?? document.body);
+              setOpen(true);
+            }
             moveActive(event.key === 'ArrowDown' ? 1 : -1);
           }
         }}
@@ -185,7 +190,7 @@ export function AdminSelect({
         <span>{selected?.label ?? '선택'}</span>
         <ChevronDown size={16} aria-hidden="true" />
       </button>
-      {open && menuStyle
+      {open && menuStyle && portalTarget
         ? createPortal(
             <div
               aria-label={ariaLabel}
@@ -221,7 +226,7 @@ export function AdminSelect({
                 );
               })}
             </div>,
-            document.body,
+            portalTarget,
           )
         : null}
     </div>

@@ -55,24 +55,22 @@ export function PointsOverviewPage() {
       {
         accessorKey: 'name',
         header: '이름',
-        cell: ({ row }) => <strong>{row.original.name}</strong>,
-        meta: { align: 'center', width: 130 },
+        meta: { align: 'left', width: 150 },
       },
       {
         accessorKey: 'meritPoint',
         header: '상점 합계',
-        cell: ({ row }) => <strong>{row.original.meritPoint}</strong>,
-        meta: { align: 'center', width: 120 },
+        meta: { align: 'right', width: 120 },
       },
       {
         accessorKey: 'penaltyPoint',
         header: '벌점 합계',
         cell: ({ row }) => (
-          <strong className={row.original.penaltyPoint > 0 ? 'point-value--danger' : ''}>
+          <span className={row.original.penaltyPoint > 0 ? 'point-value--danger' : ''}>
             {row.original.penaltyPoint}
-          </strong>
+          </span>
         ),
-        meta: { align: 'center', width: 120 },
+        meta: { align: 'right', width: 120 },
       },
       {
         accessorKey: 'currentPoint',
@@ -90,7 +88,7 @@ export function PointsOverviewPage() {
             {formatSignedPoint(row.original.currentPoint)}
           </strong>
         ),
-        meta: { align: 'center', width: 110 },
+        meta: { align: 'right', width: 110 },
       },
     ],
     [],
@@ -100,7 +98,7 @@ export function PointsOverviewPage() {
 
   return (
     <AdminListPanel
-      className="point-panel"
+      className="point-panel point-overview-panel"
       toolbar={
         <TableToolbar summary={query.data ? `총 ${query.data.total}명` : undefined}>
           <label className="point-filter point-filter--search">

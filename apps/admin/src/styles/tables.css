@@ -1,9 +1,10 @@
 .table-wrap,
 .admin-table-wrap {
-  overflow-x: auto;
-  border: 1px solid var(--line);
+  overflow: auto;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
   border-radius: 10px;
   background: var(--surface);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 3%);
 }
 
 :where(.table-wrap, .admin-table-wrap) > table,
@@ -22,7 +23,7 @@
 .admin-data-table td {
   min-height: 48px;
   padding: 12px 14px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
   vertical-align: middle;
   white-space: nowrap;
 }
@@ -30,7 +31,6 @@
 :where(.table-wrap, .admin-table-wrap) > table th,
 .admin-data-table th {
   height: 46px;
-  border-top: 2px solid var(--primary);
   background: var(--j-color-surface-subtle);
   color: var(--j-color-text-secondary);
   font-size: 13px;
@@ -69,7 +69,7 @@
   flex: 0 0 14px;
   align-items: center;
   justify-content: center;
-  color: #d8dee8;
+  color: #7f8b96;
 }
 
 .admin-table-sort__glyph {
@@ -84,7 +84,7 @@
   stroke-linejoin: round;
   stroke: currentColor;
   stroke-width: 1.6;
-  opacity: 0.32;
+  opacity: 0.68;
 }
 
 .admin-table-sort__glyph path.is-active {
@@ -95,21 +95,21 @@
 
 .admin-table-sort:hover,
 .admin-table-sort:focus-visible {
-  color: var(--action-primary-hover);
+  color: var(--primary-dark);
 }
 
 .admin-data-table th[aria-sort='ascending'] .admin-table-sort,
 .admin-data-table th[aria-sort='descending'] .admin-table-sort {
-  color: var(--action-primary-hover);
+  color: var(--primary-dark);
 }
 
 .admin-table-sort.is-sorted {
-  color: var(--action-primary-hover);
-  font-weight: 700;
+  color: var(--primary-dark);
+  font-weight: var(--j-weight-semibold);
 }
 
 .admin-table-sort.is-sorted .admin-table-sort__indicator {
-  color: var(--action-primary-hover);
+  color: var(--primary-dark);
 }
 
 .admin-main .wake-song-admin-table th {
@@ -119,7 +119,13 @@
 :where(.table-wrap, .admin-table-wrap) > table td,
 .admin-data-table td {
   background: var(--surface);
+  font-weight: var(--j-weight-regular);
   text-align: left;
+}
+
+:where(.table-wrap, .admin-table-wrap) > table td > strong,
+.admin-data-table td > strong {
+  font-weight: var(--j-weight-medium);
 }
 
 :where(.table-wrap, .admin-table-wrap) > table tbody tr:hover td,

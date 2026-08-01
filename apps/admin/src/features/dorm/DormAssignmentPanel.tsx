@@ -476,7 +476,7 @@ export function DormAssignmentPanel({
         accessorKey: 'studentName',
         header: '이름',
         enableSorting: false,
-        meta: { width: 110, align: 'center' },
+        meta: { width: 110, align: 'left' },
       },
       {
         accessorKey: 'classNo',
@@ -540,7 +540,7 @@ export function DormAssignmentPanel({
         accessorKey: 'studentName',
         header: '이름',
         enableSorting: false,
-        meta: { width: 110, align: 'center' },
+        meta: { width: 110, align: 'left' },
       },
       {
         id: 'actions',

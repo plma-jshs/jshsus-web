@@ -507,7 +507,7 @@ export function UsersPage() {
       id: 'name',
       accessorKey: 'name',
       header: '이름',
-      meta: { align: 'center', width: 150 },
+      meta: { align: 'left', width: 150 },
     },
     {
       id: 'gender',
@@ -584,7 +584,7 @@ export function UsersPage() {
       id: 'name',
       accessorKey: 'name',
       header: '이름',
-      meta: { align: 'center', width: 140 },
+      meta: { align: 'left', width: 140 },
     },
     {
       id: 'managedClasses',

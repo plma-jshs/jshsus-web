@@ -217,7 +217,7 @@ export function CommunityModerationPage({
         cell: ({ row }) =>
           row.original.isAnonymous ? '익명' : row.original.authorName || '알 수 없음',
         enableSorting: false,
-        meta: { align: 'center', width: 120 },
+        meta: { align: 'left', width: 120 },
       },
       {
         accessorKey: 'createdAt',
@@ -229,13 +229,13 @@ export function CommunityModerationPage({
         accessorKey: 'viewCount',
         header: '조회',
         cell: ({ row }) => row.original.viewCount.toLocaleString('ko-KR'),
-        meta: { align: 'center', width: 84 },
+        meta: { align: 'right', width: 84 },
       },
       {
         accessorKey: 'commentCount',
         header: '댓글',
         cell: ({ row }) => row.original.commentCount.toLocaleString('ko-KR'),
-        meta: { align: 'center', width: 84 },
+        meta: { align: 'right', width: 84 },
       },
       {
         accessorKey: 'isHidden',
@@ -328,7 +328,7 @@ export function CommunityModerationPage({
         header: '신고자',
         cell: ({ row }) => row.original.reporterName || '익명',
         enableSorting: false,
-        meta: { align: 'center', width: 112 },
+        meta: { align: 'left', width: 112 },
       },
       {
         accessorKey: 'createdAt',
@@ -385,7 +385,7 @@ export function CommunityModerationPage({
         header: '작성자',
         cell: ({ row }) => row.original.authorName || '알 수 없음',
         enableSorting: false,
-        meta: { align: 'center', width: 112 },
+        meta: { align: 'left', width: 112 },
       },
       {
         accessorKey: 'content',

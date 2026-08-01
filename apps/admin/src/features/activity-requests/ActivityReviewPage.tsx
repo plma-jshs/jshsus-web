@@ -349,11 +349,7 @@ export function ActivityReviewPage() {
       id: 'representative',
       accessorFn: (request) => `${request.studentNo} ${request.studentName}`,
       header: '대표 학생',
-      cell: ({ row }) => (
-        <strong>
-          {row.original.studentNo} {row.original.studentName}
-        </strong>
-      ),
+      cell: ({ row }) => `${row.original.studentNo} ${row.original.studentName}`,
       meta: { minWidth: 120, maxWidth: 150 },
     },
     {
@@ -362,7 +358,7 @@ export function ActivityReviewPage() {
       header: '참여 인원',
       enableSorting: false,
       cell: ({ getValue }) => `${getValue<number>()}명`,
-      meta: { width: 125, align: 'center' },
+      meta: { width: 125, align: 'right' },
     },
     {
       accessorKey: 'purpose',
@@ -387,7 +383,7 @@ export function ActivityReviewPage() {
       header: '담당 교사',
       enableSorting: false,
       cell: ({ getValue }) => getValue<string | undefined>() ?? '-',
-      meta: { width: 110, align: 'center' },
+      meta: { width: 110, align: 'left' },
     },
     {
       id: 'actions',

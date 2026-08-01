@@ -523,7 +523,7 @@ export function PointAwardPage() {
         accessorKey: 'studentName',
         header: '성명',
         enableSorting: false,
-        meta: { align: 'center', width: 110 },
+        meta: { align: 'left', width: 110 },
       },
       {
         accessorKey: 'point',
@@ -543,7 +543,7 @@ export function PointAwardPage() {
             {row.original.point}
           </strong>
         ),
-        meta: { align: 'center', width: 80 },
+        meta: { align: 'right', width: 80 },
       },
       {
         accessorKey: 'baseDate',

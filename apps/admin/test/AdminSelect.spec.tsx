@@ -71,4 +71,24 @@ describe('AdminSelect', () => {
 
     expect(container.querySelector('.admin-select__trigger')).toHaveTextContent('2');
   });
+
+  it('renders the listbox inside an open dialog so it stays in the modal top layer', () => {
+    act(() =>
+      root.render(
+        <dialog open>
+          <AdminSelect aria-label="페이지당 표시 건수" defaultValue="20">
+            <option value="20">20건</option>
+            <option value="50">50건</option>
+          </AdminSelect>
+        </dialog>,
+      ),
+    );
+
+    const dialog = container.querySelector('dialog')!;
+    const trigger = dialog.querySelector<HTMLButtonElement>('.admin-select__trigger')!;
+    act(() => trigger.click());
+
+    expect(dialog.querySelector('.admin-select__menu')).not.toBeNull();
+    expect(document.body.querySelector(':scope > .admin-select__menu')).toBeNull();
+  });
 });
