@@ -38,6 +38,7 @@ describe('content date presentation', () => {
   });
 
   it('does not expose a negative duration for future timestamps', () => {
-    expect(formatKoreanRelativeTime('2026-07-15T14:20:00+09:00', now)).toBe('방금');
+    expect(formatKoreanRelativeTime('2026-07-15T14:19:30+09:00', now)).toBe('방금');
+    expect(formatKoreanRelativeTime('2026-07-15T18:20:00+09:00', now)).toBe('2026. 07. 15. 18:20');
   });
 });

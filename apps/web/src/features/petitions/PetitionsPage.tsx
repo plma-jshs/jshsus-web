@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { PenLine } from 'lucide-react';
 import { ContentBadges } from '../../components/page/ContentBadges';
-import { DataTablePagination } from '../../components/page/DataTableControls';
+import { DataTablePagination, ToolbarSelect } from '../../components/page/DataTableControls';
 import {
   FilterChips,
   PageScaffold,
@@ -19,6 +19,7 @@ import {
   matchesPetitionFilter,
   matchesPetitionQuery,
   type PetitionFilter,
+  type PetitionSearchField,
   petitionStatusLabels,
 } from './presentation';
 import '../../styles/petitions.css';
@@ -33,15 +34,17 @@ export function PetitionsPage() {
   const petitionsQuery = useQuery({ queryKey: ['petitions'], queryFn: getPetitions });
   const [filter, setFilter] = useState<PetitionFilter>('all');
   const [query, setQuery] = useState('');
+  const [searchField, setSearchField] = useState<PetitionSearchField>('title_content');
   const [page, setPage] = useState(1);
   const petitions = useMemo(() => petitionsQuery.data ?? [], [petitionsQuery.data]);
   const filtered = useMemo(
     () =>
       petitions.filter(
         (petition) =>
-          matchesPetitionFilter(petition, filter) && matchesPetitionQuery(petition, query),
+          matchesPetitionFilter(petition, filter) &&
+          matchesPetitionQuery(petition, query, searchField),
       ),
-    [filter, petitions, query],
+    [filter, petitions, query, searchField],
   );
   const pageSize = 20;
   const totalPages = Math.ceil(filtered.length / pageSize);
@@ -88,15 +91,30 @@ export function PetitionsPage() {
             label="청원 상태"
             options={filterOptions}
           />
-          <SearchField
-            value={query}
-            onChange={(value) => {
-              setQuery(value);
-              setPage(1);
-            }}
-            label="청원 검색"
-            placeholder="제목, 내용, 작성자 검색"
-          />
+          <div className="petition-search-controls">
+            <ToolbarSelect
+              ariaLabel="검색 기준"
+              value={searchField}
+              options={[
+                { value: 'title_content', label: '제목+내용' },
+                { value: 'title', label: '제목' },
+                { value: 'author', label: '작성자' },
+              ]}
+              onChange={(value) => {
+                setSearchField(value);
+                setPage(1);
+              }}
+            />
+            <SearchField
+              value={query}
+              onChange={(value) => {
+                setQuery(value);
+                setPage(1);
+              }}
+              label="청원 검색"
+              placeholder="검색어를 입력하세요"
+            />
+          </div>
         </PageToolbar>
 
         <div className="workflow-table-summary petition-table-summary" aria-live="polite">
@@ -138,6 +156,7 @@ export function PetitionsPage() {
                   onClick={() => {
                     setFilter('all');
                     setQuery('');
+                    setSearchField('title_content');
                     setPage(1);
                   }}
                 >

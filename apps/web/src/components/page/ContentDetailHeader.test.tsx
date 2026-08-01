@@ -36,4 +36,17 @@ describe('ContentDetailHeader', () => {
       view.container.querySelector('.content-detail-header__author .user-avatar svg'),
     ).toBeInTheDocument();
   });
+
+  it('can omit the author avatar for institutional content', () => {
+    const view = render(
+      <ContentDetailHeader
+        title="공지"
+        author="학생부"
+        showAuthorAvatar={false}
+        createdAt="2026-07-16T09:00:00+09:00"
+      />,
+    );
+
+    expect(view.container.querySelector('.content-detail-header__author .user-avatar')).toBeNull();
+  });
 });

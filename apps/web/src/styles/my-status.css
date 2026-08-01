@@ -48,23 +48,18 @@
 .status-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 24px;
-  border-top: 1px solid var(--j-color-border);
-  border-bottom: 1px solid var(--j-color-border);
-  background: var(--j-color-surface);
+  margin-top: 0;
+  gap: 10px;
+  background: transparent;
 }
 
 .points-card {
-  overflow: hidden;
-  border: 1px solid var(--j-color-border);
-  border-radius: var(--j-radius-lg);
-  background: var(--j-color-surface);
-  box-shadow: var(--j-shadow-card);
+  display: grid;
+  gap: 16px;
 }
 
 .points-card > .status-summary {
   margin-top: 0;
-  border-top: 0;
 }
 
 .status-overview {
@@ -101,22 +96,20 @@
 }
 
 .status-overview .status-summary {
-  margin-top: 0;
+  margin-top: 6px;
 }
 
 .status-summary > article {
   display: grid;
-  min-height: 104px;
-  padding: 18px 24px;
+  min-height: 96px;
+  padding: 16px 20px;
   align-content: center;
   justify-items: center;
   gap: 3px;
-  border-right: 1px solid var(--j-color-border);
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-md);
+  background: var(--j-color-surface-subtle);
   text-align: center;
-}
-
-.status-summary > article:last-child {
-  border-right: 0;
 }
 
 .status-summary article > span {
@@ -152,24 +145,22 @@
 .status-life {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  border-bottom: 1px solid var(--j-color-border);
+  gap: 10px;
 }
 
 .status-overview .status-life {
-  border-top: 1px solid var(--j-color-border);
+  margin-top: 6px;
 }
 
 .status-life > article {
   display: flex;
-  min-height: 82px;
+  min-height: 88px;
   align-items: center;
   gap: 14px;
   padding: 16px 24px;
-  border-right: 1px solid var(--j-color-border);
-}
-
-.status-life > article:last-child {
-  border-right: 0;
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-md);
+  background: var(--j-color-surface-subtle);
 }
 
 .status-life > article > svg {
@@ -213,10 +204,9 @@
 .points-card > .status-records {
   margin-top: 0;
   padding: 18px 20px 20px;
-  border: 0;
-  border-top: 1px solid var(--j-color-border);
-  border-radius: 0;
-  box-shadow: none;
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-lg);
+  box-shadow: var(--j-shadow-card);
 }
 
 .status-records > header,
@@ -363,7 +353,9 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 20px;
-  padding: 11px 0;
+  padding: 11px 10px;
+  margin-inline: -10px;
+  border-radius: var(--j-radius-sm);
 }
 
 .status-activity__row:hover {
@@ -461,8 +453,9 @@
 }
 
 .status-avatar__trigger:focus-visible {
-  outline: 3px solid rgba(37, 99, 235, 0.3);
-  outline-offset: 3px;
+  outline: 0;
+  border-color: var(--j-color-focus);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .status-avatar__trigger:disabled {
@@ -794,12 +787,7 @@
   }
 
   .status-life > article {
-    border-right: 0;
-    border-bottom: 1px solid var(--j-color-border);
-  }
-
-  .status-life > article:last-child {
-    border-bottom: 0;
+    border: 1px solid var(--j-color-border);
   }
 
   .status-records th:nth-child(1) {

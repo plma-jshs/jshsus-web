@@ -25,6 +25,7 @@ type PetitionRow = {
   contentJson: unknown;
   authorId: number | null;
   authorName: string | null;
+  authorStudentNo: number | null;
   participantCount: number;
   startsAt: Date;
   endsAt: Date;
@@ -40,12 +41,15 @@ type PetitionAnswerRow = {
 };
 
 function toPetitionSummary(row: PetitionRow, answer?: PetitionAnswerRow): PetitionSummary {
+  const authorName = row.authorName?.trim();
+  const displayAuthor =
+    row.authorStudentNo && authorName ? `${row.authorStudentNo} ${authorName}` : authorName;
   return {
     id: row.id,
     title: row.title,
     content: row.content,
     contentDoc: (row.contentJson as RichTextDocument | null) ?? undefined,
-    authorName: row.authorName ?? undefined,
+    authorName: displayAuthor ?? undefined,
     participantCount: row.participantCount,
     threshold: PETITION_THRESHOLD,
     startsAt: row.startsAt.toISOString(),
@@ -76,6 +80,7 @@ export class PetitionsService {
             contentJson: schema.petitions.contentJson,
             authorId: schema.petitions.authorId,
             authorName: schema.users.name,
+            authorStudentNo: schema.users.studentNo,
             participantCount: schema.petitions.participantCount,
             startsAt: schema.petitions.startsAt,
             endsAt: schema.petitions.endsAt,
@@ -125,6 +130,7 @@ export class PetitionsService {
           contentJson: schema.petitions.contentJson,
           authorId: schema.petitions.authorId,
           authorName: schema.users.name,
+          authorStudentNo: schema.users.studentNo,
           participantCount: schema.petitions.participantCount,
           startsAt: schema.petitions.startsAt,
           endsAt: schema.petitions.endsAt,

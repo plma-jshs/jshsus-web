@@ -52,7 +52,12 @@ export function formatKoreanRelativeTime(
 ) {
   const date = value instanceof Date ? value : new Date(value);
   const reference = now instanceof Date ? now : new Date(now);
-  const elapsedSeconds = Math.max(0, Math.floor((reference.getTime() - date.getTime()) / 1_000));
+  const rawElapsedSeconds = Math.floor((reference.getTime() - date.getTime()) / 1_000);
+
+  // 서버/DB 시계가 크게 앞선 경우를 새 글로 오인해 계속 "방금"으로 표시하지 않는다.
+  if (rawElapsedSeconds < -60) return formatKoreanContentDateTime(date);
+
+  const elapsedSeconds = Math.max(0, rawElapsedSeconds);
 
   if (elapsedSeconds < 60) return '방금';
 

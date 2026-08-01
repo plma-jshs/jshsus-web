@@ -380,6 +380,7 @@ textarea.ui-control {
   line-height: 1;
   pointer-events: none;
   transform: translateY(-50%);
+  user-select: none;
 }
 
 .ui-date-input.is-empty > span {
@@ -387,7 +388,15 @@ textarea.ui-control {
 }
 
 .ui-date-input.is-empty input::-webkit-datetime-edit {
-  color: transparent;
+  opacity: 0;
+}
+
+.ui-date-input.is-empty input::-webkit-datetime-edit-fields-wrapper {
+  opacity: 0;
+}
+
+.ui-date-input.is-empty input::-webkit-date-and-time-value {
+  opacity: 0;
 }
 
 .ui-date-input input {

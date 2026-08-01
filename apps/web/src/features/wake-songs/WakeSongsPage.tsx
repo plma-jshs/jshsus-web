@@ -622,12 +622,12 @@ export function WakeSongsPage() {
           <div className="wake-song-history-viewport">
             <table className="workflow-table wake-song-history-table">
               <colgroup>
-                <col style={{ width: 130 }} />
-                <col style={{ width: 190 }} />
-                <col />
-                <col style={{ width: 150 }} />
-                <col style={{ width: 110 }} />
-                <col style={{ width: 160 }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '22%' }} />
+                <col style={{ width: '23%' }} />
+                <col style={{ width: '17%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '16%' }} />
               </colgroup>
               <thead>
                 <tr>

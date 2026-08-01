@@ -1,6 +1,7 @@
 import type { AcademicEvent } from '@jshsus/types';
-import type { CSSProperties, KeyboardEvent } from 'react';
+import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
@@ -20,6 +21,12 @@ type CalendarCell = {
 };
 type CalendarPageContentProps = {
   initialSelectedDate: string;
+};
+type CalendarPopover = {
+  title: string;
+  period: string;
+  x: number;
+  y: number;
 };
 
 function toDateKey(date: Date) {
@@ -64,6 +71,19 @@ function calendarWeeks(cells: CalendarCell[]) {
   return Array.from({ length: cells.length / 7 }, (_, index) =>
     cells.slice(index * 7, index * 7 + 7),
   );
+}
+
+function clickedSegmentDate(
+  event: MouseEvent<HTMLButtonElement>,
+  week: CalendarCell[],
+  startColumn: number,
+  endColumn: number,
+) {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const length = endColumn - startColumn + 1;
+  const ratio = rect.width ? (event.clientX - rect.left) / rect.width : 0;
+  const offset = Math.min(length - 1, Math.max(0, Math.floor(ratio * length)));
+  return week[startColumn - 1 + offset]?.date ?? week[startColumn - 1]!.date;
 }
 
 function eventTouchesDate(event: AcademicEvent, dateKey: string) {
@@ -269,6 +289,7 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
     return new Date(selected.getFullYear(), selected.getMonth(), 1);
   });
   const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
+  const [popover, setPopover] = useState<CalendarPopover | null>(null);
   const cells = useMemo(() => monthGrid(visibleMonth), [visibleMonth]);
   const weeks = useMemo(() => calendarWeeks(cells), [cells]);
   const range = { from: cells[0].dateKey, to: cells[cells.length - 1].dateKey };
@@ -490,16 +511,32 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                                   gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
                                   gridRow: segment.lane + 1,
                                 }}
-                                title={displayEventTitle(segment.event.title)}
-                                onClick={() =>
+                                onClick={(event) =>
                                   selectDate(
-                                    fromDateKey(
-                                      eventRange(segment.event).startsAt < week[0].dateKey
-                                        ? week[0].dateKey
-                                        : eventRange(segment.event).startsAt,
+                                    clickedSegmentDate(
+                                      event,
+                                      week,
+                                      segment.startColumn,
+                                      segment.endColumn,
                                     ),
                                   )
                                 }
+                                onMouseEnter={(event) =>
+                                  setPopover({
+                                    title: displayEventTitle(segment.event.title),
+                                    period: formatEventRange(segment.event),
+                                    x: event.clientX,
+                                    y: event.clientY,
+                                  })
+                                }
+                                onMouseMove={(event) =>
+                                  setPopover((current) =>
+                                    current
+                                      ? { ...current, x: event.clientX, y: event.clientY }
+                                      : current,
+                                  )
+                                }
+                                onMouseLeave={() => setPopover(null)}
                               >
                                 {segment.showLabel ? (
                                   <span>{displayEventTitle(segment.event.title)}</span>
@@ -547,6 +584,22 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
             </aside>
           </div>
         ) : null}
+        {popover
+          ? createPortal(
+              <div
+                className="calendar-event-popover"
+                role="tooltip"
+                style={{
+                  left: Math.min(popover.x + 12, window.innerWidth - 300),
+                  top: Math.min(popover.y + 14, window.innerHeight - 88),
+                }}
+              >
+                <strong>{popover.title}</strong>
+                <span>{popover.period}</span>
+              </div>,
+              document.body,
+            )
+          : null}
       </section>
     </PageScaffold>
   );

@@ -67,7 +67,6 @@ export function BoardPage() {
     >
       <section className="data-table-section" aria-label="자유게시판 목록">
         <DataTableToolbar
-          key={`${search.field}:${search.q}`}
           total={result?.total ?? 0}
           page={result?.page ?? search.page}
           totalPages={result?.totalPages ?? 0}

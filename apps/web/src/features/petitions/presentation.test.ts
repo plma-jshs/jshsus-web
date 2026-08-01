@@ -25,9 +25,12 @@ describe('petition presentation', () => {
     expect(matchesPetitionFilter({ ...petition, status: 'expired' }, 'all')).toBe(true);
   });
 
-  it('searches title, content, and author without case sensitivity', () => {
+  it('searches the selected title, content, or author field without case sensitivity', () => {
     expect(matchesPetitionQuery(petition, '도서관')).toBe(true);
-    expect(matchesPetitionQuery(petition, '학생회')).toBe(true);
+    expect(matchesPetitionQuery(petition, '학생회')).toBe(false);
     expect(matchesPetitionQuery(petition, '급식')).toBe(false);
+    expect(matchesPetitionQuery(petition, '도서관', 'title')).toBe(true);
+    expect(matchesPetitionQuery(petition, '시험 기간', 'title')).toBe(false);
+    expect(matchesPetitionQuery(petition, '학생회', 'author')).toBe(true);
   });
 });

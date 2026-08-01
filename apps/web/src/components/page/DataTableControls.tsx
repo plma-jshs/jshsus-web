@@ -142,6 +142,12 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
   }, [onSearch]);
 
   useEffect(() => {
+    setDraftField(field);
+    setDraftQuery(query);
+    lastSearchRef.current = { field, query: query.trim() };
+  }, [field, query]);
+
+  useEffect(() => {
     const normalizedQuery = draftQuery.trim();
     if (
       lastSearchRef.current.field === draftField &&

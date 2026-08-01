@@ -1,6 +1,7 @@
 import type { PetitionSummary } from '@jshsus/types';
 
 export type PetitionFilter = 'all' | 'open' | 'awaiting_answer' | 'answered';
+export type PetitionSearchField = 'title_content' | 'title' | 'author';
 
 export const petitionStatusLabels: Record<PetitionSummary['status'], string> = {
   open: '진행 중',
@@ -22,10 +23,18 @@ export function matchesPetitionFilter(petition: PetitionSummary, filter: Petitio
   return petition.status === filter;
 }
 
-export function matchesPetitionQuery(petition: PetitionSummary, query: string) {
+export function matchesPetitionQuery(
+  petition: PetitionSummary,
+  query: string,
+  field: PetitionSearchField = 'title_content',
+) {
   const normalized = query.trim().toLocaleLowerCase('ko-KR');
   if (!normalized) return true;
-  return `${petition.title} ${petition.content} ${petition.authorName ?? ''}`
-    .toLocaleLowerCase('ko-KR')
-    .includes(normalized);
+  const target =
+    field === 'title'
+      ? petition.title
+      : field === 'author'
+        ? (petition.authorName ?? '')
+        : `${petition.title} ${petition.content}`;
+  return target.toLocaleLowerCase('ko-KR').includes(normalized);
 }

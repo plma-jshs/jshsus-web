@@ -65,6 +65,7 @@ describe('PetitionsService detail contract', () => {
         content: [{ type: 'paragraph', content: [{ type: 'text', text: '상세 본문' }] }],
       },
       authorName: '작성자',
+      authorStudentNo: 2401,
       participantCount: 12,
       startsAt: new Date('2026-07-01T00:00:00Z'),
       endsAt: new Date('2026-08-01T00:00:00Z'),
@@ -91,6 +92,7 @@ describe('PetitionsService detail contract', () => {
 
     expect(result.id).toBe(73);
     expect(result.contentDoc).toEqual(petition.contentJson);
+    expect(result.authorName).toBe('2401 작성자');
     expect(result.answer?.content).toBe('답변');
   });
 

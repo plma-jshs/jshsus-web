@@ -1,5 +1,6 @@
-import type { ChangeEvent, FormEvent } from 'react';
+import type { ChangeEvent, FormEvent, MouseEvent } from 'react';
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Check,
@@ -73,6 +74,12 @@ type JsonImportPreview = {
   fileName: string;
   events: unknown[];
   replaceRange: boolean;
+};
+type CalendarPopover = {
+  title: string;
+  period: string;
+  x: number;
+  y: number;
 };
 
 function dateParts(value: Date | string) {
@@ -287,6 +294,19 @@ function weekEventSegments(
     });
 }
 
+function clickedSegmentDate(
+  event: MouseEvent<HTMLButtonElement>,
+  week: string[],
+  startColumn: number,
+  endColumn: number,
+) {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const length = endColumn - startColumn + 1;
+  const ratio = rect.width ? (event.clientX - rect.left) / rect.width : 0;
+  const offset = Math.min(length - 1, Math.max(0, Math.floor(ratio * length)));
+  return week[startColumn - 1 + offset] ?? week[startColumn - 1]!;
+}
+
 function eventCategoryLabel(event: AdminSchoolCalendarEvent) {
   return CALENDAR_EVENT_CATEGORIES.find(
     (category) => category.value === normalizeCategory(event.category, event.isHoliday),
@@ -376,6 +396,7 @@ export function SchoolEventsPage() {
   const [deleteTarget, setDeleteTarget] = useState<AdminSchoolCalendarEvent | null>(null);
   const [jsonImport, setJsonImport] = useState<JsonImportPreview | null>(null);
   const [jsonImportError, setJsonImportError] = useState<string | null>(null);
+  const [popover, setPopover] = useState<CalendarPopover | null>(null);
 
   const days = useMemo(() => calendarDays(month), [month]);
   const weeks = useMemo(() => calendarWeeks(days), [days]);
@@ -704,16 +725,37 @@ export function SchoolEventsPage() {
                                 }${segment.endColumn === 7 ? ' ends-week' : ''}`}
                                 type="button"
                                 key={`${segment.event.id}-${week[0]}`}
-                                title={segment.event.title}
                                 style={{
                                   gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
                                   gridRow: segment.lane + 1,
                                 }}
-                                onClick={() => {
-                                  const range = eventRange(segment.event);
-                                  setSelectedDate(range.startsAt);
+                                onClick={(event) => {
+                                  setSelectedDate(
+                                    clickedSegmentDate(
+                                      event,
+                                      week,
+                                      segment.startColumn,
+                                      segment.endColumn,
+                                    ),
+                                  );
                                   setSelectedEventId(segment.event.id);
                                 }}
+                                onMouseEnter={(event) =>
+                                  setPopover({
+                                    title: segment.event.title,
+                                    period: formatPeriod(segment.event),
+                                    x: event.clientX,
+                                    y: event.clientY,
+                                  })
+                                }
+                                onMouseMove={(event) =>
+                                  setPopover((current) =>
+                                    current
+                                      ? { ...current, x: event.clientX, y: event.clientY }
+                                      : current,
+                                  )
+                                }
+                                onMouseLeave={() => setPopover(null)}
                               >
                                 {segment.showLabel ? <span>{segment.event.title}</span> : null}
                               </button>
@@ -1006,6 +1048,22 @@ export function SchoolEventsPage() {
       >
         <p>삭제한 일정은 복구할 수 없습니다.</p>
       </Dialog>
+      {popover
+        ? createPortal(
+            <div
+              className="school-calendar-event-popover"
+              role="tooltip"
+              style={{
+                left: Math.min(popover.x + 12, window.innerWidth - 300),
+                top: Math.min(popover.y + 14, window.innerHeight - 88),
+              }}
+            >
+              <strong>{popover.title}</strong>
+              <span>{popover.period}</span>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

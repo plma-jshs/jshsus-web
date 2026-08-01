@@ -122,6 +122,7 @@ export function NoticeDetailPage() {
         <ContentDetailHeader
           title={notice.title}
           author={displayAuthor}
+          showAuthorAvatar={false}
           createdAt={notice.publishedAt}
           actions={
             canManage ? (

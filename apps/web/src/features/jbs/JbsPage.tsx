@@ -59,7 +59,6 @@ export function JbsPage() {
     >
       <section className="jbs-list" aria-label="JBS 영상 목록">
         <DataTableToolbar
-          key={`${search.field}:${search.q}`}
           total={result?.total ?? 0}
           page={result?.page ?? search.page}
           totalPages={result?.totalPages ?? 0}

@@ -61,4 +61,25 @@ describe('DataTableToolbar', () => {
     act(() => vi.advanceTimersByTime(250));
     expect(onSearch).toHaveBeenLastCalledWith('title_content', '');
   });
+
+  it('keeps the search input mounted and focused when URL-backed search props update', () => {
+    const props = {
+      total: 10,
+      page: 1,
+      totalPages: 1,
+      pageSize: 20 as const,
+      field: 'title_content' as const,
+      onPageSizeChange: vi.fn(),
+      onSearch: vi.fn(),
+    };
+    const view = render(<DataTableToolbar {...props} query="" />);
+    const input = screen.getByPlaceholderText('검색어를 입력하세요');
+    input.focus();
+
+    view.rerender(<DataTableToolbar {...props} query="검색 결과" />);
+
+    expect(screen.getByPlaceholderText('검색어를 입력하세요')).toBe(input);
+    expect(input).toHaveFocus();
+    expect(input).toHaveValue('검색 결과');
+  });
 });

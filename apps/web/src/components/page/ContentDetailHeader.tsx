@@ -6,6 +6,7 @@ export function ContentDetailHeader({
   title,
   author,
   authorProfileImageUrl,
+  showAuthorAvatar = true,
   createdAt,
   actions,
   children,
@@ -13,6 +14,7 @@ export function ContentDetailHeader({
   title: string;
   author: string;
   authorProfileImageUrl?: string;
+  showAuthorAvatar?: boolean;
   createdAt: string;
   actions?: ReactNode;
   children?: ReactNode;
@@ -25,7 +27,9 @@ export function ContentDetailHeader({
       </div>
       <div className="content-detail-header__meta">
         <span className="content-detail-header__author">
-          <UserAvatar imageUrl={authorProfileImageUrl} className="user-avatar--header" />
+          {showAuthorAvatar ? (
+            <UserAvatar imageUrl={authorProfileImageUrl} className="user-avatar--header" />
+          ) : null}
           {author}
         </span>
         <time dateTime={createdAt}>{formatKoreanContentDateTime(createdAt)}</time>

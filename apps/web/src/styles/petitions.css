@@ -3,6 +3,21 @@
   gap: 10px;
 }
 
+.petition-search-controls {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.petition-search-controls .data-table-toolbar-select__trigger {
+  min-width: 112px;
+}
+
+.petition-search-controls .page-search-field {
+  width: min(100%, 320px);
+}
+
 .petition-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 168px;
@@ -513,6 +528,14 @@
 
   .petition-list-section .page-search-field,
   .petition-table-section .page-search-field {
+    width: 100%;
+  }
+
+  .petition-search-controls {
+    width: 100%;
+  }
+
+  .petition-search-controls .page-search-field {
     width: 100%;
   }
 
