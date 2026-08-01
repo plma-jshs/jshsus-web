@@ -1,16 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import {
   createKoreanDateFormatter,
+  compactKoreanDateDots,
   formatKoreanContentDateTime,
   formatKoreanRelativeTime,
   toKoreanDateKey,
 } from './date';
 
-describe('createKoreanDateFormatter', () => {
-  it('removes only the trailing period from Korean dates', () => {
+describe('Korean date presentation', () => {
+  it('uses compact dotted dates without losing weekday spacing', () => {
     const formatter = createKoreanDateFormatter({ month: '2-digit', day: '2-digit' });
 
-    expect(formatter.format(new Date('2026-07-13T00:00:00+09:00'))).toBe('07. 13');
+    expect(formatter.format(new Date('2026-07-13T00:00:00+09:00'))).toBe('07.13');
+    expect(compactKoreanDateDots('2026. 08. 01. (토)')).toBe('2026.08.01 (토)');
   });
 });
 
@@ -24,7 +26,7 @@ describe('content date presentation', () => {
   const now = new Date('2026-07-15T14:19:30+09:00');
 
   it('formats the post header in Korea time with a 24-hour clock', () => {
-    expect(formatKoreanContentDateTime('2026-07-15T05:19:00.000Z')).toBe('2026. 07. 15. 14:19');
+    expect(formatKoreanContentDateTime('2026-07-15T05:19:00.000Z')).toBe('2026.07.15 14:19');
   });
 
   it.each([

@@ -6,7 +6,7 @@ function dateKey(date: Date) {
 }
 
 function displayDate(value: string) {
-  return `${value.slice(5, 7)}. ${value.slice(8, 10)}`;
+  return `${value.slice(5, 7)}.${value.slice(8, 10)}`;
 }
 
 export function getNextWakeSongWeek(now: Date) {

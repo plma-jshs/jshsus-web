@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { AdminApiError } from '../../../shared/api/adminApi';
+import { formatKoreanDate } from '../../../shared/lib/date';
 import '../content.css';
 
 type ContentAdminPanelProps = {
@@ -119,11 +120,9 @@ export function formatAdminDate(value?: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
 
-  return new Intl.DateTimeFormat('ko-KR', {
+  return formatKoreanDate(date, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  })
-    .format(date)
-    .replace(/\.$/, '');
+  });
 }

@@ -11,7 +11,7 @@ import type {
 } from '@jshsus/types';
 import { ContentBadges } from '../../components/page/ContentBadges';
 import { PageState } from '../../components/page/PageScaffold';
-import { toKoreanDateKey } from '../../shared/lib/date';
+import { compactKoreanDateDots, toKoreanDateKey } from '../../shared/lib/date';
 import { getHomeDashboard, getSchoolCalendar, getSchoolMeals } from './api';
 import {
   canShowConfirmedEmptyState,
@@ -83,26 +83,30 @@ function monthRange(year: number, month: number) {
 }
 
 function formatDate(value: string, options?: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat('ko-KR', {
-    timeZone: KOREA_TIME_ZONE,
-    month: '2-digit',
-    day: '2-digit',
-    ...options,
-  })
-    .format(new Date(value))
-    .replace(/\.$/, '');
+  return compactKoreanDateDots(
+    new Intl.DateTimeFormat('ko-KR', {
+      timeZone: KOREA_TIME_ZONE,
+      month: '2-digit',
+      day: '2-digit',
+      ...options,
+    })
+      .format(new Date(value))
+      .replace(/\.$/, ''),
+  );
 }
 
 function formatDashboardDate(value: string) {
-  return new Intl.DateTimeFormat('ko-KR', {
-    timeZone: KOREA_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    weekday: 'short',
-  })
-    .format(new Date(`${value}T12:00:00+09:00`))
-    .replace(/\.(?=\s*(?:\(|$))/g, '');
+  return compactKoreanDateDots(
+    new Intl.DateTimeFormat('ko-KR', {
+      timeZone: KOREA_TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      weekday: 'short',
+    })
+      .format(new Date(`${value}T12:00:00+09:00`))
+      .replace(/\.(?=\s*(?:\(|$))/g, ''),
+  );
 }
 
 function formatCalendarPopoverDate(year: number, month: number, day: number) {
@@ -115,15 +119,16 @@ function formatCalendarPopoverDate(year: number, month: number, day: number) {
 }
 
 function formatUpcomingDate(value: string) {
-  return new Intl.DateTimeFormat('ko-KR', {
-    timeZone: KOREA_TIME_ZONE,
-    month: '2-digit',
-    day: '2-digit',
-    weekday: 'short',
-  })
-    .format(new Date(value))
-    .replace(/\.(?=\s*(?:\(|$))/g, '')
-    .replace(/\s+\(/, '(');
+  return compactKoreanDateDots(
+    new Intl.DateTimeFormat('ko-KR', {
+      timeZone: KOREA_TIME_ZONE,
+      month: '2-digit',
+      day: '2-digit',
+      weekday: 'short',
+    })
+      .format(new Date(value))
+      .replace(/\.(?=\s*(?:\(|$))/g, ''),
+  );
 }
 
 function calendarEventTone(event: AcademicEvent) {
@@ -307,10 +312,10 @@ function CalendarDay({
   isCurrentMonth: boolean;
 }) {
   const isToday = year === today.year && month === today.month && day === today.day;
-  const className = `mini-calendar__day${isCurrentMonth ? '' : ' is-outside-month'}${isToday ? ' is-today' : ''}${events.length ? ' has-events' : ''}`;
+  const hasHoliday = events.some((event) => event.isHoliday || event.category === 'holiday');
+  const className = `mini-calendar__day${isCurrentMonth ? '' : ' is-outside-month'}${isToday ? ' is-today' : ''}${hasHoliday ? ' is-holiday' : ''}${events.length ? ' has-events' : ''}`;
   const tooltipId = `calendar-events-${year}-${month}-${day}`;
   const selectedDate = dateKey(year, month, day);
-  const hasHoliday = events.some((event) => event.isHoliday || event.category === 'holiday');
 
   if (!events.length) {
     return (
@@ -441,9 +446,9 @@ function CalendarCard({
           <button type="button" aria-label="이전 달" onClick={() => moveMonth(-1)}>
             <ChevronLeft aria-hidden="true" size={17} />
           </button>
-          <strong>
+          <span className="home-card__meta">
             {visibleMonth.year}년 {visibleMonth.month}월
-          </strong>
+          </span>
           <button type="button" aria-label="다음 달" onClick={() => moveMonth(1)}>
             <ChevronRight aria-hidden="true" size={17} />
           </button>

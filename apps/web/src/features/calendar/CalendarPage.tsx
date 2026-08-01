@@ -260,7 +260,7 @@ const eventTimeFormatter = createKoreanDateFormatter({
 
 export function formatCalendarDate(dateKey: string) {
   const [year, month, day] = dateKey.split('-');
-  return `${year}. ${month}. ${day} (${weekdayFormatter.format(fromDateKey(dateKey))})`;
+  return `${year}.${month}.${day} (${weekdayFormatter.format(fromDateKey(dateKey))})`;
 }
 
 function formatEventRange(event: AcademicEvent) {

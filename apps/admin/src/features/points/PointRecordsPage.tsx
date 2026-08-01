@@ -14,6 +14,7 @@ import {
   useToast,
 } from '../../components/ui';
 import { pointsApi, type PointRecordRow } from './pointsApi';
+import { formatKoreanDate } from '../../shared/lib/date';
 import './points.css';
 
 const reasonTypeLabel: Record<PointReason['type'], string> = {
@@ -25,18 +26,14 @@ const reasonTypeLabel: Record<PointReason['type'], string> = {
 type RecordSort = 'baseDate' | 'createdAt' | 'studentNo' | 'studentName' | 'point' | 'teacherName';
 
 function formatCreatedAt(value: string) {
-  return new Intl.DateTimeFormat('ko-KR', {
-    timeZone: 'Asia/Seoul',
+  return formatKoreanDate(value, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  })
-    .format(new Date(value))
-    .replace(/\. /g, '. ')
-    .replace(/\.$/, '');
+  });
 }
 
 export function PointRecordsPage() {

@@ -1,19 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { Activity, Database, History, RefreshCw, Server, Smartphone } from 'lucide-react';
 import { api, describeAdminApiError } from '../../shared/api/adminApi';
+import { formatKoreanDate } from '../../shared/lib/date';
 import './system.css';
 
 function formatCheckedAt(value: string) {
-  return new Intl.DateTimeFormat('ko-KR', {
+  return formatKoreanDate(value, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-  })
-    .format(new Date(value))
-    .replace(/\.$/, '');
+  });
 }
 
 function optionalDate(value?: string) {

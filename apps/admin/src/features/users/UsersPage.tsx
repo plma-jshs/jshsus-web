@@ -36,6 +36,7 @@ import {
   useToast,
 } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
+import { formatKoreanDate } from '../../shared/lib/date';
 import './users.css';
 
 type Tab = 'students' | 'staff';
@@ -126,13 +127,11 @@ function roleLabel(roles: string[], labels: ReadonlyMap<string, string>) {
 
 function formatDate(value?: string) {
   if (!value) return '-';
-  return new Intl.DateTimeFormat('ko-KR', {
+  return formatKoreanDate(value, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  })
-    .format(new Date(value))
-    .replace(/\.$/, '');
+  });
 }
 
 function studentNumberParts(value: FormDataEntryValue | null, allowTestAccount = false) {

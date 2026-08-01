@@ -14,6 +14,7 @@ import {
   PageSizeSelect,
   TableToolbar,
 } from '../../components/ui';
+import { formatKoreanDate } from '../../shared/lib/date';
 import {
   ActivityStatusBadge,
   activityStatusOptions,
@@ -25,12 +26,6 @@ import {
   koreaDateInput,
 } from './activitySchedule';
 import './operations.css';
-
-const activityDayFormatter = new Intl.DateTimeFormat('ko-KR', {
-  timeZone: 'Asia/Seoul',
-  month: '2-digit',
-  day: '2-digit',
-});
 
 function formatParticipants(request: ActivityRequestAdminSummary) {
   const participants = request.participants.length
@@ -62,7 +57,8 @@ const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
     accessorFn: (request) => request.startsAt,
     header: '날짜',
     enableSorting: false,
-    cell: ({ row }) => activityDayFormatter.format(new Date(row.original.startsAt)),
+    cell: ({ row }) =>
+      formatKoreanDate(row.original.startsAt, { month: '2-digit', day: '2-digit' }),
     meta: { width: 76, align: 'center' },
   },
   {

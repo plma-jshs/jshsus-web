@@ -14,6 +14,7 @@ import {
 } from '../../components/ui';
 import { YouTubeSegmentPlayer } from '../../components/youtube/YouTubeSegmentPlayer';
 import { wakeSongAdminApi } from './api';
+import { formatKoreanDate } from '../../shared/lib/date';
 import type { WakeSongRequest, WakeSongRequestStatus } from './types';
 import './wake-songs.css';
 
@@ -113,7 +114,11 @@ export function WakeSongsPage() {
       accessorKey: 'createdAt',
       header: '신청일',
       cell: ({ row }) =>
-        new Date(row.original.createdAt).toLocaleDateString('ko-KR').replace(/\.$/, ''),
+        formatKoreanDate(row.original.createdAt, {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        }),
       meta: { align: 'center', width: 130 },
     },
     {

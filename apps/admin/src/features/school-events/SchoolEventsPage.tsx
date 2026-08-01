@@ -200,7 +200,7 @@ function validateEvent(form: EventForm) {
 function formatCalendarDate(date: string) {
   const [year, month, day] = date.split('-');
   const weekday = WEEKDAYS[weekdayOf(date)];
-  return `${year}. ${month}. ${day} (${weekday})`;
+  return `${year}.${month}.${day} (${weekday})`;
 }
 
 function formatPeriod(event: AdminSchoolCalendarEvent) {

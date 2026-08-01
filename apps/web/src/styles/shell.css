@@ -354,7 +354,7 @@
 .portal-footer__inner {
   display: flex;
   width: min(calc(100% - 5rem), 1280px);
-  min-height: 54px;
+  min-height: 48px;
   margin-inline: auto;
   align-items: center;
   flex-wrap: wrap;

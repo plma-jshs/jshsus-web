@@ -14,6 +14,7 @@ import {
   TableToolbar,
 } from '../../components/ui';
 import { api, describeAdminApiError } from '../../shared/api/adminApi';
+import { formatKoreanDate } from '../../shared/lib/date';
 import './device-cases.css';
 
 const commandLabels: Record<DeviceCaseCommand['command'], string> = {
@@ -30,15 +31,13 @@ const commandStatusLabels: Record<DeviceCaseCommand['status'], string> = {
 };
 
 function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat('ko-KR', {
+  return formatKoreanDate(value, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-  })
-    .format(new Date(value))
-    .replace(/\.$/, '');
+  });
 }
 
 function deviceCaseLabel(id: number) {

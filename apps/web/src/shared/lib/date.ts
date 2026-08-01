@@ -1,5 +1,18 @@
 const KOREA_TIME_ZONE = 'Asia/Seoul';
 
+/**
+ * Korean Intl date output includes spaces after every dot (for example
+ * `2026. 08. 01.`). Keep the separator compact while preserving a single
+ * space before weekday and time labels.
+ */
+export function compactKoreanDateDots(value: string) {
+  return value
+    .replace(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})(?:\.(?=\s|$)|(?=\s|$))/g, '$1.$2.$3')
+    .replace(/(^|[^\d])(\d{1,2})\.\s*(\d{1,2})(?:\.(?=\s|$)|(?=\s|$))/g, '$1$2.$3')
+    .replace(/\s+\(/g, ' (')
+    .trim();
+}
+
 export function createKoreanDateFormatter(options: Intl.DateTimeFormatOptions) {
   const formatter = new Intl.DateTimeFormat('ko-KR', {
     timeZone: KOREA_TIME_ZONE,
@@ -8,7 +21,7 @@ export function createKoreanDateFormatter(options: Intl.DateTimeFormatOptions) {
 
   return {
     format(value: Date | number) {
-      return formatter.format(value).replace(/\.$/, '');
+      return compactKoreanDateDots(formatter.format(value).replace(/\.$/, ''));
     },
   };
 }
@@ -42,7 +55,7 @@ export function formatKoreanContentDateTime(value: string | number | Date) {
   const date = value instanceof Date ? value : new Date(value);
   const parts = contentDateTimeFormatter.formatToParts(date);
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${values.year}. ${values.month}. ${values.day}. ${values.hour}:${values.minute}`;
+  return `${values.year}.${values.month}.${values.day} ${values.hour}:${values.minute}`;
 }
 
 /** 목록·댓글에서 사용자가 빠르게 시점을 파악하도록 짧은 상대시간을 반환합니다. */

@@ -15,7 +15,7 @@ function formatLegacyDateTime(value: string) {
   const [year, month, day] = datePart.split('-');
   const [hour, minute] = timePart.split(':');
   if (!year || !month || !day || !hour || !minute) return value;
-  return `${year}. ${month}. ${day}. ${hour}:${minute}`;
+  return `${year}.${month}.${day} ${hour}:${minute}`;
 }
 
 export function ThanksPage() {

@@ -6,19 +6,18 @@ import { Search } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import { DateRangeField, PageSizeSelect, TableToolbar } from '../../components/ui';
 import { api, describeAdminApiError } from '../../shared/api/adminApi';
+import { formatKoreanDate } from '../../shared/lib/date';
 import './audit-logs.css';
 
 function formatAuditDate(value: string) {
-  return new Intl.DateTimeFormat('ko-KR', {
+  return formatKoreanDate(value, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  })
-    .format(new Date(value))
-    .replace(/\.$/, '');
+  });
 }
 
 const columns: ColumnDef<AdminAuditLog>[] = [

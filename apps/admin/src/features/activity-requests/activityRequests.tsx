@@ -45,12 +45,12 @@ function activityDateParts(value: string, includeTime: boolean) {
 
 export function formatActivityDateTime(value: string) {
   const parts = activityDateParts(value, true);
-  return `${parts.get('year')}. ${parts.get('month')}. ${parts.get('day')} ${parts.get('hour')}:${parts.get('minute')}`;
+  return `${parts.get('year')}.${parts.get('month')}.${parts.get('day')} ${parts.get('hour')}:${parts.get('minute')}`;
 }
 
 export function formatActivityDate(value: string) {
   const parts = activityDateParts(value, false);
-  return `${parts.get('year')}. ${parts.get('month')}. ${parts.get('day')}`;
+  return `${parts.get('year')}.${parts.get('month')}.${parts.get('day')}`;
 }
 
 export function ActivityStatusBadge({ status }: { status: ActivityRequestAdminStatus }) {
