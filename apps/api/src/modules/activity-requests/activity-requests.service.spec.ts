@@ -178,9 +178,11 @@ describe('ActivityRequestsService student create authorization', () => {
           selectChain([
             { id: 9, studentNo: 9999 },
             { id: 10, studentNo: 1101 },
+            { id: 11, studentNo: 1201 },
           ]),
         )
-        .mockReturnValueOnce(selectChain([{ userId: 30, name: '담당 교사' }])),
+        .mockReturnValueOnce(selectChain([{ userId: 30, name: '담당 교사' }]))
+        .mockReturnValueOnce(selectChain([{ userId: 20 }, { userId: 21 }, { userId: 22 }])),
       insert: vi
         .fn()
         .mockReturnValueOnce(requestInsert)
@@ -204,7 +206,7 @@ describe('ActivityRequestsService student create authorization', () => {
         studentId: 999_999,
         representativeStudentNo: 1101,
         advisorTeacherId: 30,
-        participantStudentNos: [],
+        participantStudentNos: [1201],
         location: '과학관',
         startsAt: '2026-07-18T09:00:00+09:00',
         endsAt: '2026-07-18T10:40:00+09:00',
@@ -223,6 +225,7 @@ describe('ActivityRequestsService student create authorization', () => {
     expect(participantInsert.values).toHaveBeenCalledWith([
       { activityRequestId: 14, studentId: 9 },
       { activityRequestId: 14, studentId: 10 },
+      { activityRequestId: 14, studentId: 11 },
     ]);
     expect(result.request.studentId).toBe(10);
     expect(notifications.createForUser).toHaveBeenNthCalledWith(
@@ -242,22 +245,6 @@ describe('ActivityRequestsService student create authorization', () => {
     expect(notifications.createForUser).toHaveBeenNthCalledWith(
       2,
       {
-        userId: 20,
-        type: 'activity_request_submitted',
-        title: '탐구활동서 신청이 생성되었습니다.',
-        body: '과학관 · 승인 대기',
-        link: '/activity-requests/14',
-        metadata: {
-          activityRequestId: 14,
-          representativeStudentId: 10,
-        },
-        dedupeKey: 'activity-request:14:created-for-student',
-      },
-      transactionDb,
-    );
-    expect(notifications.createForUser).toHaveBeenNthCalledWith(
-      3,
-      {
         userId: 21,
         type: 'activity_request_submitted',
         title: '탐구활동서 신청이 생성되었습니다.',
@@ -267,7 +254,23 @@ describe('ActivityRequestsService student create authorization', () => {
           activityRequestId: 14,
           representativeStudentId: 10,
         },
-        dedupeKey: 'activity-request:14:created-for-student',
+        dedupeKey: 'activity-request:14:created-for-participant',
+      },
+      transactionDb,
+    );
+    expect(notifications.createForUser).toHaveBeenNthCalledWith(
+      3,
+      {
+        userId: 22,
+        type: 'activity_request_submitted',
+        title: '탐구활동서 신청이 생성되었습니다.',
+        body: '과학관 · 승인 대기',
+        link: '/activity-requests/14',
+        metadata: {
+          activityRequestId: 14,
+          representativeStudentId: 10,
+        },
+        dedupeKey: 'activity-request:14:created-for-participant',
       },
       transactionDb,
     );

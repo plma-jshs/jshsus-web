@@ -1,5 +1,6 @@
 export * from './Button';
 export * from './AdminListPanel';
+export * from './AdminSelect';
 export * from './DateRangeField';
 export * from './Dialog';
 export * from './Drawer';

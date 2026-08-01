@@ -436,6 +436,11 @@ export const activityRequests = mysqlTable(
     creatorIdx: index('activity_requests_creator_idx').on(table.createdById, table.createdAt),
     teacherIdx: index('activity_requests_teacher_idx').on(table.advisorTeacherId, table.status),
     reviewerIdx: index('activity_requests_reviewer_idx').on(table.reviewedById, table.status),
+    statusDateIdx: index('activity_requests_status_date_idx').on(
+      table.status,
+      table.startsAt,
+      table.id,
+    ),
     issuedIdx: uniqueIndex('activity_requests_issued_number_idx').on(table.issuedNumber),
   }),
 );
@@ -487,6 +492,10 @@ export const activityRequestEvents = mysqlTable(
   },
   (table) => ({
     requestIdx: index('activity_request_events_request_idx').on(table.activityRequestId),
+    requestCreatedIdx: index('activity_request_events_request_created_idx').on(
+      table.activityRequestId,
+      table.createdAt,
+    ),
     requestFk: foreignKey({
       columns: [table.activityRequestId],
       foreignColumns: [activityRequests.id],

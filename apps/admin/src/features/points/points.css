@@ -14,7 +14,7 @@
   font-weight: var(--j-weight-semibold);
 }
 
-.point-filter :where(input, select) {
+.point-filter :where(input, .admin-select__trigger) {
   min-height: 38px;
 }
 

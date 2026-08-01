@@ -12,6 +12,7 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { MoveRight, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSelect,
   Button,
   Dialog,
   PageSizeSelect,
@@ -353,7 +354,7 @@ export function DormAssignmentPanel({
         id: 'room',
         header: '방',
         cell: ({ row }) => (
-          <select
+          <AdminSelect
             aria-label={`${row.original.studentName} 방`}
             value={row.original.roomId}
             onChange={(event) =>
@@ -378,7 +379,7 @@ export function DormAssignmentPanel({
                 {room.name}
               </option>
             ))}
-          </select>
+          </AdminSelect>
         ),
         enableSorting: false,
         meta: { width: 150, align: 'center' },
@@ -397,7 +398,7 @@ export function DormAssignmentPanel({
               .map((item) => item.bedPosition),
           );
           return (
-            <select
+            <AdminSelect
               aria-label={`${row.original.studentName} 침대`}
               value={row.original.bedPosition}
               onChange={(event) =>
@@ -415,7 +416,7 @@ export function DormAssignmentPanel({
                   {bed}번
                 </option>
               ))}
-            </select>
+            </AdminSelect>
           );
         },
         enableSorting: false,
@@ -588,7 +589,7 @@ export function DormAssignmentPanel({
             <h2>방 추첨</h2>
           </div>
           <div className="dorm-draw-controls">
-            <select
+            <AdminSelect
               value={drawDorm}
               onChange={(event) => {
                 setDrawDorm(event.target.value as DormRoom['dormName']);
@@ -598,8 +599,8 @@ export function DormAssignmentPanel({
             >
               <option value="송죽관">송죽관</option>
               <option value="동백관">동백관</option>
-            </select>
-            <select
+            </AdminSelect>
+            <AdminSelect
               value={drawGrade}
               onChange={(event) => {
                 setDrawGrade(Number(event.target.value));
@@ -612,7 +613,7 @@ export function DormAssignmentPanel({
                   {grade}학년
                 </option>
               ))}
-            </select>
+            </AdminSelect>
             <Button
               variant="primary"
               loading={previewMutation.isPending}
@@ -759,7 +760,7 @@ export function DormAssignmentPanel({
         <div className="dorm-dialog-form">
           <label>
             방
-            <select
+            <AdminSelect
               value={moveRoomId}
               onChange={(event) => {
                 setMoveRoomId(event.target.value);
@@ -771,11 +772,15 @@ export function DormAssignmentPanel({
                   {room.dormName} {room.name}
                 </option>
               ))}
-            </select>
+            </AdminSelect>
           </label>
           <label>
             침대
-            <select value={moveBed} onChange={(event) => setMoveBed(event.target.value)}>
+            <AdminSelect
+              value={moveBed}
+              onChange={(event) => setMoveBed(event.target.value)}
+              aria-label="침대"
+            >
               {Array.from({ length: selectedMoveRoom?.capacity ?? 0 }, (_, index) => index + 1).map(
                 (bed) => (
                   <option key={bed} value={bed}>
@@ -783,7 +788,7 @@ export function DormAssignmentPanel({
                   </option>
                 ),
               )}
-            </select>
+            </AdminSelect>
           </label>
         </div>
       </Dialog>

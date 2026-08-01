@@ -6,6 +6,7 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSelect,
   Button,
   FormField,
   RowActionButton,
@@ -747,7 +748,7 @@ export function PointAwardPage() {
 
           <div className="point-award-fields">
             <FormField label="기준 규정" required>
-              <select
+              <AdminSelect
                 value={form.reasonId}
                 onChange={(event) => {
                   const reason = activeReasons.find(
@@ -768,7 +769,7 @@ export function PointAwardPage() {
                     {reason.id} · {reasonTypeLabel[reason.type]} · {reason.comment}
                   </option>
                 ))}
-              </select>
+              </AdminSelect>
             </FormField>
             <FormField label="점수" required>
               <input

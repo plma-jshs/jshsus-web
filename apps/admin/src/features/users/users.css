@@ -108,7 +108,7 @@
   font-weight: 650;
 }
 .identity-field input,
-.identity-field select {
+.identity-field .admin-select__trigger {
   width: 100%;
   height: 40px;
   padding: 0 12px;
@@ -121,8 +121,8 @@
   outline: none;
 }
 .identity-field input:focus,
-.identity-field select:focus {
-  border-color: #168e87;
+.identity-field .admin-select__trigger:focus-visible {
+  border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
 }
 .identity-field input[readonly] {

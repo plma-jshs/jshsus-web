@@ -601,12 +601,19 @@ export class ActivityRequestsService {
           tx,
         );
 
+        const participantUsers = await tx
+          .select({ userId: schema.students.userId })
+          .from(schema.students)
+          .where(inArray(schema.students.id, participantIds));
         const studentRecipients = new Set(
-          [applicant.userId, representative.userId].filter(
-            (userId): userId is number =>
-              typeof userId === 'number' && Number.isSafeInteger(userId) && userId > 0,
-          ),
+          participantUsers
+            .map((participant) => participant.userId)
+            .filter(
+              (userId): userId is number =>
+                typeof userId === 'number' && Number.isSafeInteger(userId) && userId > 0,
+            ),
         );
+        if (session?.userId) studentRecipients.delete(session.userId);
         for (const userId of studentRecipients) {
           await this.notifications.createForUser(
             {
@@ -619,7 +626,7 @@ export class ActivityRequestsService {
                 activityRequestId: result.id,
                 representativeStudentId: representative.id,
               },
-              dedupeKey: `activity-request:${result.id}:created-for-student`,
+              dedupeKey: `activity-request:${result.id}:created-for-participant`,
             },
             tx,
           );

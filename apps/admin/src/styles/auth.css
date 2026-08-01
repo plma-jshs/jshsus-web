@@ -97,7 +97,7 @@
 
 .login-form > label > input:focus,
 .login-password-field > input:focus {
-  border-color: var(--primary);
+  border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
 }
 
@@ -212,7 +212,7 @@
 }
 
 .login-remember input:focus-visible {
-  outline: 2px solid rgba(22, 124, 114, 0.48);
+  outline: var(--j-focus-ring);
   outline-offset: 2px;
 }
 

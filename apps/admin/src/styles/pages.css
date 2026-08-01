@@ -556,7 +556,7 @@
   font-weight: 800;
 }
 
-.role-assignment select {
+.role-assignment .admin-select__trigger {
   min-height: 38px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -621,7 +621,7 @@
   font-size: 13px;
 }
 
-.ops-row select {
+.ops-row .admin-select__trigger {
   min-height: 36px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -1211,8 +1211,7 @@
   white-space: nowrap;
 }
 
-.content-search-field,
-.content-select-field {
+.content-search-field {
   position: relative;
   display: flex;
   min-height: 38px;
@@ -1226,17 +1225,11 @@
 }
 
 .content-search-field:focus-within {
-  border-color: var(--primary);
+  border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
 }
 
-.content-select-field:focus-within {
-  border-color: var(--line);
-  box-shadow: none;
-}
-
-.content-search-field input,
-.content-select-field select {
+.content-search-field input {
   min-width: 0;
   min-height: 36px;
   border: 0;
@@ -1250,23 +1243,18 @@
   width: 220px;
 }
 
-.content-select-field select {
-  appearance: none;
-  max-width: 180px;
-  padding-right: 30px;
-  cursor: pointer;
+.content-select-field {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
 }
 
-.content-select-field::after {
-  position: absolute;
-  right: 12px;
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid #344054;
-  border-bottom: 2px solid #344054;
-  content: '';
-  pointer-events: none;
-  transform: translateY(-2px) rotate(45deg);
+.content-select-field .admin-select {
+  width: auto;
+  min-width: 132px;
+  max-width: 180px;
 }
 
 .content-state {

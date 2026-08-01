@@ -5,6 +5,7 @@ import type { BoardCommentSummary, BoardPostSummary, ContentReportSummary } from
 import { Eye, EyeOff, Search, Settings2, ShieldAlert } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSelect,
   Drawer,
   PageSizeSelect,
   RowActionButton,
@@ -447,7 +448,7 @@ export function CommunityModerationPage({
             {sources.length > 1 ? (
               <label className="content-select-field">
                 <span className="sr-only">게시판 선택</span>
-                <select
+                <AdminSelect
                   value={activeSource.slug}
                   onChange={(event) => {
                     setActiveBoardSlug(event.target.value);
@@ -459,7 +460,7 @@ export function CommunityModerationPage({
                       {source.label}
                     </option>
                   ))}
-                </select>
+                </AdminSelect>
               </label>
             ) : null}
             <label className="content-search-field">
@@ -473,7 +474,7 @@ export function CommunityModerationPage({
             </label>
             <label className="content-select-field">
               <span className="sr-only">게시글 공개 상태</span>
-              <select
+              <AdminSelect
                 value={postVisibility}
                 onChange={(event) => setPostVisibility(event.target.value as typeof postVisibility)}
               >
@@ -481,7 +482,7 @@ export function CommunityModerationPage({
                 <option value="published">공개</option>
                 <option value="draft">임시 저장</option>
                 <option value="hidden">숨김</option>
-              </select>
+              </AdminSelect>
             </label>
             <PageSizeSelect value={postPageSize} onChange={setPostPageSize} />
           </div>
@@ -527,14 +528,14 @@ export function CommunityModerationPage({
             <label className="content-select-field">
               <ShieldAlert size={16} aria-hidden="true" />
               <span className="sr-only">신고 상태 필터</span>
-              <select
+              <AdminSelect
                 value={reportStatus}
                 onChange={(event) => setReportStatus(event.target.value)}
               >
                 <option value="all">전체 상태</option>
                 <option value="reviewing">검토 중</option>
                 <option value="closed">처리 완료</option>
-              </select>
+              </AdminSelect>
             </label>
             <PageSizeSelect value={reportPageSize} onChange={setReportPageSize} />
           </>

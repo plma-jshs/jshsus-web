@@ -5,6 +5,7 @@ import type { LostItemSummary } from '@jshsus/types';
 import { Search, Settings2, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSelect,
   Drawer,
   PageSizeSelect,
   RowActionButton,
@@ -277,15 +278,19 @@ export function LostItemsManagementPage() {
             </label>
             <label className="content-select-field">
               <span className="sr-only">등록 구분</span>
-              <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
+              <AdminSelect
+                value={typeFilter}
+                onChange={(event) => setTypeFilter(event.target.value)}
+                aria-label="등록 구분"
+              >
                 <option value="all">전체</option>
                 <option value="lost">분실</option>
                 <option value="found">습득</option>
-              </select>
+              </AdminSelect>
             </label>
             <label className="content-select-field">
               <span className="sr-only">처리 상태</span>
-              <select
+              <AdminSelect
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value)}
               >
@@ -295,7 +300,7 @@ export function LostItemsManagementPage() {
                     {label}
                   </option>
                 ))}
-              </select>
+              </AdminSelect>
             </label>
             <PageSizeSelect value={itemPageSize} onChange={setItemPageSize} />
           </div>
@@ -429,7 +434,7 @@ export function LostItemsManagementPage() {
             ) : null}
             <label className="content-drawer-field">
               <span>처리 상태</span>
-              <select
+              <AdminSelect
                 value={selectedItemStatus}
                 onChange={(event) =>
                   setSelectedItemStatus(event.target.value as LostItemSummary['status'])
@@ -440,7 +445,7 @@ export function LostItemsManagementPage() {
                     {label}
                   </option>
                 ))}
-              </select>
+              </AdminSelect>
             </label>
             <MutationMessage
               isPending={updateLostStatusMutation.isPending || deleteLostItemMutation.isPending}

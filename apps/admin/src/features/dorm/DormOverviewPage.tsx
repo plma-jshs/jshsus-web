@@ -4,6 +4,7 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { CircleAlert, DoorOpen, Eye } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSelect,
   Drawer,
   EmptyState,
   PageSizeSelect,
@@ -119,7 +120,7 @@ export function DormOverviewPage() {
             placeholder="호실 검색"
             aria-label="호실 검색"
           />
-          <select
+          <AdminSelect
             value={year}
             onChange={(event) => setYear(Number(event.target.value))}
             aria-label="연도"
@@ -129,16 +130,16 @@ export function DormOverviewPage() {
                 {option}년
               </option>
             ))}
-          </select>
-          <select
+          </AdminSelect>
+          <AdminSelect
             value={semester}
             onChange={(event) => setSemester(Number(event.target.value))}
             aria-label="학기"
           >
             <option value={1}>1학기</option>
             <option value={2}>2학기</option>
-          </select>
-          <select
+          </AdminSelect>
+          <AdminSelect
             value={dormName}
             onChange={(event) => setDormName(event.target.value as '' | DormRoom['dormName'])}
             aria-label="생활관"
@@ -146,8 +147,8 @@ export function DormOverviewPage() {
             <option value="">전체 생활관</option>
             <option value="송죽관">송죽관</option>
             <option value="동백관">동백관</option>
-          </select>
-          <select
+          </AdminSelect>
+          <AdminSelect
             value={grade}
             onChange={(event) => setGrade(event.target.value ? Number(event.target.value) : '')}
             aria-label="학년"
@@ -158,7 +159,7 @@ export function DormOverviewPage() {
                 {option}학년
               </option>
             ))}
-          </select>
+          </AdminSelect>
           <PageSizeSelect value={pageSize} onChange={setPageSize} />
         </TableToolbar>
         <DataTable

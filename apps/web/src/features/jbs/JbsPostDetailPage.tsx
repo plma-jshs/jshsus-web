@@ -385,9 +385,11 @@ export function JbsPostDetailPage() {
                 <Send size={15} aria-hidden="true" /> 등록
               </button>
             </form>
-            <span className="mutation-feedback" role="status" aria-live="polite">
-              {commentMutation.isError ? '댓글을 등록하지 못했습니다.' : null}
-            </span>
+            {commentMutation.isError ? (
+              <span className="mutation-feedback" role="status" aria-live="polite">
+                댓글을 등록하지 못했습니다.
+              </span>
+            ) : null}
           </>
         ) : sessionQuery.isLoading ? (
           <PageState kind="loading" variant="inline" title="로그인 상태를 확인하는 중입니다." />

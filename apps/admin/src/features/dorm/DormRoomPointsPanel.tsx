@@ -5,6 +5,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSelect,
   Button,
   PageSizeSelect,
   RowActionButton,
@@ -208,7 +209,11 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
         <Button onClick={addRoom}>추가</Button>
         <label>
           기준 규정
-          <select value={reasonId} onChange={(event) => selectReason(Number(event.target.value))}>
+          <AdminSelect
+            value={reasonId}
+            onChange={(event) => selectReason(Number(event.target.value))}
+            aria-label="기준 규정"
+          >
             <option value={0}>선택</option>
             {reasons.map((reason: PointReason) => (
               <option key={reason.id} value={reason.id}>
@@ -216,7 +221,7 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
                 {reason.point})
               </option>
             ))}
-          </select>
+          </AdminSelect>
         </label>
         <label>
           점수

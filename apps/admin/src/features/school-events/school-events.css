@@ -53,7 +53,7 @@
   font-size: 17px;
 }
 
-.school-calendar-actions select {
+.school-calendar-actions .admin-select {
   width: auto;
   min-width: 128px;
 }
@@ -635,7 +635,7 @@
 
 .calendar-category-select__trigger:focus-visible,
 .calendar-category-select.is-open .calendar-category-select__trigger {
-  border-color: var(--primary);
+  border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
   outline: 0;
 }

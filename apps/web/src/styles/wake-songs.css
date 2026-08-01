@@ -474,7 +474,7 @@
 
 .wake-song-rate-select__trigger:focus-visible,
 .wake-song-rate-select.is-open .wake-song-rate-select__trigger {
-  border-color: var(--j-color-brand);
+  border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
   outline: 0;
 }
@@ -688,7 +688,7 @@
 
 .wake-song-table-actions button:focus-visible {
   outline: 0;
-  box-shadow: 0 0 0 3px rgb(13 148 136 / 15%);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .wake-song-table-actions button:disabled {

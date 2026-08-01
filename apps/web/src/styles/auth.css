@@ -128,7 +128,7 @@
 .auth-form > label > input:focus,
 .auth-form > label > select:focus,
 .auth-password-field > input:focus {
-  border-color: var(--j-color-brand);
+  border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
 }
 
@@ -173,7 +173,7 @@
 
 .auth-form-grid input:focus,
 .auth-form-grid select:focus {
-  border-color: var(--j-color-brand);
+  border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
 }
 
@@ -323,7 +323,7 @@
 }
 
 .auth-remember input:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--j-color-brand) 48%, transparent);
+  outline: var(--j-focus-ring);
   outline-offset: 2px;
 }
 

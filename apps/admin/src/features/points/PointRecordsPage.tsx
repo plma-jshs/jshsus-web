@@ -4,6 +4,7 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSelect,
   AdminListPanel,
   DateRangeField,
   PageSizeSelect,
@@ -277,7 +278,7 @@ export function PointRecordsPage() {
           </label>
           <label className="point-filter">
             <span>종류</span>
-            <select
+            <AdminSelect
               value={type}
               onChange={(event) => {
                 setType(event.target.value as PointReason['type'] | '');
@@ -288,7 +289,7 @@ export function PointRecordsPage() {
               <option value="PLUS">상점</option>
               <option value="MINUS">벌점</option>
               <option value="ETC">기타</option>
-            </select>
+            </AdminSelect>
           </label>
           <DateRangeField
             label="기준일"

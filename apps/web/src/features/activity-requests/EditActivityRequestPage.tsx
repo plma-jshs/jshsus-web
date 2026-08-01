@@ -394,7 +394,7 @@ function EditForm({
             {!isWeekendActivityDate(activityDate) && !showExtendedSlots ? (
               <div className="activity-slot-selector__more">
                 <button type="button" onClick={() => setShowExtendedSlots(true)}>
-                  오전·오후 면학 더보기
+                  더보기
                   <ChevronDown size={15} aria-hidden="true" />
                 </button>
               </div>

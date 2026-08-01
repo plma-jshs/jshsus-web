@@ -131,28 +131,8 @@
   padding-left: 36px;
 }
 
-.operation-list-toolbar select:not(.ui-page-size-select) {
+.operation-list-toolbar .admin-select:not(.ui-page-size-select) {
   width: 120px;
-}
-
-.operation-date-filter {
-  display: grid;
-  gap: 5px;
-  color: var(--j-color-text-muted);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.operation-list-toolbar .operation-date-filter input[type='date'] {
-  width: 150px;
-  min-width: 150px;
-}
-
-.operation-date-separator {
-  height: var(--control-height);
-  display: inline-flex;
-  align-items: center;
-  color: var(--j-color-text-muted);
 }
 
 .operation-review-toolbar .admin-table-toolbar__controls {
@@ -264,12 +244,12 @@
 }
 
 .operation-toolbar input,
-.operation-toolbar select,
+.operation-toolbar .admin-select__trigger,
 .operation-assignment-form input,
-.operation-assignment-form select,
+.operation-assignment-form .admin-select__trigger,
 .operation-reject-form textarea,
 .operation-report-editor input,
-.operation-report-editor select {
+.operation-report-editor .admin-select__trigger {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--line);
@@ -280,11 +260,11 @@
 }
 
 .operation-toolbar input,
-.operation-toolbar select,
+.operation-toolbar .admin-select__trigger,
 .operation-assignment-form input,
-.operation-assignment-form select,
+.operation-assignment-form .admin-select__trigger,
 .operation-report-editor input,
-.operation-report-editor select {
+.operation-report-editor .admin-select__trigger {
   padding: 0 10px;
 }
 
@@ -389,7 +369,7 @@
 
 .activity-create-form input,
 .activity-create-form textarea,
-.activity-create-form select {
+.activity-create-form .admin-select__trigger {
   width: 100%;
 }
 

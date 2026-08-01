@@ -195,5 +195,6 @@ export const auditLogs = mysqlTable(
   (table) => ({
     actorIdx: index('audit_logs_actor_idx').on(table.actorId),
     targetIdx: index('audit_logs_target_idx').on(table.targetType, table.targetId),
+    createdIdx: index('audit_logs_created_idx').on(table.createdAt, table.id),
   }),
 );

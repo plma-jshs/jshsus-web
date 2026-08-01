@@ -19,7 +19,7 @@
 }
 
 .audit-log-search:focus-within {
-  border-color: var(--primary);
+  border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
 }
 

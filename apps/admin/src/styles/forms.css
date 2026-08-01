@@ -34,7 +34,7 @@
     textarea
   ):focus,
 .ui-control:focus {
-  border-color: var(--primary);
+  border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
 }
 
@@ -62,6 +62,140 @@ select.ui-control:not([multiple]) {
   cursor: pointer;
 }
 
+.admin-select {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+  height: var(--control-height);
+  vertical-align: middle;
+}
+
+.admin-select__native {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-height: 1px !important;
+  padding: 0 !important;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  border: 0 !important;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.admin-select__trigger {
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--control-height);
+  padding: 0 10px 0 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  color: var(--j-color-text);
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: var(--j-weight-regular);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--j-motion-fast),
+    background-color var(--j-motion-fast),
+    box-shadow var(--j-motion-fast);
+}
+
+.admin-select__trigger > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-select__trigger > svg {
+  flex: 0 0 auto;
+  color: var(--j-color-text-muted);
+  transition: transform var(--j-motion-fast);
+}
+
+.admin-select__trigger:hover:not(:disabled) {
+  border-color: #aebbc1;
+  background: #fbfcfc;
+}
+
+.admin-select__trigger:focus-visible,
+.admin-select.is-open .admin-select__trigger {
+  border-color: var(--j-color-focus);
+  outline: 0;
+  box-shadow: var(--j-shadow-focus);
+}
+
+.admin-select.is-open .admin-select__trigger > svg {
+  transform: rotate(180deg);
+}
+
+.admin-select__trigger:disabled {
+  color: var(--j-color-text-muted);
+  background: #f4f6f7;
+  cursor: not-allowed;
+}
+
+.admin-select__menu {
+  z-index: 90;
+  display: grid;
+  min-width: 120px;
+  max-height: min(280px, calc(100vh - 24px));
+  padding: 5px;
+  overflow-y: auto;
+  border: 1px solid var(--j-color-border);
+  border-radius: 10px;
+  background: var(--j-color-surface-raised);
+  box-shadow: var(--j-shadow-overlay);
+}
+
+.admin-select__menu button {
+  display: flex;
+  min-height: 36px;
+  padding: 0 9px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--j-color-text-secondary);
+  background: transparent;
+  font-size: 13px;
+  font-weight: var(--j-weight-regular);
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-select__menu button:hover:not(:disabled),
+.admin-select__menu button.is-active {
+  color: var(--j-color-text);
+  background: var(--j-color-surface-hover);
+}
+
+.admin-select__menu button.is-selected {
+  color: var(--j-color-brand-strong);
+  background: var(--j-color-surface-selected);
+  font-weight: var(--j-weight-medium);
+}
+
+.admin-select__menu button:focus-visible {
+  outline: 0;
+  box-shadow: inset 0 0 0 1px rgb(47 133 133 / 28%);
+}
+
+.admin-select__menu button:disabled {
+  color: var(--j-color-text-muted);
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
 .admin-main :where(textarea),
 textarea.ui-control {
   min-height: 104px;
@@ -85,7 +219,7 @@ textarea.ui-control {
 
 .admin-main :where(input[type='checkbox'], input[type='radio']):focus-visible,
 .ui-check:focus-visible {
-  outline: 2px solid rgb(8 124 130 / 48%);
+  outline: var(--j-focus-ring);
   outline-offset: 2px;
 }
 
@@ -210,14 +344,6 @@ textarea.ui-control {
   border: 0;
 }
 
-.ui-date-range legend {
-  margin-bottom: 6px;
-  color: var(--j-color-text-secondary);
-  font-size: 13px;
-  font-weight: var(--j-weight-semibold);
-  white-space: nowrap;
-}
-
 .ui-date-range__controls {
   display: grid;
   grid-template-columns: 150px auto 150px;
@@ -231,4 +357,39 @@ textarea.ui-control {
 
 .ui-date-range__controls > span {
   color: var(--j-color-text-muted);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.ui-date-input {
+  position: relative;
+  display: block;
+  width: 150px;
+  min-width: 0;
+}
+
+.ui-date-input > span {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 12px;
+  display: none;
+  color: #98a2b3;
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.ui-date-input.is-empty > span {
+  display: block;
+}
+
+.ui-date-input.is-empty input::-webkit-datetime-edit {
+  color: transparent;
+}
+
+.ui-date-input input {
+  width: 100% !important;
+  cursor: pointer;
 }

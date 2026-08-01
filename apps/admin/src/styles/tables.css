@@ -280,7 +280,8 @@
   flex: 0 0 auto;
 }
 
-.admin-table-toolbar__controls > :where(input:not([type='date']):not([type='number']), select) {
+.admin-table-toolbar__controls
+  > :where(input:not([type='date']):not([type='number']), .admin-select) {
   width: auto;
 }
 
@@ -289,7 +290,7 @@
   width: min(280px, 28vw);
 }
 
-.admin-table-toolbar__controls > select:not(.ui-page-size-select) {
+.admin-table-toolbar__controls > .admin-select:not(.ui-page-size-select) {
   min-width: 112px;
   max-width: 180px;
 }
@@ -373,7 +374,7 @@
 }
 
 @media (max-width: 640px) {
-  .admin-table-toolbar__controls > :where(input, select) {
+  .admin-table-toolbar__controls > :where(input, .admin-select) {
     width: 100%;
     max-width: none;
   }

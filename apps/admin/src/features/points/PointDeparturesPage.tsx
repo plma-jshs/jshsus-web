@@ -4,6 +4,7 @@ import { Check, LogOut } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSelect,
   AdminListPanel,
   Button,
   Dialog,
@@ -380,7 +381,7 @@ export function PointDeparturesPage() {
                 </label>
                 <label className="point-filter">
                   <span>학년</span>
-                  <select
+                  <AdminSelect
                     value={grade}
                     onChange={(event) => {
                       setGrade(event.target.value);
@@ -393,11 +394,11 @@ export function PointDeparturesPage() {
                         {value}학년
                       </option>
                     ))}
-                  </select>
+                  </AdminSelect>
                 </label>
                 <label className="point-filter">
                   <span>반</span>
-                  <select
+                  <AdminSelect
                     value={classNo}
                     onChange={(event) => {
                       setClassNo(event.target.value);
@@ -410,11 +411,11 @@ export function PointDeparturesPage() {
                         {value}반
                       </option>
                     ))}
-                  </select>
+                  </AdminSelect>
                 </label>
                 <label className="point-filter">
                   <span>대상</span>
-                  <select
+                  <AdminSelect
                     value={riskStatus}
                     onChange={(event) => {
                       setRiskStatus(event.target.value as typeof riskStatus);
@@ -424,7 +425,7 @@ export function PointDeparturesPage() {
                     <option value="all">전체</option>
                     <option value="risk">퇴사 위험</option>
                     <option value="departure">승인 가능</option>
-                  </select>
+                  </AdminSelect>
                 </label>
                 <PageSizeSelect
                   value={pageSize}
@@ -514,7 +515,7 @@ export function PointDeparturesPage() {
                 />
               </FormField>
               <FormField label="학기" required>
-                <select
+                <AdminSelect
                   value={semesterForm.semester}
                   onChange={(event) => {
                     setSemesterForm((current) => ({ ...current, semester: event.target.value }));
@@ -523,7 +524,7 @@ export function PointDeparturesPage() {
                 >
                   <option value="1">1학기</option>
                   <option value="2">2학기</option>
-                </select>
+                </AdminSelect>
               </FormField>
               <FormField label="기준일" required>
                 <input

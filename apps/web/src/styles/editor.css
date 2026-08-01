@@ -69,7 +69,7 @@
 }
 
 .rich-text-editor:focus-within {
-  border-color: var(--j-color-brand);
+  border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
 }
 
@@ -414,7 +414,7 @@
   padding: var(--j-space-5);
   color: var(--j-color-text);
   font-size: var(--j-text-md);
-  line-height: 1.55;
+  line-height: 1.5;
   outline: 0;
 }
 
@@ -568,7 +568,7 @@
 }
 
 .rich-text-poll-modal__dialog input:focus {
-  border-color: var(--j-color-brand);
+  border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
 }
 

@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSelect,
   Dialog,
   type DialogSize,
   PageSizeSelect,
@@ -865,7 +866,7 @@ export function UsersPage() {
             {tab === 'students' ? (
               <>
                 <Field label="학년도">
-                  <select
+                  <AdminSelect
                     name="schoolYear"
                     value={filters.schoolYear ?? ''}
                     onChange={(event) =>
@@ -882,10 +883,10 @@ export function UsersPage() {
                         {year.year}
                       </option>
                     ))}
-                  </select>
+                  </AdminSelect>
                 </Field>
                 <Field label="학년">
-                  <select
+                  <AdminSelect
                     name="grade"
                     value={filters.grade ?? ''}
                     onChange={(event) =>
@@ -900,10 +901,10 @@ export function UsersPage() {
                     {[1, 2, 3].map((value) => (
                       <option key={value}>{value}</option>
                     ))}
-                  </select>
+                  </AdminSelect>
                 </Field>
                 <Field label="반">
-                  <select
+                  <AdminSelect
                     name="classNo"
                     value={filters.classNo ?? ''}
                     onChange={(event) =>
@@ -918,7 +919,7 @@ export function UsersPage() {
                     {[1, 2, 3, 4].map((value) => (
                       <option key={value}>{value}</option>
                     ))}
-                  </select>
+                  </AdminSelect>
                 </Field>
               </>
             ) : null}
@@ -1138,13 +1139,13 @@ export function UsersPage() {
                 <input name="name" required />
               </Field>
               <Field label="성별">
-                <select name="gender" defaultValue="" required>
+                <AdminSelect name="gender" defaultValue="" required aria-label="성별">
                   <option value="" disabled>
                     선택
                   </option>
                   <option value="male">남</option>
                   <option value="female">여</option>
-                </select>
+                </AdminSelect>
               </Field>
               <Field label="이메일">
                 <input name="email" type="email" />
@@ -1418,13 +1419,18 @@ function EditForm({
             <input name="name" defaultValue={identity.value.name} required />
           </Field>
           <Field label="성별">
-            <select name="gender" defaultValue={identity.value.gender ?? ''} required>
+            <AdminSelect
+              name="gender"
+              defaultValue={identity.value.gender ?? ''}
+              required
+              aria-label="성별"
+            >
               <option value="" disabled>
                 선택
               </option>
               <option value="male">남</option>
               <option value="female">여</option>
-            </select>
+            </AdminSelect>
           </Field>
           <Field label="이메일">
             <input name="email" type="email" defaultValue={identity.value.email} />

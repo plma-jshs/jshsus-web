@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
-import { AdminListPanel, PageSizeSelect, TableToolbar } from '../../components/ui';
+import { AdminListPanel, AdminSelect, PageSizeSelect, TableToolbar } from '../../components/ui';
 import { pointsApi, type PointStudentRow } from './pointsApi';
 import './points.css';
 
@@ -116,7 +116,7 @@ export function PointsOverviewPage() {
           </label>
           <label className="point-filter">
             <span>학년</span>
-            <select
+            <AdminSelect
               value={grade}
               onChange={(event) => {
                 setGrade(event.target.value);
@@ -129,11 +129,11 @@ export function PointsOverviewPage() {
                   {value}학년
                 </option>
               ))}
-            </select>
+            </AdminSelect>
           </label>
           <label className="point-filter">
             <span>반</span>
-            <select
+            <AdminSelect
               value={classNo}
               onChange={(event) => {
                 setClassNo(event.target.value);
@@ -146,7 +146,7 @@ export function PointsOverviewPage() {
                   {value}반
                 </option>
               ))}
-            </select>
+            </AdminSelect>
           </label>
           <PageSizeSelect
             value={pageSize}

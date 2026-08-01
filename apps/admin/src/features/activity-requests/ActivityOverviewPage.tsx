@@ -7,7 +7,13 @@ import type {
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { Search } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { AdminListPanel, PageSizeSelect, TableToolbar } from '../../components/ui';
+import {
+  AdminListPanel,
+  AdminSelect,
+  DateRangeField,
+  PageSizeSelect,
+  TableToolbar,
+} from '../../components/ui';
 import {
   ActivityStatusBadge,
   activityStatusOptions,
@@ -170,34 +176,20 @@ export function ActivityOverviewPage() {
                 placeholder="내용, 인원, 장소, 지도교사 검색"
               />
             </label>
-            <label className="operation-date-filter">
-              <span>시작일</span>
-              <input
-                type="date"
-                value={startDate}
-                max={endDate || undefined}
-                onChange={(event) => {
-                  setStartDate(event.target.value);
-                  resetPage();
-                }}
-              />
-            </label>
-            <span className="operation-date-separator" aria-hidden="true">
-              ~
-            </span>
-            <label className="operation-date-filter">
-              <span>마감일</span>
-              <input
-                type="date"
-                value={endDate}
-                min={startDate || undefined}
-                onChange={(event) => {
-                  setEndDate(event.target.value);
-                  resetPage();
-                }}
-              />
-            </label>
-            <select
+            <DateRangeField
+              label="활동일"
+              from={startDate}
+              to={endDate}
+              onFromChange={(value) => {
+                setStartDate(value);
+                resetPage();
+              }}
+              onToChange={(value) => {
+                setEndDate(value);
+                resetPage();
+              }}
+            />
+            <AdminSelect
               value={status}
               onChange={(event) => {
                 setStatus(event.target.value as typeof status);
@@ -211,7 +203,7 @@ export function ActivityOverviewPage() {
                   {option.label}
                 </option>
               ))}
-            </select>
+            </AdminSelect>
             <PageSizeSelect
               value={pageSize}
               onChange={(value) => {

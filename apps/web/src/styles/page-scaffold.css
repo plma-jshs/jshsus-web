@@ -215,7 +215,7 @@
 
 .filter-chips button:focus-visible {
   outline: 0;
-  box-shadow: 0 0 0 3px rgb(13 148 136 / 15%);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .filter-chips button span {
@@ -234,8 +234,8 @@
 .page-search-field input {
   width: 100%;
   min-height: 44px;
-  padding-right: 38px;
-  padding-left: 36px;
+  padding-right: 40px;
+  padding-left: 40px;
 }
 
 .page-search-field > svg {
@@ -269,7 +269,7 @@
 
 .page-search-field__clear:focus-visible {
   outline: 0;
-  box-shadow: 0 0 0 2px rgb(13 148 136 / 16%);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .page-state {

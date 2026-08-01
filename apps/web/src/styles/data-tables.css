@@ -255,7 +255,7 @@
 
 .data-table-toolbar-select__trigger:focus-visible,
 .data-table-toolbar-select.is-open .data-table-toolbar-select__trigger {
-  border-color: var(--j-color-brand);
+  border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
   outline: 0;
 }
@@ -382,7 +382,7 @@
 
 .data-table-toolbar__clear:focus-visible {
   outline: 0;
-  box-shadow: 0 0 0 2px rgb(13 148 136 / 16%);
+  box-shadow: var(--j-shadow-focus);
 }
 
 /* Keep toolbar controls visually identical even when the global form selector

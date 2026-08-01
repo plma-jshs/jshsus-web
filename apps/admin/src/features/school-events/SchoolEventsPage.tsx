@@ -13,7 +13,14 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react';
-import { Dialog, Drawer, RowActionButton, RowActions, useToast } from '../../components/ui';
+import {
+  AdminSelect,
+  Dialog,
+  Drawer,
+  RowActionButton,
+  RowActions,
+  useToast,
+} from '../../components/ui';
 import {
   api,
   type AdminSchoolCalendarEvent,
@@ -541,14 +548,14 @@ export function SchoolEventsPage() {
           <div className="school-calendar-actions">
             <label>
               <span className="sr-only">공개 상태</span>
-              <select
+              <AdminSelect
                 value={visibility}
                 onChange={(event) => setVisibility(event.target.value as typeof visibility)}
               >
                 <option value="all">전체</option>
                 <option value="public">공개</option>
                 <option value="private">비공개</option>
-              </select>
+              </AdminSelect>
             </label>
             <button className="primary-button" type="button" onClick={() => openCreate()}>
               <Plus size={16} /> 새 일정

@@ -5,6 +5,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSelect,
   AdminListPanel,
   Button,
   Dialog,
@@ -196,7 +197,7 @@ export function PointReasonsPage() {
             </label>
             <label className="point-filter">
               <span>종류</span>
-              <select
+              <AdminSelect
                 value={type}
                 onChange={(event) => {
                   setType(event.target.value as PointReason['type'] | '');
@@ -207,7 +208,7 @@ export function PointReasonsPage() {
                 <option value="PLUS">상점</option>
                 <option value="MINUS">벌점</option>
                 <option value="ETC">기타</option>
-              </select>
+              </AdminSelect>
             </label>
             <PageSizeSelect
               value={pageSize}
@@ -267,7 +268,7 @@ export function PointReasonsPage() {
       >
         <div className="point-dialog-form">
           <FormField label="종류" required>
-            <select
+            <AdminSelect
               value={form.type}
               onChange={(event) => {
                 const nextType = event.target.value as PointReason['type'];
@@ -281,7 +282,7 @@ export function PointReasonsPage() {
               <option value="PLUS">상점</option>
               <option value="MINUS">벌점</option>
               <option value="ETC">기타</option>
-            </select>
+            </AdminSelect>
           </FormField>
           <FormField label="점수" required>
             <input

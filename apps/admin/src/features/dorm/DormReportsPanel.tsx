@@ -5,6 +5,7 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { ClipboardCheck } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSelect,
   Button,
   Drawer,
   PageSizeSelect,
@@ -138,7 +139,7 @@ export function DormReportsPanel({
           placeholder="호실, 학생, 내용 검색"
           aria-label="민원 검색"
         />
-        <select
+        <AdminSelect
           value={status}
           onChange={(event) => setStatus(event.target.value as '' | DormReportStatus)}
           aria-label="민원 상태"
@@ -149,7 +150,7 @@ export function DormReportsPanel({
               {option.label}
             </option>
           ))}
-        </select>
+        </AdminSelect>
         <PageSizeSelect value={pageSize} onChange={setPageSize} />
       </TableToolbar>
       <DataTable
@@ -199,7 +200,7 @@ export function DormReportsPanel({
             </section>
             <label>
               상태
-              <select
+              <AdminSelect
                 value={draftStatus}
                 onChange={(event) => setDraftStatus(event.target.value as DormReportStatus)}
               >
@@ -208,7 +209,7 @@ export function DormReportsPanel({
                     {option.label}
                   </option>
                 ))}
-              </select>
+              </AdminSelect>
             </label>
             <label>
               처리 메모

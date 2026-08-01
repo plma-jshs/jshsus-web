@@ -546,7 +546,7 @@
 }
 
 .status-profile-inline-form input:focus {
-  border-color: var(--j-color-brand);
+  border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
   outline: 0;
 }

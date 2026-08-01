@@ -38,9 +38,7 @@ textarea {
   box-shadow: none;
 }
 
-input:not([type='checkbox']):not([type='radio']):not([type='file']),
-select,
-textarea {
+:where(input:not([type='checkbox']):not([type='radio']):not([type='file']), select, textarea) {
   width: 100%;
   min-height: var(--j-control-public);
   padding: 0 var(--j-space-4);
@@ -67,15 +65,19 @@ textarea {
   resize: vertical;
 }
 
-input:not([type='checkbox']):not([type='radio']):not([type='file']):hover,
-select:hover,
-textarea:hover {
+:where(
+  input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  select,
+  textarea
+):hover {
   border-color: var(--j-color-brand);
 }
-input:not([type='checkbox']):not([type='radio']):not([type='file']):focus,
-select:focus,
-textarea:focus {
-  border-color: var(--j-color-brand);
+:where(
+  input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  select,
+  textarea
+):focus {
+  border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
   outline: 0;
 }

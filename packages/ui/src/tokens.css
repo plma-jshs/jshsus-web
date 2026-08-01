@@ -29,6 +29,7 @@
     --j-color-brand-strong: var(--j-ref-teal-800);
     --j-color-brand-subtle: var(--j-ref-teal-50);
     --j-color-brand-subtle-strong: var(--j-ref-teal-100);
+    --j-color-focus: #2f8585;
     --j-color-canvas: var(--j-ref-slate-50);
     --j-color-surface: #ffffff;
     --j-color-surface-subtle: var(--j-ref-slate-100);
@@ -92,8 +93,8 @@
 
     --j-shadow-card: 0 1px 2px rgb(16 24 40 / 4%);
     --j-shadow-overlay: 0 12px 32px rgb(16 24 40 / 12%);
-    --j-shadow-focus: 0 0 0 3px rgb(8 124 130 / 14%);
-    --j-focus-ring: 3px solid rgb(8 124 130 / 48%);
+    --j-shadow-focus: 0 0 0 2px rgb(47 133 133 / 10%);
+    --j-focus-ring: 2px solid rgb(47 133 133 / 42%);
     --j-focus-offset: 2px;
 
     --j-motion-fast: 120ms ease;
@@ -127,7 +128,7 @@
   }
 
   :where(input, select, textarea):focus-visible {
-    border-color: var(--j-color-brand);
+    border-color: var(--j-color-focus);
     outline: 0;
     box-shadow: var(--j-shadow-focus);
   }

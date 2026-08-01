@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SegmentedTabs } from '../../components/ui';
+import { AdminSelect, SegmentedTabs } from '../../components/ui';
 import { DormAssignmentPanel } from './DormAssignmentPanel';
 import { useDormData, useRefreshDorm } from './dormData';
 import { DormReportsPanel } from './DormReportsPanel';
@@ -32,7 +32,7 @@ export function DormManagementPage() {
       <div className="dorm-management-header">
         <SegmentedTabs value={tab} options={tabs} onChange={setTab} ariaLabel="기숙사 관리 메뉴" />
         <div className="dorm-term-controls">
-          <select
+          <AdminSelect
             value={year}
             onChange={(event) => setYear(Number(event.target.value))}
             aria-label="연도"
@@ -42,15 +42,15 @@ export function DormManagementPage() {
                 {option}년
               </option>
             ))}
-          </select>
-          <select
+          </AdminSelect>
+          <AdminSelect
             value={semester}
             onChange={(event) => setSemester(Number(event.target.value))}
             aria-label="학기"
           >
             <option value={1}>1학기</option>
             <option value={2}>2학기</option>
-          </select>
+          </AdminSelect>
         </div>
       </div>
 

@@ -11,9 +11,9 @@
   width: 240px !important;
 }
 
-.dorm-page .admin-table-toolbar__controls > select,
-.dorm-term-controls select,
-.dorm-draw-controls select {
+.dorm-page .admin-table-toolbar__controls > .admin-select,
+.dorm-term-controls .admin-select,
+.dorm-draw-controls .admin-select {
   width: var(--dorm-control-sm);
 }
 
@@ -137,7 +137,7 @@
   border-top: 1px solid var(--line);
 }
 
-.dorm-preview-block .admin-data-table select {
+.dorm-preview-block .admin-data-table .admin-select {
   min-width: 100px;
 }
 
@@ -257,7 +257,7 @@
 }
 
 .dorm-management-stack .admin-data-table td input:not([type='checkbox']),
-.dorm-management-stack .admin-data-table td select {
+.dorm-management-stack .admin-data-table td .admin-select {
   min-height: 34px;
 }
 
@@ -278,9 +278,9 @@
 
 @media (max-width: 700px) {
   .dorm-search-control,
-  .dorm-page .admin-table-toolbar__controls > select,
-  .dorm-term-controls select,
-  .dorm-draw-controls select {
+  .dorm-page .admin-table-toolbar__controls > .admin-select,
+  .dorm-term-controls .admin-select,
+  .dorm-draw-controls .admin-select {
     width: 100% !important;
   }
 
