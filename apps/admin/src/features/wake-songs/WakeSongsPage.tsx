@@ -119,7 +119,7 @@ export function WakeSongsPage() {
           month: '2-digit',
           day: '2-digit',
         }),
-      meta: { align: 'center', width: 130 },
+      meta: { kind: 'dateTime', width: 130 },
     },
     {
       id: 'requester',
@@ -131,7 +131,7 @@ export function WakeSongsPage() {
           <small>{row.original.requesterStudentNo}</small>
         </div>
       ),
-      meta: { align: 'center', width: 150 },
+      meta: { kind: 'person', width: 150 },
     },
     {
       id: 'candidateWeek',
@@ -182,7 +182,7 @@ export function WakeSongsPage() {
         </span>
       ),
       enableSorting: false,
-      meta: { align: 'center', width: 110 },
+      meta: { kind: 'category', width: 110 },
     },
     {
       id: 'actions',

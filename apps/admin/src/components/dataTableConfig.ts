@@ -21,3 +21,16 @@ export const DATA_TABLE_COLUMN_WIDTHS = {
 } as const;
 
 export type DataTableWidthPreset = keyof typeof DATA_TABLE_COLUMN_WIDTHS;
+
+/** Semantic column roles keep alignment consistent across admin tables. */
+export const DATA_TABLE_COLUMN_ALIGNMENTS = {
+  selection: 'center',
+  dateTime: 'center',
+  studentNo: 'center',
+  person: 'left',
+  category: 'center',
+  description: 'left',
+  score: 'right',
+} as const;
+
+export type DataTableColumnKind = keyof typeof DATA_TABLE_COLUMN_ALIGNMENTS;

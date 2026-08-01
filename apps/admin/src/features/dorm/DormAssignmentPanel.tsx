@@ -341,7 +341,7 @@ export function DormAssignmentPanel({
           </strong>
         ),
         enableSorting: true,
-        meta: { width: 170, align: 'center' },
+        meta: { width: 170, kind: 'person' },
       },
       {
         accessorKey: 'classNo',

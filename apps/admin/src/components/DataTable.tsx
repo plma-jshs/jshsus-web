@@ -13,7 +13,9 @@ import {
 import { useEffect, useState } from 'react';
 import {
   ADMIN_DEFAULT_PAGE_SIZE,
+  DATA_TABLE_COLUMN_ALIGNMENTS,
   DATA_TABLE_COLUMN_WIDTHS,
+  type DataTableColumnKind,
   type DataTableWidthPreset,
 } from './dataTableConfig';
 
@@ -29,6 +31,8 @@ declare module '@tanstack/react-table' {
     minWidth?: number | string;
     maxWidth?: number | string;
     truncate?: boolean;
+    /** Applies the documented semantic alignment for common admin data. */
+    kind?: DataTableColumnKind;
     /** Applies a consistent narrow width and centers short values by default. */
     widthPreset?: DataTableWidthPreset;
   }
@@ -82,6 +86,13 @@ function SortDirectionGlyph({ direction }: { direction: false | 'asc' | 'desc' }
 
 function widthForPreset(preset: DataTableWidthPreset | undefined) {
   return preset ? DATA_TABLE_COLUMN_WIDTHS[preset] : undefined;
+}
+
+function alignmentForMeta(
+  meta: { align?: DataTableAlignment; kind?: DataTableColumnKind } | undefined,
+  fallback: DataTableAlignment,
+) {
+  return meta?.align ?? (meta?.kind ? DATA_TABLE_COLUMN_ALIGNMENTS[meta.kind] : fallback);
 }
 
 function cellClassName(
@@ -211,7 +222,8 @@ export function DataTable<T>({
                 {headerGroup.headers.map((header) => {
                   const meta = header.column.columnDef.meta;
                   const alignment =
-                    meta?.headerAlign ?? meta?.align ?? (meta?.widthPreset ? 'center' : 'left');
+                    meta?.headerAlign ??
+                    alignmentForMeta(meta, meta?.widthPreset ? 'center' : 'left');
                   const presetWidth = widthForPreset(meta?.widthPreset);
                   const sortDirection = header.column.getIsSorted();
                   const canSort = header.column.getCanSort();
@@ -291,7 +303,7 @@ export function DataTable<T>({
                   {row.getVisibleCells().map((cell) => {
                     const meta = cell.column.columnDef.meta;
                     const presetWidth = widthForPreset(meta?.widthPreset);
-                    const alignment = meta?.align ?? (meta?.widthPreset ? 'center' : 'left');
+                    const alignment = alignmentForMeta(meta, meta?.widthPreset ? 'center' : 'left');
                     return (
                       <td
                         key={cell.id}

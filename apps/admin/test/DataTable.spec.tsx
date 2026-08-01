@@ -9,6 +9,7 @@ import { DataTable } from '../src/components/DataTable';
 import {
   ADMIN_DEFAULT_PAGE_SIZE,
   ADMIN_PAGE_SIZES,
+  DATA_TABLE_COLUMN_ALIGNMENTS,
   normalizeAdminPageSize,
 } from '../src/components/dataTableConfig';
 
@@ -106,5 +107,32 @@ describe('admin page-size policy', () => {
     expect(ADMIN_DEFAULT_PAGE_SIZE).toBe(20);
     expect(normalizeAdminPageSize(30)).toBe(20);
     expect(normalizeAdminPageSize(50)).toBe(50);
+  });
+});
+
+describe('admin table alignment policy', () => {
+  it('maps semantic data roles to the documented alignment', () => {
+    expect(DATA_TABLE_COLUMN_ALIGNMENTS).toEqual({
+      selection: 'center',
+      dateTime: 'center',
+      studentNo: 'center',
+      person: 'left',
+      category: 'center',
+      description: 'left',
+      score: 'right',
+    });
+  });
+
+  it('applies semantic alignment to both headers and cells', () => {
+    const semanticColumns: ColumnDef<Row>[] = [
+      { accessorKey: 'studentNo', header: '학번', meta: { kind: 'studentNo' } },
+      { accessorKey: 'name', header: '이름', meta: { kind: 'person' } },
+    ];
+    const html = renderToStaticMarkup(
+      <DataTable columns={semanticColumns} data={rows.slice(0, 1)} caption="정렬 정책 테스트" />,
+    );
+
+    expect(html).toContain('admin-table-cell--center');
+    expect(html).toContain('admin-table-cell--left');
   });
 });

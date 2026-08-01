@@ -7,15 +7,28 @@
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.petition-search-controls .data-table-toolbar-select__trigger {
+.petition-search-controls .data-table-toolbar-select {
   min-width: 112px;
 }
 
 .petition-search-controls .page-search-field {
-  width: min(100%, 320px);
+  width: min(28vw, 260px);
+}
+
+.petition-search-controls .page-search-field input {
+  height: 40px;
+  min-height: 40px;
+  padding-right: 36px;
+  padding-left: 36px;
+  border-radius: 8px;
+}
+
+.petition-search-controls .page-search-field__clear {
+  width: 26px;
+  height: 26px;
 }
 
 .petition-card {

@@ -50,17 +50,17 @@ export function PointsOverviewPage() {
             {row.original.studentNo}
           </a>
         ),
-        meta: { align: 'center', width: 110 },
+        meta: { kind: 'studentNo', width: 110 },
       },
       {
         accessorKey: 'name',
         header: '이름',
-        meta: { align: 'left', width: 150 },
+        meta: { kind: 'person', width: 150 },
       },
       {
         accessorKey: 'meritPoint',
         header: '상점 합계',
-        meta: { align: 'right', width: 120 },
+        meta: { kind: 'score', width: 120 },
       },
       {
         accessorKey: 'penaltyPoint',
@@ -70,7 +70,7 @@ export function PointsOverviewPage() {
             {row.original.penaltyPoint}
           </span>
         ),
-        meta: { align: 'right', width: 120 },
+        meta: { kind: 'score', width: 120 },
       },
       {
         accessorKey: 'currentPoint',
@@ -88,7 +88,7 @@ export function PointsOverviewPage() {
             {formatSignedPoint(row.original.currentPoint)}
           </strong>
         ),
-        meta: { align: 'right', width: 110 },
+        meta: { kind: 'score', width: 110 },
       },
     ],
     [],

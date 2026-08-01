@@ -3,7 +3,7 @@
 }
 
 .point-overview-panel {
-  width: min(100%, 880px);
+  width: 100%;
 }
 
 .point-overview-panel .admin-data-table tbody td:last-child,
