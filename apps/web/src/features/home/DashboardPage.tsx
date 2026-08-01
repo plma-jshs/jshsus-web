@@ -114,6 +114,23 @@ function formatCalendarPopoverDate(year: number, month: number, day: number) {
   }).format(new Date(`${dateKey(year, month, day)}T12:00:00+09:00`));
 }
 
+function formatUpcomingDate(value: string) {
+  return new Intl.DateTimeFormat('ko-KR', {
+    timeZone: KOREA_TIME_ZONE,
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+  })
+    .format(new Date(value))
+    .replace(/\.(?=\s*(?:\(|$))/g, '')
+    .replace(/\s+\(/, '(');
+}
+
+function calendarEventTone(event: AcademicEvent) {
+  if (event.isHoliday || event.category === 'holiday') return 'holiday';
+  return event.category === 'observance' ? 'observance' : 'school';
+}
+
 const majorEventKeywords = [
   '시험',
   '개학',
@@ -293,6 +310,7 @@ function CalendarDay({
   const className = `mini-calendar__day${isCurrentMonth ? '' : ' is-outside-month'}${isToday ? ' is-today' : ''}${events.length ? ' has-events' : ''}`;
   const tooltipId = `calendar-events-${year}-${month}-${day}`;
   const selectedDate = dateKey(year, month, day);
+  const hasHoliday = events.some((event) => event.isHoliday || event.category === 'holiday');
 
   if (!events.length) {
     return (
@@ -322,9 +340,14 @@ function CalendarDay({
         <i />
       </span>
       <span className="calendar-day-popover" id={tooltipId} role="tooltip">
-        <strong>{formatCalendarPopoverDate(year, month, day)}</strong>
+        <strong className={hasHoliday ? 'is-holiday' : undefined}>
+          {formatCalendarPopoverDate(year, month, day)}
+        </strong>
         {events.slice(0, 3).map((event) => (
-          <span key={event.id}>{event.title}</span>
+          <span className="calendar-day-popover__event" key={event.id}>
+            <i className={`is-${calendarEventTone(event)}`} aria-hidden="true" />
+            <span>{event.title}</span>
+          </span>
         ))}
         {events.length > 3 ? <small>외 {events.length - 3}개 일정</small> : null}
       </span>
@@ -414,9 +437,17 @@ function CalendarCard({
     >
       <header className="home-card__header schedule-card__header">
         <h2>학사일정</h2>
-        <Link to="/calendar">
-          전체보기 <ChevronRight aria-hidden="true" size={16} />
-        </Link>
+        <div className="calendar-heading">
+          <button type="button" aria-label="이전 달" onClick={() => moveMonth(-1)}>
+            <ChevronLeft aria-hidden="true" size={17} />
+          </button>
+          <strong>
+            {visibleMonth.year}년 {visibleMonth.month}월
+          </strong>
+          <button type="button" aria-label="다음 달" onClick={() => moveMonth(1)}>
+            <ChevronRight aria-hidden="true" size={17} />
+          </button>
+        </div>
       </header>
 
       {hasDataError ? (
@@ -428,19 +459,6 @@ function CalendarCard({
         </div>
       ) : null}
 
-      <div className="calendar-heading">
-        <button type="button" aria-label="이전 달" onClick={() => moveMonth(-1)}>
-          <ChevronLeft aria-hidden="true" size={17} />
-        </button>
-        <div>
-          <strong>
-            {visibleMonth.year}년 {visibleMonth.month}월
-          </strong>
-        </div>
-        <button type="button" aria-label="다음 달" onClick={() => moveMonth(1)}>
-          <ChevronRight aria-hidden="true" size={17} />
-        </button>
-      </div>
       <div
         className={`mini-calendar${cardState === 'loading' ? ' is-loading' : ''}`}
         aria-label={`${visibleMonth.year}년 ${visibleMonth.month}월 달력`}
@@ -470,7 +488,7 @@ function CalendarCard({
         <ul aria-label="오늘부터 일주일 이내 주요 일정">
           {visibleUpcoming.map((event) => (
             <li key={event.id}>
-              <time dateTime={event.startsAt}>{formatDate(event.startsAt)}</time>
+              <time dateTime={event.startsAt}>{formatUpcomingDate(event.startsAt)}</time>
               <span>{event.title}</span>
             </li>
           ))}

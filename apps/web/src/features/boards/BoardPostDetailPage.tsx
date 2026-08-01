@@ -453,7 +453,7 @@ export function BoardPostDetailPage() {
                 value={comment}
                 onChange={(event) => setComment(event.target.value)}
                 placeholder="댓글을 입력하세요"
-                rows={3}
+                rows={1}
               />
               <button
                 className="detail-primary-button"

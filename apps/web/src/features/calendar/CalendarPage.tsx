@@ -25,6 +25,7 @@ type CalendarPageContentProps = {
 type CalendarPopover = {
   title: string;
   period: string;
+  tone: 'school' | 'observance' | 'holiday';
   x: number;
   y: number;
 };
@@ -94,6 +95,11 @@ function eventColor(event: AcademicEvent) {
   if (event.isHoliday) return { color: '#ffffff', background: '#e34242' };
   if (event.category === 'observance') return { color: '#0c43b7', background: 'transparent' };
   return { color: '#185b46', background: '#ddf5ea' };
+}
+
+function eventTone(event: AcademicEvent): CalendarPopover['tone'] {
+  if (event.isHoliday || event.category === 'holiday') return 'holiday';
+  return event.category === 'observance' ? 'observance' : 'school';
 }
 
 function eventRange(event: AcademicEvent) {
@@ -525,6 +531,7 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                                   setPopover({
                                     title: displayEventTitle(segment.event.title),
                                     period: formatEventRange(segment.event),
+                                    tone: eventTone(segment.event),
                                     x: event.clientX,
                                     y: event.clientY,
                                   })
@@ -594,8 +601,13 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                   top: Math.min(popover.y + 14, window.innerHeight - 88),
                 }}
               >
-                <strong>{popover.title}</strong>
-                <span>{popover.period}</span>
+                <strong>
+                  <i className={`is-${popover.tone}`} aria-hidden="true" />
+                  <span>{popover.title}</span>
+                </strong>
+                <span className={popover.tone === 'holiday' ? 'is-holiday' : undefined}>
+                  {popover.period}
+                </span>
               </div>,
               document.body,
             )

@@ -12,9 +12,11 @@ function toDateKey(year: number, month: number, day: number) {
 
 export function buildCalendarDays(year: number, month: number): CalendarDayCell[] {
   const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const weekCount = Math.ceil((firstWeekday + lastDay) / 7);
   const gridStart = new Date(Date.UTC(year, month - 1, 1 - firstWeekday));
 
-  return Array.from({ length: 42 }, (_, index) => {
+  return Array.from({ length: weekCount * 7 }, (_, index) => {
     const current = new Date(gridStart);
     current.setUTCDate(gridStart.getUTCDate() + index);
     const cellYear = current.getUTCFullYear();

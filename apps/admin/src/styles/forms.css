@@ -205,21 +205,65 @@ textarea.ui-control {
   resize: vertical;
 }
 
-.admin-main :where(input[type='checkbox'], input[type='radio']),
+.admin-main :where(input[type='checkbox']),
 .ui-check {
+  appearance: none;
   width: 16px;
   height: 16px;
   min-height: 16px;
   margin: 0;
   padding: 0;
   flex: 0 0 auto;
-  border: 0;
+  border: 1px solid #b8c3c9;
+  border-radius: 4px;
+  background-color: var(--surface);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 12px 12px;
+  box-shadow: none;
+  cursor: pointer;
+  transition:
+    border-color var(--j-motion-fast),
+    background-color var(--j-motion-fast),
+    box-shadow var(--j-motion-fast);
+}
+
+.admin-main :where(input[type='checkbox']):hover:not(:disabled),
+.ui-check:hover:not(:disabled) {
+  border-color: var(--j-color-brand);
+}
+
+.admin-main :where(input[type='checkbox']):checked,
+.ui-check:checked {
+  border-color: var(--j-color-brand);
+  background-color: var(--j-color-brand);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='m2.3 6.1 2.1 2.1 5.2-5.1' fill='none' stroke='white' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.admin-main :where(input[type='checkbox']):focus-visible,
+.ui-check:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 2px rgb(47 133 133 / 16%);
+}
+
+.admin-main :where(input[type='checkbox']):disabled,
+.ui-check:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.admin-main :where(input[type='radio']) {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
   accent-color: var(--primary);
   box-shadow: none;
 }
 
-.admin-main :where(input[type='checkbox'], input[type='radio']):focus-visible,
-.ui-check:focus-visible {
+.admin-main :where(input[type='radio']):focus-visible {
   outline: var(--j-focus-ring);
   outline-offset: 2px;
 }
@@ -295,6 +339,10 @@ textarea.ui-control {
   min-height: var(--control-height);
   align-items: center;
   gap: 8px;
+  color: var(--j-color-text-secondary);
+  font-size: 13px;
+  font-weight: var(--j-weight-medium);
+  cursor: pointer;
 }
 
 .answer-form {

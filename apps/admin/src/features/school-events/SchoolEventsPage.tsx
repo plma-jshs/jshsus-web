@@ -78,6 +78,7 @@ type JsonImportPreview = {
 type CalendarPopover = {
   title: string;
   period: string;
+  tone: 'bar' | 'schedule' | 'holiday';
   x: number;
   y: number;
 };
@@ -744,6 +745,7 @@ export function SchoolEventsPage() {
                                   setPopover({
                                     title: segment.event.title,
                                     period: formatPeriod(segment.event),
+                                    tone: eventTone(segment.event),
                                     x: event.clientX,
                                     y: event.clientY,
                                   })
@@ -901,6 +903,7 @@ export function SchoolEventsPage() {
       </Drawer>
 
       <Dialog
+        className="school-event-editor-dialog"
         open={editorOpen}
         onClose={() => setEditorOpen(false)}
         title={editingId === null ? '새 일정' : '일정 수정'}
@@ -1058,8 +1061,13 @@ export function SchoolEventsPage() {
                 top: Math.min(popover.y + 14, window.innerHeight - 88),
               }}
             >
-              <strong>{popover.title}</strong>
-              <span>{popover.period}</span>
+              <strong>
+                <i className={`source-dot ${popover.tone}`} aria-hidden="true" />
+                <span>{popover.title}</span>
+              </strong>
+              <span className={popover.tone === 'holiday' ? 'is-holiday' : undefined}>
+                {popover.period}
+              </span>
             </div>,
             document.body,
           )

@@ -465,24 +465,28 @@
 .detail-comment-form textarea {
   display: block;
   width: 100%;
-  min-height: 52px;
+  min-height: 44px;
   max-height: 220px;
-  padding: 13px 15px;
+  padding: 11px 13px;
+  overflow-y: auto;
   border: 0;
   border-radius: 0;
   outline: 0;
   background: transparent;
-  resize: vertical;
+  field-sizing: content;
+  line-height: 22px;
+  resize: none;
   transition:
     min-height var(--j-motion-fast),
-    padding-bottom var(--j-motion-fast);
+    padding-right var(--j-motion-fast);
 }
 
 .detail-comment-form button {
   position: absolute;
-  right: 10px;
-  bottom: 10px;
+  right: 6px;
+  bottom: 6px;
   visibility: hidden;
+  min-height: 32px;
   min-width: 76px;
   opacity: 0;
   transform: translateY(4px);
@@ -494,8 +498,8 @@
 
 .detail-comment-form:focus-within textarea,
 .detail-comment-form:has(textarea:not(:placeholder-shown)) textarea {
-  min-height: 88px;
-  padding-bottom: 58px;
+  min-height: 44px;
+  padding-right: 96px;
 }
 
 .detail-comment-form:focus-within button,

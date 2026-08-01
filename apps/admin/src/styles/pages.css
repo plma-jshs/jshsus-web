@@ -859,22 +859,21 @@
 }
 
 .checkbox-pill input[type='checkbox'] {
-  appearance: auto;
+  appearance: none;
   width: 16px;
   height: 16px;
   min-height: 16px;
   margin: 0;
   padding: 0;
   flex: none;
-  border: 0;
-  border-radius: 3px;
-  accent-color: var(--primary);
+  border: 1px solid #b8c3c9;
+  border-radius: 4px;
   box-shadow: none;
 }
 
 .checkbox-pill input[type='checkbox']:focus-visible {
-  outline: 2px solid rgba(22, 124, 114, 0.45);
-  outline-offset: 2px;
+  outline: 0;
+  box-shadow: 0 0 0 2px rgb(47 133 133 / 16%);
 }
 
 .school-event-form textarea {
@@ -1318,27 +1317,28 @@
   min-height: 38px;
   align-items: center;
   gap: 9px !important;
-  color: #334241;
+  color: var(--j-color-text-secondary);
+  font-size: 13px;
+  font-weight: var(--j-weight-medium);
   cursor: pointer;
 }
 
 .content-checkbox-row input {
-  appearance: auto;
+  appearance: none;
   width: 16px;
   height: 16px;
   min-height: 16px;
   margin: 0;
   padding: 0;
   flex: none;
-  border: 0;
-  border-radius: 3px;
-  accent-color: var(--primary);
+  border: 1px solid #b8c3c9;
+  border-radius: 4px;
   box-shadow: none;
 }
 
 .content-checkbox-row input:focus-visible {
-  outline: 2px solid rgba(22, 124, 114, 0.45);
-  outline-offset: 2px;
+  outline: 0;
+  box-shadow: 0 0 0 2px rgb(47 133 133 / 16%);
 }
 
 .content-inline-meta {

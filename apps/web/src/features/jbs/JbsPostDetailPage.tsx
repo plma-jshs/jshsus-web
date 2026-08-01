@@ -373,7 +373,7 @@ export function JbsPostDetailPage() {
                 id="jbs-comment"
                 value={comment}
                 maxLength={2000}
-                rows={3}
+                rows={1}
                 onChange={(event) => setComment(event.target.value)}
                 placeholder="댓글을 입력하세요"
               />

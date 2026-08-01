@@ -200,26 +200,42 @@
   z-index: 1200;
   display: grid;
   width: max-content;
-  max-width: 280px;
-  padding: 9px 11px;
-  gap: 3px;
+  max-width: 220px;
+  padding: 7px 9px;
+  gap: 2px;
   border: 1px solid rgb(15 23 42 / 10%);
   border-radius: 8px;
   color: var(--j-color-text, #111827);
   background: var(--j-color-surface, #fff);
-  box-shadow: 0 10px 28px rgb(15 23 42 / 14%);
-  font-size: 12px;
-  line-height: 1.45;
+  box-shadow: 0 7px 20px rgb(15 23 42 / 13%);
+  font-size: 11px;
+  line-height: 1.4;
   pointer-events: none;
 }
 
 .school-calendar-event-popover strong {
-  font-weight: 650;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
 }
 
-.school-calendar-event-popover span {
+.school-calendar-event-popover strong > span {
+  overflow: hidden;
+  color: inherit;
+  font-size: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.school-calendar-event-popover > span {
   color: var(--j-color-text-muted, #667085);
-  font-size: 11px;
+  font-size: 10px;
+}
+
+.school-calendar-event-popover > span.is-holiday {
+  color: var(--j-color-danger, #d13c34);
 }
 
 .school-calendar-month {
@@ -616,7 +632,7 @@
 .calendar-event-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
 .calendar-event-form > label,
@@ -818,13 +834,41 @@
 .calendar-event-options {
   display: flex;
   flex-wrap: wrap;
-  gap: 18px;
+  gap: 12px;
 }
 
 .compact-check {
   width: fit-content;
-  min-height: 40px;
-  gap: 8px;
+  min-height: 30px;
+  gap: 7px;
+  color: var(--j-color-text-muted, #667085);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.school-event-editor-dialog .ui-dialog__header {
+  min-height: 56px;
+  padding: 11px 18px;
+  align-items: center;
+}
+
+.school-event-editor-dialog .ui-dialog__header h2 {
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.school-event-editor-dialog .ui-dialog__close {
+  width: 32px;
+  height: 32px;
+}
+
+.school-event-editor-dialog .ui-dialog__body {
+  padding: 17px 18px;
+}
+
+.school-event-editor-dialog .ui-dialog__footer {
+  min-height: 56px;
+  padding: 10px 18px;
 }
 
 .danger-button {
