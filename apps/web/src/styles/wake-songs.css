@@ -169,8 +169,30 @@
   outline: 0;
 }
 
-.wake-song-player .youtube-segment-player__target:empty {
+.wake-song-player div.youtube-segment-player__target:empty {
   pointer-events: none;
+}
+
+.wake-song-candidate-week {
+  display: flex;
+  min-height: 34px;
+  margin: 0;
+  padding: 8px 18px;
+  align-items: center;
+  gap: 7px;
+  border-bottom: 1px solid var(--j-color-border);
+  color: var(--j-color-text-muted);
+  background: var(--j-color-surface-subtle);
+  font-size: var(--j-text-xs);
+}
+
+.wake-song-candidate-week svg {
+  color: var(--j-color-brand);
+}
+
+.wake-song-candidate-week strong {
+  color: var(--j-color-text-secondary);
+  font-weight: var(--j-weight-semibold);
 }
 
 .wake-song-player .youtube-segment-player__state {
@@ -627,27 +649,51 @@
 }
 
 .wake-song-table-actions {
-  display: flex;
-  gap: var(--j-space-1);
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .wake-song-table-actions button {
   display: inline-flex;
-  min-height: 34px;
-  padding: 0 var(--j-space-2);
+  width: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
   align-items: center;
-  gap: 4px;
-  border: 0;
-  border-radius: var(--j-radius-sm);
-  color: var(--j-color-text-secondary);
-  background: transparent;
-  font-size: var(--j-text-xs);
-  font-weight: var(--j-weight-semibold);
+  justify-content: center;
+  border: 1px solid var(--j-color-brand);
+  border-radius: 8px;
+  color: white;
+  background: var(--j-color-brand);
+  cursor: pointer;
 }
 
-.wake-song-table-actions button:hover {
-  color: var(--j-color-brand-strong);
-  background: var(--j-color-surface-selected);
+.wake-song-table-actions button:last-child {
+  border-color: var(--j-color-danger);
+  background: var(--j-color-danger);
+}
+
+.wake-song-table-actions button:hover:not(:disabled) {
+  border-color: var(--j-color-brand-strong);
+  background: var(--j-color-brand-strong);
+}
+
+.wake-song-table-actions button:last-child:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--j-color-danger) 84%, black);
+  background: color-mix(in srgb, var(--j-color-danger) 84%, black);
+}
+
+.wake-song-table-actions button:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px rgb(13 148 136 / 15%);
+}
+
+.wake-song-table-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 @media (max-width: 900px) {

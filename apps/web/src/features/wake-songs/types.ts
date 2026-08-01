@@ -27,6 +27,9 @@ export type WakeSongRequest = {
   rejectionReason?: string;
   scheduledAt?: string;
   playedAt?: string;
+  candidateWeekStart?: string;
+  candidateWeekEnd?: string;
+  candidateWeekLabel?: string;
   createdAt: string;
   updatedAt: string;
 };

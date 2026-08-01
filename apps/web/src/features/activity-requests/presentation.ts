@@ -5,7 +5,8 @@ import type {
 } from '@jshsus/types';
 
 export type ActivityRequestFilter = 'all' | 'submitted' | 'approved' | 'completed';
-export type ActivityRequestSearchField = 'activity_location' | 'activity' | 'location';
+export type ActivityRequestSearchField =
+  'all' | 'activity' | 'participants' | 'location' | 'advisor';
 
 export const activityStatusLabels: Record<ActivityRequestStatus, string> = {
   draft: '임시저장',
@@ -28,7 +29,7 @@ export function matchesActivityFilter(
 export function matchesActivityQuery(
   request: ActivityRequestSummary,
   query: string,
-  field: ActivityRequestSearchField = 'activity_location',
+  field: ActivityRequestSearchField = 'all',
 ) {
   const normalized = query.trim().toLocaleLowerCase('ko-KR');
   if (!normalized) return true;
@@ -36,7 +37,7 @@ export function matchesActivityQuery(
     .map((student) => `${student.studentNo} ${student.studentName}`)
     .join(' ');
   const values = {
-    activity_location: [
+    all: [
       request.purpose,
       request.location,
       request.advisorTeacherName,
@@ -49,7 +50,9 @@ export function matchesActivityQuery(
       `#${request.id}`,
     ].join(' '),
     activity: request.purpose,
+    participants: [participantText, request.studentName, request.studentNo].join(' '),
     location: request.location,
+    advisor: [request.advisorTeacherName, request.teacherName, request.reviewerName].join(' '),
   };
   return values[field].toLocaleLowerCase('ko-KR').includes(normalized);
 }

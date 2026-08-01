@@ -19,6 +19,7 @@ import {
 } from './activitySchedule';
 import {
   type ActivityRequestFilter,
+  type ActivityRequestSearchField,
   activityStatusLabels,
   formatActivityParticipants,
   matchesActivityFilter,
@@ -37,6 +38,7 @@ export function ActivityRequestsPage() {
     queryFn: getMyActivityRequests,
   });
   const [filter, setFilter] = useState<ActivityRequestFilter>('all');
+  const [searchField, setSearchField] = useState<ActivityRequestSearchField>('all');
   const [query, setQuery] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -48,11 +50,11 @@ export function ActivityRequestsPage() {
       requests.filter(
         (request) =>
           matchesActivityFilter(request, filter) &&
-          matchesActivityQuery(request, query, 'activity_location') &&
+          matchesActivityQuery(request, query, searchField) &&
           (!startDate || koreaDateInput(new Date(request.startsAt)) >= startDate) &&
           (!endDate || koreaDateInput(new Date(request.startsAt)) <= endDate),
       ),
-    [endDate, filter, query, requests, startDate],
+    [endDate, filter, query, requests, searchField, startDate],
   );
   const totalPages = Math.ceil(filtered.length / pageSize);
   const safePage = Math.min(page, Math.max(totalPages, 1));
@@ -74,20 +76,26 @@ export function ActivityRequestsPage() {
         aria-label="탐구활동서 신청 내역"
       >
         <DataTableToolbar
-          key={query}
           total={filtered.length}
           page={safePage}
           totalPages={totalPages}
           pageSize={pageSize}
-          field="activity_location"
+          field={searchField}
           query={query}
-          showSearchField={false}
-          searchPlaceholder="내용, 인원, 장소, 지도교사 검색"
+          searchPlaceholder="검색어를 입력하세요"
+          searchFieldOptions={[
+            { value: 'all', label: '전체' },
+            { value: 'activity', label: '내용' },
+            { value: 'participants', label: '인원' },
+            { value: 'location', label: '장소' },
+            { value: 'advisor', label: '지도교사' },
+          ]}
           onPageSizeChange={(nextPageSize) => {
             setPageSize(nextPageSize);
             setPage(1);
           }}
-          onSearch={(_field, nextQuery) => {
+          onSearch={(nextField, nextQuery) => {
+            setSearchField(nextField);
             setQuery(nextQuery);
             setPage(1);
           }}

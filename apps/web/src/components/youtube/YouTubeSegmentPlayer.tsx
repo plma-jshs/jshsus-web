@@ -25,6 +25,7 @@ type YouTubePlayer = {
   playVideo: () => void;
   seekTo: (seconds: number, allowSeekAhead: boolean) => void;
   setPlaybackRate: (rate: number) => void;
+  unloadModule?: (moduleName: string) => void;
 };
 
 type YouTubePlayerOptions = {
@@ -232,6 +233,7 @@ export function YouTubeSegmentPlayer({
               readyRef.current = true;
               const iframe = event.target.getIframe?.();
               if (iframe) iframe.title = latestRef.current.title;
+              event.target.unloadModule?.('captions');
               const currentSegment = normalizedSegment(
                 latestRef.current.startSeconds,
                 latestRef.current.endSeconds,
@@ -249,6 +251,7 @@ export function YouTubeSegmentPlayer({
             },
             onStateChange: (event) => {
               if (event.data === PLAYING_STATE) {
+                event.target.unloadModule?.('captions');
                 applyRate(event.target, latestRef.current.playbackRate);
                 startMonitoring(event.target);
               } else {

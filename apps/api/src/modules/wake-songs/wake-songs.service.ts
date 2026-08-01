@@ -21,6 +21,7 @@ import {
   type WakeSongRequestSummary,
   WAKE_SONG_STATUSES,
 } from './wake-songs.types';
+import { getWakeSongCandidateWeek } from './wake-song-week';
 
 const requestInputSchema = z.object({
   url: z.string().trim().min(1).max(500),
@@ -110,6 +111,7 @@ function optionalDate(value: Date | null): string | undefined {
 }
 
 function toSummary(row: WakeSongRow): WakeSongRequestSummary {
+  const candidateWeek = getWakeSongCandidateWeek(row.createdAt);
   return {
     id: row.id,
     requesterId: row.requesterId,
@@ -136,6 +138,9 @@ function toSummary(row: WakeSongRow): WakeSongRequestSummary {
     scheduledAt: optionalDate(row.scheduledAt),
     playedAt: optionalDate(row.playedAt),
     canceledAt: optionalDate(row.canceledAt),
+    candidateWeekStart: candidateWeek.startDate,
+    candidateWeekEnd: candidateWeek.endDate,
+    candidateWeekLabel: candidateWeek.label,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -419,7 +424,10 @@ export class WakeSongsService {
     return this.database.query('wake-songs.schedule', async (db) =>
       db.transaction(async (tx) => {
         const [request] = await tx
-          .select({ status: schema.wakeSongRequests.status })
+          .select({
+            status: schema.wakeSongRequests.status,
+            createdAt: schema.wakeSongRequests.createdAt,
+          })
           .from(schema.wakeSongRequests)
           .where(eq(schema.wakeSongRequests.id, id))
           .limit(1)
@@ -428,6 +436,14 @@ export class WakeSongsService {
         if (!request) throw new NotFoundException('기상곡 신청을 찾을 수 없습니다.');
         if (request.status !== 'APPROVED' && request.status !== 'SCHEDULED') {
           throw new ConflictException('승인된 신청만 편성할 수 있습니다.');
+        }
+
+        const candidateWeek = getWakeSongCandidateWeek(request.createdAt);
+        if (
+          parsed.data.scheduledAt < candidateWeek.start ||
+          parsed.data.scheduledAt >= candidateWeek.end
+        ) {
+          throw new BadRequestException(`이 신청은 ${candidateWeek.label}에만 편성할 수 있습니다.`);
         }
 
         await tx

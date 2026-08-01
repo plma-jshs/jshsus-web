@@ -6,9 +6,10 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Search,
+  X,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 export type DataTableSearchField = 'title_content' | 'title' | 'author';
 export type DataTablePageSize = 20 | 50 | 100;
@@ -133,6 +134,27 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
     defaultSearchFieldOptions) as readonly DataTableSearchFieldOption<TField>[];
   const [draftField, setDraftField] = useState(field);
   const [draftQuery, setDraftQuery] = useState(query);
+  const onSearchRef = useRef(onSearch);
+  const lastSearchRef = useRef({ field, query: query.trim() });
+
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
+
+  useEffect(() => {
+    const normalizedQuery = draftQuery.trim();
+    if (
+      lastSearchRef.current.field === draftField &&
+      lastSearchRef.current.query === normalizedQuery
+    ) {
+      return undefined;
+    }
+    const timer = window.setTimeout(() => {
+      lastSearchRef.current = { field: draftField, query: normalizedQuery };
+      onSearchRef.current(draftField, normalizedQuery);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [draftField, draftQuery]);
 
   return (
     <form
@@ -140,7 +162,6 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
       role="search"
       onSubmit={(event) => {
         event.preventDefault();
-        onSearch(draftField, draftQuery.trim());
       }}
     >
       <div className="data-table-toolbar__summary" aria-live="polite">
@@ -158,6 +179,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
           options={([20, 50, 100] as const).map((size) => ({ value: size, label: `${size}건` }))}
           onChange={onPageSizeChange}
         />
+        {extraControls}
         {showSearchField ? (
           <ToolbarSelect
             ariaLabel="검색 범위"
@@ -166,17 +188,26 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
             onChange={setDraftField}
           />
         ) : null}
-        {extraControls}
-        <label className="data-table-toolbar__query">
-          <span className="sr-only">검색어</span>
+        <div className="data-table-toolbar__query">
           <Search size={15} aria-hidden="true" />
           <input
-            type="search"
+            aria-label="검색어"
+            type="text"
             value={draftQuery}
             onChange={(event) => setDraftQuery(event.target.value)}
             placeholder={searchPlaceholder}
           />
-        </label>
+          {draftQuery ? (
+            <button
+              aria-label="검색어 지우기"
+              className="data-table-toolbar__clear"
+              type="button"
+              onClick={() => setDraftQuery('')}
+            >
+              <X size={15} aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
         <button className="sr-only" type="submit">
           검색
         </button>

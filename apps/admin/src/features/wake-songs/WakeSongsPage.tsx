@@ -1,5 +1,4 @@
-import type { FormEvent } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { Check, ExternalLink, Search, X } from 'lucide-react';
@@ -62,6 +61,14 @@ export function WakeSongsPage() {
   const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setAppliedQuery(query.trim());
+      setPage(1);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
   const requestsQuery = useQuery({
     queryKey: ['admin', 'wake-songs', status, appliedQuery, page, pageSize, sorting],
     queryFn: () =>
@@ -120,6 +127,13 @@ export function WakeSongsPage() {
         </div>
       ),
       meta: { align: 'center', width: 150 },
+    },
+    {
+      id: 'candidateWeek',
+      header: '대상 주차',
+      cell: ({ row }) => row.original.candidateWeekLabel ?? '—',
+      enableSorting: false,
+      meta: { align: 'center', width: 190 },
     },
     {
       id: 'videoTitle',
@@ -200,12 +214,6 @@ export function WakeSongsPage() {
   const pageData = requestsQuery.data;
   const selectedRequest = pageData?.items.find((request) => request.id === selectedId);
 
-  const submitSearch = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setAppliedQuery(query.trim());
-    setPage(1);
-  };
-
   return (
     <div className="admin-stack wake-song-admin">
       <section className="admin-panel wake-song-admin-toolbar">
@@ -218,20 +226,18 @@ export function WakeSongsPage() {
             setPage(1);
           }}
         />
-        <form className="wake-song-admin-search" onSubmit={submitSearch}>
+        <div className="wake-song-admin-search">
           <label>
             <span className="sr-only">신청 검색</span>
+            <Search size={15} aria-hidden="true" />
             <input
-              type="search"
+              type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="영상, 신청자, 메모 검색"
             />
           </label>
-          <button className="quiet-button" type="submit">
-            <Search size={15} aria-hidden="true" /> 검색
-          </button>
-        </form>
+        </div>
         <PageSizeSelect
           value={pageSize}
           onChange={(nextPageSize) => {
@@ -297,6 +303,10 @@ export function WakeSongsPage() {
                   <dd>
                     {selectedRequest.requesterStudentNo} {selectedRequest.requesterName}
                   </dd>
+                </div>
+                <div>
+                  <dt>대상 주차</dt>
+                  <dd>{selectedRequest.candidateWeekLabel ?? '—'}</dd>
                 </div>
                 <div>
                   <dt>재생</dt>

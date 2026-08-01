@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DataTableToolbar } from './DataTableControls';
 
-afterEach(cleanup);
+afterEach(() => {
+  vi.useRealTimers();
+  cleanup();
+});
 
 describe('DataTableToolbar', () => {
   it('uses styled listboxes for filters instead of native selects', () => {
@@ -26,5 +29,36 @@ describe('DataTableToolbar', () => {
     expect(screen.getByRole('listbox', { name: '페이지당 표시 건수' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('option', { name: '50건' }));
     expect(onPageSizeChange).toHaveBeenCalledWith(50);
+  });
+
+  it('applies search changes after a 250ms debounce and exposes a stable clear button', () => {
+    vi.useFakeTimers();
+    const onSearch = vi.fn();
+    render(
+      <DataTableToolbar
+        total={10}
+        page={1}
+        totalPages={1}
+        pageSize={20}
+        field="title_content"
+        query=""
+        onPageSizeChange={vi.fn()}
+        onSearch={onSearch}
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('검색어를 입력하세요'), {
+      target: { value: '실시간 검색' },
+    });
+    expect(onSearch).not.toHaveBeenCalled();
+
+    act(() => vi.advanceTimersByTime(249));
+    expect(onSearch).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(1));
+    expect(onSearch).toHaveBeenLastCalledWith('title_content', '실시간 검색');
+
+    fireEvent.click(screen.getByRole('button', { name: '검색어 지우기' }));
+    act(() => vi.advanceTimersByTime(250));
+    expect(onSearch).toHaveBeenLastCalledWith('title_content', '');
   });
 });

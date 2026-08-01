@@ -48,8 +48,7 @@
   white-space: nowrap;
 }
 
-.activity-date-control.has-value::before,
-.activity-date-control:focus-within::before {
+.activity-date-control.has-value::before {
   display: none;
 }
 
@@ -61,8 +60,15 @@
   font-size: 13px;
 }
 
-.activity-date-control:not(.has-value):not(:focus-within) input::-webkit-datetime-edit {
+.activity-date-control:not(.has-value) input::-webkit-datetime-edit,
+.activity-date-control:not(.has-value) input::-webkit-datetime-edit-fields-wrapper,
+.activity-date-control:not(.has-value) input::-webkit-datetime-edit-text,
+.activity-date-control:not(.has-value) input::-webkit-datetime-edit-month-field,
+.activity-date-control:not(.has-value) input::-webkit-datetime-edit-day-field,
+.activity-date-control:not(.has-value) input::-webkit-datetime-edit-year-field {
   color: transparent;
+  opacity: 0;
+  -webkit-text-fill-color: transparent;
 }
 
 .activity-date-control::after {

@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { ChevronRight, Inbox, TriangleAlert } from 'lucide-react';
+import { ChevronRight, Inbox, Search, TriangleAlert, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
 import type { BreadcrumbItem } from './pageHierarchy';
@@ -77,15 +77,26 @@ export function SearchField({
   label?: string;
 }) {
   return (
-    <label className="page-search-field">
-      <span className="sr-only">{label}</span>
+    <div className="page-search-field">
+      <Search size={15} aria-hidden="true" />
       <input
-        type="search"
+        aria-label={label}
+        type="text"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
       />
-    </label>
+      {value ? (
+        <button
+          aria-label="검색어 지우기"
+          className="page-search-field__clear"
+          type="button"
+          onClick={() => onChange('')}
+        >
+          <X size={15} aria-hidden="true" />
+        </button>
+      ) : null}
+    </div>
   );
 }
 

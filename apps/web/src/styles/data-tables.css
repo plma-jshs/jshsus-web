@@ -352,7 +352,37 @@
 }
 
 .data-table-toolbar__query input {
+  padding-right: 36px;
   padding-left: 36px;
+}
+
+.data-table-toolbar__clear {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: 7px;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  color: var(--j-color-text-muted);
+  background: transparent;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.data-table-toolbar__clear:hover {
+  color: var(--j-color-text);
+  background: var(--j-color-surface-hover);
+  cursor: pointer;
+}
+
+.data-table-toolbar__clear:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 2px rgb(13 148 136 / 16%);
 }
 
 /* Keep toolbar controls visually identical even when the global form selector
@@ -369,6 +399,7 @@
 }
 
 .data-table-toolbar .data-table-toolbar__controls .data-table-toolbar__query input {
+  padding-right: 36px;
   padding-left: 36px;
 }
 
@@ -547,7 +578,7 @@
   }
 
   .data-table-toolbar__query {
-    grid-column: 1 / 2;
+    grid-column: 1 / -1;
   }
 
   .data-table-viewport {

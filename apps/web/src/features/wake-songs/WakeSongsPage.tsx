@@ -2,6 +2,7 @@ import type { CSSProperties, FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  CalendarDays,
   Check,
   ChevronDown,
   Clock3,
@@ -11,6 +12,7 @@ import {
   RotateCcw,
   X,
 } from 'lucide-react';
+import { useToast } from '../../components/feedback/Toast';
 import { YouTubeSegmentPlayer } from '../../components/youtube/YouTubeSegmentPlayer';
 import { DataTablePagination } from '../../components/page/DataTableControls';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
@@ -33,6 +35,7 @@ import {
   WAKE_SONG_PLAYBACK_RATES,
 } from './presentation';
 import type { WakeSongRequest } from './types';
+import { getNextWakeSongWeek } from './week';
 import '../../styles/wake-songs.css';
 
 const dateFormatter = createKoreanDateFormatter({
@@ -148,6 +151,7 @@ function describeError(error: unknown) {
 
 export function WakeSongsPage() {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [form, setForm] = useState<FormState>(initialForm);
   const [formError, setFormError] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -169,14 +173,19 @@ export function WakeSongsPage() {
       input.editingId
         ? updateWakeSongRequest(input.editingId, input.request)
         : createWakeSongRequest(input.request),
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
       setForm(initialForm);
       setEditingId(null);
       setPreviewFor('');
       setPreviewAttemptFor('');
+      resetPreview();
       setFormError('');
       setPage(1);
       await queryClient.invalidateQueries({ queryKey: ['wake-songs', 'me'] });
+      showToast({
+        title: input.editingId ? '기상곡 신청을 수정했습니다.' : '기상곡 신청을 완료했습니다.',
+        tone: 'info',
+      });
     },
   });
   const cancelMutation = useMutation({
@@ -193,6 +202,9 @@ export function WakeSongsPage() {
       ? 0
       : effectiveDuration(startSeconds, endSeconds, form.playbackRate);
   const requests = useMemo(() => requestsQuery.data?.items ?? [], [requestsQuery.data]);
+  const fallbackCandidateWeek = useMemo(() => getNextWakeSongWeek(new Date()), []);
+  const editingRequest = requests.find((request) => request.id === editingId);
+  const candidateWeekLabel = editingRequest?.candidateWeekLabel ?? fallbackCandidateWeek.label;
   const normalizedUrl = form.url.trim();
   const preview = previewFor === normalizedUrl ? previewMutation.data : undefined;
   const timelineMax = Math.max(
@@ -380,6 +392,11 @@ export function WakeSongsPage() {
               </button>
             </div>
           ) : null}
+
+          <p className="wake-song-candidate-week">
+            <CalendarDays size={15} aria-hidden="true" />
+            신청 대상 <strong>{candidateWeekLabel}</strong>
+          </p>
 
           <form className="wake-song-form" onSubmit={handleSubmit}>
             <label className="wake-song-url-field wake-song-url-field--hero">
@@ -606,6 +623,7 @@ export function WakeSongsPage() {
             <table className="workflow-table wake-song-history-table">
               <colgroup>
                 <col style={{ width: 130 }} />
+                <col style={{ width: 190 }} />
                 <col />
                 <col style={{ width: 150 }} />
                 <col style={{ width: 110 }} />
@@ -614,6 +632,7 @@ export function WakeSongsPage() {
               <thead>
                 <tr>
                   <th scope="col">신청일</th>
+                  <th scope="col">대상 주차</th>
                   <th scope="col">영상</th>
                   <th scope="col">재생 구간</th>
                   <th scope="col">상태</th>
@@ -630,6 +649,7 @@ export function WakeSongsPage() {
                           {dateFormatter.format(new Date(request.createdAt))}
                         </time>
                       </td>
+                      <td data-label="대상 주차">{request.candidateWeekLabel ?? '—'}</td>
                       <td className="wake-song-history-title" data-label="영상">
                         <a href={request.canonicalUrl} target="_blank" rel="noreferrer">
                           {request.videoTitle}
@@ -654,10 +674,17 @@ export function WakeSongsPage() {
                       <td data-label="작업">
                         {request.status === 'PENDING' ? (
                           <div className="wake-song-table-actions">
-                            <button type="button" onClick={() => beginEdit(request)}>
-                              <Pencil size={14} aria-hidden="true" /> 수정
+                            <button
+                              aria-label="신청 수정"
+                              title="신청 수정"
+                              type="button"
+                              onClick={() => beginEdit(request)}
+                            >
+                              <Pencil size={15} aria-hidden="true" />
                             </button>
                             <button
+                              aria-label="신청 취소"
+                              title="신청 취소"
                               type="button"
                               onClick={() => {
                                 if (window.confirm('이 기상곡 신청을 취소하시겠습니까?')) {
@@ -666,7 +693,7 @@ export function WakeSongsPage() {
                               }}
                               disabled={cancelMutation.isPending}
                             >
-                              <X size={14} aria-hidden="true" /> 취소
+                              <X size={15} aria-hidden="true" />
                             </button>
                           </div>
                         ) : (

@@ -31,7 +31,18 @@
 }
 
 .wake-song-admin-search label {
+  position: relative;
+  display: flex;
   flex: 1;
+  align-items: center;
+}
+
+.wake-song-admin-search label > svg {
+  position: absolute;
+  z-index: 1;
+  left: 12px;
+  color: var(--muted);
+  pointer-events: none;
 }
 
 .wake-song-admin-search input,
@@ -44,11 +55,8 @@
   background: white;
 }
 
-.wake-song-admin-search .quiet-button {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 6px;
+.wake-song-admin-search input {
+  padding-left: 36px;
 }
 
 .wake-song-admin-list {

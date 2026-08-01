@@ -35,6 +35,9 @@ export type WakeSongRequestSummary = {
   scheduledAt?: string;
   playedAt?: string;
   canceledAt?: string;
+  candidateWeekStart: string;
+  candidateWeekEnd: string;
+  candidateWeekLabel: string;
   createdAt: string;
   updatedAt: string;
 };
