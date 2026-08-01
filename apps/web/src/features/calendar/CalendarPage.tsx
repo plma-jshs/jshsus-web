@@ -359,7 +359,7 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
     <PageScaffold
       breadcrumbs={listBreadcrumbs('calendar')}
       title="학사일정"
-      width="full"
+      width="wide"
       variant="workspace"
     >
       <section className="calendar-workspace" aria-label="학사일정 달력">

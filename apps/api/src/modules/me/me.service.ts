@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import * as schema from '@jshsus/db';
 import type { ActivityRequestSummary, PointRecord, StudentSelfStatus } from '@jshsus/types';
-import { and, desc, eq, inArray, isNull, ne } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, ne, or } from 'drizzle-orm';
 import { z } from 'zod';
 import type { AuthSession } from '../auth/auth.service';
 import { DatabaseService } from '../database/database.service';
@@ -76,25 +76,51 @@ export class MeService {
     }
 
     return this.database.query('me.status', async (db) => {
-      const [student] =
+      const persistedUserId =
         session.userId && session.userId > 0
-          ? await db
-              .select({
-                id: schema.students.id,
-                userId: schema.students.userId,
-                studentNo: schema.students.studentNo,
-                name: schema.students.name,
-                nickname: schema.users.nickname,
-                grade: schema.students.grade,
-                classNo: schema.students.classNo,
-                number: schema.students.number,
-                currentPoint: schema.students.currentPoint,
-              })
-              .from(schema.students)
-              .leftJoin(schema.users, eq(schema.students.userId, schema.users.id))
-              .where(eq(schema.students.userId, session.userId))
-              .limit(1)
-          : [];
+          ? session.userId
+          : session.iamId && session.iamId > 0
+            ? session.iamId
+            : 0;
+      if (!persistedUserId) {
+        throw new UnauthorizedException('A persisted student session is required.');
+      }
+
+      const [account] = await db
+        .select({ studentNo: schema.users.studentNo, nickname: schema.users.nickname })
+        .from(schema.users)
+        .where(eq(schema.users.id, persistedUserId))
+        .limit(1);
+      const identifierStudentNo =
+        session.identityType === 'student' && /^\d+$/.test(session.identifier ?? '')
+          ? Number(session.identifier)
+          : undefined;
+      const studentNo = session.stuid ?? identifierStudentNo ?? account?.studentNo ?? undefined;
+      // Cognito 전환 전 생성된 학생 행에는 이전 users.id가 남아 있을 수 있다.
+      // 인증된 세션의 학번은 Cognito 계정과 users 호환 필드에서 검증해 만든 값이므로,
+      // 이 경우에도 학번으로 학생 프로필을 찾을 수 있어야 한다.
+      const studentIdentityCondition = studentNo
+        ? eq(schema.students.studentNo, studentNo)
+        : undefined;
+      const [studentRow] = await db
+        .select({
+          id: schema.students.id,
+          userId: schema.students.userId,
+          studentNo: schema.students.studentNo,
+          name: schema.students.name,
+          grade: schema.students.grade,
+          classNo: schema.students.classNo,
+          number: schema.students.number,
+          currentPoint: schema.students.currentPoint,
+        })
+        .from(schema.students)
+        .where(
+          studentIdentityCondition
+            ? or(eq(schema.students.userId, persistedUserId), studentIdentityCondition)
+            : eq(schema.students.userId, persistedUserId),
+        )
+        .limit(1);
+      const student = studentRow ? { ...studentRow, nickname: account?.nickname ?? null } : null;
 
       if (!student) {
         throw new BadRequestException('Student profile is not linked to this session.');
@@ -146,7 +172,7 @@ export class MeService {
             )
             .orderBy(desc(schema.pointRecords.baseDate), desc(schema.pointRecords.id))
             .limit(20),
-          student.userId
+          (student.userId ?? persistedUserId)
             ? db
                 .select({
                   roomName: schema.dormRooms.name,
@@ -157,7 +183,7 @@ export class MeService {
                 })
                 .from(schema.dormAssignments)
                 .innerJoin(schema.dormRooms, eq(schema.dormAssignments.roomId, schema.dormRooms.id))
-                .where(eq(schema.dormAssignments.userId, student.userId))
+                .where(eq(schema.dormAssignments.userId, student.userId ?? persistedUserId))
                 .orderBy(desc(schema.dormAssignments.year), desc(schema.dormAssignments.semester))
                 .limit(1)
             : Promise.resolve([]),
@@ -173,14 +199,14 @@ export class MeService {
                 .where(inArray(schema.deviceCases.id, classDeviceCaseIds))
                 .orderBy(schema.deviceCases.id)
             : Promise.resolve([]),
-          student.userId
+          persistedUserId
             ? db
                 .select({ id: schema.files.id })
                 .from(schema.files)
                 .where(
                   and(
                     eq(schema.files.targetType, 'profile'),
-                    eq(schema.files.targetId, student.userId),
+                    eq(schema.files.targetId, persistedUserId),
                     eq(schema.files.visibility, 'public'),
                   ),
                 )

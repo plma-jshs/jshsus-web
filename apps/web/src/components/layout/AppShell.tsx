@@ -15,7 +15,9 @@ import {
   X,
 } from 'lucide-react';
 import { getSession, logout } from '../../features/auth/api';
+import { getMyStatus } from '../../features/my-status/api';
 import { getAdminSiteHref } from '../../shared/lib/adminSiteHref';
+import { UserAvatar } from '../page/UserAvatar';
 import { NotificationMenu } from './NotificationMenu';
 
 type InternalNavigationPath =
@@ -263,10 +265,12 @@ function MobileMenu() {
 
 function UserMenu({
   displayName,
+  profileImageUrl,
   loggingOut,
   onLogout,
 }: {
   displayName: string;
+  profileImageUrl?: string;
   loggingOut: boolean;
   onLogout: () => void;
 }) {
@@ -299,7 +303,7 @@ function UserMenu({
         aria-expanded={isOpen}
         onClick={() => setIsOpen((current) => !current)}
       >
-        <User aria-hidden="true" size={16} />
+        <UserAvatar className="user-avatar--header" imageUrl={profileImageUrl} />
         <span>{displayName}</span>
         <ChevronDown className="header-user-link__chevron" aria-hidden="true" size={14} />
       </button>
@@ -343,6 +347,13 @@ function PortalShell() {
     queryKey: ['session'],
     queryFn: getSession,
   });
+  const session = sessionQuery.data;
+  const myStatusQuery = useQuery({
+    queryKey: ['my-status'],
+    queryFn: getMyStatus,
+    enabled: Boolean(session?.isLogined && session.roles?.includes('student')),
+    retry: false,
+  });
   const logoutMutation = useMutation({
     mutationFn: logout,
     onSuccess: async () => {
@@ -351,7 +362,6 @@ function PortalShell() {
     },
   });
 
-  const session = sessionQuery.data;
   const sessionDisplayName = session?.isLogined
     ? [session.stuid, session.name ?? '사용자'].filter(Boolean).join(' ')
     : '';
@@ -406,6 +416,7 @@ function PortalShell() {
                 <NotificationMenu />
                 <UserMenu
                   displayName={sessionDisplayName}
+                  profileImageUrl={myStatusQuery.data?.student.profileImageUrl}
                   loggingOut={logoutMutation.isPending}
                   onLogout={() => logoutMutation.mutate()}
                 />

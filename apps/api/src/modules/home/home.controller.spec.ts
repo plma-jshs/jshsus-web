@@ -32,7 +32,8 @@ describe('HomeController', () => {
 
     const result = await controller.dashboard();
 
-    expect(boards.listPosts).toHaveBeenCalledWith('free', 5);
+    expect(notices.listDashboard).toHaveBeenCalledWith(6);
+    expect(boards.listPosts).toHaveBeenCalledWith('free', 6);
     expect(result.boardPosts).toEqual([{ id: 7, title: '최근 글' }]);
     expect(result.meals).toEqual([]);
     expect(result.academicEvents).toEqual([]);

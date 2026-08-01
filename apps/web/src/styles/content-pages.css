@@ -446,17 +446,63 @@
 }
 
 .detail-comment-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--j-space-2);
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--j-color-border-strong);
+  border-radius: var(--j-radius-md);
+  background: var(--j-color-surface);
+  transition:
+    border-color var(--j-motion-fast),
+    box-shadow var(--j-motion-fast);
+}
+
+.detail-comment-form:focus-within {
+  border-color: var(--j-color-focus);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .detail-comment-form textarea {
-  min-height: 92px;
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  max-height: 220px;
+  padding: 13px 15px;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  resize: vertical;
+  transition:
+    min-height var(--j-motion-fast),
+    padding-bottom var(--j-motion-fast);
 }
 
 .detail-comment-form button {
-  min-width: 84px;
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  visibility: hidden;
+  min-width: 76px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity var(--j-motion-fast),
+    transform var(--j-motion-fast),
+    visibility var(--j-motion-fast);
+}
+
+.detail-comment-form:focus-within textarea,
+.detail-comment-form:has(textarea:not(:placeholder-shown)) textarea {
+  min-height: 88px;
+  padding-bottom: 58px;
+}
+
+.detail-comment-form:focus-within button,
+.detail-comment-form:has(textarea:not(:placeholder-shown)) button {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .comment-login-prompt {
@@ -515,12 +561,8 @@
     padding-top: var(--j-space-3);
   }
 
-  .detail-comment-form {
-    grid-template-columns: 1fr;
-  }
-
   .detail-comment-form button {
-    width: 100%;
+    width: auto;
   }
 
   .detail-comment-list article > div:first-child {

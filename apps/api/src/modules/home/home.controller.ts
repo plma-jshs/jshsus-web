@@ -17,9 +17,9 @@ export class HomeController {
   @Get()
   async dashboard(): Promise<HomeDashboard> {
     const [notices, petitions, boardPosts, schoolData] = await Promise.all([
-      this.noticesService.listDashboard(),
+      this.noticesService.listDashboard(6),
       this.petitionsService.list(),
-      this.boardsService.listPosts('free', 5),
+      this.boardsService.listPosts('free', 6),
       this.schoolDataService.getHomeData(),
     ]);
 

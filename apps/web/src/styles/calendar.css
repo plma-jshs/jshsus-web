@@ -1,5 +1,5 @@
 .calendar-workspace {
-  width: min(100%, 1380px);
+  width: 100%;
   margin-inline: auto;
   overflow: hidden;
   border: 1px solid var(--j-color-border);
@@ -9,7 +9,7 @@
 
 .calendar-toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1fr) 260px;
   min-height: 46px;
   padding: 0;
   border-bottom: 1px solid #dde4e8;
@@ -26,7 +26,7 @@
   display: flex;
   min-width: 0;
   padding: 0 18px;
-  align-items: center;
+  align-items: baseline;
   gap: 9px;
   border-left: 1px solid #dde4e8;
   background: var(--j-color-surface);
@@ -113,7 +113,7 @@
 
 .calendar-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1fr) 260px;
 }
 
 .full-calendar {
@@ -380,7 +380,7 @@
 .calendar-agenda {
   min-width: 0;
   min-height: 540px;
-  padding: 0 18px 18px;
+  padding: 0 12px 18px 16px;
   border-left: 1px solid #dde4e8;
   background: var(--j-color-surface);
 }
@@ -421,6 +421,7 @@
 
 .calendar-agenda__list {
   display: grid;
+  padding-right: 6px;
 }
 
 .calendar-agenda__skeleton {
@@ -460,7 +461,7 @@
   grid-template-columns: 7px minmax(0, 1fr);
   gap: 10px;
   border-bottom: 1px solid #e5e9ed;
-  background: #fbfcfc;
+  background: transparent;
 }
 
 .calendar-source-dot {

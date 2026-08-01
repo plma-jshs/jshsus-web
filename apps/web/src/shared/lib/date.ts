@@ -54,9 +54,8 @@ export function formatKoreanRelativeTime(
   const reference = now instanceof Date ? now : new Date(now);
   const rawElapsedSeconds = Math.floor((reference.getTime() - date.getTime()) / 1_000);
 
-  // 서버/DB 시계가 크게 앞선 경우를 새 글로 오인해 계속 "방금"으로 표시하지 않는다.
-  if (rawElapsedSeconds < -60) return formatKoreanContentDateTime(date);
-
+  // 게시글·댓글 생성 시각은 미래일 수 없다. DB/서버 시계가 조금 앞서거나
+  // 고정된 개발 데이터가 현재 시각보다 앞선 경우에도 목록 표기를 깨지 않는다.
   const elapsedSeconds = Math.max(0, rawElapsedSeconds);
 
   if (elapsedSeconds < 60) return '방금';

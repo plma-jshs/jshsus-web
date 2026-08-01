@@ -488,9 +488,25 @@
   gap: 10px;
 }
 
+.selected-day-panel .panel-title h2 {
+  font-size: 16px;
+  line-height: 1.35;
+}
+
 .selected-day-panel .panel-title span {
   color: var(--j-color-text-muted, var(--muted));
   font-size: 12px;
+}
+
+.selected-day-panel .compact-empty {
+  display: block;
+  min-height: 0;
+  padding: 0;
+  margin: 2px 0 0;
+  color: var(--j-color-text-muted, var(--muted));
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
 }
 
 .selected-day-list {

@@ -1,15 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
-import {
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  MoonStar,
-  Sunrise,
-  Sun,
-  Users,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoonStar, Sunrise, Sun, Users } from 'lucide-react';
 import type {
   AcademicEvent,
   SchoolDataAvailability,
@@ -113,6 +105,43 @@ function formatDashboardDate(value: string) {
     .replace(/\.(?=\s*(?:\(|$))/g, '');
 }
 
+function formatCalendarPopoverDate(year: number, month: number, day: number) {
+  return new Intl.DateTimeFormat('ko-KR', {
+    timeZone: KOREA_TIME_ZONE,
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long',
+  }).format(new Date(`${dateKey(year, month, day)}T12:00:00+09:00`));
+}
+
+const majorEventKeywords = [
+  '시험',
+  '개학',
+  '방학',
+  '졸업',
+  '입학',
+  '수강',
+  '학교 행사',
+  '체육',
+  '축제',
+  '발표',
+  '대회',
+  '캠프',
+  '설명회',
+  '휴업',
+  '공휴일',
+  '재량',
+];
+
+function isMajorAcademicEvent(event: AcademicEvent) {
+  return (
+    event.isHoliday ||
+    event.category === 'holiday' ||
+    event.category === 'observance' ||
+    majorEventKeywords.some((keyword) => event.title.includes(keyword))
+  );
+}
+
 function MealColumn({
   type,
   meal,
@@ -141,7 +170,7 @@ function MealColumn({
       ) : showEmpty ? (
         <span className="meal-column__empty">등록된 식단이 없습니다.</span>
       ) : null}
-      {meal?.calories ? <small>{meal.calories}</small> : null}
+      {meal?.calories ? <small className="meal-column__calories">{meal.calories}</small> : null}
     </div>
   );
 }
@@ -273,7 +302,7 @@ function CalendarDay({
         search={{ date: selectedDate }}
         aria-current={isToday ? 'date' : undefined}
       >
-        {day}
+        <span className="mini-calendar__date-number">{day}</span>
       </Link>
     );
   }
@@ -288,20 +317,16 @@ function CalendarDay({
       aria-describedby={tooltipId}
       aria-label={`${year}년 ${month}월 ${day}일, 일정 ${events.length}개`}
     >
-      <span>{day}</span>
+      <span className="mini-calendar__date-number">{day}</span>
       <span className="calendar-event-dots" aria-hidden="true">
-        {events.slice(0, 3).map((event) => (
-          <i key={event.id} />
-        ))}
+        <i />
       </span>
       <span className="calendar-day-popover" id={tooltipId} role="tooltip">
-        <strong>
-          {month}월 {day}일
-        </strong>
+        <strong>{formatCalendarPopoverDate(year, month, day)}</strong>
         {events.slice(0, 3).map((event) => (
           <span key={event.id}>{event.title}</span>
         ))}
-        {events.length > 3 ? <small>+{events.length - 3}</small> : null}
+        {events.length > 3 ? <small>외 {events.length - 3}개 일정</small> : null}
       </span>
     </Link>
   );
@@ -345,6 +370,12 @@ function CalendarCard({
     else void calendarQuery.refetch();
   };
   const today = getKoreaDateParts();
+  const upcomingTo = shiftDateKey(today.key, 6);
+  const upcomingQuery = useQuery({
+    queryKey: ['school-calendar', 'home-upcoming', today.key, upcomingTo],
+    queryFn: () => getSchoolCalendar(today.key, upcomingTo),
+    staleTime: 10 * 60 * 1000,
+  });
   const days = buildCalendarDays(visibleMonth.year, visibleMonth.month);
   const eventsByDay = useMemo(() => {
     const map = new Map<string, AcademicEvent[]>();
@@ -359,17 +390,17 @@ function CalendarCard({
   }, [days, events]);
 
   const upcoming = useMemo(() => {
-    if (range.to < today.key) return [];
-    const from = range.from <= today.key && today.key <= range.to ? today.key : range.from;
-    const to = shiftDateKey(from, 6) < range.to ? shiftDateKey(from, 6) : range.to;
-    return events
+    const upcomingEvents = upcomingQuery.data?.events ?? [];
+    return upcomingEvents
       .filter(
-        (event) => toKoreanDateKey(event.startsAt) <= to && toKoreanDateKey(event.endsAt) >= from,
+        (event) =>
+          toKoreanDateKey(event.startsAt) <= upcomingTo &&
+          toKoreanDateKey(event.endsAt) >= today.key &&
+          isMajorAcademicEvent(event),
       )
       .sort((left, right) => left.startsAt.localeCompare(right.startsAt));
-  }, [events, range.from, range.to, today.key]);
-  const visibleUpcoming = upcoming.slice(0, 3);
-  const hiddenUpcomingCount = Math.max(0, upcoming.length - 3);
+  }, [today.key, upcomingQuery.data?.events, upcomingTo]);
+  const visibleUpcoming = upcoming.slice(0, 2);
 
   const moveMonth = (amount: number) => {
     setVisibleMonth((current) => shiftMonth(current.year, current.month, amount));
@@ -383,7 +414,9 @@ function CalendarCard({
     >
       <header className="home-card__header schedule-card__header">
         <h2>학사일정</h2>
-        <span className="home-card__meta">{visibleMonth.year}년</span>
+        <Link to="/calendar">
+          전체보기 <ChevronRight aria-hidden="true" size={16} />
+        </Link>
       </header>
 
       {hasDataError ? (
@@ -400,8 +433,9 @@ function CalendarCard({
           <ChevronLeft aria-hidden="true" size={17} />
         </button>
         <div>
-          <CalendarDays aria-hidden="true" size={18} />
-          <strong>{visibleMonth.month}월</strong>
+          <strong>
+            {visibleMonth.year}년 {visibleMonth.month}월
+          </strong>
         </div>
         <button type="button" aria-label="다음 달" onClick={() => moveMonth(1)}>
           <ChevronRight aria-hidden="true" size={17} />
@@ -431,26 +465,17 @@ function CalendarCard({
 
       <div className="upcoming-events">
         <div className="upcoming-events__heading">
-          <strong>다가오는 일정</strong>
-          <span>{upcoming.length}건</span>
+          <strong>다가오는 주요 일정</strong>
         </div>
-        <ul aria-label="일주일 이내 일정">
+        <ul aria-label="오늘부터 일주일 이내 주요 일정">
           {visibleUpcoming.map((event) => (
             <li key={event.id}>
               <time dateTime={event.startsAt}>{formatDate(event.startsAt)}</time>
               <span>{event.title}</span>
             </li>
           ))}
-          {hiddenUpcomingCount ? (
-            <li
-              className="upcoming-events__more"
-              aria-label={`일정 ${hiddenUpcomingCount}개 더 있음`}
-            >
-              +{hiddenUpcomingCount}
-            </li>
-          ) : null}
-          {!upcoming.length && canShowConfirmedEmptyState(cardState) ? (
-            <li className="upcoming-events__empty">다가오는 일정이 없습니다.</li>
+          {!upcoming.length && upcomingQuery.isSuccess ? (
+            <li className="upcoming-events__empty">예정된 주요 일정이 없습니다.</li>
           ) : null}
         </ul>
       </div>
@@ -504,7 +529,7 @@ export function DashboardPage() {
           </header>
           {dashboard.notices.length ? (
             <ul className="notice-preview-list">
-              {dashboard.notices.slice(0, 5).map((notice) => {
+              {dashboard.notices.slice(0, 6).map((notice) => {
                 const content = (
                   <>
                     <span className="notice-preview-copy">
@@ -557,7 +582,7 @@ export function DashboardPage() {
           </header>
           {dashboard.boardPosts.length ? (
             <ul className="community-preview-list">
-              {dashboard.boardPosts.slice(0, 5).map((post) => {
+              {dashboard.boardPosts.slice(0, 6).map((post) => {
                 const content = (
                   <>
                     <span className="content-title-line">

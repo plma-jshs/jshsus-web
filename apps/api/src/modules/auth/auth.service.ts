@@ -841,6 +841,7 @@ export class AuthService {
         authAccountId: schema.authAccounts.id,
         providerAccountId: schema.authAccounts.providerAccountId,
         studentProfileNo: schema.students.studentNo,
+        compatibilityStudentNo: schema.users.studentNo,
         staffNo: schema.staffProfiles.staffNo,
         name: schema.users.name,
         status: schema.users.status,
@@ -857,7 +858,12 @@ export class AuthService {
       )
       .limit(1);
 
-    return account ?? null;
+    return account
+      ? {
+          ...account,
+          studentProfileNo: account.studentProfileNo ?? account.compatibilityStudentNo,
+        }
+      : null;
   }
 
   private async getGrantsForUser(
