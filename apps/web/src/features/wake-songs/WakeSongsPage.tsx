@@ -576,9 +576,7 @@ export function WakeSongsPage() {
                       ? '영상을 확인하는 중입니다.'
                       : 'URL을 붙여넣어 주세요.'}
                   </strong>
-                  <p>
-                    YouTube URL을 입력하면 영상 미리보기와 구간 타임라인이 이 카드 안에 펼쳐집니다.
-                  </p>
+                  <p>YouTube URL을 입력하면 미리보기가 표시됩니다.</p>
                 </div>
               )}
             </div>
@@ -590,7 +588,6 @@ export function WakeSongsPage() {
         <div className="wake-song-section-title">
           <div>
             <span>내 신청</span>
-            <h2 id="wake-song-history-title">신청 내역</h2>
           </div>
           <small>총 {requests.length}건</small>
         </div>
