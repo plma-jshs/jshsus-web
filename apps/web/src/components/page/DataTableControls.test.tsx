@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DataTableToolbar } from './DataTableControls';
 
@@ -62,7 +62,7 @@ describe('DataTableToolbar', () => {
     expect(onSearch).toHaveBeenLastCalledWith('title_content', '');
   });
 
-  it('keeps the search input mounted and focused when URL-backed search props update', () => {
+  it('keeps the search input mounted and focused when URL-backed search props update', async () => {
     const props = {
       total: 10,
       page: 1,
@@ -80,6 +80,6 @@ describe('DataTableToolbar', () => {
 
     expect(screen.getByPlaceholderText('검색어를 입력하세요')).toBe(input);
     expect(input).toHaveFocus();
-    expect(input).toHaveValue('검색 결과');
+    await waitFor(() => expect(input).toHaveValue('검색 결과'));
   });
 });

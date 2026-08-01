@@ -135,6 +135,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
   const [draftField, setDraftField] = useState(field);
   const [draftQuery, setDraftQuery] = useState(query);
   const onSearchRef = useRef(onSearch);
+  const externalSearchRef = useRef({ field, query });
   const lastSearchRef = useRef({ field, query: query.trim() });
 
   useEffect(() => {
@@ -142,9 +143,16 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
   }, [onSearch]);
 
   useEffect(() => {
-    setDraftField(field);
-    setDraftQuery(query);
-    lastSearchRef.current = { field, query: query.trim() };
+    if (externalSearchRef.current.field === field && externalSearchRef.current.query === query) {
+      return undefined;
+    }
+    externalSearchRef.current = { field, query };
+    const timer = window.setTimeout(() => {
+      setDraftField(field);
+      setDraftQuery(query);
+      lastSearchRef.current = { field, query: query.trim() };
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [field, query]);
 
   useEffect(() => {
