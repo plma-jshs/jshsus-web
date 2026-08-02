@@ -701,6 +701,461 @@
   color: var(--j-color-danger);
   font-size: 12px;
 }
+
+.my-page {
+  display: grid;
+  width: min(calc(100% - 40px), 980px);
+  padding: 42px 0 72px;
+  margin: 0 auto;
+  gap: 18px;
+}
+
+.my-page .status-profile-card,
+.my-page .status-overview,
+.my-page .status-activity {
+  border-radius: 14px;
+  box-shadow: 0 8px 26px rgb(15 38 45 / 5%);
+}
+
+.my-page .status-profile-card {
+  padding: 26px 28px 22px;
+}
+
+.status-profile-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.72fr);
+  gap: 8px 32px;
+}
+
+.status-profile-form .status-identity {
+  align-self: start;
+}
+
+.my-page .status-avatar__trigger {
+  width: 92px;
+  height: 92px;
+  border: 0;
+  background: #d8d8d8;
+}
+
+.my-page .status-avatar__trigger > img {
+  width: 100%;
+  height: 100%;
+  transform: scale(1.025);
+  object-fit: cover;
+}
+
+.status-person-name {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.status-person-name strong {
+  color: var(--j-color-text);
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.status-person-name span {
+  color: var(--j-color-text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.my-page .status-identity__copy {
+  gap: 12px;
+}
+
+.my-page .status-profile-inline-form {
+  display: grid;
+  width: min(100%, 320px);
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.my-page .status-profile-inline-form label {
+  color: var(--j-color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.my-page .status-profile-inline-form input {
+  height: 40px;
+}
+
+.status-contact-list {
+  display: grid;
+  align-self: stretch;
+}
+
+.status-contact-row {
+  display: grid;
+  min-height: 46px;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--j-color-border);
+  color: var(--j-color-text-secondary);
+  font-size: 13px;
+}
+
+.status-contact-row:first-child {
+  border-top: 1px solid var(--j-color-border);
+}
+
+.status-contact-row > svg {
+  color: var(--j-color-text-muted);
+}
+
+.status-contact-row > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-contact-row > button,
+.status-contact-row > a {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--j-color-text-secondary);
+  background: var(--j-color-surface-subtle);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 30px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.status-contact-row > button:hover,
+.status-contact-row > a:hover {
+  color: var(--j-color-info);
+  background: color-mix(in srgb, var(--j-color-info) 8%, #fff);
+}
+
+.status-profile-save {
+  min-width: 78px;
+  min-height: 38px;
+  padding: 0 17px;
+  grid-column: 2;
+  justify-self: end;
+  border: 1px solid var(--j-color-info);
+  border-radius: 8px;
+  color: #fff;
+  background: var(--j-color-info);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.status-profile-save:hover:not(:disabled) {
+  filter: brightness(0.94);
+}
+
+.status-profile-save:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.my-page .status-section-heading,
+.my-page .status-activity > header {
+  min-height: 34px;
+}
+
+.my-page .status-section-heading h2,
+.my-page .status-activity > header h2 {
+  font-size: 16px;
+}
+
+.my-page .status-section-heading a,
+.my-page .status-activity > header a {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  place-items: center;
+  border-radius: 7px;
+  color: var(--j-color-text-muted);
+}
+
+.my-page .status-section-heading a:hover,
+.my-page .status-activity > header a:hover {
+  color: var(--j-color-info);
+  background: color-mix(in srgb, var(--j-color-info) 8%, #fff);
+  text-decoration: none;
+}
+
+.status-point-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.status-point-chips > span {
+  display: inline-flex;
+  min-height: 28px;
+  padding: 0 10px;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--j-color-border);
+  border-radius: 999px;
+  color: var(--j-color-text-muted);
+  background: var(--j-color-surface-subtle);
+  font-size: 11px;
+}
+
+.status-point-chips strong {
+  color: var(--j-color-text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.status-point-chips .is-positive strong,
+.status-point-preview .is-positive {
+  color: var(--j-color-positive);
+}
+
+.status-point-chips .is-negative strong,
+.status-point-preview .is-negative {
+  color: var(--j-color-danger);
+}
+
+.status-point-chips .is-total strong {
+  color: var(--j-color-info);
+}
+
+.status-point-preview {
+  display: grid;
+  margin-top: 10px;
+  border-top: 1px solid var(--j-color-border);
+}
+
+.status-point-preview > div {
+  display: grid;
+  min-height: 42px;
+  grid-template-columns: 90px 50px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--j-color-border);
+  font-size: 12px;
+}
+
+.status-point-preview > div:last-child {
+  border-bottom: 0;
+}
+
+.status-point-preview time {
+  color: var(--j-color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.status-point-preview > div > strong {
+  text-align: center;
+}
+
+.status-point-preview > div > span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--j-color-text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-point-preview > p {
+  margin: 0;
+  padding: 18px 0 4px;
+  color: var(--j-color-text-muted);
+  font-size: 12px;
+}
+
+.my-page .status-activity {
+  padding: 14px 20px 16px;
+}
+
+.my-page .status-activity > header {
+  padding: 0 0 8px;
+}
+
+.my-page .status-activity__row {
+  min-height: 68px;
+  padding: 12px 10px;
+  align-items: start;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.status-activity__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+.status-activity__meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.status-activity__meta svg {
+  color: var(--j-color-text-muted);
+}
+
+.status-contact-modal {
+  width: min(100%, 440px);
+  border: 1px solid var(--j-color-border);
+  border-radius: 14px;
+  background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-overlay);
+}
+
+.status-contact-modal > header {
+  display: flex;
+  min-height: 72px;
+  padding: 14px 16px 14px 20px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--j-color-border);
+}
+
+.status-contact-modal h2,
+.status-contact-modal p {
+  margin: 0;
+}
+
+.status-contact-modal h2 {
+  color: var(--j-color-text);
+  font-size: 17px;
+}
+
+.status-contact-modal p {
+  margin-top: 4px;
+  color: var(--j-color-text-muted);
+  font-size: 11px;
+}
+
+.status-contact-modal > header > button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  color: var(--j-color-text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.status-contact-modal > header > button:hover {
+  background: var(--j-color-surface-hover);
+}
+
+.status-contact-modal > form {
+  display: grid;
+  padding: 20px;
+  gap: 7px;
+}
+
+.status-contact-modal label {
+  color: var(--j-color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-contact-modal input {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--j-color-border-strong);
+  border-radius: 8px;
+  outline: 0;
+  font: inherit;
+  font-size: 13px;
+}
+
+.status-contact-modal input:focus {
+  border-color: var(--j-color-focus);
+  box-shadow: var(--j-shadow-focus);
+}
+
+.status-contact-modal__actions {
+  display: flex;
+  margin-top: 14px;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.status-contact-modal__actions button {
+  min-height: 38px;
+  padding: 0 15px;
+  border: 1px solid var(--j-color-border-strong);
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.status-contact-modal__actions button[type='submit'] {
+  border-color: var(--j-color-info);
+  color: #fff;
+  background: var(--j-color-info);
+}
+
+@media (max-width: 760px) {
+  .my-page {
+    width: min(calc(100% - 28px), 980px);
+    padding-top: 24px;
+  }
+
+  .status-profile-form {
+    grid-template-columns: 1fr;
+  }
+
+  .status-profile-save {
+    grid-column: 1;
+  }
+
+  .status-contact-list {
+    margin-top: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .my-page .status-profile-card {
+    padding: 20px 18px;
+  }
+
+  .my-page .status-profile-card .status-identity {
+    align-items: center;
+  }
+
+  .my-page .status-avatar__trigger {
+    width: 78px;
+    height: 78px;
+  }
+
+  .status-point-preview > div {
+    grid-template-columns: 74px 42px minmax(0, 1fr);
+  }
+
+  .status-activity__meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+}
 @media (max-width: 899px) {
   .status-summary > article,
   .status-life > article {

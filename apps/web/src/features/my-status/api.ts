@@ -12,6 +12,13 @@ export function updateMyProfile(nickname: string) {
   });
 }
 
+export function updateMyContact(field: 'email' | 'phone', value: string) {
+  return request<{ ok: true; field: 'email' | 'phone' }>('/api/me/contact', {
+    method: 'PATCH',
+    body: { field, value },
+  });
+}
+
 export function uploadProfileImage(file: File) {
   const formData = new FormData();
   formData.set('file', file);

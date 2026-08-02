@@ -22,4 +22,10 @@ export class MeController {
   updateProfile(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
     return this.meService.updateProfile(request.authSession, body);
   }
+
+  @Patch('contact')
+  @UseGuards(CsrfGuard)
+  updateContact(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
+    return this.meService.updateContact(request.authSession, body);
+  }
 }

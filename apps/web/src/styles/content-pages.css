@@ -71,6 +71,11 @@
   object-fit: cover;
 }
 
+.user-avatar .user-avatar__image--default {
+  transform: scale(1.045);
+  background: #d8d8d8;
+}
+
 .user-avatar svg {
   width: 17px;
   height: 17px;

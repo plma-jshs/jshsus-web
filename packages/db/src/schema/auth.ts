@@ -38,7 +38,7 @@ export const users = mysqlTable(
   },
   (table) => ({
     studentNoIdx: uniqueIndex('users_student_no_idx').on(table.studentNo),
-    nicknameIdx: uniqueIndex('users_nickname_idx').on(table.nickname),
+    nicknameIdx: index('users_nickname_idx').on(table.nickname),
     statusChangedIdx: index('users_status_changed_idx').on(table.status, table.statusChangedAt),
     cognitoDeleteIdx: index('users_cognito_delete_idx').on(
       table.cognitoDeleteAfter,

@@ -359,9 +359,9 @@ async function ensureStagingTestAccount(connection) {
     let userId;
     if (numberOwners.length === 0) {
       const [result] = await connection.execute(
-        `INSERT INTO users (student_no, name, grade, class_no, number, \`${statusColumn}\`)
-         VALUES (?, ?, 9, 9, 99, 'active')`,
-        [TEST_STUDENT_NO, '테스트'],
+        `INSERT INTO users (student_no, name, nickname, grade, class_no, number, \`${statusColumn}\`)
+         VALUES (?, ?, ?, 9, 9, 99, 'active')`,
+        [TEST_STUDENT_NO, '테스트', '테스트'],
       );
       userId = Number(result.insertId);
     } else {

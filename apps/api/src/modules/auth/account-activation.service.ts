@@ -423,7 +423,10 @@ export class AccountActivationService {
         .set({ ...userValues, updatedAt: new Date() })
         .where(eq(schema.users.id, userId));
     } else {
-      const [user] = await tx.insert(schema.users).values(userValues).$returningId();
+      const [user] = await tx
+        .insert(schema.users)
+        .values({ ...userValues, nickname: input.name })
+        .$returningId();
       userId = user.id;
     }
 
@@ -512,7 +515,10 @@ export class AccountActivationService {
         .set({ ...userValues, updatedAt: new Date() })
         .where(eq(schema.users.id, userId));
     } else {
-      const [user] = await tx.insert(schema.users).values(userValues).$returningId();
+      const [user] = await tx
+        .insert(schema.users)
+        .values({ ...userValues, nickname: input.name })
+        .$returningId();
       userId = user.id;
     }
 

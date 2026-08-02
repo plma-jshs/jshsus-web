@@ -5,6 +5,7 @@ import { Link } from '@tanstack/react-router';
 import type { AccountActivationIdentityType, StudentGender } from '@jshsus/types';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { completeAccountActivation, getAuthErrorMessage } from './api';
+import { AuthLayout } from './AuthLayout';
 import { AuthSelect } from './AuthSelect';
 
 function PasswordField(props: {
@@ -108,142 +109,134 @@ export function AccountActivationPage() {
       : null);
 
   return (
-    <section className="auth-page" aria-labelledby="account-activation-title">
-      <section className="auth-panel">
-        <Link to="/" className="auth-brand" aria-label="과구리 홈으로 이동">
-          <img className="auth-brand-mark" src="/assets/lIcon.png" alt="" width="34" height="34" />
-          <strong>과구리</strong>
-        </Link>
-
-        <header className="auth-heading">
-          <h1 id="account-activation-title">통합로그인 계정 만들기</h1>
-          <p>학교에서 배부한 학번·교사번호와 인증코드로 과구리 계정과 통합로그인을 연결합니다.</p>
-        </header>
-
-        {activationMutation.isSuccess ? (
-          <div className="auth-form">
-            <FormMessage success>
-              계정을 만들었습니다. 학번 또는 교사번호와 설정한 비밀번호로 로그인해 주세요.
-            </FormMessage>
-            <Link className="auth-submit" to="/login" search={{ returnTo: undefined }} replace>
-              로그인하기
-            </Link>
-          </div>
-        ) : (
-          <form className="auth-form" onSubmit={submitActivation}>
-            <label htmlFor="activation-type">
-              <span>구분</span>
+    <AuthLayout
+      active="activation"
+      title="통합로그인 계정 생성"
+      description="학교에서 배부한 학번·교사번호와 인증코드로 계정을 활성화합니다."
+    >
+      {activationMutation.isSuccess ? (
+        <div className="auth-form">
+          <FormMessage success>
+            계정을 만들었습니다. 학번 또는 교사번호와 설정한 비밀번호로 로그인해 주세요.
+          </FormMessage>
+          <Link className="auth-submit" to="/login" search={{ returnTo: undefined }} replace>
+            로그인하기
+          </Link>
+        </div>
+      ) : (
+        <form className="auth-form" onSubmit={submitActivation}>
+          <label htmlFor="activation-type">
+            <span>구분</span>
+            <AuthSelect
+              id="activation-type"
+              value={identityType}
+              onChange={setIdentityType}
+              options={[
+                { value: 'student', label: '학생' },
+                { value: 'staff', label: '교직원' },
+              ]}
+              required
+            />
+          </label>
+          <label htmlFor="activation-identity-number">
+            <span>{identityType === 'student' ? '학번' : '교사번호'}</span>
+            <input
+              id="activation-identity-number"
+              value={identityNumber}
+              onChange={(event) => setIdentityNumber(event.target.value.replace(/\D/g, ''))}
+              autoComplete="username"
+              inputMode="numeric"
+              placeholder={identityType === 'student' ? '학번' : '교사번호'}
+              required
+            />
+          </label>
+          <label htmlFor="activation-code">
+            <span>인증코드</span>
+            <input
+              id="activation-code"
+              value={activationCode}
+              onChange={(event) => setActivationCode(event.target.value)}
+              autoComplete="one-time-code"
+              placeholder="인증코드"
+              required
+            />
+          </label>
+          <div className="auth-form-grid two">
+            <label htmlFor="activation-name">
+              <span>이름</span>
+              <input
+                id="activation-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                autoComplete="name"
+                placeholder="이름"
+                required
+              />
+            </label>
+            <label htmlFor="activation-gender">
+              <span>성별</span>
               <AuthSelect
-                id="activation-type"
-                value={identityType}
-                onChange={setIdentityType}
+                id="activation-gender"
+                value={gender}
+                onChange={setGender}
+                placeholder="성별"
                 options={[
-                  { value: 'student', label: '학생' },
-                  { value: 'staff', label: '교직원' },
+                  { value: 'male', label: '남' },
+                  { value: 'female', label: '여' },
                 ]}
                 required
               />
             </label>
-            <label htmlFor="activation-identity-number">
-              <span>{identityType === 'student' ? '학번' : '교사번호'}</span>
-              <input
-                id="activation-identity-number"
-                value={identityNumber}
-                onChange={(event) => setIdentityNumber(event.target.value.replace(/\D/g, ''))}
-                autoComplete="username"
-                inputMode="numeric"
-                placeholder={identityType === 'student' ? '학번' : '교사번호'}
-                required
-              />
-            </label>
-            <label htmlFor="activation-code">
-              <span>인증코드</span>
-              <input
-                id="activation-code"
-                value={activationCode}
-                onChange={(event) => setActivationCode(event.target.value)}
-                autoComplete="one-time-code"
-                placeholder="인증코드"
-                required
-              />
-            </label>
-            <div className="auth-form-grid two">
-              <label htmlFor="activation-name">
-                <span>이름</span>
-                <input
-                  id="activation-name"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  autoComplete="name"
-                  placeholder="이름"
-                  required
-                />
-              </label>
-              <label htmlFor="activation-gender">
-                <span>성별</span>
-                <AuthSelect
-                  id="activation-gender"
-                  value={gender}
-                  onChange={setGender}
-                  placeholder="성별"
-                  options={[
-                    { value: 'male', label: '남' },
-                    { value: 'female', label: '여' },
-                  ]}
-                  required
-                />
-              </label>
-            </div>
-            <label htmlFor="activation-email">
-              <span>이메일</span>
-              <input
-                id="activation-email"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                autoComplete="email"
-                placeholder="jshsus@gmail.com"
-                required
-              />
-            </label>
-            <label htmlFor="activation-phone">
-              <span>휴대폰번호</span>
-              <input
-                id="activation-phone"
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                autoComplete="tel"
-                inputMode="tel"
-                placeholder="010-1234-5678"
-                required
-              />
-            </label>
-            <PasswordField
-              id="activation-password"
-              label="비밀번호"
-              value={password}
-              onChange={setPassword}
-              autoComplete="new-password"
-              placeholder="비밀번호"
+          </div>
+          <label htmlFor="activation-email">
+            <span>이메일</span>
+            <input
+              id="activation-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              placeholder="jshsus@gmail.com"
+              required
             />
-            <PasswordField
-              id="activation-password-confirm"
-              label="비밀번호 확인"
-              value={passwordConfirm}
-              onChange={setPasswordConfirm}
-              autoComplete="new-password"
-              placeholder="비밀번호 확인"
+          </label>
+          <label htmlFor="activation-phone">
+            <span>휴대폰번호</span>
+            <input
+              id="activation-phone"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              autoComplete="tel"
+              inputMode="tel"
+              placeholder="010-1234-5678"
+              required
             />
-            {error ? <FormMessage>{error}</FormMessage> : null}
-            <button className="auth-submit" type="submit" disabled={activationMutation.isPending}>
-              {activationMutation.isPending ? '계정 생성 중' : '계정 만들기'}
-            </button>
-            <Link className="auth-back-button" to="/login" search={{ returnTo: undefined }}>
-              <ArrowLeft size={15} aria-hidden="true" /> 로그인으로 돌아가기
-            </Link>
-          </form>
-        )}
-      </section>
-    </section>
+          </label>
+          <PasswordField
+            id="activation-password"
+            label="비밀번호"
+            value={password}
+            onChange={setPassword}
+            autoComplete="new-password"
+            placeholder="비밀번호"
+          />
+          <PasswordField
+            id="activation-password-confirm"
+            label="비밀번호 확인"
+            value={passwordConfirm}
+            onChange={setPasswordConfirm}
+            autoComplete="new-password"
+            placeholder="비밀번호 확인"
+          />
+          {error ? <FormMessage>{error}</FormMessage> : null}
+          <button className="auth-submit" type="submit" disabled={activationMutation.isPending}>
+            {activationMutation.isPending ? '계정 생성 중' : '계정 만들기'}
+          </button>
+          <Link className="auth-back-button" to="/login" search={{ returnTo: undefined }}>
+            <ArrowLeft size={15} aria-hidden="true" /> 로그인으로 돌아가기
+          </Link>
+        </form>
+      )}
+    </AuthLayout>
   );
 }

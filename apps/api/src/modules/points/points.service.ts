@@ -293,6 +293,7 @@ export class PointsService {
       .values({
         studentNo: null,
         name: SYSTEM_POINT_ACTOR_NAME,
+        nickname: SYSTEM_POINT_ACTOR_NAME,
         status: 'active',
       })
       .$returningId();

@@ -599,6 +599,7 @@ export class AdminService {
         .values({
           studentNo: parsed.data.studentNo,
           name: parsed.data.name,
+          nickname: parsed.data.name,
           grade: studentIdentity.grade,
           classNo: studentIdentity.classNo,
           number: studentIdentity.number,
@@ -1166,6 +1167,7 @@ export class AdminService {
             .values({
               studentNo: normalized.studentNo,
               name: normalized.name,
+              nickname: normalized.name,
               grade: normalized.grade,
               classNo: normalized.classNo,
               number: normalized.number,
@@ -1444,6 +1446,7 @@ export class AdminService {
         .values({
           studentNo: null,
           name: parsed.data.name,
+          nickname: parsed.data.name,
           gender: toStoredStudentGender(parsed.data.gender),
           email: parsed.data.email || null,
           phone: parsed.data.phone || null,

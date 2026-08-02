@@ -9,6 +9,7 @@ import {
   requestPasswordReset,
   type PasswordResetDelivery,
 } from './api';
+import { AuthLayout } from './AuthLayout';
 
 type ResetStep = 'request' | 'confirm' | 'done';
 
@@ -137,143 +138,133 @@ export function PasswordResetPage() {
         : null);
 
   return (
-    <section className="auth-page" aria-labelledby="password-reset-title">
-      <section className="auth-panel">
-        <Link to="/" className="auth-brand" aria-label="과구리 홈으로 이동">
-          <img className="auth-brand-mark" src="/assets/lIcon.png" alt="" width="34" height="34" />
-          <strong>과구리</strong>
-        </Link>
+    <AuthLayout
+      active="password"
+      title={step === 'done' ? '비밀번호 변경 완료' : '비밀번호 찾기'}
+      description={
+        step === 'done'
+          ? '새 비밀번호로 다시 로그인해 주세요.'
+          : '등록된 연락처로 본인 확인 코드를 보냅니다.'
+      }
+    >
+      {step === 'request' ? (
+        <form className="auth-form" onSubmit={submitRequest}>
+          <label htmlFor="forgot-username">
+            <span>학번 또는 교사번호</span>
+            <input
+              id="forgot-username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              autoComplete="username"
+              placeholder="학번 또는 교사번호"
+              autoFocus
+              required
+            />
+          </label>
+          <fieldset className="auth-recovery-method">
+            <legend>인증 방법</legend>
+            <label>
+              <input
+                type="radio"
+                name="password-reset-delivery"
+                value="phone"
+                checked={delivery === 'phone'}
+                onChange={() => setDelivery('phone')}
+              />
+              <span>카카오톡 또는 문자</span>
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="password-reset-delivery"
+                value="email"
+                checked={delivery === 'email'}
+                onChange={() => setDelivery('email')}
+              />
+              <span>이메일</span>
+            </label>
+          </fieldset>
+          {activeError ? <FormMessage>{activeError}</FormMessage> : null}
+          <button className="auth-submit" type="submit" disabled={requestMutation.isPending}>
+            {requestMutation.isPending ? '전송 중' : '인증 코드 받기'}
+          </button>
+          <Link className="auth-back-button" to="/login" search={{ returnTo: undefined }}>
+            <ArrowLeft size={15} aria-hidden="true" /> 로그인으로 돌아가기
+          </Link>
+        </form>
+      ) : null}
 
-        <header className="auth-heading">
-          <h1 id="password-reset-title">
-            {step === 'done' ? '비밀번호 변경 완료' : '비밀번호 찾기'}
-          </h1>
-          <p>
-            {step === 'done'
-              ? '새 비밀번호로 다시 로그인하면 됩니다.'
-              : '계정에 등록된 휴대폰 번호 또는 이메일로 본인 확인 코드를 전송합니다.'}
+      {step === 'confirm' ? (
+        <form className="auth-form" onSubmit={submitConfirm}>
+          {notice ? <FormMessage success>{notice}</FormMessage> : null}
+          <label htmlFor="confirmation-code">
+            <span>인증 코드</span>
+            <input
+              id="confirmation-code"
+              value={confirmationCode}
+              onChange={(event) => setConfirmationCode(event.target.value.replace(/\s/g, ''))}
+              autoComplete="one-time-code"
+              inputMode="numeric"
+              placeholder="인증코드"
+              autoFocus
+              required
+            />
+          </label>
+          <PasswordField
+            id="reset-password"
+            label="새 비밀번호"
+            value={newPassword}
+            onChange={setNewPassword}
+            autoComplete="new-password"
+            placeholder="새 비밀번호"
+          />
+          <PasswordField
+            id="reset-password-confirm"
+            label="새 비밀번호 확인"
+            value={newPasswordConfirm}
+            onChange={setNewPasswordConfirm}
+            autoComplete="new-password"
+            placeholder="새 비밀번호 확인"
+          />
+          <p className="auth-help">
+            8자 이상으로 입력하고, 이름이나 학번과 다른 비밀번호를 사용하세요.
           </p>
-        </header>
-
-        {step === 'request' ? (
-          <form className="auth-form" onSubmit={submitRequest}>
-            <label htmlFor="forgot-username">
-              <span>학번 또는 교사번호</span>
-              <input
-                id="forgot-username"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                autoComplete="username"
-                placeholder="학번 또는 교사번호"
-                autoFocus
-                required
-              />
-            </label>
-            <fieldset className="auth-recovery-method">
-              <legend>인증 방법</legend>
-              <label>
-                <input
-                  type="radio"
-                  name="password-reset-delivery"
-                  value="phone"
-                  checked={delivery === 'phone'}
-                  onChange={() => setDelivery('phone')}
-                />
-                <span>카카오톡 또는 문자</span>
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="password-reset-delivery"
-                  value="email"
-                  checked={delivery === 'email'}
-                  onChange={() => setDelivery('email')}
-                />
-                <span>이메일</span>
-              </label>
-            </fieldset>
-            {activeError ? <FormMessage>{activeError}</FormMessage> : null}
-            <button className="auth-submit" type="submit" disabled={requestMutation.isPending}>
-              {requestMutation.isPending ? '전송 중' : '인증 코드 받기'}
-            </button>
-            <Link className="auth-back-button" to="/login" search={{ returnTo: undefined }}>
-              <ArrowLeft size={15} aria-hidden="true" /> 로그인으로 돌아가기
-            </Link>
-          </form>
-        ) : null}
-
-        {step === 'confirm' ? (
-          <form className="auth-form" onSubmit={submitConfirm}>
-            {notice ? <FormMessage success>{notice}</FormMessage> : null}
-            <label htmlFor="confirmation-code">
-              <span>인증 코드</span>
-              <input
-                id="confirmation-code"
-                value={confirmationCode}
-                onChange={(event) => setConfirmationCode(event.target.value.replace(/\s/g, ''))}
-                autoComplete="one-time-code"
-                inputMode="numeric"
-                placeholder="인증코드"
-                autoFocus
-                required
-              />
-            </label>
-            <PasswordField
-              id="reset-password"
-              label="새 비밀번호"
-              value={newPassword}
-              onChange={setNewPassword}
-              autoComplete="new-password"
-              placeholder="새 비밀번호"
-            />
-            <PasswordField
-              id="reset-password-confirm"
-              label="새 비밀번호 확인"
-              value={newPasswordConfirm}
-              onChange={setNewPasswordConfirm}
-              autoComplete="new-password"
-              placeholder="새 비밀번호 확인"
-            />
-            <p className="auth-help">
-              8자 이상으로 입력하고, 이름이나 학번과 다른 비밀번호를 사용하세요.
-            </p>
-            {activeError ? <FormMessage>{activeError}</FormMessage> : null}
-            <div className="auth-inline-actions">
-              <button
-                className="auth-link-button"
-                type="button"
-                disabled={requestMutation.isPending}
-                onClick={() => requestMutation.mutate({ username: username.trim(), delivery })}
-              >
-                인증 코드 다시 받기
-              </button>
-            </div>
-            <button className="auth-submit" type="submit" disabled={confirmMutation.isPending}>
-              {confirmMutation.isPending ? '변경 중' : '비밀번호 변경'}
-            </button>
+          {activeError ? <FormMessage>{activeError}</FormMessage> : null}
+          <div className="auth-inline-actions">
             <button
-              className="auth-back-button"
+              className="auth-link-button"
               type="button"
-              onClick={() => {
-                setStep('request');
-                setNotice(null);
-                setValidationError(null);
-              }}
+              disabled={requestMutation.isPending}
+              onClick={() => requestMutation.mutate({ username: username.trim(), delivery })}
             >
-              <ArrowLeft size={15} aria-hidden="true" /> 계정 다시 입력
+              인증 코드 다시 받기
             </button>
-          </form>
-        ) : null}
-
-        {step === 'done' ? (
-          <div className="auth-form">
-            {notice ? <FormMessage success>{notice}</FormMessage> : null}
-            <Link className="auth-submit" to="/login" search={{ returnTo: undefined }}>
-              로그인하기
-            </Link>
           </div>
-        ) : null}
-      </section>
-    </section>
+          <button className="auth-submit" type="submit" disabled={confirmMutation.isPending}>
+            {confirmMutation.isPending ? '변경 중' : '비밀번호 변경'}
+          </button>
+          <button
+            className="auth-back-button"
+            type="button"
+            onClick={() => {
+              setStep('request');
+              setNotice(null);
+              setValidationError(null);
+            }}
+          >
+            <ArrowLeft size={15} aria-hidden="true" /> 계정 다시 입력
+          </button>
+        </form>
+      ) : null}
+
+      {step === 'done' ? (
+        <div className="auth-form">
+          {notice ? <FormMessage success>{notice}</FormMessage> : null}
+          <Link className="auth-submit" to="/login" search={{ returnTo: undefined }}>
+            로그인하기
+          </Link>
+        </div>
+      ) : null}
+    </AuthLayout>
   );
 }

@@ -261,6 +261,46 @@ export class CognitoAuthService {
     return this.subjectFromUser(user, username);
   }
 
+  async updateContactAttributes(input: {
+    subject: string;
+    fallbackUsername: string;
+    email?: string;
+    phone?: string;
+  }): Promise<void> {
+    const username = await this.findUsernameBySubject(input.subject, input.fallbackUsername.trim());
+    if (!username) {
+      throw new CognitoAuthError('AUTH_PROVIDER_UNAVAILABLE', '통합로그인 계정을 찾지 못했습니다.');
+    }
+
+    const attributes: Array<{ Name: string; Value: string }> = [];
+    if (input.email) {
+      attributes.push(
+        { Name: 'email', Value: input.email },
+        { Name: 'email_verified', Value: 'true' },
+      );
+    }
+    if (input.phone) {
+      const nationalNumber = input.phone.replace(/\D/g, '').replace(/^0/, '');
+      attributes.push(
+        { Name: 'phone_number', Value: `+82${nationalNumber}` },
+        { Name: 'phone_number_verified', Value: 'true' },
+      );
+    }
+    if (!attributes.length) return;
+
+    await this.getAdminClient()
+      .send(
+        new AdminUpdateUserAttributesCommand({
+          UserAttributes: attributes,
+          Username: username,
+          UserPoolId: env.COGNITO_USER_POOL_ID,
+        }),
+      )
+      .catch((error) => {
+        throw this.mapAdminProviderError(error, 'AdminUpdateUserAttributes');
+      });
+  }
+
   async disableAndScrubUser(input: {
     subject: string;
     fallbackUsername: string;

@@ -1,9 +1,12 @@
-import { CircleUserRound } from 'lucide-react';
-
 export function UserAvatar({ imageUrl, className }: { imageUrl?: string; className?: string }) {
+  const resolvedImageUrl = imageUrl || '/assets/default-avatar.png';
   return (
     <span className={['user-avatar', className].filter(Boolean).join(' ')} aria-hidden="true">
-      {imageUrl ? <img src={imageUrl} alt="" /> : <CircleUserRound />}
+      <img
+        className={!imageUrl ? 'user-avatar__image--default' : undefined}
+        src={resolvedImageUrl}
+        alt=""
+      />
     </span>
   );
 }

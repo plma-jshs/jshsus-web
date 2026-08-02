@@ -33,8 +33,8 @@ describe('ContentDetailHeader', () => {
     );
 
     expect(
-      view.container.querySelector('.content-detail-header__author .user-avatar svg'),
-    ).toBeInTheDocument();
+      view.container.querySelector('.content-detail-header__author .user-avatar img'),
+    ).toHaveAttribute('src', '/assets/default-avatar.png');
   });
 
   it('can omit the author avatar for institutional content', () => {

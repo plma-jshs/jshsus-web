@@ -318,10 +318,11 @@ async function importLegacyPeople(target, legacy) {
     if (!user) {
       const [result] = await target.execute(
         `INSERT INTO users
-          (student_no, name, grade, class_no, number, email, phone, gender, user_status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (student_no, name, nickname, grade, class_no, number, email, phone, gender, user_status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           studentNo,
+          name,
           name,
           grade,
           classNo,
@@ -404,9 +405,10 @@ async function importLegacyPeople(target, legacy) {
     if (!user) {
       const [result] = await target.execute(
         `INSERT INTO users
-          (student_no, name, email, phone, gender, user_status)
-         VALUES (NULL, ?, ?, ?, ?, ?)`,
+          (student_no, name, nickname, email, phone, gender, user_status)
+         VALUES (NULL, ?, ?, ?, ?, ?, ?)`,
         [
+          name,
           name,
           cleanText(iam?.email) || null,
           normalizePhone(iam?.phone),

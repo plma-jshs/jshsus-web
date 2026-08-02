@@ -1,14 +1,10 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as schema from '@jshsus/db';
 import type { ActivityRequestSummary, PointRecord, StudentSelfStatus } from '@jshsus/types';
-import { and, desc, eq, inArray, isNull, ne, or } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
 import { z } from 'zod';
 import type { AuthSession } from '../auth/auth.service';
+import { CognitoAuthService } from '../auth/cognito-auth.service';
 import { DatabaseService } from '../database/database.service';
 import { meritPointBalanceSql, penaltyPointBalanceSql } from '../points/point-balance.query';
 
@@ -66,9 +62,23 @@ const profileUpdateSchema = z.object({
   nickname: z.string().trim().max(16),
 });
 
+const contactUpdateSchema = z.discriminatedUnion('field', [
+  z.object({ field: z.literal('email'), value: z.string().trim().email().max(255) }),
+  z.object({
+    field: z.literal('phone'),
+    value: z
+      .string()
+      .transform((value) => value.replace(/\D/g, ''))
+      .refine((value) => /^010\d{8}$/.test(value), '휴대폰번호를 확인해 주세요.'),
+  }),
+]);
+
 @Injectable()
 export class MeService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly cognito: CognitoAuthService,
+  ) {}
 
   async status(session?: AuthSession): Promise<StudentSelfStatus> {
     if (!session) {
@@ -87,7 +97,12 @@ export class MeService {
       }
 
       const [account] = await db
-        .select({ studentNo: schema.users.studentNo, nickname: schema.users.nickname })
+        .select({
+          studentNo: schema.users.studentNo,
+          nickname: schema.users.nickname,
+          email: schema.users.email,
+          phone: schema.users.phone,
+        })
         .from(schema.users)
         .where(eq(schema.users.id, persistedUserId))
         .limit(1);
@@ -266,6 +281,8 @@ export class MeService {
           profileImageUrl: profileRows[0]
             ? '/api/files/' + profileRows[0].id + '/content'
             : undefined,
+          email: account?.email ?? undefined,
+          phone: account?.phone ?? undefined,
           grade: student.grade,
           classNo: student.classNo,
           number: student.number,
@@ -313,17 +330,6 @@ export class MeService {
       throw new BadRequestException('닉네임은 한글, 영문, 숫자, 밑줄로 2~16자까지 입력해 주세요.');
     }
 
-    if (nickname) {
-      const [duplicate] = await this.database.db
-        .select({ id: schema.users.id })
-        .from(schema.users)
-        .where(and(eq(schema.users.nickname, nickname), ne(schema.users.id, session.userId)))
-        .limit(1);
-      if (duplicate) {
-        throw new ConflictException('이미 사용 중인 닉네임입니다.');
-      }
-    }
-
     await this.database.db
       .update(schema.users)
       .set({ nickname, updatedAt: new Date() })
@@ -336,5 +342,49 @@ export class MeService {
     });
 
     return { ok: true as const, nickname: nickname ?? undefined };
+  }
+
+  async updateContact(session: AuthSession | undefined, body: unknown) {
+    if (!session?.userId || session.userId <= 0) {
+      throw new UnauthorizedException('A persisted student session is required.');
+    }
+
+    const parsed = contactUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    }
+
+    const [cognitoAccount] = await this.database.db
+      .select({ subject: schema.authAccounts.providerAccountId })
+      .from(schema.authAccounts)
+      .where(
+        and(
+          eq(schema.authAccounts.userId, session.userId),
+          eq(schema.authAccounts.provider, 'cognito'),
+        ),
+      )
+      .limit(1);
+
+    const value = parsed.data.value;
+    if (cognitoAccount?.subject) {
+      await this.cognito.updateContactAttributes({
+        subject: cognitoAccount.subject,
+        fallbackUsername: session.identifier ?? String(session.stuid ?? ''),
+        ...(parsed.data.field === 'email' ? { email: value } : { phone: value }),
+      });
+    }
+
+    await this.database.db
+      .update(schema.users)
+      .set({ [parsed.data.field]: value, updatedAt: new Date() })
+      .where(eq(schema.users.id, session.userId));
+    await this.database.writeAudit({
+      actorId: session.userId,
+      action: `me.contact.${parsed.data.field}.update`,
+      targetType: 'users',
+      targetId: session.userId,
+    });
+
+    return { ok: true as const, field: parsed.data.field };
   }
 }

@@ -1,10 +1,10 @@
 import type { FormEvent, ReactNode } from 'react';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import { ArrowLeft, Eye, EyeOff, LoaderCircle } from 'lucide-react';
 import { safeInternalReturnTo } from '../../shared/lib/route';
 import { completeNewPassword, getAuthErrorCode, getAuthErrorMessage, login } from './api';
+import { AuthLayout } from './AuthLayout';
 
 type AuthMode = 'login' | 'new-password';
 
@@ -157,115 +157,100 @@ export function LoginPage() {
         : null);
 
   return (
-    <section className="auth-page" aria-labelledby="login-title">
-      <section className="auth-panel">
-        <Link to="/" className="auth-brand" aria-label="과구리 홈으로 이동">
-          <img className="auth-brand-mark" src="/assets/lIcon.png" alt="" width="34" height="34" />
-          <strong>과구리</strong>
-        </Link>
+    <AuthLayout
+      active="login"
+      title={title}
+      description={
+        mode === 'new-password' ? '처음 로그인하는 계정의 비밀번호를 변경해 주세요.' : undefined
+      }
+    >
+      {mode === 'login' ? (
+        <form className="auth-form" onSubmit={submitLogin}>
+          <label htmlFor="login-username">
+            <span>학번 또는 교사번호</span>
+            <input
+              id="login-username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              autoComplete="username"
+              placeholder="학번 또는 교사번호"
+              autoFocus
+              required
+            />
+          </label>
+          <PasswordField
+            id="login-password"
+            label="비밀번호"
+            value={password}
+            onChange={setPassword}
+            autoComplete="current-password"
+            placeholder="비밀번호"
+          />
 
-        <header className="auth-heading">
-          <h1 id="login-title">{title}</h1>
-          {mode !== 'login' ? (
-            <p>
-              {mode === 'new-password'
-                ? '처음 로그인하는 계정의 비밀번호를 변경해 주세요.'
-                : '계정에 등록된 이메일로 본인 확인을 진행합니다.'}
-            </p>
-          ) : null}
-        </header>
+          {notice ? <FormMessage success>{notice}</FormMessage> : null}
+          {activeError ? <FormMessage>{activeError}</FormMessage> : null}
 
-        {mode === 'login' ? (
-          <form className="auth-form" onSubmit={submitLogin}>
-            <label htmlFor="login-username">
-              <span>학번 또는 교사번호</span>
+          <div className="auth-options">
+            <label className="auth-remember">
               <input
-                id="login-username"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                autoComplete="username"
-                placeholder="학번 또는 교사번호"
-                autoFocus
-                required
+                type="checkbox"
+                checked={remember}
+                onChange={(event) => setRemember(event.target.checked)}
               />
+              <span>로그인 기억하기</span>
             </label>
-            <PasswordField
-              id="login-password"
-              label="비밀번호"
-              value={password}
-              onChange={setPassword}
-              autoComplete="current-password"
-              placeholder="비밀번호"
-            />
+            <a className="auth-link-button" href={forgotPasswordHref}>
+              비밀번호를 잊으셨나요?
+            </a>
+          </div>
 
-            {notice ? <FormMessage success>{notice}</FormMessage> : null}
-            {activeError ? <FormMessage>{activeError}</FormMessage> : null}
+          <button className="auth-submit" type="submit" disabled={loginMutation.isPending}>
+            {loginMutation.isPending ? (
+              <>
+                <LoaderCircle className="auth-loading-icon" size={18} aria-hidden="true" />
+                <span className="sr-only">로그인 처리 중</span>
+              </>
+            ) : (
+              '로그인'
+            )}
+          </button>
+        </form>
+      ) : null}
 
-            <div className="auth-options">
-              <label className="auth-remember">
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={(event) => setRemember(event.target.checked)}
-                />
-                <span>로그인 기억하기</span>
-              </label>
-              <a className="auth-link-button" href={forgotPasswordHref}>
-                비밀번호를 잊으셨나요?
-              </a>
-            </div>
-
-            <button className="auth-submit" type="submit" disabled={loginMutation.isPending}>
-              {loginMutation.isPending ? (
-                <>
-                  <LoaderCircle className="auth-loading-icon" size={18} aria-hidden="true" />
-                  <span className="sr-only">로그인 처리 중</span>
-                </>
-              ) : (
-                '로그인'
-              )}
-            </button>
-            <p className="auth-signup">
-              통합로그인 계정이 없나요? <Link to="/account-activation">통합로그인 계정 만들기</Link>
-            </p>
-          </form>
-        ) : null}
-
-        {mode === 'new-password' ? (
-          <form className="auth-form" onSubmit={submitNewPassword}>
-            <PasswordField
-              id="new-password"
-              label="새 비밀번호"
-              value={newPassword}
-              onChange={setNewPassword}
-              autoComplete="new-password"
-              placeholder="새 비밀번호"
-            />
-            <PasswordField
-              id="new-password-confirm"
-              label="새 비밀번호 확인"
-              value={newPasswordConfirm}
-              onChange={setNewPasswordConfirm}
-              autoComplete="new-password"
-              placeholder="새 비밀번호 확인"
-            />
-            <p className="auth-help">
-              8자 이상으로 입력하고, 이름이나 학번과 다른 비밀번호를 사용하세요.
-            </p>
-            {activeError ? <FormMessage>{activeError}</FormMessage> : null}
-            <button className="auth-submit" type="submit" disabled={newPasswordMutation.isPending}>
-              {newPasswordMutation.isPending ? '변경 중' : '비밀번호 변경'}
-            </button>
-            <button
-              className="auth-back-button"
-              type="button"
-              onClick={() => resetTransientState('login')}
-            >
-              <ArrowLeft size={15} aria-hidden="true" /> 로그인으로 돌아가기
-            </button>
-          </form>
-        ) : null}
-      </section>
-    </section>
+      {mode === 'new-password' ? (
+        <form className="auth-form" onSubmit={submitNewPassword}>
+          <PasswordField
+            id="new-password"
+            label="새 비밀번호"
+            value={newPassword}
+            onChange={setNewPassword}
+            autoComplete="new-password"
+            placeholder="새 비밀번호"
+          />
+          <PasswordField
+            id="new-password-confirm"
+            label="새 비밀번호 확인"
+            value={newPasswordConfirm}
+            onChange={setNewPasswordConfirm}
+            autoComplete="new-password"
+            placeholder="새 비밀번호 확인"
+          />
+          <p className="auth-help">
+            8자 이상으로 입력하고, 이름이나 학번과 다른 비밀번호를 사용하세요.
+          </p>
+          {activeError ? <FormMessage>{activeError}</FormMessage> : null}
+          <button className="auth-submit" type="submit" disabled={newPasswordMutation.isPending}>
+            {newPasswordMutation.isPending ? '변경 중' : '비밀번호 변경'}
+          </button>
+          <button
+            className="auth-back-button"
+            type="button"
+            onClick={() => resetTransientState('login')}
+          >
+            <ArrowLeft size={15} aria-hidden="true" /> 로그인으로 돌아가기
+          </button>
+        </form>
+      ) : null}
+    </AuthLayout>
   );
 }

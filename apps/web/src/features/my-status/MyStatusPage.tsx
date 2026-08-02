@@ -2,14 +2,29 @@ import type { FormEvent, PointerEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { BedDouble, CircleUserRound, ClipboardCheck, Smartphone, X } from 'lucide-react';
+import {
+  BedDouble,
+  CalendarDays,
+  Clock3,
+  KeyRound,
+  Mail,
+  MapPin,
+  Phone,
+  Smartphone,
+  SquareArrowOutUpRight,
+  X,
+} from 'lucide-react';
 import { useToast } from '../../components/feedback/Toast';
-import { PageScaffold, PageState } from '../../components/page/PageScaffold';
-import { listBreadcrumbs } from '../../components/page/pageHierarchy';
+import { PageState } from '../../components/page/PageScaffold';
 import { ApiError } from '../../shared/api/http';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
-import { deleteProfileImage, getMyStatus, updateMyProfile, uploadProfileImage } from './api';
-import { PointsSummary } from './PointsSummary';
+import {
+  deleteProfileImage,
+  getMyStatus,
+  updateMyContact,
+  updateMyProfile,
+  uploadProfileImage,
+} from './api';
 import '../../styles/my-status.css';
 
 const dateFormatter = createKoreanDateFormatter({ month: 'long', day: 'numeric' });
@@ -34,6 +49,57 @@ type CropDragState = {
   startX: number;
   startY: number;
 };
+
+type ContactField = 'email' | 'phone';
+
+type ContactDraft = {
+  field: ContactField;
+  value: string;
+};
+
+const activitySlotLabels: Record<string, string> = {
+  'morning-1': '오전 1면학',
+  'morning-2': '오전 2면학',
+  'afternoon-1': '오후 1면학',
+  'afternoon-2': '오후 2면학',
+  'evening-1': '저녁 1면학',
+  'evening-2': '저녁 2면학',
+  'evening-3': '저녁 3면학',
+};
+
+function signedPoint(value: number) {
+  return value > 0 ? `+${value}` : String(value);
+}
+
+export function maskEmail(value?: string) {
+  if (!value || !value.includes('@')) return '미등록';
+  const [local, domain] = value.split('@');
+  const domainParts = domain.split('.');
+  const visibleLocal = local.slice(0, Math.min(2, local.length));
+  const visibleDomain = domainParts[0]?.slice(0, 1) ?? '';
+  const suffix = domainParts.length > 1 ? `.${domainParts.slice(1).join('.')}` : '';
+  return `${visibleLocal}******@${visibleDomain}******${suffix}`;
+}
+
+export function maskPhone(value?: string) {
+  const digits = value?.replace(/\D/g, '') ?? '';
+  if (digits.length < 8) return '미등록';
+  const prefix = digits.slice(0, 3);
+  const middle = digits.slice(3, -4);
+  const end = digits.slice(-4);
+  return `${prefix}-${middle.slice(0, 1)}***-${end.slice(0, 1)}***`;
+}
+
+function activityTimeLabel(slotIds?: string[], startsAt?: string, endsAt?: string) {
+  const labels = slotIds?.map((id) => activitySlotLabels[id]).filter(Boolean) ?? [];
+  if (labels.length) return labels.join(', ');
+  if (!startsAt || !endsAt) return '시간 미정';
+  const format = (value: string) =>
+    new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(
+      new Date(value),
+    );
+  return `${format(startsAt)}~${format(endsAt)}`;
+}
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -130,6 +196,7 @@ export function MyStatusPage() {
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const [cropDraft, setCropDraft] = useState<CropDraft | null>(null);
   const [nicknameDraft, setNicknameDraft] = useState<string | null>(null);
+  const [contactDraft, setContactDraft] = useState<ContactDraft | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
   const nickname = nicknameDraft ?? statusQuery.data?.student.nickname ?? '';
 
@@ -154,9 +221,22 @@ export function MyStatusPage() {
     onError: () =>
       showToast({
         title: '닉네임을 저장하지 못했습니다.',
-        description: '다른 사용자가 쓰는 닉네임인지 확인해 주세요.',
+        description: '입력한 닉네임을 확인해 주세요.',
         tone: 'danger',
       }),
+  });
+
+  const contactMutation = useMutation({
+    mutationFn: (draft: ContactDraft) => updateMyContact(draft.field, draft.value),
+    onSuccess: async (_, draft) => {
+      await queryClient.invalidateQueries({ queryKey: ['my-status'] });
+      setContactDraft(null);
+      showToast({
+        title: `${draft.field === 'email' ? '이메일' : '휴대폰번호'}를 변경했습니다.`,
+        tone: 'success',
+      });
+    },
+    onError: () => showToast({ title: '연락처를 변경하지 못했습니다.', tone: 'danger' }),
   });
 
   const imageMutation = useMutation({
@@ -259,14 +339,9 @@ export function MyStatusPage() {
 
   if (statusQuery.isLoading) {
     return (
-      <PageScaffold
-        breadcrumbs={listBreadcrumbs('myStatus')}
-        title="마이페이지"
-        width="wide"
-        variant="workspace"
-      >
+      <div className="my-page">
         <PageState kind="loading" title="마이페이지를 불러오는 중입니다." variant="page" />
-      </PageScaffold>
+      </div>
     );
   }
 
@@ -277,12 +352,7 @@ export function MyStatusPage() {
     const isStudentUnlinked = statusCode === 400 || statusCode === 404;
 
     return (
-      <PageScaffold
-        breadcrumbs={listBreadcrumbs('myStatus')}
-        title="마이페이지"
-        width="wide"
-        variant="workspace"
-      >
+      <div className="my-page">
         <PageState
           kind={isStudentUnlinked ? 'empty' : 'error'}
           title={
@@ -320,7 +390,7 @@ export function MyStatusPage() {
           }
           variant="page"
         />
-      </PageScaffold>
+      </div>
     );
   }
 
@@ -346,128 +416,188 @@ export function MyStatusPage() {
     : '연결 정보 없음';
 
   return (
-    <PageScaffold
-      breadcrumbs={listBreadcrumbs('myStatus')}
-      title="마이페이지"
-      description="내 계정과 학교생활 정보를 확인하세요."
-      width="wide"
-      variant="workspace"
-    >
+    <div className="my-page">
+      <h1 className="sr-only">마이페이지</h1>
       <section className="status-profile-card" aria-label="프로필 정보">
-        <div className="status-identity">
-          <div
-            className="status-avatar"
-            onBlur={(event) => {
-              const nextTarget = event.relatedTarget;
-              if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
-                setAvatarMenuOpen(false);
-              }
-            }}
-          >
-            <button
-              aria-expanded={status.student.profileImageUrl ? avatarMenuOpen : undefined}
-              aria-haspopup={status.student.profileImageUrl ? 'menu' : undefined}
-              aria-label={
-                status.student.profileImageUrl ? '프로필 사진 메뉴 열기' : '프로필 사진 업로드'
-              }
-              className="status-avatar__trigger"
-              disabled={imageMutation.isPending || imageDeleteMutation.isPending}
-              onClick={() => {
-                if (status.student.profileImageUrl) {
-                  setAvatarMenuOpen((current) => !current);
-                  return;
+        <form className="status-profile-form" onSubmit={submitProfile}>
+          <div className="status-identity">
+            <div
+              className="status-avatar"
+              onBlur={(event) => {
+                const nextTarget = event.relatedTarget;
+                if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
+                  setAvatarMenuOpen(false);
                 }
-                profileImageInputRef.current?.click();
               }}
-              type="button"
             >
-              {status.student.profileImageUrl ? (
-                <img src={status.student.profileImageUrl} alt="현재 프로필" />
-              ) : (
-                <CircleUserRound size={44} aria-hidden="true" />
-              )}
-            </button>
-            {avatarMenuOpen && status.student.profileImageUrl ? (
-              <div className="status-avatar__menu" role="menu">
-                <button
-                  role="menuitem"
-                  onClick={() => {
-                    setAvatarMenuOpen(false);
-                    profileImageInputRef.current?.click();
-                  }}
-                  type="button"
-                >
-                  사진 업로드
-                </button>
-                <button
-                  role="menuitem"
-                  onClick={() => {
-                    setAvatarMenuOpen(false);
-                    imageDeleteMutation.mutate();
-                  }}
-                  type="button"
-                >
-                  사진 삭제
-                </button>
-              </div>
-            ) : null}
-            <input
-              ref={profileImageInputRef}
-              accept="image/jpeg,image/png,image/webp"
-              className="sr-only"
-              onChange={(event) => {
-                selectProfileImage(event.target.files?.[0]);
-                event.target.value = '';
-              }}
-              tabIndex={-1}
-              type="file"
-            />
-          </div>
-          <div className="status-identity__copy">
-            <form className="status-profile-inline-form" onSubmit={submitProfile}>
-              <label className="sr-only" htmlFor="profile-nickname">
-                닉네임
-              </label>
-              <input
-                id="profile-nickname"
-                maxLength={16}
-                onChange={(event) => setNicknameDraft(event.target.value)}
-                placeholder="닉네임"
-                type="text"
-                value={nickname}
-              />
               <button
-                className="detail-primary-button"
-                disabled={profileMutation.isPending}
-                type="submit"
+                aria-expanded={status.student.profileImageUrl ? avatarMenuOpen : undefined}
+                aria-haspopup={status.student.profileImageUrl ? 'menu' : undefined}
+                aria-label={
+                  status.student.profileImageUrl ? '프로필 사진 메뉴 열기' : '프로필 사진 업로드'
+                }
+                className="status-avatar__trigger"
+                disabled={imageMutation.isPending || imageDeleteMutation.isPending}
+                onClick={() => {
+                  if (status.student.profileImageUrl) {
+                    setAvatarMenuOpen((current) => !current);
+                    return;
+                  }
+                  profileImageInputRef.current?.click();
+                }}
+                type="button"
               >
-                {profileMutation.isPending ? '저장 중…' : '저장'}
+                {status.student.profileImageUrl ? (
+                  <img src={status.student.profileImageUrl} alt="현재 프로필" />
+                ) : (
+                  <img src="/assets/default-avatar.png" alt="기본 프로필" />
+                )}
               </button>
-            </form>
-            <p className="status-student-meta">
-              <span>{status.student.grade}학년</span>
-              <span>{status.student.classNo}반</span>
-              <span>{status.student.number}번</span>
-              <span>{status.student.name}</span>
-            </p>
-            {profileError ? <small className="status-profile-error">{profileError}</small> : null}
+              {avatarMenuOpen && status.student.profileImageUrl ? (
+                <div className="status-avatar__menu" role="menu">
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setAvatarMenuOpen(false);
+                      profileImageInputRef.current?.click();
+                    }}
+                    type="button"
+                  >
+                    사진 업로드
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setAvatarMenuOpen(false);
+                      imageDeleteMutation.mutate();
+                    }}
+                    type="button"
+                  >
+                    사진 삭제
+                  </button>
+                </div>
+              ) : null}
+              <input
+                ref={profileImageInputRef}
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={(event) => {
+                  selectProfileImage(event.target.files?.[0]);
+                  event.target.value = '';
+                }}
+                tabIndex={-1}
+                type="file"
+              />
+            </div>
+            <div className="status-identity__copy">
+              <div className="status-person-name">
+                <strong>{status.student.name}</strong>
+                <span>{status.student.studentNo}</span>
+              </div>
+              <div className="status-profile-inline-form">
+                <label htmlFor="profile-nickname">닉네임</label>
+                <input
+                  id="profile-nickname"
+                  maxLength={16}
+                  onChange={(event) => setNicknameDraft(event.target.value)}
+                  placeholder="닉네임"
+                  type="text"
+                  value={nickname}
+                />
+              </div>
+              {profileError ? <small className="status-profile-error">{profileError}</small> : null}
+            </div>
           </div>
-        </div>
+
+          <div className="status-contact-list">
+            <div className="status-contact-row">
+              <Phone size={18} aria-hidden="true" />
+              <span>{maskPhone(status.student.phone)}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  setContactDraft({ field: 'phone', value: status.student.phone ?? '' })
+                }
+              >
+                수정
+              </button>
+            </div>
+            <div className="status-contact-row">
+              <Mail size={18} aria-hidden="true" />
+              <span>{maskEmail(status.student.email)}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  setContactDraft({ field: 'email', value: status.student.email ?? '' })
+                }
+              >
+                수정
+              </button>
+            </div>
+            <div className="status-contact-row">
+              <KeyRound size={18} aria-hidden="true" />
+              <span>비밀번호</span>
+              <Link to="/forgot-password" search={{ username: String(status.student.studentNo) }}>
+                수정
+              </Link>
+            </div>
+          </div>
+
+          <button
+            className="status-profile-save"
+            disabled={profileMutation.isPending}
+            type="submit"
+          >
+            {profileMutation.isPending ? '저장 중…' : '저장'}
+          </button>
+        </form>
       </section>
 
       <section className="status-overview" aria-labelledby="status-points-title">
         <header className="status-section-heading">
           <h2 id="status-points-title">상벌점</h2>
-          <Link to="/points">자세히 보기</Link>
+          <Link to="/points" aria-label="상벌점 자세히 보기" title="상벌점 자세히 보기">
+            <SquareArrowOutUpRight size={17} aria-hidden="true" />
+          </Link>
         </header>
-        <PointsSummary points={status.points} />
+        <div className="status-point-chips" aria-label="상벌점 요약">
+          <span className="is-positive">
+            상점 <strong>{Math.abs(status.points.meritPoint)}</strong>
+          </span>
+          <span className="is-negative">
+            벌점 <strong>{Math.abs(status.points.penaltyPoint)}</strong>
+          </span>
+          <span className="is-total">
+            합계 <strong>{signedPoint(status.points.currentPoint)}</strong>
+          </span>
+        </div>
+        <div className="status-point-preview">
+          {status.points.records.length ? (
+            status.points.records.slice(0, 3).map((record) => (
+              <div key={record.id}>
+                <time>{record.baseDate.replaceAll('-', '. ')}</time>
+                <strong className={record.point >= 0 ? 'is-positive' : 'is-negative'}>
+                  {signedPoint(record.point)}
+                </strong>
+                <span>{record.comment || record.reason}</span>
+              </div>
+            ))
+          ) : (
+            <p>최근 상벌점 내역이 없습니다.</p>
+          )}
+        </div>
       </section>
 
       <section className="status-activity" aria-labelledby="status-activity-title">
         <header>
-          <ClipboardCheck size={18} aria-hidden="true" />
           <h2 id="status-activity-title">최근 탐구활동서</h2>
-          <Link to="/activity-requests">자세히 보기</Link>
+          <Link
+            to="/activity-requests"
+            aria-label="탐구활동서 자세히 보기"
+            title="탐구활동서 자세히 보기"
+          >
+            <SquareArrowOutUpRight size={17} aria-hidden="true" />
+          </Link>
         </header>
         {status.latestActivityRequest ? (
           <Link
@@ -476,11 +606,23 @@ export function MyStatusPage() {
             params={{ requestId: String(status.latestActivityRequest.id) }}
           >
             <strong>{status.latestActivityRequest.purpose}</strong>
-            <span>
-              #{status.latestActivityRequest.id} · {status.latestActivityRequest.studentName} · 대표
-              {' · '}
-              {dateFormatter.format(new Date(status.latestActivityRequest.startsAt))} ·{' '}
-              {status.latestActivityRequest.location}
+            <span className="status-activity__meta">
+              <span>
+                <CalendarDays size={14} aria-hidden="true" />
+                {dateFormatter.format(new Date(status.latestActivityRequest.startsAt))}
+              </span>
+              <span>
+                <Clock3 size={14} aria-hidden="true" />
+                {activityTimeLabel(
+                  status.latestActivityRequest.activitySlotIds,
+                  status.latestActivityRequest.startsAt,
+                  status.latestActivityRequest.endsAt,
+                )}
+              </span>
+              <span>
+                <MapPin size={14} aria-hidden="true" />
+                {status.latestActivityRequest.location}
+              </span>
             </span>
           </Link>
         ) : (
@@ -603,6 +745,62 @@ export function MyStatusPage() {
           </section>
         </div>
       ) : null}
-    </PageScaffold>
+
+      {contactDraft ? (
+        <div className="status-crop-backdrop">
+          <section
+            className="status-contact-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="status-contact-title"
+          >
+            <header>
+              <div>
+                <h2 id="status-contact-title">
+                  {contactDraft.field === 'email' ? '이메일 변경' : '휴대폰번호 변경'}
+                </h2>
+                <p>통합로그인과 연락처 정보에 함께 반영됩니다.</p>
+              </div>
+              <button type="button" aria-label="닫기" onClick={() => setContactDraft(null)}>
+                <X size={18} aria-hidden="true" />
+              </button>
+            </header>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (!contactMutation.isPending) contactMutation.mutate(contactDraft);
+              }}
+            >
+              <label htmlFor="status-contact-value">
+                {contactDraft.field === 'email' ? '이메일' : '휴대폰번호'}
+              </label>
+              <input
+                id="status-contact-value"
+                autoFocus
+                autoComplete={contactDraft.field === 'email' ? 'email' : 'tel'}
+                inputMode={contactDraft.field === 'email' ? 'email' : 'tel'}
+                type={contactDraft.field === 'email' ? 'email' : 'tel'}
+                value={contactDraft.value}
+                onChange={(event) =>
+                  setContactDraft((current) =>
+                    current ? { ...current, value: event.target.value } : current,
+                  )
+                }
+                placeholder={contactDraft.field === 'email' ? 'name@example.com' : '010-0000-0000'}
+                required
+              />
+              <div className="status-contact-modal__actions">
+                <button type="button" onClick={() => setContactDraft(null)}>
+                  취소
+                </button>
+                <button type="submit" disabled={contactMutation.isPending}>
+                  {contactMutation.isPending ? '저장 중…' : '저장'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
+    </div>
   );
 }

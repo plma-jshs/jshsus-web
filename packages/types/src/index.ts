@@ -409,6 +409,8 @@ export type StudentSelfStatus = {
     name: string;
     nickname?: string;
     profileImageUrl?: string;
+    email?: string;
+    phone?: string;
     grade: number;
     classNo: number;
     number: number;
