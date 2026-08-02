@@ -626,6 +626,7 @@ export function PointAwardPage() {
                     setSearchOpen(true);
                     if (search) event.currentTarget.select();
                   }}
+                  onPointerDown={() => setSearchOpen(true)}
                   onClick={() => setSearchOpen(true)}
                   onBlur={() => setSearchOpen(false)}
                   onChange={(event) => {
