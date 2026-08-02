@@ -514,7 +514,7 @@
   opacity: 0.55;
 }
 
-.mini-calendar__day {
+.mini-calendar > .mini-calendar__day {
   min-height: 30px;
   align-content: start;
   cursor: pointer;
