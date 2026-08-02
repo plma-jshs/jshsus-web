@@ -363,6 +363,7 @@ function AdminShell() {
                     key={entry.to}
                     to={entry.to as never}
                     className={`admin-nav-item${activeNavigationTarget === entry.to ? ' active' : ''}`}
+                    activeOptions={{ exact: true }}
                     onClick={() => setMobileNavigationOpen(false)}
                   >
                     <Icon size={18} aria-hidden="true" />
