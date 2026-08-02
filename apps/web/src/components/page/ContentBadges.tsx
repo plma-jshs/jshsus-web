@@ -1,4 +1,4 @@
-const RECENT_CONTENT_WINDOW_MS = 2 * 24 * 60 * 60 * 1000;
+const RECENT_CONTENT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export function isRecentContent(dateValue?: string | null) {
   if (!dateValue) return false;

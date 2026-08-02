@@ -61,11 +61,6 @@ export function DashboardPage() {
             <strong>
               {data.today.connectedDeviceCases}/{data.today.totalDeviceCases}대
             </strong>
-            <small>
-              {data.today.disconnectedDeviceCases > 0
-                ? `미연결 ${data.today.disconnectedDeviceCases}대`
-                : '모두 연결됨'}
-            </small>
           </article>
         </div>
       </section>

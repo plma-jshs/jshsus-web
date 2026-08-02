@@ -45,7 +45,7 @@
   padding: 0;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 2px;
   border: 0;
   background: transparent;
   color: inherit;
@@ -64,17 +64,17 @@
 
 .admin-table-sort__indicator {
   display: inline-flex;
-  width: 14px;
-  height: 16px;
-  flex: 0 0 14px;
+  width: 12px;
+  height: 14px;
+  flex: 0 0 12px;
   align-items: center;
   justify-content: center;
-  color: #7f8b96;
+  color: #aab2b8;
 }
 
 .admin-table-sort__glyph {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   overflow: visible;
 }
 
@@ -82,20 +82,25 @@
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  opacity: 0.68;
+  stroke: #aab2b8;
+  stroke-width: 1.45;
+  opacity: 1;
 }
 
 .admin-table-sort__glyph path.is-active {
-  stroke: currentColor;
-  stroke-width: 2.1;
+  stroke: var(--primary-dark);
+  stroke-width: 1.9;
   opacity: 1;
 }
 
 .admin-table-sort:hover,
 .admin-table-sort:focus-visible {
   color: var(--primary-dark);
+}
+
+.admin-table-sort:hover .admin-table-sort__glyph path:not(.is-active),
+.admin-table-sort:focus-visible .admin-table-sort__glyph path:not(.is-active) {
+  stroke: #657276;
 }
 
 .admin-data-table th[aria-sort='ascending'] .admin-table-sort,
@@ -109,7 +114,7 @@
 }
 
 .admin-table-sort.is-sorted .admin-table-sort__indicator {
-  color: var(--primary-dark);
+  color: inherit;
 }
 
 .admin-main .wake-song-admin-table th {

@@ -284,11 +284,16 @@
 
 .point-award-fields {
   display: grid;
-  grid-template-columns: minmax(260px, 360px) 96px 156px auto minmax(0, 1fr);
+  grid-template-columns: minmax(460px, 600px) 96px 156px auto minmax(0, 1fr);
   gap: 12px;
   align-items: end;
   padding-top: 20px;
   border-top: 1px solid var(--line);
+}
+
+.point-reason-select .admin-select__trigger,
+.point-reason-select + .admin-select__menu button {
+  white-space: nowrap;
 }
 
 .point-award-reason {

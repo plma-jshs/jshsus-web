@@ -288,7 +288,12 @@ export const api = {
     }),
   adminStaff: (query: AdminIdentityListQuery = {}) =>
     request<PaginatedResponse<AdminStaffSummary>>(withQuery('/api/admin/staff', { ...query })),
-  createStaff: (input: { name: string; email?: string; phone?: string }) =>
+  createStaff: (input: {
+    name: string;
+    gender: 'male' | 'female';
+    email?: string;
+    phone?: string;
+  }) =>
     request<{ ok: true; staffId: number; userId: number; staffNo: number }>('/api/admin/staff', {
       method: 'POST',
       body: input,
@@ -297,6 +302,7 @@ export const api = {
     id: number,
     input: Partial<{
       name: string;
+      gender: 'male' | 'female';
       email: string;
       phone: string;
     }>,

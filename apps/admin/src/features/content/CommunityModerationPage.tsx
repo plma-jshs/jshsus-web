@@ -6,6 +6,7 @@ import { Eye, EyeOff, Search, Settings2, ShieldAlert } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
+  ConfirmDialog,
   Drawer,
   PageSizeSelect,
   RowActionButton,
@@ -86,6 +87,7 @@ export function CommunityModerationPage({
   const [activeBoardSlug, setActiveBoardSlug] = useState(initialBoardSlug);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
+  const [hideTarget, setHideTarget] = useState<BoardPostSummary | null>(null);
   const [postSearch, setPostSearch] = useState('');
   const [postVisibility, setPostVisibility] = useState<CommunityPostVisibility>('all');
   const [reportStatus, setReportStatus] = useState('all');
@@ -131,6 +133,7 @@ export function CommunityModerationPage({
     mutationFn: ({ id, isHidden }: { id: number; isHidden: boolean }) =>
       api.updatePostHidden(id, isHidden),
     onSuccess: async (_, variables) => {
+      setHideTarget(null);
       await refreshPosts();
       showToast({
         title: variables.isHidden ? '게시글을 숨겼습니다.' : '게시글을 공개했습니다.',
@@ -227,7 +230,7 @@ export function CommunityModerationPage({
       },
       {
         accessorKey: 'createdAt',
-        header: '등록일',
+        header: '작성일',
         cell: ({ row }) => formatAdminDate(row.original.createdAt),
         meta: { align: 'center', width: 128 },
       },
@@ -576,12 +579,16 @@ export function CommunityModerationPage({
               className={selectedPost.isHidden ? 'quiet-button' : 'ui-button ui-button--danger'}
               type="button"
               disabled={togglePostMutation.isPending}
-              onClick={() =>
+              onClick={() => {
+                if (!selectedPost.isHidden) {
+                  setHideTarget(selectedPost);
+                  return;
+                }
                 togglePostMutation.mutate(
-                  { id: selectedPost.id, isHidden: !selectedPost.isHidden },
+                  { id: selectedPost.id, isHidden: false },
                   { onSuccess: () => setSelectedPostId(null) },
-                )
-              }
+                );
+              }}
             >
               {selectedPost.isHidden ? (
                 <Eye size={15} aria-hidden="true" />
@@ -603,7 +610,7 @@ export function CommunityModerationPage({
                 </dd>
               </div>
               <div>
-                <dt>등록일</dt>
+                <dt>작성일</dt>
                 <dd>{formatAdminDate(selectedPost.createdAt)}</dd>
               </div>
               <div>
@@ -654,6 +661,23 @@ export function CommunityModerationPage({
           </div>
         ) : null}
       </Drawer>
+
+      <ConfirmDialog
+        open={Boolean(hideTarget)}
+        title="게시글 숨김"
+        subject={hideTarget?.title}
+        description="게시글은 삭제하지 않고 사용자 화면에서 숨깁니다. 필요하면 다시 공개할 수 있습니다."
+        confirmLabel="숨기기"
+        pending={togglePostMutation.isPending}
+        onClose={() => setHideTarget(null)}
+        onConfirm={() =>
+          hideTarget &&
+          togglePostMutation.mutate(
+            { id: hideTarget.id, isHidden: true },
+            { onSuccess: () => setSelectedPostId(null) },
+          )
+        }
+      />
 
       <Drawer
         open={selectedReportId !== null}

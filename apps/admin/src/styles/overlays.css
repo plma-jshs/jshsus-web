@@ -42,10 +42,17 @@
   display: flex;
   min-height: 68px;
   padding: 16px 20px;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   border-bottom: 1px solid var(--line);
+}
+
+.ui-dialog__header > div,
+.ui-drawer__header > div {
+  display: grid;
+  min-width: 0;
+  align-content: center;
 }
 
 .ui-dialog__header h2,
@@ -106,6 +113,48 @@
   gap: 8px;
   border-top: 1px solid var(--line);
   background: var(--j-color-surface-subtle);
+}
+
+.ui-confirm-dialog .ui-dialog__body {
+  padding: 18px 20px;
+}
+
+.ui-confirm-dialog__content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ui-confirm-dialog__content > span {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--danger);
+  background: #fff1ef;
+}
+
+.ui-confirm-dialog__content strong,
+.ui-confirm-dialog__content p {
+  margin: 0;
+}
+
+.ui-confirm-dialog__content strong {
+  display: block;
+  overflow: hidden;
+  color: var(--j-color-text);
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-confirm-dialog__content p {
+  margin-top: 3px;
+  color: var(--j-color-text-muted);
+  font-size: 13px;
 }
 
 .ui-drawer {

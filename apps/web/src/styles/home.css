@@ -493,8 +493,8 @@
 
 .mini-calendar__date-number {
   display: inline-grid;
-  width: 25px;
-  height: 25px;
+  width: 21px;
+  height: 21px;
   place-items: center;
   border-radius: 50%;
   transition: background var(--j-motion-fast);
@@ -534,7 +534,7 @@
 
 .calendar-event-dots {
   position: absolute;
-  bottom: 0;
+  bottom: 3px;
   left: 50%;
   display: flex;
   transform: translateX(-50%);
@@ -677,7 +677,7 @@
   min-width: 0;
   padding: 0 7px;
   align-items: center;
-  gap: 6px;
+  gap: 9px;
   border-radius: 7px;
   color: var(--j-color-text-secondary);
   background: var(--j-color-surface-subtle);

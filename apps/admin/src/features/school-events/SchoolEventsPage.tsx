@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import {
   AdminSelect,
+  ConfirmDialog,
   Dialog,
   Drawer,
   RowActionButton,
@@ -59,7 +60,7 @@ const CALENDAR_EVENT_CATEGORIES: ReadonlyArray<{
   {
     value: 'observance',
     label: '기념일·절기',
-    description: '제헌절, 국군의 날, 과학의 날, 절기 등',
+    description: '제헌절, 국군의 날, 절기 등',
     tone: 'observance',
   },
   {
@@ -197,15 +198,16 @@ function validateEvent(form: EventForm) {
   return null;
 }
 
-function formatCalendarDate(date: string) {
+function formatCalendarDate(date: string, includeYear = true) {
   const [year, month, day] = date.split('-');
   const weekday = WEEKDAYS[weekdayOf(date)];
-  return `${year}.${month}.${day} (${weekday})`;
+  return `${includeYear ? `${year}.` : ''}${month}.${day} (${weekday})`;
 }
 
 function formatPeriod(event: AdminSchoolCalendarEvent) {
   const start = koreanDate(event.startsAt);
   const end = koreanDate(event.endsAt);
+  const crossesYear = start.slice(0, 4) !== end.slice(0, 4);
   const dateTimeFormatter = new Intl.DateTimeFormat('ko-KR', {
     timeZone: KOREA_TIME_ZONE,
     hour: '2-digit',
@@ -214,12 +216,12 @@ function formatPeriod(event: AdminSchoolCalendarEvent) {
   });
   if (event.allDay) {
     return start === end
-      ? `${formatCalendarDate(start)} 종일`
-      : `${formatCalendarDate(start)} 〜 ${formatCalendarDate(end)} 종일`;
+      ? `${formatCalendarDate(start, false)} 종일`
+      : `${formatCalendarDate(start, crossesYear)} 〜 ${formatCalendarDate(end, crossesYear)} 종일`;
   }
   return start === end
-    ? `${formatCalendarDate(start)} ${dateTimeFormatter.format(new Date(event.startsAt))} 〜 ${dateTimeFormatter.format(new Date(event.endsAt))}`
-    : `${formatCalendarDate(start)} ${dateTimeFormatter.format(new Date(event.startsAt))} 〜 ${formatCalendarDate(end)} ${dateTimeFormatter.format(new Date(event.endsAt))}`;
+    ? `${formatCalendarDate(start, false)} ${dateTimeFormatter.format(new Date(event.startsAt))} 〜 ${dateTimeFormatter.format(new Date(event.endsAt))}`
+    : `${formatCalendarDate(start, crossesYear)} ${dateTimeFormatter.format(new Date(event.startsAt))} 〜 ${formatCalendarDate(end, crossesYear)} ${dateTimeFormatter.format(new Date(event.endsAt))}`;
 }
 
 function occursOn(event: AdminSchoolCalendarEvent, date: string) {
@@ -789,7 +791,7 @@ export function SchoolEventsPage() {
             <section className="selected-day-panel">
               <div className="panel-title">
                 <div>
-                  <h2>{formatCalendarDate(selectedDate)}</h2>
+                  <h2>{formatCalendarDate(selectedDate, false)}</h2>
                   <span>{selectedDateEvents.length}건</span>
                 </div>
               </div>
@@ -1025,32 +1027,15 @@ export function SchoolEventsPage() {
         </form>
       </Dialog>
 
-      <Dialog
+      <ConfirmDialog
         open={Boolean(deleteTarget)}
         onClose={() => setDeleteTarget(null)}
         title="일정 삭제"
-        description={deleteTarget ? `‘${deleteTarget.title}’ 일정을 삭제합니다.` : undefined}
-        size="sm"
-        footer={
-          <div className="button-row">
-            <button className="quiet-button" type="button" onClick={() => setDeleteTarget(null)}>
-              취소
-            </button>
-            <button
-              className="danger-button"
-              type="button"
-              disabled={deleteMutation.isPending}
-              onClick={() =>
-                deleteTarget?.managedId && deleteMutation.mutate(deleteTarget.managedId)
-              }
-            >
-              {deleteMutation.isPending ? '삭제 중' : '삭제'}
-            </button>
-          </div>
-        }
-      >
-        <p>삭제한 일정은 복구할 수 없습니다.</p>
-      </Dialog>
+        subject={deleteTarget?.title}
+        description="삭제한 일정은 복구할 수 없습니다."
+        pending={deleteMutation.isPending}
+        onConfirm={() => deleteTarget?.managedId && deleteMutation.mutate(deleteTarget.managedId)}
+      />
       {popover
         ? createPortal(
             <div

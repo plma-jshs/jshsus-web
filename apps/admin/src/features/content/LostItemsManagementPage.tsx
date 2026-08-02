@@ -6,6 +6,7 @@ import { Search, Settings2, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
+  ConfirmDialog,
   Drawer,
   PageSizeSelect,
   RowActionButton,
@@ -40,6 +41,7 @@ export function LostItemsManagementPage() {
   const [selectedItemIds, setSelectedItemIds] = useState<Set<number>>(() => new Set());
   const [itemPageSize, setItemPageSize] = useState(20);
   const [itemSorting, setItemSorting] = useState<SortingState>([{ id: 'id', desc: true }]);
+  const [deleteTarget, setDeleteTarget] = useState<LostItemSummary | null>(null);
 
   const lostItemsQuery = useQuery({
     queryKey: ['admin-lost-items'],
@@ -70,6 +72,7 @@ export function LostItemsManagementPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-lost-items'] });
       setSelectedItemId(null);
+      setDeleteTarget(null);
       showToast({ title: '분실물 게시물을 삭제했습니다.', tone: 'success' });
     },
     onError: () => showToast({ title: '분실물 게시물을 삭제하지 못했습니다.', tone: 'danger' }),
@@ -363,11 +366,7 @@ export function LostItemsManagementPage() {
                 className="content-danger-button"
                 type="button"
                 disabled={deleteLostItemMutation.isPending || updateLostStatusMutation.isPending}
-                onClick={() => {
-                  if (window.confirm('이 분실물 게시물을 삭제하시겠습니까?')) {
-                    deleteLostItemMutation.mutate(selectedItem.id);
-                  }
-                }}
+                onClick={() => setDeleteTarget(selectedItem)}
               >
                 <Trash2 size={16} aria-hidden="true" /> 삭제
               </button>
@@ -459,6 +458,15 @@ export function LostItemsManagementPage() {
           </div>
         ) : null}
       </Drawer>
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="분실물 게시물 삭제"
+        subject={deleteTarget?.itemName}
+        description="삭제한 게시물은 복구할 수 없습니다."
+        pending={deleteLostItemMutation.isPending}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteLostItemMutation.mutate(deleteTarget.id)}
+      />
     </div>
   );
 }

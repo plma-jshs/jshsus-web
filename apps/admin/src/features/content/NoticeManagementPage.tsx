@@ -4,7 +4,13 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { NoticeSummary } from '@jshsus/types';
 import { ExternalLink, Paperclip, Pin, PinOff, Search, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { PageSizeSelect, RowActionButton, RowActions, useToast } from '../../components/ui';
+import {
+  ConfirmDialog,
+  PageSizeSelect,
+  RowActionButton,
+  RowActions,
+  useToast,
+} from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 import {
   ContentAdminPanel,
@@ -20,6 +26,7 @@ export function NoticeManagementPage() {
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState(20);
   const [sorting, setSorting] = useState<SortingState>([{ id: 'id', desc: true }]);
+  const [deleteTarget, setDeleteTarget] = useState<NoticeSummary | null>(null);
 
   const noticesQuery = useQuery({
     queryKey: ['admin-notices'],
@@ -44,6 +51,7 @@ export function NoticeManagementPage() {
   const deleteNoticeMutation = useMutation({
     mutationFn: api.deleteNotice,
     onSuccess: async () => {
+      setDeleteTarget(null);
       await refreshNotices();
       showToast({ title: '공지를 삭제했습니다.', tone: 'success' });
     },
@@ -144,11 +152,7 @@ export function NoticeManagementPage() {
               label="공지 삭제"
               variant="danger"
               disabled={deleteNoticeMutation.isPending}
-              onClick={() => {
-                if (window.confirm(`‘${row.original.title}’ 공지를 삭제하시겠습니까?`)) {
-                  deleteNoticeMutation.mutate(row.original.id);
-                }
-              }}
+              onClick={() => setDeleteTarget(row.original)}
             />
           </RowActions>
         ),
@@ -214,6 +218,15 @@ export function NoticeManagementPage() {
           pendingText="공지 정보를 변경하는 중입니다."
         />
       </ContentAdminPanel>
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="공지 삭제"
+        subject={deleteTarget?.title}
+        description="삭제한 공지는 복구할 수 없습니다."
+        pending={deleteNoticeMutation.isPending}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteNoticeMutation.mutate(deleteTarget.id)}
+      />
     </div>
   );
 }

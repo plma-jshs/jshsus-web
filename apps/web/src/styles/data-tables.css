@@ -506,6 +506,9 @@
 .data-table__views,
 .data-table__date,
 .data-table__author {
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

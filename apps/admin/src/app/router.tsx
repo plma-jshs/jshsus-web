@@ -280,6 +280,12 @@ function AdminShell() {
   const visibleNavigation = adminNavigation
     .map((group) => ({ ...group, entries: group.entries.filter(hasAccess) }))
     .filter((group) => group.entries.length > 0);
+  const activeNavigationTarget = visibleNavigation
+    .flatMap((group) => group.entries)
+    .filter(
+      (entry) => pathname === entry.to || (entry.to !== '/' && pathname.startsWith(`${entry.to}/`)),
+    )
+    .sort((left, right) => right.to.length - left.to.length)[0]?.to;
   const canUseAdmin = isSystemAdmin || visibleNavigation.length > 0;
   const identitySession = sessionQuery.data as typeof sessionQuery.data & {
     identifier?: string | number;
@@ -356,9 +362,7 @@ function AdminShell() {
                   <Link
                     key={entry.to}
                     to={entry.to as never}
-                    className="admin-nav-item"
-                    activeProps={{ className: 'admin-nav-item active' }}
-                    activeOptions={{ exact: true }}
+                    className={`admin-nav-item${activeNavigationTarget === entry.to ? ' active' : ''}`}
                     onClick={() => setMobileNavigationOpen(false)}
                   >
                     <Icon size={18} aria-hidden="true" />

@@ -88,6 +88,7 @@ const emailValueSchema = z.string().email();
 
 const staffSchema = z.object({
   name: z.string().min(1).max(64),
+  gender: studentGenderSchema,
   email: z.string().email().optional().or(z.literal('')),
   phone: phoneSchema.optional().default(''),
 });
@@ -1362,6 +1363,7 @@ export class AdminService {
           userId: schema.staffProfiles.userId,
           staffNo: schema.staffProfiles.staffNo,
           name: schema.staffProfiles.name,
+          gender: schema.users.gender,
           managedClasses: schema.staffProfiles.managedClasses,
           email: schema.users.email,
           phone: schema.users.phone,
@@ -1382,6 +1384,7 @@ export class AdminService {
           userId: row.userId,
           staffNo: row.staffNo,
           name: row.name,
+          gender: normalizeStudentGender(row.gender),
           managedClasses: row.managedClasses ?? [],
           email: row.email ?? undefined,
           phone: row.phone ?? undefined,
@@ -1441,6 +1444,7 @@ export class AdminService {
         .values({
           studentNo: null,
           name: parsed.data.name,
+          gender: toStoredStudentGender(parsed.data.gender),
           email: parsed.data.email || null,
           phone: parsed.data.phone || null,
         })
@@ -1507,6 +1511,10 @@ export class AdminService {
         .update(schema.users)
         .set({
           name: parsed.data.name,
+          gender:
+            parsed.data.gender === undefined
+              ? undefined
+              : toStoredStudentGender(parsed.data.gender),
           email: parsed.data.email === undefined ? undefined : parsed.data.email || null,
           phone: parsed.data.phone === undefined ? undefined : parsed.data.phone || null,
           updatedAt: new Date(),

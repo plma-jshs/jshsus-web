@@ -78,7 +78,6 @@
 }
 
 .auth-form > label > input,
-.auth-form > label > select,
 .auth-password-field > input {
   width: 100%;
   height: 46px;
@@ -92,41 +91,12 @@
   font: inherit;
 }
 
-.auth-form > label > select,
-.auth-form-grid select {
-  appearance: none;
-  padding-right: 40px;
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--j-color-text-muted) 50%),
-    linear-gradient(135deg, var(--j-color-text-muted) 50%, transparent 50%);
-  background-position:
-    calc(100% - 18px) 20px,
-    calc(100% - 13px) 20px;
-  background-size:
-    5px 5px,
-    5px 5px;
-  background-repeat: no-repeat;
-  cursor: pointer;
-}
-
-.auth-form > label > select:invalid,
-.auth-form-grid select:invalid {
-  color: var(--j-color-text-muted);
-}
-
-.auth-form > label > select option,
-.auth-form-grid select option {
-  color: var(--j-color-text);
-}
-
 .auth-form > label > input:hover,
-.auth-form > label > select:hover,
 .auth-password-field > input:hover {
   border-color: #7c898a;
 }
 
 .auth-form > label > input:focus,
-.auth-form > label > select:focus,
 .auth-password-field > input:focus {
   border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
@@ -152,8 +122,7 @@
   font-weight: 600;
 }
 
-.auth-form-grid input,
-.auth-form-grid select {
+.auth-form-grid input {
   width: 100%;
   height: 46px;
   min-height: 46px;
@@ -167,14 +136,101 @@
 }
 
 .auth-form-grid input:hover,
-.auth-form-grid select:hover {
+.auth-select__trigger:hover {
   border-color: #7c898a;
 }
 
 .auth-form-grid input:focus,
-.auth-form-grid select:focus {
+.auth-select__trigger:focus-visible {
   border-color: var(--j-color-focus);
   box-shadow: var(--j-shadow-focus);
+}
+
+.auth-select {
+  position: relative;
+  min-width: 0;
+}
+
+.auth-select__trigger {
+  display: flex;
+  width: 100%;
+  height: 46px;
+  padding: 0 13px 0 14px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--j-color-border-strong);
+  border-radius: 8px;
+  outline: 0;
+  color: var(--j-color-text);
+  background: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.auth-select__trigger .is-placeholder {
+  color: var(--j-color-text-muted);
+}
+
+.auth-select__trigger[aria-expanded='true'] {
+  border-color: var(--j-color-focus);
+  box-shadow: var(--j-shadow-focus);
+}
+
+.auth-select__trigger[aria-expanded='true'] > svg {
+  transform: rotate(180deg);
+}
+
+.auth-select__trigger > svg {
+  flex: none;
+  color: var(--j-color-text-muted);
+  transition: transform var(--j-motion-fast);
+}
+
+.auth-select__menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  display: grid;
+  padding: 5px;
+  border: 1px solid var(--j-color-border);
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgb(15 23 42 / 14%);
+}
+
+.auth-select__menu > button {
+  display: flex;
+  min-height: 36px;
+  padding: 0 9px;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-radius: 6px;
+  color: var(--j-color-text-secondary);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.auth-select__menu > button:hover,
+.auth-select__menu > button.is-selected {
+  color: var(--j-color-brand-strong);
+  background: var(--j-color-surface-selected);
+}
+
+.auth-loading-icon {
+  animation: auth-spinner 0.75s linear infinite;
+}
+
+@keyframes auth-spinner {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .auth-password-field {

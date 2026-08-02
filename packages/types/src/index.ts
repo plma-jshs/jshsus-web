@@ -491,6 +491,7 @@ export type AdminStaffSummary = {
   userId: number;
   staffNo: number;
   name: string;
+  gender?: StudentGender;
   managedClasses?: Array<{ grade: number; classNo: number }>;
   email?: string;
   phone?: string;

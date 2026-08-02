@@ -21,6 +21,8 @@ type SelectOption = {
   value: string;
   label: ReactNode;
   disabled: boolean;
+  badge?: string;
+  tone?: string;
 };
 
 type AdminSelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, 'multiple' | 'size'> & {
@@ -31,6 +33,10 @@ function toOptions(children: ReactNode): SelectOption[] {
   return Children.toArray(children).flatMap((child) => {
     if (!isValidElement(child) || child.type !== 'option') return [];
     const option = child as ReactElement<OptionHTMLAttributes<HTMLOptionElement>>;
+    const decoratedProps = option.props as OptionHTMLAttributes<HTMLOptionElement> & {
+      'data-badge'?: string;
+      'data-tone'?: string;
+    };
     const implicitValue =
       typeof option.props.children === 'string' || typeof option.props.children === 'number'
         ? option.props.children
@@ -40,6 +46,8 @@ function toOptions(children: ReactNode): SelectOption[] {
         value: String(option.props.value ?? implicitValue),
         label: option.props.children,
         disabled: Boolean(option.props.disabled),
+        badge: decoratedProps['data-badge'],
+        tone: decoratedProps['data-tone'],
       },
     ];
   });
@@ -187,7 +195,14 @@ export function AdminSelect({
           }
         }}
       >
-        <span>{selected?.label ?? '선택'}</span>
+        <span className="admin-select__option-content">
+          {selected?.badge ? (
+            <span className={`admin-select__badge is-${selected.tone ?? 'neutral'}`}>
+              {selected.badge}
+            </span>
+          ) : null}
+          <span>{selected?.label ?? '선택'}</span>
+        </span>
         <ChevronDown size={16} aria-hidden="true" />
       </button>
       {open && menuStyle && portalTarget
@@ -220,7 +235,14 @@ export function AdminSelect({
                     onClick={() => choose(option.value)}
                     onMouseEnter={() => setActiveIndex(index)}
                   >
-                    <span>{option.label}</span>
+                    <span className="admin-select__option-content">
+                      {option.badge ? (
+                        <span className={`admin-select__badge is-${option.tone ?? 'neutral'}`}>
+                          {option.badge}
+                        </span>
+                      ) : null}
+                      <span>{option.label}</span>
+                    </span>
                     {isSelected ? <Check size={15} aria-hidden="true" /> : null}
                   </button>
                 );

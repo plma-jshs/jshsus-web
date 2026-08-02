@@ -112,7 +112,7 @@ export function NoticesPage() {
                 <colgroup>
                   <col className="data-table__number-column" style={{ width: 76 }} />
                   <col />
-                  <col className="data-table__author-column" style={{ width: 130 }} />
+                  <col className="data-table__author-column" style={{ width: 190 }} />
                   <col className="data-table__date-column" style={{ width: 140 }} />
                   <col className="data-table__views-column" style={{ width: 86 }} />
                 </colgroup>
@@ -125,7 +125,7 @@ export function NoticesPage() {
                     <th className="data-table__author" scope="col">
                       작성자
                     </th>
-                    <th scope="col">등록일</th>
+                    <th scope="col">작성일</th>
                     <th className="data-table__views" scope="col">
                       조회
                     </th>

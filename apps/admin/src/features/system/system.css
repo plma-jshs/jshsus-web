@@ -58,6 +58,28 @@
   background: #fffaf0;
 }
 
+.system-health-grid .metric-card span {
+  font-weight: 550;
+}
+
+.system-health-grid .metric-card strong {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.system-status-panel .system-detail-list div {
+  grid-template-columns: 140px minmax(0, 1fr);
+}
+
+.system-status-panel .system-detail-list dt {
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.system-status-panel .system-detail-list dd {
+  font-weight: 450;
+}
+
 .system-status-loading {
   min-height: 48px;
   margin: 0;

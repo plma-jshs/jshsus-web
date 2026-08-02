@@ -266,6 +266,16 @@
   border-radius: 8px;
 }
 
+.login-loading-icon {
+  animation: login-spinner 0.75s linear infinite;
+}
+
+@keyframes login-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .login-actions {
   display: grid;
   grid-template-columns: 92px minmax(0, 1fr);

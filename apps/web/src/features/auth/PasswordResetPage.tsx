@@ -164,7 +164,7 @@ export function PasswordResetPage() {
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
                 autoComplete="username"
-                placeholder="학번 또는 교사번호를 입력하세요"
+                placeholder="학번 또는 교사번호"
                 autoFocus
                 required
               />
@@ -213,11 +213,7 @@ export function PasswordResetPage() {
                 onChange={(event) => setConfirmationCode(event.target.value.replace(/\s/g, ''))}
                 autoComplete="one-time-code"
                 inputMode="numeric"
-                placeholder={
-                  delivery === 'phone'
-                    ? '카카오톡 또는 문자로 받은 코드를 입력하세요'
-                    : '이메일로 받은 코드를 입력하세요'
-                }
+                placeholder="인증코드"
                 autoFocus
                 required
               />
@@ -228,7 +224,7 @@ export function PasswordResetPage() {
               value={newPassword}
               onChange={setNewPassword}
               autoComplete="new-password"
-              placeholder="새 비밀번호를 입력하세요"
+              placeholder="새 비밀번호"
             />
             <PasswordField
               id="reset-password-confirm"
@@ -236,7 +232,7 @@ export function PasswordResetPage() {
               value={newPasswordConfirm}
               onChange={setNewPasswordConfirm}
               autoComplete="new-password"
-              placeholder="새 비밀번호를 다시 입력하세요"
+              placeholder="새 비밀번호 확인"
             />
             <p className="auth-help">
               8자 이상으로 입력하고, 이름이나 학번과 다른 비밀번호를 사용하세요.

@@ -1,4 +1,11 @@
-import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type {
@@ -18,6 +25,7 @@ import {
   Download,
   FileSpreadsheet,
   KeyRound,
+  MoreHorizontal,
   Pencil,
   Plus,
   ShieldAlert,
@@ -51,14 +59,6 @@ type DialogState =
   | { type: 'roles'; identity: Identity }
   | null;
 
-const BUILT_IN_ROLE_LABELS: Record<string, string> = {
-  system_admin: '시스템 관리자',
-  student_affairs_head: '학생관리부장',
-  teacher: '교직원',
-  student_council: '학생회',
-  broadcast_club: '방송부',
-  student: '학생',
-};
 const ROLE_ORDER = new Map(
   [
     'student',
@@ -117,12 +117,6 @@ function displayIdentity(identity: Identity) {
 
 function identityNumber(identity: Identity) {
   return identity.kind === 'student' ? identity.value.studentNo : identity.value.staffNo;
-}
-
-function roleLabel(roles: string[], labels: ReadonlyMap<string, string>) {
-  return roles.length > 0
-    ? roles.map((role) => labels.get(role) ?? BUILT_IN_ROLE_LABELS[role] ?? role).join(', ')
-    : '역할 없음';
 }
 
 function formatDate(value?: string) {
@@ -318,7 +312,10 @@ export function UsersPage() {
   const [filters, setFilters] = useState<AdminIdentityListQuery>({ pageSize: 20 });
   const [sorting, setSorting] = useState<SortingState>([{ id: 'identifier', desc: false }]);
   const [dialog, setDialog] = useState<DialogState>(null);
-  const [issuedStaffNo, setIssuedStaffNo] = useState<number | null>(null);
+  const [issuedStaffIdentity, setIssuedStaffIdentity] = useState<{
+    staffNo: number;
+    activationCode?: string;
+  } | null>(null);
   const [rosterRows, setRosterRows] = useState<RosterImportRowInput[]>([]);
   const [rosterFileName, setRosterFileName] = useState('');
   const [rosterPreview, setRosterPreview] = useState<RosterImportPreview | null>(null);
@@ -388,15 +385,27 @@ export function UsersPage() {
     onError: () => showToast({ title: '학생을 추가하지 못했습니다.', tone: 'danger' }),
   });
   const createStaff = useMutation({
-    mutationFn: api.createStaff,
+    mutationFn: async (input: Parameters<typeof api.createStaff>[0]) => {
+      const result = await api.createStaff(input);
+      const activation = await api
+        .issueAccountActivation({
+          identityType: 'staff',
+          identityNumber: result.staffNo,
+        })
+        .catch(() => null);
+      return { ...result, activation };
+    },
     onSuccess: async (result) => {
-      setIssuedStaffNo(result.staffNo);
+      setIssuedStaffIdentity({
+        staffNo: result.staffNo,
+        activationCode: result.activation?.code,
+      });
       setDialog(null);
       await refresh();
       showToast({
         title: '교직원을 추가했습니다.',
         description: `교사번호 ${result.staffNo}`,
-        tone: 'success',
+        tone: result.activation ? 'success' : 'warning',
       });
     },
     onError: () => showToast({ title: '교직원을 추가하지 못했습니다.', tone: 'danger' }),
@@ -494,7 +503,6 @@ export function UsersPage() {
 
   const activeQuery = tab === 'students' ? studentsQuery : staffQuery;
   const data = activeQuery.data;
-  const roleLabels = new Map((rolesQuery.data ?? []).map((role) => [role.name, role.label]));
   const studentColumns: ColumnDef<AdminStudentSummary>[] = [
     {
       id: 'identifier',
@@ -520,13 +528,6 @@ export function UsersPage() {
       meta: { align: 'center', width: 80 },
     },
     {
-      id: 'roles',
-      header: '역할',
-      enableSorting: false,
-      cell: ({ row }) => roleLabel(row.original.roles, roleLabels),
-      meta: { align: 'center', minWidth: 220, maxWidth: 360, truncate: true },
-    },
-    {
       id: 'contact',
       header: '연락처',
       enableSorting: false,
@@ -537,7 +538,7 @@ export function UsersPage() {
       id: 'status',
       accessorKey: 'status',
       header: '상태',
-      cell: ({ row }) => (row.original.status === 'deleted' ? '전근·퇴직' : '재직·휴직'),
+      cell: ({ row }) => (row.original.status === 'graduated' ? '졸업·학적종료' : '재학'),
       meta: { align: 'center', width: 112 },
     },
     {
@@ -598,6 +599,17 @@ export function UsersPage() {
       meta: { align: 'center', width: 132, truncate: true },
     },
     {
+      id: 'gender',
+      header: '성별',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <span className={`identity-gender${row.original.gender ? '' : ' is-missing'}`}>
+          {row.original.gender ? GENDER_LABELS[row.original.gender] : '미입력'}
+        </span>
+      ),
+      meta: { align: 'center', width: 80 },
+    },
+    {
       id: 'contact',
       header: '연락처',
       enableSorting: false,
@@ -605,11 +617,11 @@ export function UsersPage() {
       meta: { minWidth: 200, maxWidth: 320, truncate: true },
     },
     {
-      id: 'roles',
-      header: '역할',
-      enableSorting: false,
-      cell: ({ row }) => roleLabel(row.original.roles, roleLabels),
-      meta: { align: 'center', minWidth: 200, maxWidth: 320, truncate: true },
+      id: 'status',
+      accessorKey: 'status',
+      header: '상태',
+      cell: ({ row }) => (row.original.status === 'deleted' ? '전근·퇴직' : '재직·휴직'),
+      meta: { align: 'center', width: 112 },
     },
     {
       id: 'lastLoginAt',
@@ -648,7 +660,7 @@ export function UsersPage() {
     setPage(1);
     setFilters({ pageSize: 20 });
     setSorting([{ id: 'identifier', desc: false }]);
-    setIssuedStaffNo(null);
+    setIssuedStaffIdentity(null);
   };
 
   const updateFilters = (nextFilters: Partial<AdminIdentityListQuery>) => {
@@ -685,6 +697,7 @@ export function UsersPage() {
     const form = new FormData(event.currentTarget);
     createStaff.mutate({
       name: String(form.get('name')),
+      gender: String(form.get('gender')) as StudentGender,
       email: String(form.get('email') || ''),
       phone: String(form.get('phone') || ''),
     });
@@ -719,6 +732,7 @@ export function UsersPage() {
         id: identity.value.id,
         input: {
           name: String(form.get('name')),
+          gender: String(form.get('gender')) as StudentGender,
           email: String(form.get('email') || ''),
           phone: String(form.get('phone') || ''),
         },
@@ -830,10 +844,18 @@ export function UsersPage() {
         </div>
       </div>
 
-      {issuedStaffNo ? (
+      {issuedStaffIdentity ? (
         <div className="identity-success" role="status">
-          교직원 계정이 생성되었습니다. 발급된 교사번호는 <strong>{issuedStaffNo}</strong>입니다.
-          <button type="button" onClick={() => setIssuedStaffNo(null)}>
+          교직원 계정이 생성되었습니다. 교사번호 <strong>{issuedStaffIdentity.staffNo}</strong>
+          {issuedStaffIdentity.activationCode ? (
+            <>
+              {' '}
+              · 인증코드 <strong>{issuedStaffIdentity.activationCode}</strong>
+            </>
+          ) : (
+            <> · 인증코드는 행의 더보기 메뉴에서 발급해 주세요.</>
+          )}
+          <button type="button" onClick={() => setIssuedStaffIdentity(null)}>
             확인
           </button>
         </div>
@@ -1171,6 +1193,15 @@ export function UsersPage() {
               <Field label="이름">
                 <input name="name" required />
               </Field>
+              <Field label="성별">
+                <AdminSelect name="gender" defaultValue="" required aria-label="성별">
+                  <option value="" disabled>
+                    선택
+                  </option>
+                  <option value="male">남</option>
+                  <option value="female">여</option>
+                </AdminSelect>
+              </Field>
               <Field label="이메일">
                 <input name="email" type="email" />
               </Field>
@@ -1324,6 +1355,8 @@ function IdentityActions({
   onUpdateStatus: (identity: Identity, status: AdminUserStatus) => void;
   onOpenActivation: (identity: Identity) => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const disabled = !identity.value.userId;
   const inactive =
     identity.kind === 'student'
@@ -1331,6 +1364,16 @@ function IdentityActions({
       : identity.value.status === 'deleted';
   const nextStatus: AdminUserStatus = identity.kind === 'student' ? 'graduated' : 'deleted';
   const deactivateLabel = identity.kind === 'student' ? '학적 종료' : '전근·퇴직 처리';
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', close);
+    return () => document.removeEventListener('pointerdown', close);
+  }, [menuOpen]);
+
   return (
     <RowActions className="identity-row-actions">
       <RowActionButton
@@ -1338,39 +1381,64 @@ function IdentityActions({
         label="정보 수정"
         onClick={() => onOpen({ type: 'edit', identity })}
       />
-      <RowActionButton
-        icon={<KeyRound aria-hidden="true" />}
-        label="인증코드 발급"
-        onClick={() => onOpenActivation(identity)}
-      />
-      {canManageRoles ? (
+      <div className="identity-more-actions" ref={menuRef}>
         <RowActionButton
-          icon={<ShieldCheck aria-hidden="true" />}
-          label="역할 수정"
-          disabled={disabled}
-          onClick={() => onOpen({ type: 'roles', identity })}
+          icon={<MoreHorizontal aria-hidden="true" />}
+          label="더보기"
+          onClick={() => setMenuOpen((current) => !current)}
         />
-      ) : null}
-      {canManageStatus && !inactive ? (
-        <RowActionButton
-          icon={<ShieldAlert aria-hidden="true" />}
-          label={deactivateLabel}
-          disabled={disabled || statusPending}
-          onClick={() => {
-            const subject =
-              identity.kind === 'student'
-                ? `${identity.value.studentNo} ${identity.value.name}`
-                : `${identity.value.staffNo} ${identity.value.name}`;
-            if (
-              window.confirm(
-                `${subject} 계정을 비활성화하고 연락처·프로필·인증정보를 즉시 파기하시겠습니까?`,
-              )
-            ) {
-              onUpdateStatus(identity, nextStatus);
-            }
-          }}
-        />
-      ) : null}
+        {menuOpen ? (
+          <div className="identity-more-actions__menu" role="menu">
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false);
+                onOpenActivation(identity);
+              }}
+            >
+              <KeyRound aria-hidden="true" /> 인증코드 발급
+            </button>
+            {canManageRoles ? (
+              <button
+                type="button"
+                role="menuitem"
+                disabled={disabled}
+                onClick={() => {
+                  setMenuOpen(false);
+                  onOpen({ type: 'roles', identity });
+                }}
+              >
+                <ShieldCheck aria-hidden="true" /> 역할 수정
+              </button>
+            ) : null}
+            {canManageStatus && !inactive ? (
+              <button
+                className="is-danger"
+                type="button"
+                role="menuitem"
+                disabled={disabled || statusPending}
+                onClick={() => {
+                  const subject =
+                    identity.kind === 'student'
+                      ? `${identity.value.studentNo} ${identity.value.name}`
+                      : `${identity.value.staffNo} ${identity.value.name}`;
+                  if (
+                    window.confirm(
+                      `${subject} 계정을 비활성화하고 연락처·프로필·인증정보를 즉시 파기하시겠습니까?`,
+                    )
+                  ) {
+                    setMenuOpen(false);
+                    onUpdateStatus(identity, nextStatus);
+                  }
+                }}
+              >
+                <ShieldAlert aria-hidden="true" /> {deactivateLabel}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
     </RowActions>
   );
 }
@@ -1445,6 +1513,20 @@ function EditForm({
           </Field>
           <Field label="이름">
             <input name="name" defaultValue={identity.value.name} required />
+          </Field>
+          <Field label="성별">
+            <AdminSelect
+              name="gender"
+              defaultValue={identity.value.gender ?? ''}
+              required
+              aria-label="성별"
+            >
+              <option value="" disabled>
+                선택
+              </option>
+              <option value="male">남</option>
+              <option value="female">여</option>
+            </AdminSelect>
           </Field>
           <Field label="이메일">
             <input name="email" type="email" defaultValue={identity.value.email} />

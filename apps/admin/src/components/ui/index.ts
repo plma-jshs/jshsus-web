@@ -1,4 +1,5 @@
 export * from './Button';
+export * from './ConfirmDialog';
 export * from './AdminListPanel';
 export * from './AdminSelect';
 export * from './DateRangeField';

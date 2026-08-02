@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, LoaderCircle } from 'lucide-react';
 import type { FormEvent, InputHTMLAttributes } from 'react';
 import { useState } from 'react';
 import { AdminApiError, api } from '../../shared/api/adminApi';
@@ -278,7 +278,7 @@ export function LoginPage() {
                 onChange={(event) => setUsername(event.target.value)}
                 autoComplete="username"
                 inputMode="numeric"
-                placeholder="학번 또는 교사번호를 입력하세요"
+                placeholder="학번 또는 교사번호"
                 autoFocus
                 required
               />
@@ -289,7 +289,7 @@ export function LoginPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"
-              placeholder="비밀번호를 입력하세요"
+              placeholder="비밀번호"
               required
             />
 
@@ -326,7 +326,14 @@ export function LoginPage() {
               type="submit"
               disabled={loginMutation.isPending}
             >
-              {loginMutation.isPending ? '로그인 중' : '로그인'}
+              {loginMutation.isPending ? (
+                <>
+                  <LoaderCircle className="login-loading-icon" size={18} aria-hidden="true" />
+                  <span className="sr-only">로그인 처리 중</span>
+                </>
+              ) : (
+                '로그인'
+              )}
             </button>
           </form>
         ) : null}
@@ -341,7 +348,7 @@ export function LoginPage() {
                 onChange={(event) => setUsername(event.target.value)}
                 autoComplete="username"
                 inputMode="numeric"
-                placeholder="학번 또는 교사번호를 입력하세요"
+                placeholder="학번 또는 교사번호"
                 autoFocus
                 required
               />
@@ -401,7 +408,7 @@ export function LoginPage() {
                 onChange={(event) => setCode(event.target.value)}
                 autoComplete="one-time-code"
                 inputMode="numeric"
-                placeholder="인증 코드를 입력하세요"
+                placeholder="인증코드"
                 autoFocus
                 required
               />
@@ -412,7 +419,7 @@ export function LoginPage() {
               value={newPassword}
               onChange={(event) => setNewPassword(event.target.value)}
               autoComplete="new-password"
-              placeholder="8자 이상 입력하세요"
+              placeholder="새 비밀번호"
               minLength={8}
               required
             />
@@ -422,7 +429,7 @@ export function LoginPage() {
               value={newPasswordConfirmation}
               onChange={(event) => setNewPasswordConfirmation(event.target.value)}
               autoComplete="new-password"
-              placeholder="새 비밀번호를 다시 입력하세요"
+              placeholder="새 비밀번호 확인"
               minLength={8}
               required
             />
@@ -473,7 +480,7 @@ export function LoginPage() {
               value={newPassword}
               onChange={(event) => setNewPassword(event.target.value)}
               autoComplete="new-password"
-              placeholder="8자 이상 입력하세요"
+              placeholder="새 비밀번호"
               minLength={8}
               autoFocus
               required
@@ -484,7 +491,7 @@ export function LoginPage() {
               value={newPasswordConfirmation}
               onChange={(event) => setNewPasswordConfirmation(event.target.value)}
               autoComplete="new-password"
-              placeholder="새 비밀번호를 다시 입력하세요"
+              placeholder="새 비밀번호 확인"
               minLength={8}
               required
             />

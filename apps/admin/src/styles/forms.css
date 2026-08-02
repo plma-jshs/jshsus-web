@@ -115,6 +115,48 @@ select.ui-control:not([multiple]) {
   white-space: nowrap;
 }
 
+.admin-select__option-content {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.admin-select__option-content > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-select__badge {
+  display: inline-flex;
+  min-height: 20px;
+  padding: 0 7px;
+  flex: none;
+  align-items: center;
+  border-radius: 999px;
+  color: #526162;
+  background: #eef2f3;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.admin-select__badge.is-plus {
+  color: #0f6b55;
+  background: #e4f5ee;
+}
+
+.admin-select__badge.is-minus {
+  color: #b42318;
+  background: #fff0ee;
+}
+
+.admin-select__badge.is-etc {
+  color: #4b5f76;
+  background: #edf2f7;
+}
+
 .admin-select__trigger > svg {
   flex: 0 0 auto;
   color: var(--j-color-text-muted);
@@ -172,6 +214,10 @@ select.ui-control:not([multiple]) {
   font-weight: var(--j-weight-regular);
   text-align: left;
   cursor: pointer;
+}
+
+.admin-select__menu .admin-select__option-content {
+  flex: 1 1 auto;
 }
 
 .admin-select__menu button:hover:not(:disabled),

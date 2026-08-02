@@ -626,6 +626,7 @@ export function PointAwardPage() {
                     setSearchOpen(true);
                     if (search) event.currentTarget.select();
                   }}
+                  onClick={() => setSearchOpen(true)}
                   onBlur={() => setSearchOpen(false)}
                   onChange={(event) => {
                     setSearch(event.target.value);
@@ -749,6 +750,7 @@ export function PointAwardPage() {
           <div className="point-award-fields">
             <FormField label="기준 규정" required>
               <AdminSelect
+                className="point-reason-select"
                 value={form.reasonId}
                 onChange={(event) => {
                   const reason = activeReasons.find(
@@ -765,8 +767,13 @@ export function PointAwardPage() {
               >
                 <option value="">사유 선택</option>
                 {activeReasons.map((reason) => (
-                  <option key={reason.id} value={reason.id}>
-                    {reason.id} · {reasonTypeLabel[reason.type]} · {reason.comment}
+                  <option
+                    key={reason.id}
+                    value={reason.id}
+                    data-badge={reasonTypeLabel[reason.type]}
+                    data-tone={reason.type.toLowerCase()}
+                  >
+                    {reason.comment}
                   </option>
                 ))}
               </AdminSelect>

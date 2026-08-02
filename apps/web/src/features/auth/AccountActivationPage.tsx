@@ -5,6 +5,7 @@ import { Link } from '@tanstack/react-router';
 import type { AccountActivationIdentityType, StudentGender } from '@jshsus/types';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { completeAccountActivation, getAuthErrorMessage } from './api';
+import { AuthSelect } from './AuthSelect';
 
 function PasswordField(props: {
   id: string;
@@ -116,7 +117,7 @@ export function AccountActivationPage() {
 
         <header className="auth-heading">
           <h1 id="account-activation-title">통합로그인 계정 만들기</h1>
-          <p>학교에서 받은 인증코드로 과구리 계정과 통합로그인을 연결합니다.</p>
+          <p>학교에서 배부한 학번·교사번호와 인증코드로 과구리 계정과 통합로그인을 연결합니다.</p>
         </header>
 
         {activationMutation.isSuccess ? (
@@ -132,17 +133,16 @@ export function AccountActivationPage() {
           <form className="auth-form" onSubmit={submitActivation}>
             <label htmlFor="activation-type">
               <span>구분</span>
-              <select
+              <AuthSelect
                 id="activation-type"
                 value={identityType}
-                onChange={(event) =>
-                  setIdentityType(event.currentTarget.value as AccountActivationIdentityType)
-                }
+                onChange={setIdentityType}
+                options={[
+                  { value: 'student', label: '학생' },
+                  { value: 'staff', label: '교직원' },
+                ]}
                 required
-              >
-                <option value="student">학생</option>
-                <option value="staff">교직원</option>
-              </select>
+              />
             </label>
             <label htmlFor="activation-identity-number">
               <span>{identityType === 'student' ? '학번' : '교사번호'}</span>
@@ -163,7 +163,7 @@ export function AccountActivationPage() {
                 value={activationCode}
                 onChange={(event) => setActivationCode(event.target.value)}
                 autoComplete="one-time-code"
-                placeholder=""
+                placeholder="인증코드"
                 required
               />
             </label>
@@ -175,23 +175,23 @@ export function AccountActivationPage() {
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   autoComplete="name"
+                  placeholder="이름"
                   required
                 />
               </label>
               <label htmlFor="activation-gender">
                 <span>성별</span>
-                <select
+                <AuthSelect
                   id="activation-gender"
                   value={gender}
-                  onChange={(event) => setGender(event.currentTarget.value as StudentGender)}
+                  onChange={setGender}
+                  placeholder="성별"
+                  options={[
+                    { value: 'male', label: '남' },
+                    { value: 'female', label: '여' },
+                  ]}
                   required
-                >
-                  <option value="" disabled>
-                    선택
-                  </option>
-                  <option value="male">남</option>
-                  <option value="female">여</option>
-                </select>
+                />
               </label>
             </div>
             <label htmlFor="activation-email">
@@ -202,7 +202,7 @@ export function AccountActivationPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 autoComplete="email"
-                placeholder=""
+                placeholder="jshsus@gmail.com"
                 required
               />
             </label>
@@ -214,7 +214,7 @@ export function AccountActivationPage() {
                 onChange={(event) => setPhone(event.target.value)}
                 autoComplete="tel"
                 inputMode="tel"
-                placeholder=""
+                placeholder="010-1234-5678"
                 required
               />
             </label>
@@ -224,7 +224,7 @@ export function AccountActivationPage() {
               value={password}
               onChange={setPassword}
               autoComplete="new-password"
-              placeholder=""
+              placeholder="비밀번호"
             />
             <PasswordField
               id="activation-password-confirm"

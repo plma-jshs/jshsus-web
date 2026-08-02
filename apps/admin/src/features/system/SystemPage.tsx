@@ -12,6 +12,7 @@ function formatCheckedAt(value: string) {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
+    hourCycle: 'h23',
   });
 }
 
@@ -82,11 +83,6 @@ export function SystemPage() {
               <strong>
                 {systemStatus.deviceCases.connected}/{systemStatus.deviceCases.total}대
               </strong>
-              <small>
-                {systemStatus.deviceCases.disconnected > 0
-                  ? `미연결 ${systemStatus.deviceCases.disconnected}대`
-                  : '모두 연결됨'}
-              </small>
             </article>
             <article className="metric-card">
               <History size={20} />

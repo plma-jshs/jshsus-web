@@ -2,7 +2,7 @@ import type { FormEvent, ReactNode } from 'react';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, LoaderCircle } from 'lucide-react';
 import { safeInternalReturnTo } from '../../shared/lib/route';
 import { completeNewPassword, getAuthErrorCode, getAuthErrorMessage, login } from './api';
 
@@ -184,7 +184,7 @@ export function LoginPage() {
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
                 autoComplete="username"
-                placeholder="학번 또는 교사번호를 입력하세요"
+                placeholder="학번 또는 교사번호"
                 autoFocus
                 required
               />
@@ -195,7 +195,7 @@ export function LoginPage() {
               value={password}
               onChange={setPassword}
               autoComplete="current-password"
-              placeholder="비밀번호를 입력하세요"
+              placeholder="비밀번호"
             />
 
             {notice ? <FormMessage success>{notice}</FormMessage> : null}
@@ -216,7 +216,14 @@ export function LoginPage() {
             </div>
 
             <button className="auth-submit" type="submit" disabled={loginMutation.isPending}>
-              {loginMutation.isPending ? '로그인 중' : '로그인'}
+              {loginMutation.isPending ? (
+                <>
+                  <LoaderCircle className="auth-loading-icon" size={18} aria-hidden="true" />
+                  <span className="sr-only">로그인 처리 중</span>
+                </>
+              ) : (
+                '로그인'
+              )}
             </button>
             <p className="auth-signup">
               통합로그인 계정이 없나요? <Link to="/account-activation">통합로그인 계정 만들기</Link>
@@ -232,7 +239,7 @@ export function LoginPage() {
               value={newPassword}
               onChange={setNewPassword}
               autoComplete="new-password"
-              placeholder="새 비밀번호를 입력하세요"
+              placeholder="새 비밀번호"
             />
             <PasswordField
               id="new-password-confirm"
@@ -240,7 +247,7 @@ export function LoginPage() {
               value={newPasswordConfirm}
               onChange={setNewPasswordConfirm}
               autoComplete="new-password"
-              placeholder="새 비밀번호를 다시 입력하세요"
+              placeholder="새 비밀번호 확인"
             />
             <p className="auth-help">
               8자 이상으로 입력하고, 이름이나 학번과 다른 비밀번호를 사용하세요.

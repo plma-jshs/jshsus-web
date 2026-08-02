@@ -125,7 +125,7 @@ export function BoardPage() {
                     <th className="data-table__author" scope="col">
                       작성자
                     </th>
-                    <th scope="col">등록일</th>
+                    <th scope="col">작성일</th>
                     <th className="data-table__views" scope="col">
                       조회
                     </th>
