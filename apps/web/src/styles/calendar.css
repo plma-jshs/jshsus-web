@@ -26,7 +26,7 @@
   display: flex;
   min-width: 0;
   padding: 0 18px;
-  align-items: baseline;
+  align-items: center;
   gap: 9px;
   border-left: 1px solid #dde4e8;
   background: var(--j-color-surface);
@@ -309,7 +309,8 @@
 
 .full-calendar__event-bar.is-inline {
   height: 22px;
-  padding-inline: 2px;
+  padding-right: 2px;
+  padding-left: 7px;
   align-items: center;
   color: #1769aa;
   background: transparent;
@@ -390,7 +391,7 @@
   z-index: 1000;
   display: grid;
   width: max-content;
-  max-width: 220px;
+  max-width: min(280px, calc(100vw - 24px));
   padding: 7px 9px;
   gap: 2px;
   border: 1px solid rgb(15 23 42 / 10%);
@@ -406,17 +407,21 @@
 .calendar-event-popover strong {
   display: flex;
   min-width: 0;
-  align-items: center;
+  align-items: start;
   gap: 6px;
   font-weight: 600;
 }
 
 .calendar-event-popover strong > span {
+  display: -webkit-box;
   overflow: hidden;
   color: inherit;
   font-size: inherit;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .calendar-event-popover strong > i {
@@ -425,6 +430,7 @@
   flex: 0 0 auto;
   border-radius: 50%;
   background: #58c89b;
+  margin-top: 5px;
 }
 
 .calendar-event-popover strong > i.is-observance {

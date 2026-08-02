@@ -258,16 +258,22 @@ const eventTimeFormatter = createKoreanDateFormatter({
   hourCycle: 'h23',
 });
 
-export function formatCalendarDate(dateKey: string) {
+export function formatCalendarDate(dateKey: string, includeYear = true) {
   const [year, month, day] = dateKey.split('-');
-  return `${year}.${month}.${day} (${weekdayFormatter.format(fromDateKey(dateKey))})`;
+  const date = includeYear ? `${year}.${month}.${day}` : `${month}.${day}`;
+  return `${date} (${weekdayFormatter.format(fromDateKey(dateKey))})`;
 }
 
-function formatEventRange(event: AcademicEvent) {
+export function formatEventRange(
+  event: AcademicEvent,
+  yearMode: 'cross-year' | 'never' = 'cross-year',
+) {
   const startKey = toKoreanDateKey(event.startsAt);
   const endKey = toKoreanDateKey(event.endsAt);
-  const startLabel = formatCalendarDate(startKey);
-  const endLabel = formatCalendarDate(endKey);
+  const crossesYear = startKey.slice(0, 4) !== endKey.slice(0, 4);
+  const includeYear = yearMode === 'cross-year' && crossesYear;
+  const startLabel = formatCalendarDate(startKey, includeYear);
+  const endLabel = formatCalendarDate(endKey, includeYear);
   if (event.allDay) {
     return startKey === endKey ? `${startLabel} 종일` : `${startLabel} 〜 ${endLabel} 종일`;
   }
@@ -309,7 +315,7 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
   );
   const events = allEvents;
   const selectedEvents = events.filter((event) => eventTouchesDate(event, selectedDate));
-  const selectedDateLabel = formatCalendarDate(selectedDate);
+  const selectedDateLabel = formatCalendarDate(selectedDate, false);
   const monthStartKey = toDateKey(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1));
   const monthEndKey = toDateKey(
     new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 0),
@@ -530,7 +536,7 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                                 onMouseEnter={(event) =>
                                   setPopover({
                                     title: displayEventTitle(segment.event.title),
-                                    period: formatEventRange(segment.event),
+                                    period: formatEventRange(segment.event, 'never'),
                                     tone: eventTone(segment.event),
                                     x: event.clientX,
                                     y: event.clientY,

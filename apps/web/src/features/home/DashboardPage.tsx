@@ -494,7 +494,10 @@ function CalendarCard({
           {visibleUpcoming.map((event) => (
             <li key={event.id}>
               <time dateTime={event.startsAt}>{formatUpcomingDate(event.startsAt)}</time>
-              <span>{event.title}</span>
+              <span className="upcoming-events__title">
+                <i className={`is-${calendarEventTone(event)}`} aria-hidden="true" />
+                <span>{event.title}</span>
+              </span>
             </li>
           ))}
           {!upcoming.length && upcomingQuery.isSuccess ? (

@@ -515,6 +515,8 @@
 }
 
 .mini-calendar__day {
+  min-height: 30px;
+  align-content: start;
   cursor: pointer;
 }
 
@@ -547,7 +549,7 @@
 }
 
 .mini-calendar__day.is-today .calendar-event-dots i {
-  background: var(--j-color-text-inverse);
+  background: var(--j-color-brand);
 }
 
 .calendar-day-popover {
@@ -559,7 +561,7 @@
   visibility: hidden;
   width: max-content;
   min-width: 132px;
-  max-width: 196px;
+  max-width: 240px;
   padding: 7px 9px;
   gap: 4px;
   transform: translateX(-50%);
@@ -590,7 +592,7 @@
   display: grid;
   min-width: 0;
   grid-template-columns: 6px minmax(0, 1fr);
-  align-items: center;
+  align-items: start;
   gap: 6px;
   color: var(--j-color-text-secondary);
   font-size: 11px;
@@ -601,6 +603,7 @@
   height: 5px;
   border-radius: 50%;
   background: #58c89b;
+  margin-top: 5px;
 }
 
 .calendar-day-popover__event > i.is-observance {
@@ -612,9 +615,13 @@
 }
 
 .calendar-day-popover__event > span {
+  display: -webkit-box;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 .calendar-day-popover small {
   color: var(--j-color-text-muted);
@@ -659,35 +666,64 @@
 
 .upcoming-events ul {
   display: grid;
-  min-height: 48px;
-  grid-template-rows: repeat(2, 22px);
+  min-height: 54px;
+  grid-template-rows: repeat(2, 25px);
   row-gap: 4px;
 }
 
 .upcoming-events li {
   display: flex;
-  min-height: 22px;
+  min-height: 25px;
   min-width: 0;
+  padding: 0 7px;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  border-radius: 7px;
   color: var(--j-color-text-secondary);
+  background: var(--j-color-surface-subtle);
   font-size: 12px;
 }
 
 .upcoming-events time {
   color: inherit;
   flex: 0 0 auto;
-  font-weight: var(--j-weight-medium);
+  font-weight: var(--j-weight-bold);
   font-variant-numeric: tabular-nums;
 }
-.upcoming-events li > span {
+
+.upcoming-events__title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.upcoming-events__title > i {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #58c89b;
+}
+
+.upcoming-events__title > i.is-observance {
+  background: #2779bd;
+}
+
+.upcoming-events__title > i.is-holiday {
+  background: #e94b4b;
+}
+
+.upcoming-events__title > span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .upcoming-events__empty {
   display: flex !important;
   align-items: center;
+  background: transparent !important;
   color: var(--j-color-text-muted) !important;
 }
 
