@@ -498,8 +498,10 @@ function PortalShell() {
 
 export function AppShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const isAuthPage =
-    pathname === '/login' || pathname === '/forgot-password' || pathname === '/account-activation';
+  const normalizedPathname = pathname === '/' ? pathname : pathname.replace(/\/+$/, '');
+  const isAuthPage = ['/login', '/forgot-password', '/account-activation'].includes(
+    normalizedPathname,
+  );
   const isNotFound = useRouterState({
     select: (state) =>
       state.statusCode === 404 || state.matches.some((match) => match.status === 'notFound'),
@@ -508,14 +510,14 @@ export function AppShell() {
   useEffect(() => {
     if (isNotFound) {
       document.title = '페이지를 찾을 수 없습니다 | 과구리';
-    } else if (pathname === '/login') {
+    } else if (normalizedPathname === '/login') {
       document.title = '전남과학고 통합로그인 | 과구리';
-    } else if (pathname === '/forgot-password') {
+    } else if (normalizedPathname === '/forgot-password') {
       document.title = '비밀번호 찾기 | 과구리';
-    } else if (pathname === '/account-activation') {
+    } else if (normalizedPathname === '/account-activation') {
       document.title = '통합로그인 계정 만들기 | 과구리';
     }
-  }, [isNotFound, pathname]);
+  }, [isNotFound, normalizedPathname]);
 
   if (isNotFound) {
     return (

@@ -12,9 +12,7 @@
   padding: 48px 24px 58px;
   place-items: center;
   overflow-x: hidden;
-  background:
-    linear-gradient(rgb(8 27 48 / 62%), rgb(8 27 48 / 62%)),
-    url('/images/auth-campus.png') center / cover no-repeat;
+  background: url('/images/auth-campus.png') center / cover no-repeat;
 }
 
 .auth-card {
@@ -24,10 +22,10 @@
   width: min(100%, 940px);
   min-height: 560px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  overflow: hidden;
+  overflow: visible;
   border: 0;
   border-radius: 0;
-  background: #fff;
+  background: transparent;
   box-shadow: 0 30px 80px rgb(0 17 36 / 35%);
 }
 
@@ -39,11 +37,16 @@
   flex-direction: column;
   justify-content: space-between;
   color: #fff;
-  background-image: url('/images/auth-campus.png');
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  background: transparent;
+}
+
+.auth-intro::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  box-shadow: 0 0 0 100vmax rgb(8 27 48 / 62%);
+  content: '';
+  pointer-events: none;
 }
 
 .auth-brand {
@@ -53,7 +56,7 @@
   gap: 9px;
   color: #fff;
   text-decoration: none;
-  text-shadow: 0 1px 8px rgb(0 19 35 / 50%);
+  text-shadow: 0 1px 5px rgb(0 19 35 / 30%);
 }
 
 .auth-brand-mark {
@@ -65,20 +68,29 @@
 }
 
 .auth-brand strong {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+.auth-brand-copy {
+  display: grid;
+  gap: 5px;
 }
 
 .auth-intro__wordmark {
-  color: rgb(255 255 255 / 92%);
-  font-size: 13px;
+  color: rgb(255 255 255 / 68%);
+  font-size: 8px;
   font-weight: 500;
-  letter-spacing: 0.22em;
-  text-shadow: 0 1px 8px rgb(0 19 35 / 60%);
+  letter-spacing: 0.28em;
+  line-height: 1;
+  text-shadow: 0 1px 4px rgb(0 19 35 / 28%);
 }
 
 .auth-panel {
+  position: relative;
+  z-index: 1;
   width: 100%;
   min-width: 0;
   padding: 48px 52px 42px;
