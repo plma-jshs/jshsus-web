@@ -7,6 +7,7 @@ import { z } from 'zod';
 import type { AuthSession } from '../auth/auth.service';
 import { CognitoAuthService } from '../auth/cognito-auth.service';
 import { SendonPasswordResetService } from '../auth/sendon-password-reset.service';
+import { EmailVerificationService } from '../auth/email-verification.service';
 import { DatabaseService } from '../database/database.service';
 import { meritPointBalanceSql, penaltyPointBalanceSql } from '../points/point-balance.query';
 import { RedisService } from '../redis/redis.service';
@@ -69,7 +70,14 @@ const profileUpdateSchema = z.object({
 });
 
 const contactUpdateSchema = z.discriminatedUnion('field', [
-  z.object({ field: z.literal('email'), value: z.string().trim().email().max(255) }),
+  z.object({
+    field: z.literal('email'),
+    value: z.string().trim().email().max(255),
+    verificationCode: z
+      .string()
+      .trim()
+      .regex(/^\d{6}$/),
+  }),
   z.object({
     field: z.literal('phone'),
     value: z
@@ -83,12 +91,16 @@ const contactUpdateSchema = z.discriminatedUnion('field', [
   }),
 ]);
 
-const phoneVerificationRequestSchema = z.object({
-  phone: z
-    .string()
-    .transform((value) => value.replace(/\D/g, ''))
-    .refine((value) => /^010\d{8}$/.test(value), '전화번호를 확인해 주세요.'),
-});
+const contactVerificationRequestSchema = z.discriminatedUnion('field', [
+  z.object({ field: z.literal('email'), value: z.string().trim().email().max(255) }),
+  z.object({
+    field: z.literal('phone'),
+    value: z
+      .string()
+      .transform((value) => value.replace(/\D/g, ''))
+      .refine((value) => /^010\d{8}$/.test(value), '전화번호를 확인해 주세요.'),
+  }),
+]);
 
 @Injectable()
 export class MeService {
@@ -97,6 +109,7 @@ export class MeService {
     private readonly cognito: CognitoAuthService,
     private readonly redis: RedisService,
     private readonly sendon: SendonPasswordResetService,
+    private readonly emailVerification: EmailVerificationService,
   ) {}
 
   async status(session?: AuthSession): Promise<StudentSelfStatus> {
@@ -384,15 +397,23 @@ export class MeService {
       )
       .limit(1);
 
-    const value = parsed.data.value;
-    if (parsed.data.field === 'phone') {
-      await this.assertContactVerification(session.userId, value, parsed.data.verificationCode);
-    }
+    const value =
+      parsed.data.field === 'email'
+        ? parsed.data.value.toLocaleLowerCase('en-US')
+        : parsed.data.value;
+    await this.assertContactVerification(
+      session.userId,
+      parsed.data.field,
+      value,
+      parsed.data.verificationCode,
+    );
     if (cognitoAccount?.subject) {
       await this.cognito.updateContactAttributes({
         subject: cognitoAccount.subject,
         fallbackUsername: session.identifier ?? String(session.stuid ?? ''),
-        ...(parsed.data.field === 'email' ? { email: value } : { phone: value }),
+        ...(parsed.data.field === 'email'
+          ? { email: value, emailVerified: true }
+          : { phone: value }),
       });
     }
 
@@ -407,9 +428,7 @@ export class MeService {
       targetId: session.userId,
     });
 
-    if (parsed.data.field === 'phone') {
-      await this.redis.delete(this.contactVerificationFlowKey(session.userId));
-    }
+    await this.redis.delete(this.contactVerificationFlowKey(session.userId, parsed.data.field));
 
     return { ok: true as const, field: parsed.data.field };
   }
@@ -418,26 +437,37 @@ export class MeService {
     if (!session?.userId || session.userId <= 0) {
       throw new UnauthorizedException('A persisted student session is required.');
     }
-    const parsed = phoneVerificationRequestSchema.safeParse(body);
+    const parsed = contactVerificationRequestSchema.safeParse(body);
     if (!parsed.success) {
       throw new BadRequestException(parsed.error.flatten().fieldErrors);
     }
 
-    const phone = parsed.data.phone;
+    const field = parsed.data.field;
+    const value =
+      field === 'email' ? parsed.data.value.toLocaleLowerCase('en-US') : parsed.data.value;
     const code = String(randomInt(100_000, 1_000_000));
-    const flowKey = this.contactVerificationFlowKey(session.userId);
+    const flowKey = this.contactVerificationFlowKey(session.userId, field);
     await this.redis.setJson(
       flowKey,
       {
-        phone,
-        codeHash: this.hashContactVerificationCode(session.userId, phone, code),
+        field,
+        value,
+        codeHash: this.hashContactVerificationCode(session.userId, field, value, code),
         attemptCount: 0,
       },
       CONTACT_VERIFICATION_TTL_SECONDS,
     );
 
     try {
-      await this.sendon.sendVerificationCode({ code, phone, purpose: 'contact-change' });
+      if (field === 'phone') {
+        await this.sendon.sendVerificationCode({ code, phone: value, purpose: 'contact-change' });
+      } else {
+        await this.emailVerification.sendVerificationCode({
+          code,
+          email: value,
+          purpose: 'contact-change',
+        });
+      }
     } catch (error) {
       await this.redis.delete(flowKey);
       throw error;
@@ -445,18 +475,28 @@ export class MeService {
     return { ok: true as const };
   }
 
-  private contactVerificationFlowKey(userId: number) {
-    return `me:contact-verification:${userId}`;
+  private contactVerificationFlowKey(userId: number, field: 'email' | 'phone') {
+    return `me:contact-verification:${userId}:${field}`;
   }
 
-  private hashContactVerificationCode(userId: number, phone: string, code: string) {
+  private hashContactVerificationCode(
+    userId: number,
+    field: 'email' | 'phone',
+    value: string,
+    code: string,
+  ) {
     return createHmac('sha256', env.CSRF_SECRET)
-      .update(`contact-verification:${userId}:${phone}:${code.trim()}`)
+      .update(`contact-verification:${userId}:${field}:${value}:${code.trim()}`)
       .digest('hex');
   }
 
-  private async assertContactVerification(userId: number, phone: string, code: string) {
-    const flowKey = this.contactVerificationFlowKey(userId);
+  private async assertContactVerification(
+    userId: number,
+    field: 'email' | 'phone',
+    value: string,
+    code: string,
+  ) {
+    const flowKey = this.contactVerificationFlowKey(userId, field);
     const rawFlow = await this.redis.get(flowKey);
     const decoded: unknown = (() => {
       try {
@@ -467,16 +507,22 @@ export class MeService {
     })();
     const parsed = z
       .object({
-        phone: z.string(),
+        field: z.enum(['email', 'phone']),
+        value: z.string(),
         codeHash: z.string(),
         attemptCount: z.number().int().nonnegative(),
       })
       .safeParse(decoded);
-    if (!parsed.success || parsed.data.phone !== phone) {
-      throw new BadRequestException('전화번호 인증을 다시 진행해 주세요.');
+    if (!parsed.success || parsed.data.field !== field || parsed.data.value !== value) {
+      throw new BadRequestException(
+        `${field === 'email' ? '이메일' : '전화번호'} 인증을 다시 진행해 주세요.`,
+      );
     }
 
-    const expected = Buffer.from(this.hashContactVerificationCode(userId, phone, code), 'hex');
+    const expected = Buffer.from(
+      this.hashContactVerificationCode(userId, field, value, code),
+      'hex',
+    );
     const actual = Buffer.from(parsed.data.codeHash, 'hex');
     const matches = expected.length === actual.length && timingSafeEqual(expected, actual);
     if (!matches) {
@@ -490,7 +536,9 @@ export class MeService {
           CONTACT_VERIFICATION_TTL_SECONDS,
         );
       }
-      throw new BadRequestException('전화번호 인증번호를 확인해 주세요.');
+      throw new BadRequestException(
+        `${field === 'email' ? '이메일' : '전화번호'} 인증번호를 확인해 주세요.`,
+      );
     }
   }
 }

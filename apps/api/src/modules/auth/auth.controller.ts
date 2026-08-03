@@ -269,6 +269,13 @@ export class AuthController {
     return this.accountActivationService.requestPhoneVerification(body);
   }
 
+  @Post('account-activation/email/request')
+  @RateLimit({ max: 5, windowSeconds: 900 })
+  requestAccountActivationEmailCode(@Body() body: unknown, @Req() request: Request) {
+    assertTrustedCredentialRequest(request);
+    return this.accountActivationService.requestEmailVerification(body);
+  }
+
   private setSessionCookies(
     request: Request,
     response: Response,

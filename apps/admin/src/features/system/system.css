@@ -58,6 +58,16 @@
   background: #fffaf0;
 }
 
+.system-health-grid .metric-card.is-danger {
+  border-color: #fecaca;
+  background: #fff7f7;
+}
+
+.system-health-grid .metric-card.is-danger > svg,
+.system-health-grid .metric-card.is-danger strong {
+  color: #c43d3d;
+}
+
 .system-health-grid .metric-card span {
   font-weight: 550;
 }
@@ -80,6 +90,75 @@
   font-weight: 450;
 }
 
+.system-status-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.system-status-group {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.system-status-group h3 {
+  display: flex;
+  min-height: 48px;
+  margin: 0;
+  padding: 0 16px;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  background: #f7f9fa;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.system-status-group ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.system-status-group li {
+  display: flex;
+  min-height: 44px;
+  padding: 0 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.system-status-group li:last-child {
+  border-bottom: 0;
+}
+
+.system-status-group li strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.system-status-group .is-running {
+  color: #167a50;
+}
+
+.system-status-group .is-stopped {
+  color: #c43d3d;
+}
+
+.system-metrics-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .system-status-loading {
   min-height: 48px;
   margin: 0;
@@ -89,6 +168,10 @@
 @media (max-width: 960px) {
   .system-health-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .system-status-columns {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -334,6 +334,25 @@
   line-height: 1.6;
 }
 
+.login-legal-links {
+  display: flex;
+  margin-top: 24px;
+  gap: 14px;
+  color: #7d8888;
+  font-size: 11px;
+}
+
+.login-legal-links a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.login-legal-links a:hover {
+  color: #344342;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 @media (max-width: 479px) {
   .login-shell {
     padding: 32px 20px;

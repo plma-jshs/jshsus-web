@@ -19,13 +19,29 @@ import type {
   StudentGender,
   UserRole,
 } from '@jshsus/types';
-import { and, asc, desc, eq, gte, inArray, like, lte, or, sql, type SQL } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  like,
+  lte,
+  or,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 import { z } from 'zod';
 import { ActivityRequestsService } from '../activity-requests/activity-requests.service';
 import { DatabaseService } from '../database/database.service';
 import { DeviceCasesService } from '../device-cases/device-cases.service';
 import { PointsService } from '../points/points.service';
 import { AuthService } from '../auth/auth.service';
+import { RedisService } from '../redis/redis.service';
+import { env } from '../../shared/config/env';
+import { OperationalMetricsService } from '../../shared/observability/operational-metrics.service';
 import { AccountLifecycleService, type ManagedUserStatus } from './account-lifecycle.service';
 import {
   assertRoleAssignmentAllowed,
@@ -223,12 +239,6 @@ function koreanDayRange(value = new Date()) {
   };
 }
 
-function optionalIsoDate(value?: Date | string | null) {
-  if (!value) return undefined;
-  if (value instanceof Date) return value.toISOString();
-  return value;
-}
-
 @Injectable()
 export class AdminService {
   constructor(
@@ -238,6 +248,8 @@ export class AdminService {
     private readonly database: DatabaseService,
     private readonly authService: AuthService,
     private readonly accountLifecycle: AccountLifecycleService,
+    private readonly redis: RedisService,
+    private readonly operationalMetrics: OperationalMetricsService,
   ) {}
 
   async dashboard(actorId?: number | null): Promise<AdminDashboard> {
@@ -287,44 +299,27 @@ export class AdminService {
   async systemStatus(): Promise<AdminSystemStatus> {
     const checkedAt = new Date();
     await this.database.ping();
-    const [deviceCases, auditRows, dataOperationRows] = await Promise.all([
+    const todayRange = koreanDayRange(checkedAt);
+    const [deviceCases, studentLoginRows, redisRunning] = await Promise.all([
       this.deviceCasesService.list(),
-      this.database.query('admin.system-status.latest-audit', async (db) =>
+      this.database.query('admin.system-status.student-logins', async (db) =>
         db
           .select({
-            action: schema.auditLogs.action,
-            actorName: schema.users.name,
-            createdAt: schema.auditLogs.createdAt,
+            total: sql<number>`cast(count(*) as unsigned)`.mapWith(Number),
           })
-          .from(schema.auditLogs)
-          .leftJoin(schema.users, eq(schema.auditLogs.actorId, schema.users.id))
-          .orderBy(desc(schema.auditLogs.createdAt), desc(schema.auditLogs.id))
-          .limit(1),
-      ),
-      this.database.query('admin.system-status.latest-data-operation', async (db) =>
-        db
-          .select({
-            action: schema.auditLogs.action,
-            actorName: schema.users.name,
-            createdAt: schema.auditLogs.createdAt,
-          })
-          .from(schema.auditLogs)
-          .leftJoin(schema.users, eq(schema.auditLogs.actorId, schema.users.id))
+          .from(schema.users)
           .where(
-            or(
-              inArray(schema.auditLogs.targetType, [
-                'roster_import_batches',
-                'point_records',
-                'wake_song_requests',
-                'thanks_messages',
-              ]),
-              like(schema.auditLogs.action, '%import%'),
-              like(schema.auditLogs.action, '%migration%'),
+            and(
+              isNotNull(schema.users.studentNo),
+              gte(schema.users.lastLoginAt, todayRange.startsAt),
+              lte(schema.users.lastLoginAt, todayRange.endsAt),
             ),
-          )
-          .orderBy(desc(schema.auditLogs.createdAt), desc(schema.auditLogs.id))
-          .limit(1),
+          ),
       ),
+      this.redis
+        .ping()
+        .then(() => true)
+        .catch(() => false),
     ]);
     const connectedDeviceCases = deviceCases.filter((deviceCase) => deviceCase.isConnected).length;
     const disconnectedDeviceCases = deviceCases.length - connectedDeviceCases;
@@ -333,8 +328,10 @@ export class AdminService {
       .filter(Boolean)
       .sort()
       .at(-1);
-    const latestAudit = auditRows[0];
-    const latestDataOperation = dataOperationRows[0];
+    const metrics = this.operationalMetrics.snapshot();
+    const hasCognito = Boolean(env.COGNITO_USER_POOL_ID && env.COGNITO_WEB_CLIENT_ID);
+    const hasSendon = Boolean(env.SENDON_ACCOUNT_ID && env.SENDON_API_KEY);
+    const hasSes = Boolean(env.SES_FROM_EMAIL);
 
     return {
       checkedAt: checkedAt.toISOString(),
@@ -353,16 +350,43 @@ export class AdminService {
         disconnected: disconnectedDeviceCases,
         lastSeenAt: latestDeviceSeenAt,
       },
-      audit: {
-        latestAction: latestAudit?.action,
-        latestAt: optionalIsoDate(latestAudit?.createdAt),
-        latestActorName: latestAudit?.actorName ?? undefined,
+      traffic: {
+        requests24h: metrics.requests,
+        serverErrors24h: metrics.serverErrors,
+        studentsLoggedInToday: studentLoginRows[0]?.total ?? 0,
+        processStartedAt: metrics.startedAt,
       },
-      dataOperations: {
-        latestAction: latestDataOperation?.action,
-        latestAt: optionalIsoDate(latestDataOperation?.createdAt),
-        latestActorName: latestDataOperation?.actorName ?? undefined,
-      },
+      integrations: [
+        {
+          key: 'cognito',
+          label: 'Amazon Cognito',
+          status: hasCognito ? 'configured' : 'not_configured',
+        },
+        { key: 'ses', label: 'Amazon SES', status: hasSes ? 'configured' : 'not_configured' },
+        { key: 'sendon', label: 'Sendon', status: hasSendon ? 'configured' : 'not_configured' },
+        {
+          key: 'neis',
+          label: 'NEIS Open API',
+          status: env.NEIS_API_KEY ? 'configured' : 'not_configured',
+        },
+        {
+          key: 'youtube',
+          label: 'YouTube Data API',
+          status: env.YOUTUBE_API_KEY ? 'configured' : 'not_configured',
+        },
+        {
+          key: 'storage',
+          label: env.S3_BUCKET ? 'Amazon S3' : '로컬 파일 저장소',
+          status: 'configured',
+        },
+      ],
+      processes: [
+        { key: 'api', label: 'API 서버', status: 'running' },
+        { key: 'database', label: 'MySQL', status: 'running' },
+        { key: 'redis', label: 'Redis', status: redisRunning ? 'running' : 'stopped' },
+        { key: 'file-cleanup', label: '파일 정리 작업', status: 'running' },
+        { key: 'notification-cleanup', label: '알림 정리 작업', status: 'running' },
+      ],
     };
   }
 

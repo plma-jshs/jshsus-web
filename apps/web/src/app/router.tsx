@@ -26,6 +26,28 @@ type CalendarSearch = {
   date?: string;
 };
 
+type ActivitySearch = {
+  field?: 'all' | 'activity' | 'participants' | 'location' | 'advisor';
+  q?: string;
+};
+
+const activitySearchFields = ['all', 'activity', 'participants', 'location', 'advisor'] as const;
+
+function safeInternalReturnTo(value: unknown) {
+  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//')
+    ? value.slice(0, 500)
+    : undefined;
+}
+
+function validateActivitySearch(search: Record<string, unknown>): ActivitySearch {
+  const result: ActivitySearch = {};
+  if (activitySearchFields.includes(search.field as (typeof activitySearchFields)[number])) {
+    result.field = search.field as ActivitySearch['field'];
+  }
+  if (typeof search.q === 'string' && search.q.trim()) result.q = search.q.trim().slice(0, 100);
+  return result;
+}
+
 function isDateSearch(value: unknown): value is string {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const [year, month, day] = value.split('-').map(Number);
@@ -339,6 +361,7 @@ const activityRequestsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/activity-requests',
   beforeLoad: ({ location }) => requireSession(location),
+  validateSearch: validateActivitySearch,
   component: lazyRouteComponent(
     () => import('../features/activity-requests/ActivityRequestsPage'),
     'ActivityRequestsPage',
@@ -449,6 +472,7 @@ const forgotPasswordRoute = createRoute({
   path: '/forgot-password',
   validateSearch: (search: Record<string, unknown>) => ({
     username: typeof search.username === 'string' ? search.username : undefined,
+    returnTo: safeInternalReturnTo(search.returnTo),
   }),
   component: lazyRouteComponent(
     () => import('../features/auth/PasswordResetPage'),

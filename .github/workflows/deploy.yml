@@ -517,6 +517,8 @@ jobs:
           SENDON_ACCOUNT_ACTIVATION_TEMPLATE_ID: ${{ secrets.SENDON_ACCOUNT_ACTIVATION_TEMPLATE_ID }}
           SENDON_CONTACT_VERIFICATION_TEMPLATE_ID: ${{ secrets.SENDON_CONTACT_VERIFICATION_TEMPLATE_ID }}
           SENDON_SMS_SENDER_NUMBER: ${{ secrets.SENDON_SMS_SENDER_NUMBER }}
+          SES_FROM_EMAIL: ${{ secrets.SES_FROM_EMAIL }}
+          SES_FROM_NAME: ${{ secrets.SES_FROM_NAME }}
         run: |
           set -euo pipefail
           umask 077
@@ -628,6 +630,9 @@ jobs:
           set_optional_env_value SENDON_ACCOUNT_ACTIVATION_TEMPLATE_ID
           set_optional_env_value SENDON_CONTACT_VERIFICATION_TEMPLATE_ID
           set_optional_env_value SENDON_SMS_SENDER_NUMBER
+          set_env_value SES_REGION ap-northeast-2
+          set_optional_env_value SES_FROM_EMAIL
+          set_optional_env_value SES_FROM_NAME
 
       - name: Authenticate the server to GHCR
         shell: bash

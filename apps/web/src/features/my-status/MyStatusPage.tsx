@@ -246,13 +246,12 @@ export function MyStatusPage() {
     onError: () => showToast({ title: '연락처를 변경하지 못했습니다.', tone: 'danger' }),
   });
 
-  const phoneVerificationMutation = useMutation({
-    mutationFn: requestMyContactVerification,
+  const contactVerificationMutation = useMutation({
+    mutationFn: ({ field, value }: Pick<ContactDraft, 'field' | 'value'>) =>
+      requestMyContactVerification(field, value),
     onSuccess: () => {
       setContactDraft((current) =>
-        current?.field === 'phone'
-          ? { ...current, verificationCode: '', verificationRequested: true }
-          : current,
+        current ? { ...current, verificationCode: '', verificationRequested: true } : current,
       );
       showToast({ title: '인증번호를 보냈습니다.', tone: 'success' });
     },
@@ -564,7 +563,10 @@ export function MyStatusPage() {
             <div className="status-contact-row">
               <KeyRound size={18} aria-hidden="true" />
               <span>비밀번호</span>
-              <Link to="/forgot-password" search={{ username: String(status.student.studentNo) }}>
+              <Link
+                to="/forgot-password"
+                search={{ username: String(status.student.studentNo), returnTo: '/my-status' }}
+              >
                 수정
               </Link>
             </div>
@@ -612,7 +614,11 @@ export function MyStatusPage() {
       <section className="status-activity" aria-labelledby="status-activity-title">
         <header>
           <h2 id="status-activity-title">최근 탐구활동서</h2>
-          <Link to="/activity-requests" aria-label="탐구활동서 더보기">
+          <Link
+            to="/activity-requests"
+            search={{ field: 'participants', q: status.student.name }}
+            aria-label="탐구활동서 더보기"
+          >
             더보기 <ChevronRight size={14} aria-hidden="true" />
           </Link>
         </header>
@@ -671,10 +677,6 @@ export function MyStatusPage() {
           </article>
         </div>
       </section>
-
-      <p className="status-help">
-        상벌점 기록이나 기타 정보가 실제와 다르면 학생생활부에 문의해 주세요.
-      </p>
 
       {cropDraft && cropGeometry ? (
         <div className="status-crop-backdrop">
@@ -799,13 +801,7 @@ export function MyStatusPage() {
                 <button type="button" onClick={() => setNicknameModalOpen(false)}>
                   취소
                 </button>
-                <button
-                  type="submit"
-                  disabled={
-                    profileMutation.isPending ||
-                    nickname.trim() === (status.student.nickname || status.student.name)
-                  }
-                >
+                <button type="submit" disabled={profileMutation.isPending || !nickname.trim()}>
                   {profileMutation.isPending ? '변경 중…' : '변경'}
                 </button>
               </div>
@@ -834,11 +830,13 @@ export function MyStatusPage() {
               onSubmit={(event) => {
                 event.preventDefault();
                 if (
-                  contactDraft.field === 'phone' &&
-                  (!contactDraft.verificationRequested ||
-                    !/^\d{6}$/.test(contactDraft.verificationCode))
+                  !contactDraft.verificationRequested ||
+                  !/^\d{6}$/.test(contactDraft.verificationCode)
                 ) {
-                  showToast({ title: '전화번호 인증을 완료해 주세요.', tone: 'danger' });
+                  showToast({
+                    title: `${contactDraft.field === 'email' ? '이메일' : '전화번호'} 인증을 완료해 주세요.`,
+                    tone: 'danger',
+                  });
                   return;
                 }
                 if (!contactMutation.isPending) contactMutation.mutate(contactDraft);
@@ -863,60 +861,47 @@ export function MyStatusPage() {
               <label className="sr-only" htmlFor="status-contact-value">
                 {contactDraft.field === 'email' ? '새 이메일' : '새 전화번호'}
               </label>
-              {contactDraft.field === 'phone' ? (
-                <div className="status-contact-verification">
-                  <input
-                    id="status-contact-value"
-                    autoFocus
-                    autoComplete="tel"
-                    inputMode="tel"
-                    type="tel"
-                    value={contactDraft.value}
-                    onChange={(event) =>
-                      setContactDraft((current) =>
-                        current
-                          ? {
-                              ...current,
-                              value: event.target.value,
-                              verificationCode: '',
-                              verificationRequested: false,
-                            }
-                          : current,
-                      )
-                    }
-                    placeholder="새 전화번호를 입력해주세요."
-                    required
-                  />
-                  <button
-                    type="button"
-                    disabled={phoneVerificationMutation.isPending || !contactDraft.value.trim()}
-                    onClick={() => phoneVerificationMutation.mutate(contactDraft.value)}
-                  >
-                    {phoneVerificationMutation.isPending
-                      ? '전송 중'
-                      : contactDraft.verificationRequested
-                        ? '재전송'
-                        : '인증'}
-                  </button>
-                </div>
-              ) : (
+              <div className="status-contact-verification">
                 <input
                   id="status-contact-value"
                   autoFocus
-                  autoComplete="email"
-                  inputMode="email"
-                  type="email"
+                  autoComplete={contactDraft.field === 'email' ? 'email' : 'tel'}
+                  inputMode={contactDraft.field === 'email' ? 'email' : 'tel'}
+                  type={contactDraft.field === 'email' ? 'email' : 'tel'}
                   value={contactDraft.value}
                   onChange={(event) =>
                     setContactDraft((current) =>
-                      current ? { ...current, value: event.target.value } : current,
+                      current
+                        ? {
+                            ...current,
+                            value: event.target.value,
+                            verificationCode: '',
+                            verificationRequested: false,
+                          }
+                        : current,
                     )
                   }
-                  placeholder="새 이메일을 입력해주세요."
+                  placeholder={`새 ${contactDraft.field === 'email' ? '이메일' : '전화번호'}를 입력해주세요.`}
                   required
                 />
-              )}
-              {contactDraft.field === 'phone' && contactDraft.verificationRequested ? (
+                <button
+                  type="button"
+                  disabled={contactVerificationMutation.isPending || !contactDraft.value.trim()}
+                  onClick={() =>
+                    contactVerificationMutation.mutate({
+                      field: contactDraft.field,
+                      value: contactDraft.value,
+                    })
+                  }
+                >
+                  {contactVerificationMutation.isPending
+                    ? '전송 중'
+                    : contactDraft.verificationRequested
+                      ? '재전송'
+                      : '인증'}
+                </button>
+              </div>
+              {contactDraft.verificationRequested ? (
                 <>
                   <label className="sr-only" htmlFor="status-contact-code">
                     인증번호

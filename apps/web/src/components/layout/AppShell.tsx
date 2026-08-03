@@ -487,8 +487,9 @@ function PortalShell() {
           <span>
             호스팅서비스사업자: 아이디비아이 | 사업자 등록번호: 332-44-01176 | 사업자 대표: 강재환
           </span>
+          <Link to="/terms">서비스 이용약관</Link>
           <Link to="/privacy">개인정보처리방침</Link>
-          <span>Copyright © 2026 IT부 All Rights Reserved.</span>
+          <span>Copyright © 2026 전남과학고등학교 IT부</span>
         </div>
       </footer>
     </div>

@@ -38,6 +38,16 @@ export class BoardsController {
     return this.boardsService.listPostsPage(slug, parseContentListQuery(query));
   }
 
+  @Get('boards/:slug/posts/drafts/latest')
+  @UseGuards(SessionGuard, RolesGuard)
+  @RequireRoles(...memberRoles)
+  latestBoardPostDraft(
+    @Param('slug') slug: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.boardsService.getLatestOwnedDraft(slug, request.authSession?.userId);
+  }
+
   @Get('boards/:slug/posts/:id')
   @UseGuards(OptionalSessionGuard)
   boardPost(

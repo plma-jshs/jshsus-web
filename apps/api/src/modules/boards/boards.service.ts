@@ -218,6 +218,45 @@ export class BoardsService {
     return this.insertPost(slug, parsed, actorId);
   }
 
+  async getLatestOwnedDraft(slug: string, actorId?: number | null) {
+    if (!actorId || actorId <= 0) throw new ForbiddenException('A persisted account is required.');
+
+    return this.database.query('boards.posts.latestDraft', async (db) => {
+      const board = await this.findMemberWritableBoard(db, slug);
+      const [draft] = await db
+        .select({
+          id: schema.posts.id,
+          title: schema.posts.title,
+          content: schema.posts.content,
+          contentJson: schema.posts.contentJson,
+          updatedAt: schema.posts.updatedAt,
+        })
+        .from(schema.posts)
+        .where(
+          and(
+            eq(schema.posts.boardId, board.id),
+            eq(schema.posts.authorId, actorId),
+            eq(schema.posts.status, 'draft'),
+            eq(schema.posts.isHidden, false),
+          ),
+        )
+        .orderBy(desc(schema.posts.updatedAt), desc(schema.posts.id))
+        .limit(1);
+
+      return {
+        draft: draft
+          ? {
+              id: draft.id,
+              title: draft.title,
+              content: draft.content,
+              contentDoc: (draft.contentJson as RichTextDocument | null) ?? undefined,
+              updatedAt: draft.updatedAt.toISOString(),
+            }
+          : undefined,
+      };
+    });
+  }
+
   private async insertPost(
     slug: string,
     parsed: ReturnType<typeof parsePostCreate>,

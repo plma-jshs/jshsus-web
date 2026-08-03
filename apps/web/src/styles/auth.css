@@ -39,7 +39,11 @@
   flex-direction: column;
   justify-content: space-between;
   color: #fff;
-  background: url('/images/auth-campus.png') 27% center / auto 114% no-repeat;
+  background-image: url('/images/auth-campus.png');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 .auth-brand {
@@ -401,6 +405,18 @@
   box-shadow: none;
 }
 
+.auth-remember input:focus,
+.auth-recovery-method input:focus {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.auth-remember input:focus-visible,
+.auth-recovery-method input:focus-visible {
+  outline: 2px solid #0969da;
+  outline-offset: 2px;
+}
+
 .auth-recovery-method {
   display: grid;
   padding: 0;
@@ -511,7 +527,7 @@
   display: flex;
   width: min(calc(100% - 32px), 940px);
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 18px;
   transform: translateX(-50%);
   color: rgb(255 255 255 / 58%);
@@ -520,6 +536,8 @@
 
 .auth-page-footer nav {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 14px;
 }
 
@@ -534,8 +552,7 @@
   text-underline-offset: 3px;
 }
 
-.auth-page-footer p {
-  margin: 0;
+.auth-page-footer span {
   white-space: nowrap;
 }
 
@@ -555,7 +572,8 @@
     min-height: 128px;
     padding: 22px 24px;
     background-size: cover;
-    background-position: center 43%;
+    background-position: center;
+    background-attachment: scroll;
   }
 
   .auth-panel {

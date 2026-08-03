@@ -520,6 +520,11 @@ export function LoginPage() {
         {mode === 'login' ? (
           <p className="login-signup">계정 발급이 필요하면 학교 담당자에게 문의해 주세요.</p>
         ) : null}
+
+        <nav className="login-legal-links" aria-label="법적 고지">
+          <a href="https://v26.jshsus.kr/terms">서비스 이용약관</a>
+          <a href="https://v26.jshsus.kr/privacy">개인정보 처리방침</a>
+        </nav>
       </section>
     </main>
   );

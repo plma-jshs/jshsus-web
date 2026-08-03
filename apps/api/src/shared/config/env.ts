@@ -54,6 +54,9 @@ const envSchema = z
     SENDON_CONTACT_VERIFICATION_TEMPLATE_ID: z.string().trim().default(''),
     SENDON_SMS_SENDER_NUMBER: z.string().trim().default(''),
     SENDON_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(15_000).default(5_000),
+    SES_REGION: z.string().trim().default('ap-northeast-2'),
+    SES_FROM_EMAIL: z.string().trim().default(''),
+    SES_FROM_NAME: z.string().trim().default('전남과학고등학교 전산시스템'),
     LEGACY_SYSTEM_ADMIN_STUIDS: z
       .string()
       .default('')

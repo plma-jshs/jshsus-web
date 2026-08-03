@@ -118,6 +118,7 @@ export function completeAccountActivation(input: {
   email: string;
   phone: string;
   phoneVerificationCode: string;
+  emailVerificationCode: string;
   password: string;
 }) {
   return request<AccountActivationCompleteResult>('/api/auth/account-activation/complete', {
@@ -140,6 +141,17 @@ export function requestAccountActivationPhoneVerification(input: {
   phone: string;
 }) {
   return request<{ ok: true }>('/api/auth/account-activation/phone/request', {
+    method: 'POST',
+    body: input,
+    csrf: false,
+  });
+}
+
+export function requestAccountActivationEmailVerification(input: {
+  activationCode: string;
+  email: string;
+}) {
+  return request<{ ok: true }>('/api/auth/account-activation/email/request', {
     method: 'POST',
     body: input,
     csrf: false,

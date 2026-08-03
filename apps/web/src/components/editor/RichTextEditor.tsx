@@ -632,6 +632,7 @@ export function RichTextEditor({
   }, [onChange]);
 
   const editor = useEditor({
+    immediatelyRender: false,
     content: initialValue ?? plainTextToRichTextDocument(''),
     extensions: editorExtensions({ placeholder, allowImages, allowPoll }),
     editorProps: {

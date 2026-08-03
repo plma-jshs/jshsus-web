@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
+import { Link, useSearch } from '@tanstack/react-router';
 import { FilePlus2 } from 'lucide-react';
 import {
   DataTablePagination,
@@ -33,13 +33,16 @@ const activityDayFormatter = createKoreanDateFormatter({
 });
 
 export function ActivityRequestsPage() {
+  const routeSearch = useSearch({ from: '/activity-requests' });
   const requestsQuery = useQuery({
     queryKey: ['activity-requests', 'me'],
     queryFn: getMyActivityRequests,
   });
   const [filter, setFilter] = useState<ActivityRequestFilter>('all');
-  const [searchField, setSearchField] = useState<ActivityRequestSearchField>('all');
-  const [query, setQuery] = useState('');
+  const [searchField, setSearchField] = useState<ActivityRequestSearchField>(
+    routeSearch.field ?? 'all',
+  );
+  const [query, setQuery] = useState(routeSearch.q ?? '');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);

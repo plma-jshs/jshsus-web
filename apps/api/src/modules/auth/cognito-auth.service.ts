@@ -265,6 +265,7 @@ export class CognitoAuthService {
     subject: string;
     fallbackUsername: string;
     email?: string;
+    emailVerified?: boolean;
     phone?: string;
   }): Promise<void> {
     const username = await this.findUsernameBySubject(input.subject, input.fallbackUsername.trim());
@@ -276,7 +277,7 @@ export class CognitoAuthService {
     if (input.email) {
       attributes.push(
         { Name: 'email', Value: input.email },
-        { Name: 'email_verified', Value: 'false' },
+        { Name: 'email_verified', Value: input.emailVerified ? 'true' : 'false' },
       );
     }
     if (input.phone) {

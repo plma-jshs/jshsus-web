@@ -28,11 +28,13 @@ import { env } from '../../shared/config/env';
 import { CognitoAuthError, CognitoAuthService, type CognitoSurface } from './cognito-auth.service';
 import { RedisService } from '../redis/redis.service';
 import { SendonPasswordResetService } from './sendon-password-reset.service';
+import { EmailVerificationService } from './email-verification.service';
 
 const ACTIVATION_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const ACTIVATION_CODE_LENGTH = 12;
 const MAX_ACTIVATION_ATTEMPTS = 10;
 const PHONE_VERIFICATION_TTL_SECONDS = 300;
+const EMAIL_VERIFICATION_TTL_SECONDS = 300;
 
 const activationIdentitySchema = z.object({
   identityType: z.enum(['student', 'staff']),
@@ -63,6 +65,10 @@ const phoneVerificationRequestSchema = activationCodeSchema.extend({
   }),
 });
 
+const emailVerificationRequestSchema = activationCodeSchema.extend({
+  email: z.string().trim().email().max(255),
+});
+
 const completeActivationSchema = activationIdentitySchema.extend({
   activationCode: z.string().trim().min(6).max(32),
   name: z.string().trim().min(1).max(64),
@@ -72,6 +78,10 @@ const completeActivationSchema = activationIdentitySchema.extend({
     message: 'Phone number must start with 010.',
   }),
   phoneVerificationCode: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/),
+  emailVerificationCode: z
     .string()
     .trim()
     .regex(/^\d{6}$/),
@@ -110,6 +120,7 @@ export class AccountActivationService {
     private readonly cognito: CognitoAuthService,
     private readonly redis: RedisService,
     private readonly sendon: SendonPasswordResetService,
+    private readonly emailVerification: EmailVerificationService,
   ) {}
 
   async issue(body: unknown, actorId?: number | null): Promise<AccountActivationIssueResult> {
@@ -301,6 +312,45 @@ export class AccountActivationService {
     return { ok: true };
   }
 
+  async requestEmailVerification(body: unknown): Promise<{ ok: true }> {
+    const parsed = emailVerificationRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException({
+        code: 'ACCOUNT_ACTIVATION_INVALID_INPUT',
+        message: '인증코드와 이메일 주소를 확인해 주세요.',
+      });
+    }
+
+    const activation = await this.findAvailableActivation(parsed.data.activationCode);
+    const email = parsed.data.email.toLocaleLowerCase('en-US');
+    const code = String(randomInt(100_000, 1_000_000));
+    const flowKey = this.emailVerificationFlowKey(parsed.data.activationCode);
+    await this.redis.setJson(
+      flowKey,
+      {
+        identityType: activation.identityType,
+        identityNumber: activation.identityNumber,
+        email,
+        codeHash: this.hashVerificationCode(flowKey, email, code),
+        attemptCount: 0,
+      },
+      EMAIL_VERIFICATION_TTL_SECONDS,
+    );
+
+    try {
+      await this.emailVerification.sendVerificationCode({
+        code,
+        email,
+        purpose: 'account-activation',
+      });
+    } catch (error) {
+      await this.redis.delete(flowKey);
+      throw error;
+    }
+
+    return { ok: true };
+  }
+
   async complete(
     body: unknown,
     _surface: CognitoSurface,
@@ -327,6 +377,14 @@ export class AccountActivationService {
       identityNumber: input.identityNumber,
       phone: input.phone,
       code: input.phoneVerificationCode,
+    });
+    const emailFlowKey = this.emailVerificationFlowKey(input.activationCode);
+    await this.assertEmailVerification({
+      flowKey: emailFlowKey,
+      identityType: input.identityType,
+      identityNumber: input.identityNumber,
+      email: input.email,
+      code: input.emailVerificationCode,
     });
 
     try {
@@ -393,6 +451,8 @@ export class AccountActivationService {
         await this.cognito.updateContactAttributes({
           subject: cognitoUser.subject,
           fallbackUsername: String(input.identityNumber),
+          email: input.email,
+          emailVerified: true,
           phone: input.phone,
         });
         await this.assertCognitoLinkAllowed(tx, user.userId, cognitoUser.subject);
@@ -431,6 +491,7 @@ export class AccountActivationService {
       });
 
       await this.redis.delete(phoneFlowKey);
+      await this.redis.delete(emailFlowKey);
 
       return { ok: true, ...result };
     } catch (error) {
@@ -481,9 +542,17 @@ export class AccountActivationService {
     return `auth:account-activation:phone:${this.hashCodeLookup(activationCode)}`;
   }
 
+  private emailVerificationFlowKey(activationCode: string) {
+    return `auth:account-activation:email:${this.hashCodeLookup(activationCode)}`;
+  }
+
   private hashPhoneVerificationCode(flowKey: string, phone: string, code: string) {
+    return this.hashVerificationCode(flowKey, phone, code);
+  }
+
+  private hashVerificationCode(flowKey: string, value: string, code: string) {
     return createHmac('sha256', env.CSRF_SECRET)
-      .update(`${flowKey}:${phone}:${code.trim()}`)
+      .update(`${flowKey}:${value}:${code.trim()}`)
       .digest('hex');
   }
 
@@ -597,6 +666,60 @@ export class AccountActivationService {
       throw new BadRequestException({
         code: 'AUTH_CODE_MISMATCH',
         message: '전화번호 인증번호를 확인해 주세요.',
+      });
+    }
+  }
+
+  private async assertEmailVerification(input: {
+    flowKey: string;
+    identityType: AccountActivationIdentityType;
+    identityNumber: number;
+    email: string;
+    code: string;
+  }) {
+    const rawFlow = await this.redis.get(input.flowKey);
+    const flowSchema = z.object({
+      identityType: z.enum(['student', 'staff']),
+      identityNumber: z.number().int().positive(),
+      email: z.string().email(),
+      codeHash: z.string(),
+      attemptCount: z.number().int().nonnegative(),
+    });
+    const decodedFlow: unknown = (() => {
+      try {
+        return rawFlow ? JSON.parse(rawFlow) : null;
+      } catch {
+        return null;
+      }
+    })();
+    const flow = flowSchema.safeParse(decodedFlow);
+    if (
+      !flow.success ||
+      flow.data.identityType !== input.identityType ||
+      flow.data.identityNumber !== input.identityNumber ||
+      flow.data.email !== input.email
+    ) {
+      throw new BadRequestException({
+        code: 'AUTH_CODE_EXPIRED',
+        message: '이메일 인증을 다시 진행해 주세요.',
+      });
+    }
+
+    const expectedHash = this.hashVerificationCode(input.flowKey, input.email, input.code);
+    if (!safeCompareHex(flow.data.codeHash, expectedHash)) {
+      const attemptCount = flow.data.attemptCount + 1;
+      if (attemptCount >= 5) {
+        await this.redis.delete(input.flowKey);
+      } else {
+        await this.redis.setJson(
+          input.flowKey,
+          { ...flow.data, attemptCount },
+          EMAIL_VERIFICATION_TTL_SECONDS,
+        );
+      }
+      throw new BadRequestException({
+        code: 'AUTH_CODE_MISMATCH',
+        message: '이메일 인증번호를 확인해 주세요.',
       });
     }
   }

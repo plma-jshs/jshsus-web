@@ -19,14 +19,14 @@ export function updateMyContact(
 ) {
   return request<{ ok: true; field: 'email' | 'phone' }>('/api/me/contact', {
     method: 'PATCH',
-    body: { field, value, ...(field === 'phone' ? { verificationCode } : {}) },
+    body: { field, value, verificationCode },
   });
 }
 
-export function requestMyContactVerification(phone: string) {
+export function requestMyContactVerification(field: 'email' | 'phone', value: string) {
   return request<{ ok: true }>('/api/me/contact/verification', {
     method: 'POST',
-    body: { phone },
+    body: { field, value },
   });
 }
 

@@ -839,7 +839,7 @@
 
 .my-page .status-section-heading,
 .my-page .status-activity > header {
-  min-height: 36px;
+  min-height: 0;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--j-color-border);
 }
@@ -953,16 +953,17 @@
 }
 
 .my-page .status-activity {
-  padding: 18px 20px 19px;
+  padding: 18px 24px 20px;
 }
 
 .my-page .status-activity > header {
+  height: auto;
   padding-inline: 0;
 }
 
 .my-page .status-activity__row {
   min-height: 68px;
-  padding: 13px 4px 0;
+  padding: 13px 0 0;
   align-items: start;
   grid-template-columns: 1fr;
   gap: 8px;

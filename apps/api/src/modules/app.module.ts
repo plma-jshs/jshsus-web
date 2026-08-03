@@ -22,9 +22,11 @@ import { ReportsModule } from './reports/reports.module';
 import { ThanksModule } from './thanks/thanks.module';
 import { WakeSongsModule } from './wake-songs/wake-songs.module';
 import { RateLimitGuard } from '../shared/security/rate-limit.guard';
+import { ObservabilityModule } from '../shared/observability/observability.module';
 
 @Module({
   imports: [
+    ObservabilityModule,
     RedisModule,
     DatabaseModule,
     FilesModule,

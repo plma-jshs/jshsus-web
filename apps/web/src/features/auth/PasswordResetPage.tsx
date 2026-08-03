@@ -73,7 +73,14 @@ function initialUsername() {
   }
 }
 
+function initialReturnTo() {
+  if (typeof window === 'undefined') return undefined;
+  const value = new URLSearchParams(window.location.search).get('returnTo');
+  return value?.startsWith('/') && !value.startsWith('//') ? value : undefined;
+}
+
 export function PasswordResetPage() {
+  const returnTo = initialReturnTo();
   const [step, setStep] = useState<ResetStep>('request');
   const [username, setUsername] = useState(initialUsername);
   const [delivery, setDelivery] = useState<PasswordResetDelivery>('phone');
@@ -186,9 +193,15 @@ export function PasswordResetPage() {
           <button className="auth-submit" type="submit" disabled={requestMutation.isPending}>
             {requestMutation.isPending ? '전송 중' : '인증 코드 받기'}
           </button>
-          <Link className="auth-back-button" to="/login" search={{ returnTo: undefined }}>
-            <ArrowLeft size={15} aria-hidden="true" /> 로그인으로 돌아가기
-          </Link>
+          {returnTo === '/my-status' ? (
+            <Link className="auth-back-button" to="/my-status">
+              <ArrowLeft size={15} aria-hidden="true" /> 마이페이지로 돌아가기
+            </Link>
+          ) : (
+            <Link className="auth-back-button" to="/login" search={{ returnTo: undefined }}>
+              <ArrowLeft size={15} aria-hidden="true" /> 로그인으로 돌아가기
+            </Link>
+          )}
         </form>
       ) : null}
 
@@ -261,9 +274,15 @@ export function PasswordResetPage() {
       {step === 'done' ? (
         <div className="auth-form">
           {notice ? <FormMessage success>{notice}</FormMessage> : null}
-          <Link className="auth-submit" to="/login" search={{ returnTo: undefined }}>
-            로그인하기
-          </Link>
+          {returnTo === '/my-status' ? (
+            <Link className="auth-submit" to="/my-status">
+              마이페이지로 돌아가기
+            </Link>
+          ) : (
+            <Link className="auth-submit" to="/login" search={{ returnTo: undefined }}>
+              로그인하기
+            </Link>
+          )}
         </div>
       ) : null}
     </AuthLayout>

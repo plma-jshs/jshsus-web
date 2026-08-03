@@ -919,14 +919,20 @@ export type AdminSystemStatus = {
     disconnected: number;
     lastSeenAt?: string;
   };
-  audit: {
-    latestAction?: string;
-    latestAt?: string;
-    latestActorName?: string;
+  traffic: {
+    requests24h: number;
+    serverErrors24h: number;
+    studentsLoggedInToday: number;
+    processStartedAt: string;
   };
-  dataOperations: {
-    latestAction?: string;
-    latestAt?: string;
-    latestActorName?: string;
-  };
+  integrations: Array<{
+    key: string;
+    label: string;
+    status: 'configured' | 'not_configured';
+  }>;
+  processes: Array<{
+    key: string;
+    label: string;
+    status: 'running' | 'stopped';
+  }>;
 };

@@ -97,6 +97,18 @@ export function createBoardPostDraft(input: BoardPostInput) {
   });
 }
 
+export function getLatestBoardPostDraft(slug = 'free') {
+  return request<{
+    draft?: {
+      id: number;
+      title: string;
+      content: string;
+      contentDoc?: RichTextDocument;
+      updatedAt: string;
+    };
+  }>(`/api/boards/${slug}/posts/drafts/latest`);
+}
+
 export function updateBoardPost(input: BoardPostInput & { postId: number }) {
   const { slug = 'free', postId, ...body } = input;
   return request<BoardPostMutationResult>(`/api/boards/${slug}/posts/${postId}`, {
