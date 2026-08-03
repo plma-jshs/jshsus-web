@@ -6,6 +6,8 @@ type PasswordResetDeliveryInput = {
   phone: string;
 };
 
+type VerificationPurpose = 'account-activation' | 'contact-change';
+
 type SendonResponse = {
   code?: number;
   message?: string;
@@ -34,7 +36,7 @@ export class SendonPasswordResetService {
     if (!phone) {
       throw new ServiceUnavailableException({
         code: 'AUTH_RECOVERY_UNAVAILABLE',
-        message: '비밀번호 재설정에 사용할 휴대폰 번호를 확인해 주세요.',
+        message: '비밀번호 재설정에 사용할 전화번호를 확인해 주세요.',
       });
     }
 
@@ -58,6 +60,41 @@ export class SendonPasswordResetService {
     throw new ServiceUnavailableException({
       code: 'AUTH_RECOVERY_UNAVAILABLE',
       message: '비밀번호 재설정 발송 채널을 확인해 주세요.',
+    });
+  }
+
+  async sendVerificationCode(
+    input: PasswordResetDeliveryInput & { purpose: VerificationPurpose },
+  ): Promise<void> {
+    const phone = normalizeKoreanMobilePhone(input.phone);
+    if (!phone) {
+      throw new ServiceUnavailableException({
+        code: 'AUTH_RECOVERY_UNAVAILABLE',
+        message: '인증에 사용할 전화번호를 확인해 주세요.',
+      });
+    }
+    if (!env.SENDON_ACCOUNT_ID || !env.SENDON_API_KEY) {
+      throw new ServiceUnavailableException({
+        code: 'AUTH_RECOVERY_UNAVAILABLE',
+        message: '전화번호 인증 발송 설정을 확인해 주세요.',
+      });
+    }
+
+    const templateId =
+      input.purpose === 'account-activation'
+        ? env.SENDON_ACCOUNT_ACTIVATION_TEMPLATE_ID
+        : env.SENDON_CONTACT_VERIFICATION_TEMPLATE_ID;
+    if (env.SENDON_KAKAO_SEND_PROFILE_ID && templateId) {
+      await this.sendVerificationAlimTalk(phone, input.code, templateId);
+      return;
+    }
+    if (env.SENDON_SMS_SENDER_NUMBER) {
+      await this.sendSms(phone, input.code, this.verificationMessage(input.code));
+      return;
+    }
+    throw new ServiceUnavailableException({
+      code: 'AUTH_RECOVERY_UNAVAILABLE',
+      message: '전화번호 인증 발송 채널을 확인해 주세요.',
     });
   }
 
@@ -88,12 +125,40 @@ export class SendonPasswordResetService {
     });
   }
 
-  private async sendSms(phone: string, code: string): Promise<void> {
+  private async sendVerificationAlimTalk(
+    phone: string,
+    code: string,
+    templateId: string,
+  ): Promise<void> {
+    await this.send('/v2/messages/kakao/alim-talk', {
+      sendProfileId: env.SENDON_KAKAO_SEND_PROFILE_ID,
+      templateId,
+      to: [{ phone, variables: { '#{인증번호}': code } }],
+      fallback: env.SENDON_SMS_SENDER_NUMBER
+        ? {
+            fallbackType: 'CUSTOM',
+            custom: {
+              type: 'SMS',
+              senderNumber: env.SENDON_SMS_SENDER_NUMBER,
+              message: this.verificationMessage(code),
+              isAd: false,
+            },
+          }
+        : { fallbackType: 'NONE' },
+      useCredit: true,
+    });
+  }
+
+  private async sendSms(
+    phone: string,
+    code: string,
+    message = this.passwordResetMessage(code),
+  ): Promise<void> {
     await this.send('/v2/messages/sms', {
       type: 'SMS',
       from: env.SENDON_SMS_SENDER_NUMBER,
       to: [phone],
-      message: this.passwordResetMessage(code),
+      message,
       isAd: false,
       useCredit: true,
     });
@@ -101,6 +166,10 @@ export class SendonPasswordResetService {
 
   private passwordResetMessage(code: string): string {
     return `[과구리] 인증번호 ${code}`;
+  }
+
+  private verificationMessage(code: string): string {
+    return `[전남과학고등학교 전산시스템] 전화번호 인증번호는 ${code}입니다.`;
   }
 
   private async send(path: string, body: unknown): Promise<void> {

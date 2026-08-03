@@ -12,10 +12,21 @@ export function updateMyProfile(nickname: string) {
   });
 }
 
-export function updateMyContact(field: 'email' | 'phone', value: string) {
+export function updateMyContact(
+  field: 'email' | 'phone',
+  value: string,
+  verificationCode?: string,
+) {
   return request<{ ok: true; field: 'email' | 'phone' }>('/api/me/contact', {
     method: 'PATCH',
-    body: { field, value },
+    body: { field, value, ...(field === 'phone' ? { verificationCode } : {}) },
+  });
+}
+
+export function requestMyContactVerification(phone: string) {
+  return request<{ ok: true }>('/api/me/contact/verification', {
+    method: 'POST',
+    body: { phone },
   });
 }
 

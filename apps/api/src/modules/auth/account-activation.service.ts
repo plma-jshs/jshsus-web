@@ -12,8 +12,9 @@ import type {
   AccountActivationCompleteResult,
   AccountActivationIdentityType,
   AccountActivationIssueResult,
+  AccountActivationLookupResult,
 } from '@jshsus/types';
-import { and, asc, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { DatabaseService, type AppDatabase } from '../database/database.service';
@@ -25,10 +26,13 @@ import {
 } from '../admin/identity.policy';
 import { env } from '../../shared/config/env';
 import { CognitoAuthError, CognitoAuthService, type CognitoSurface } from './cognito-auth.service';
+import { RedisService } from '../redis/redis.service';
+import { SendonPasswordResetService } from './sendon-password-reset.service';
 
 const ACTIVATION_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const ACTIVATION_CODE_LENGTH = 12;
 const MAX_ACTIVATION_ATTEMPTS = 10;
+const PHONE_VERIFICATION_TTL_SECONDS = 300;
 
 const activationIdentitySchema = z.object({
   identityType: z.enum(['student', 'staff']),
@@ -49,6 +53,16 @@ const genderSchema = z.preprocess(
 
 const phoneSchema = z.preprocess((value) => normalizePhoneNumber(value) ?? value, z.string());
 
+const activationCodeSchema = z.object({
+  activationCode: z.string().trim().min(6).max(32),
+});
+
+const phoneVerificationRequestSchema = activationCodeSchema.extend({
+  phone: phoneSchema.refine((value) => /^010\d{8}$/.test(value), {
+    message: 'Phone number must start with 010.',
+  }),
+});
+
 const completeActivationSchema = activationIdentitySchema.extend({
   activationCode: z.string().trim().min(6).max(32),
   name: z.string().trim().min(1).max(64),
@@ -57,6 +71,10 @@ const completeActivationSchema = activationIdentitySchema.extend({
   phone: phoneSchema.refine((value) => /^010\d{8}$/.test(value), {
     message: 'Phone number must start with 010.',
   }),
+  phoneVerificationCode: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/),
   password: z.string().min(8).max(256),
 });
 
@@ -90,6 +108,8 @@ export class AccountActivationService {
   constructor(
     private readonly database: DatabaseService,
     private readonly cognito: CognitoAuthService,
+    private readonly redis: RedisService,
+    private readonly sendon: SendonPasswordResetService,
   ) {}
 
   async issue(body: unknown, actorId?: number | null): Promise<AccountActivationIssueResult> {
@@ -102,6 +122,7 @@ export class AccountActivationService {
         identityType: input.identityType,
         identityNumber: input.identityNumber,
         codeHash: this.hashCode(input, code),
+        codeLookupHash: this.hashCodeLookup(code),
         attemptCount: 0,
         issuedById: actorId && actorId > 0 ? actorId : null,
         usedById: null,
@@ -110,6 +131,7 @@ export class AccountActivationService {
       .onDuplicateKeyUpdate({
         set: {
           codeHash: this.hashCode(input, code),
+          codeLookupHash: this.hashCodeLookup(code),
           attemptCount: 0,
           issuedById: actorId && actorId > 0 ? actorId : null,
           usedById: null,
@@ -185,6 +207,7 @@ export class AccountActivationService {
             identityType: input.identityType,
             identityNumber: input.identityNumber,
             codeHash: this.hashCode(input, item.code),
+            codeLookupHash: this.hashCodeLookup(item.code),
             attemptCount: 0,
             issuedById: actorId && actorId > 0 ? actorId : null,
             usedById: null,
@@ -195,6 +218,7 @@ export class AccountActivationService {
           .onDuplicateKeyUpdate({
             set: {
               codeHash: this.hashCode(input, item.code),
+              codeLookupHash: this.hashCodeLookup(item.code),
               attemptCount: 0,
               issuedById: actorId && actorId > 0 ? actorId : null,
               usedById: null,
@@ -221,6 +245,62 @@ export class AccountActivationService {
     };
   }
 
+  async lookup(body: unknown): Promise<AccountActivationLookupResult> {
+    const parsed = activationCodeSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException({
+        code: 'ACCOUNT_ACTIVATION_CODE_INVALID',
+        message: '인증코드를 확인해 주세요.',
+      });
+    }
+
+    const activation = await this.findAvailableActivation(parsed.data.activationCode);
+    return {
+      ok: true,
+      identityType: activation.identityType,
+      identityNumber: activation.identityNumber,
+    };
+  }
+
+  async requestPhoneVerification(body: unknown): Promise<{ ok: true }> {
+    const parsed = phoneVerificationRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException({
+        code: 'ACCOUNT_ACTIVATION_INVALID_INPUT',
+        message: '인증코드와 전화번호를 확인해 주세요.',
+      });
+    }
+
+    const activation = await this.findAvailableActivation(parsed.data.activationCode);
+    const phone = parsed.data.phone;
+    const code = String(randomInt(100_000, 1_000_000));
+    const flowKey = this.phoneVerificationFlowKey(parsed.data.activationCode);
+    await this.redis.setJson(
+      flowKey,
+      {
+        identityType: activation.identityType,
+        identityNumber: activation.identityNumber,
+        phone,
+        codeHash: this.hashPhoneVerificationCode(flowKey, phone, code),
+        attemptCount: 0,
+      },
+      PHONE_VERIFICATION_TTL_SECONDS,
+    );
+
+    try {
+      await this.sendon.sendVerificationCode({
+        code,
+        phone,
+        purpose: 'account-activation',
+      });
+    } catch (error) {
+      await this.redis.delete(flowKey);
+      throw error;
+    }
+
+    return { ok: true };
+  }
+
   async complete(
     body: unknown,
     _surface: CognitoSurface,
@@ -239,6 +319,15 @@ export class AccountActivationService {
       activationCode: normalizeActivationCode(parsed.data.activationCode),
       email: parsed.data.email.trim().toLocaleLowerCase('en-US'),
     };
+
+    const phoneFlowKey = this.phoneVerificationFlowKey(input.activationCode);
+    await this.assertPhoneVerification({
+      flowKey: phoneFlowKey,
+      identityType: input.identityType,
+      identityNumber: input.identityNumber,
+      phone: input.phone,
+      code: input.phoneVerificationCode,
+    });
 
     try {
       const result = await this.database.db.transaction(async (tx) => {
@@ -301,6 +390,11 @@ export class AccountActivationService {
           name: input.name,
           ...(input.identityType === 'student' ? { studentNo: input.identityNumber } : {}),
         });
+        await this.cognito.updateContactAttributes({
+          subject: cognitoUser.subject,
+          fallbackUsername: String(input.identityNumber),
+          phone: input.phone,
+        });
         await this.assertCognitoLinkAllowed(tx, user.userId, cognitoUser.subject);
         await tx
           .insert(schema.authAccounts)
@@ -335,6 +429,8 @@ export class AccountActivationService {
         targetType: result.identityType,
         targetId: result.identityNumber,
       });
+
+      await this.redis.delete(phoneFlowKey);
 
       return { ok: true, ...result };
     } catch (error) {
@@ -373,6 +469,136 @@ export class AccountActivationService {
     return createHmac('sha256', env.CSRF_SECRET)
       .update(`${input.identityType}:${input.identityNumber}:${normalizeActivationCode(code)}`)
       .digest('hex');
+  }
+
+  private hashCodeLookup(code: string) {
+    return createHmac('sha256', env.CSRF_SECRET)
+      .update(`account-activation:${normalizeActivationCode(code)}`)
+      .digest('hex');
+  }
+
+  private phoneVerificationFlowKey(activationCode: string) {
+    return `auth:account-activation:phone:${this.hashCodeLookup(activationCode)}`;
+  }
+
+  private hashPhoneVerificationCode(flowKey: string, phone: string, code: string) {
+    return createHmac('sha256', env.CSRF_SECRET)
+      .update(`${flowKey}:${phone}:${code.trim()}`)
+      .digest('hex');
+  }
+
+  private async findAvailableActivation(activationCode: string): Promise<ValidatedIdentity> {
+    const lookupResults = await this.database.db
+      .select({
+        id: schema.accountActivationCodes.id,
+        codeHash: schema.accountActivationCodes.codeHash,
+        identityType: schema.accountActivationCodes.identityType,
+        identityNumber: schema.accountActivationCodes.identityNumber,
+        usedAt: schema.accountActivationCodes.usedAt,
+        attemptCount: schema.accountActivationCodes.attemptCount,
+      })
+      .from(schema.accountActivationCodes)
+      .where(eq(schema.accountActivationCodes.codeLookupHash, this.hashCodeLookup(activationCode)))
+      .limit(1);
+    let activation: (typeof lookupResults)[number] | undefined = lookupResults[0];
+
+    if (!activation) {
+      const legacyActivations = await this.database.db
+        .select({
+          id: schema.accountActivationCodes.id,
+          codeHash: schema.accountActivationCodes.codeHash,
+          identityType: schema.accountActivationCodes.identityType,
+          identityNumber: schema.accountActivationCodes.identityNumber,
+          usedAt: schema.accountActivationCodes.usedAt,
+          attemptCount: schema.accountActivationCodes.attemptCount,
+        })
+        .from(schema.accountActivationCodes)
+        .where(isNull(schema.accountActivationCodes.codeLookupHash));
+
+      activation = legacyActivations.find((candidate) => {
+        if (candidate.usedAt || candidate.attemptCount >= MAX_ACTIVATION_ATTEMPTS) return false;
+        const expectedHash = this.hashCode(
+          {
+            identityType: candidate.identityType,
+            identityNumber: candidate.identityNumber,
+          },
+          activationCode,
+        );
+        return safeCompareHex(candidate.codeHash, expectedHash);
+      });
+
+      if (activation) {
+        await this.database.db
+          .update(schema.accountActivationCodes)
+          .set({ codeLookupHash: this.hashCodeLookup(activationCode), updatedAt: new Date() })
+          .where(eq(schema.accountActivationCodes.id, activation.id));
+      }
+    }
+
+    if (!activation || activation.usedAt || activation.attemptCount >= MAX_ACTIVATION_ATTEMPTS) {
+      throw new BadRequestException({
+        code: 'ACCOUNT_ACTIVATION_CODE_INVALID',
+        message: '인증코드를 확인해 주세요.',
+      });
+    }
+    return {
+      identityType: activation.identityType,
+      identityNumber: activation.identityNumber,
+    };
+  }
+
+  private async assertPhoneVerification(input: {
+    flowKey: string;
+    identityType: AccountActivationIdentityType;
+    identityNumber: number;
+    phone: string;
+    code: string;
+  }) {
+    const rawFlow = await this.redis.get(input.flowKey);
+    const flowSchema = z.object({
+      identityType: z.enum(['student', 'staff']),
+      identityNumber: z.number().int().positive(),
+      phone: z.string(),
+      codeHash: z.string(),
+      attemptCount: z.number().int().nonnegative(),
+    });
+    const decodedFlow: unknown = (() => {
+      try {
+        return rawFlow ? JSON.parse(rawFlow) : null;
+      } catch {
+        return null;
+      }
+    })();
+    const flow = flowSchema.safeParse(decodedFlow);
+    if (
+      !flow?.success ||
+      flow.data.identityType !== input.identityType ||
+      flow.data.identityNumber !== input.identityNumber ||
+      flow.data.phone !== input.phone
+    ) {
+      throw new BadRequestException({
+        code: 'AUTH_CODE_EXPIRED',
+        message: '전화번호 인증을 다시 진행해 주세요.',
+      });
+    }
+
+    const expectedHash = this.hashPhoneVerificationCode(input.flowKey, input.phone, input.code);
+    if (!safeCompareHex(flow.data.codeHash, expectedHash)) {
+      const attemptCount = flow.data.attemptCount + 1;
+      if (attemptCount >= 5) {
+        await this.redis.delete(input.flowKey);
+      } else {
+        await this.redis.setJson(
+          input.flowKey,
+          { ...flow.data, attemptCount },
+          PHONE_VERIFICATION_TTL_SECONDS,
+        );
+      }
+      throw new BadRequestException({
+        code: 'AUTH_CODE_MISMATCH',
+        message: '전화번호 인증번호를 확인해 주세요.',
+      });
+    }
   }
 
   private async ensureLocalIdentity(

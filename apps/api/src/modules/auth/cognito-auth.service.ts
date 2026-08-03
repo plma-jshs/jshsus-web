@@ -276,7 +276,7 @@ export class CognitoAuthService {
     if (input.email) {
       attributes.push(
         { Name: 'email', Value: input.email },
-        { Name: 'email_verified', Value: 'true' },
+        { Name: 'email_verified', Value: 'false' },
       );
     }
     if (input.phone) {

@@ -1,6 +1,7 @@
 import type {
   AccountActivationCompleteResult,
   AccountActivationIdentityType,
+  AccountActivationLookupResult,
   SessionUser,
   StudentGender,
 } from '@jshsus/types';
@@ -116,9 +117,29 @@ export function completeAccountActivation(input: {
   gender: StudentGender;
   email: string;
   phone: string;
+  phoneVerificationCode: string;
   password: string;
 }) {
   return request<AccountActivationCompleteResult>('/api/auth/account-activation/complete', {
+    method: 'POST',
+    body: input,
+    csrf: false,
+  });
+}
+
+export function lookupAccountActivation(input: { activationCode: string }) {
+  return request<AccountActivationLookupResult>('/api/auth/account-activation/lookup', {
+    method: 'POST',
+    body: input,
+    csrf: false,
+  });
+}
+
+export function requestAccountActivationPhoneVerification(input: {
+  activationCode: string;
+  phone: string;
+}) {
+  return request<{ ok: true }>('/api/auth/account-activation/phone/request', {
     method: 'POST',
     body: input,
     csrf: false,

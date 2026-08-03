@@ -1,7 +1,8 @@
 import type { FormEvent, ReactNode } from 'react';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Eye, EyeOff, LoaderCircle } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { ArrowLeft, Eye, EyeOff, LoaderCircle, LockKeyhole, UserRound } from 'lucide-react';
 import { safeInternalReturnTo } from '../../shared/lib/route';
 import { completeNewPassword, getAuthErrorCode, getAuthErrorMessage, login } from './api';
 import { AuthLayout } from './AuthLayout';
@@ -20,8 +21,11 @@ function PasswordField(props: {
 
   return (
     <div className="auth-form-field">
-      <label htmlFor={props.id}>{props.label}</label>
+      <label className="sr-only" htmlFor={props.id}>
+        {props.label}
+      </label>
       <div className="auth-password-field">
+        <LockKeyhole className="auth-field-icon" size={17} aria-hidden="true" />
         <input
           id={props.id}
           type={visible ? 'text' : 'password'}
@@ -167,16 +171,19 @@ export function LoginPage() {
       {mode === 'login' ? (
         <form className="auth-form" onSubmit={submitLogin}>
           <label htmlFor="login-username">
-            <span>학번 또는 교사번호</span>
-            <input
-              id="login-username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              autoComplete="username"
-              placeholder="학번 또는 교사번호"
-              autoFocus
-              required
-            />
+            <span className="sr-only">학번 또는 교사번호</span>
+            <span className="auth-input-shell">
+              <UserRound className="auth-field-icon" size={17} aria-hidden="true" />
+              <input
+                id="login-username"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                autoComplete="username"
+                placeholder="학번 또는 교사번호를 입력해주세요."
+                autoFocus
+                required
+              />
+            </span>
           </label>
           <PasswordField
             id="login-password"
@@ -184,7 +191,7 @@ export function LoginPage() {
             value={password}
             onChange={setPassword}
             autoComplete="current-password"
-            placeholder="비밀번호"
+            placeholder="비밀번호를 입력해주세요."
           />
 
           {notice ? <FormMessage success>{notice}</FormMessage> : null}
@@ -214,6 +221,9 @@ export function LoginPage() {
               '로그인'
             )}
           </button>
+          <p className="auth-signup-prompt">
+            통합로그인 계정이 없나요? <Link to="/account-activation">계정 생성하기</Link>
+          </p>
         </form>
       ) : null}
 

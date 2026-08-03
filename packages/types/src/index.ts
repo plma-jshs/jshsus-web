@@ -524,6 +524,12 @@ export type AccountActivationIssueResult = {
   code: string;
 };
 
+export type AccountActivationLookupResult = {
+  ok: true;
+  identityType: AccountActivationIdentityType;
+  identityNumber: number;
+};
+
 export type AccountActivationBulkIssueResult = {
   ok: true;
   identityType: 'student';

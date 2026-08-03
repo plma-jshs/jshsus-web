@@ -2,11 +2,17 @@ import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/
 import * as schema from '@jshsus/db';
 import type { ActivityRequestSummary, PointRecord, StudentSelfStatus } from '@jshsus/types';
 import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
+import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import type { AuthSession } from '../auth/auth.service';
 import { CognitoAuthService } from '../auth/cognito-auth.service';
+import { SendonPasswordResetService } from '../auth/sendon-password-reset.service';
 import { DatabaseService } from '../database/database.service';
 import { meritPointBalanceSql, penaltyPointBalanceSql } from '../points/point-balance.query';
+import { RedisService } from '../redis/redis.service';
+import { env } from '../../shared/config/env';
+
+const CONTACT_VERIFICATION_TTL_SECONDS = 300;
 
 function toDateOnly(value: Date | string): string {
   if (value instanceof Date) {
@@ -69,15 +75,28 @@ const contactUpdateSchema = z.discriminatedUnion('field', [
     value: z
       .string()
       .transform((value) => value.replace(/\D/g, ''))
-      .refine((value) => /^010\d{8}$/.test(value), '휴대폰번호를 확인해 주세요.'),
+      .refine((value) => /^010\d{8}$/.test(value), '전화번호를 확인해 주세요.'),
+    verificationCode: z
+      .string()
+      .trim()
+      .regex(/^\d{6}$/),
   }),
 ]);
+
+const phoneVerificationRequestSchema = z.object({
+  phone: z
+    .string()
+    .transform((value) => value.replace(/\D/g, ''))
+    .refine((value) => /^010\d{8}$/.test(value), '전화번호를 확인해 주세요.'),
+});
 
 @Injectable()
 export class MeService {
   constructor(
     private readonly database: DatabaseService,
     private readonly cognito: CognitoAuthService,
+    private readonly redis: RedisService,
+    private readonly sendon: SendonPasswordResetService,
   ) {}
 
   async status(session?: AuthSession): Promise<StudentSelfStatus> {
@@ -366,6 +385,9 @@ export class MeService {
       .limit(1);
 
     const value = parsed.data.value;
+    if (parsed.data.field === 'phone') {
+      await this.assertContactVerification(session.userId, value, parsed.data.verificationCode);
+    }
     if (cognitoAccount?.subject) {
       await this.cognito.updateContactAttributes({
         subject: cognitoAccount.subject,
@@ -385,6 +407,90 @@ export class MeService {
       targetId: session.userId,
     });
 
+    if (parsed.data.field === 'phone') {
+      await this.redis.delete(this.contactVerificationFlowKey(session.userId));
+    }
+
     return { ok: true as const, field: parsed.data.field };
+  }
+
+  async requestContactVerification(session: AuthSession | undefined, body: unknown) {
+    if (!session?.userId || session.userId <= 0) {
+      throw new UnauthorizedException('A persisted student session is required.');
+    }
+    const parsed = phoneVerificationRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    }
+
+    const phone = parsed.data.phone;
+    const code = String(randomInt(100_000, 1_000_000));
+    const flowKey = this.contactVerificationFlowKey(session.userId);
+    await this.redis.setJson(
+      flowKey,
+      {
+        phone,
+        codeHash: this.hashContactVerificationCode(session.userId, phone, code),
+        attemptCount: 0,
+      },
+      CONTACT_VERIFICATION_TTL_SECONDS,
+    );
+
+    try {
+      await this.sendon.sendVerificationCode({ code, phone, purpose: 'contact-change' });
+    } catch (error) {
+      await this.redis.delete(flowKey);
+      throw error;
+    }
+    return { ok: true as const };
+  }
+
+  private contactVerificationFlowKey(userId: number) {
+    return `me:contact-verification:${userId}`;
+  }
+
+  private hashContactVerificationCode(userId: number, phone: string, code: string) {
+    return createHmac('sha256', env.CSRF_SECRET)
+      .update(`contact-verification:${userId}:${phone}:${code.trim()}`)
+      .digest('hex');
+  }
+
+  private async assertContactVerification(userId: number, phone: string, code: string) {
+    const flowKey = this.contactVerificationFlowKey(userId);
+    const rawFlow = await this.redis.get(flowKey);
+    const decoded: unknown = (() => {
+      try {
+        return rawFlow ? JSON.parse(rawFlow) : null;
+      } catch {
+        return null;
+      }
+    })();
+    const parsed = z
+      .object({
+        phone: z.string(),
+        codeHash: z.string(),
+        attemptCount: z.number().int().nonnegative(),
+      })
+      .safeParse(decoded);
+    if (!parsed.success || parsed.data.phone !== phone) {
+      throw new BadRequestException('전화번호 인증을 다시 진행해 주세요.');
+    }
+
+    const expected = Buffer.from(this.hashContactVerificationCode(userId, phone, code), 'hex');
+    const actual = Buffer.from(parsed.data.codeHash, 'hex');
+    const matches = expected.length === actual.length && timingSafeEqual(expected, actual);
+    if (!matches) {
+      const attemptCount = parsed.data.attemptCount + 1;
+      if (attemptCount >= 5) {
+        await this.redis.delete(flowKey);
+      } else {
+        await this.redis.setJson(
+          flowKey,
+          { ...parsed.data, attemptCount },
+          CONTACT_VERIFICATION_TTL_SECONDS,
+        );
+      }
+      throw new BadRequestException('전화번호 인증번호를 확인해 주세요.');
+    }
   }
 }

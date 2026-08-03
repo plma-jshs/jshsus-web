@@ -514,6 +514,8 @@ jobs:
           SENDON_ACCOUNT_ID: ${{ secrets.SENDON_ACCOUNT_ID }}
           SENDON_KAKAO_SEND_PROFILE_ID: ${{ secrets.SENDON_KAKAO_SEND_PROFILE_ID }}
           SENDON_PASSWORD_RESET_TEMPLATE_ID: ${{ secrets.SENDON_PASSWORD_RESET_TEMPLATE_ID }}
+          SENDON_ACCOUNT_ACTIVATION_TEMPLATE_ID: ${{ secrets.SENDON_ACCOUNT_ACTIVATION_TEMPLATE_ID }}
+          SENDON_CONTACT_VERIFICATION_TEMPLATE_ID: ${{ secrets.SENDON_CONTACT_VERIFICATION_TEMPLATE_ID }}
           SENDON_SMS_SENDER_NUMBER: ${{ secrets.SENDON_SMS_SENDER_NUMBER }}
         run: |
           set -euo pipefail
@@ -623,6 +625,8 @@ jobs:
           set_env_value SENDON_KAKAO_SEND_PROFILE_ID "$SENDON_KAKAO_SEND_PROFILE_ID"
           set_env_value SENDON_PASSWORD_RESET_TEMPLATE_ID "$SENDON_PASSWORD_RESET_TEMPLATE_ID"
           set_env_value RESET_DATABASE_ON_BASELINE_MISMATCH false
+          set_optional_env_value SENDON_ACCOUNT_ACTIVATION_TEMPLATE_ID
+          set_optional_env_value SENDON_CONTACT_VERIFICATION_TEMPLATE_ID
           set_optional_env_value SENDON_SMS_SENDER_NUMBER
 
       - name: Authenticate the server to GHCR

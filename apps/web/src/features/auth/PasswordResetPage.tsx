@@ -2,7 +2,7 @@ import type { FormEvent, ReactNode } from 'react';
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, KeyRound, LockKeyhole, UserRound } from 'lucide-react';
 import {
   confirmPasswordReset,
   getAuthErrorMessage,
@@ -25,8 +25,11 @@ function PasswordField(props: {
 
   return (
     <div className="auth-form-field">
-      <label htmlFor={props.id}>{props.label}</label>
+      <label className="sr-only" htmlFor={props.id}>
+        {props.label}
+      </label>
       <div className="auth-password-field">
+        <LockKeyhole className="auth-field-icon" size={17} aria-hidden="true" />
         <input
           id={props.id}
           type={visible ? 'text' : 'password'}
@@ -90,7 +93,7 @@ export function PasswordResetPage() {
       setValidationError(null);
       setNotice(
         delivery === 'phone'
-          ? '계정에 등록된 휴대폰 번호로 인증 코드를 보냈습니다.'
+          ? '계정에 등록된 전화번호로 인증 코드를 보냈습니다.'
           : '계정에 등록되고 확인된 이메일로 인증 코드를 보냈습니다.',
       );
     },
@@ -138,28 +141,23 @@ export function PasswordResetPage() {
         : null);
 
   return (
-    <AuthLayout
-      active="password"
-      title={step === 'done' ? '비밀번호 변경 완료' : '비밀번호 찾기'}
-      description={
-        step === 'done'
-          ? '새 비밀번호로 다시 로그인해 주세요.'
-          : '등록된 연락처로 본인 확인 코드를 보냅니다.'
-      }
-    >
+    <AuthLayout active="password" title={step === 'done' ? '비밀번호 변경 완료' : '비밀번호 찾기'}>
       {step === 'request' ? (
         <form className="auth-form" onSubmit={submitRequest}>
           <label htmlFor="forgot-username">
-            <span>학번 또는 교사번호</span>
-            <input
-              id="forgot-username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              autoComplete="username"
-              placeholder="학번 또는 교사번호"
-              autoFocus
-              required
-            />
+            <span className="sr-only">학번 또는 교사번호</span>
+            <span className="auth-input-shell">
+              <UserRound className="auth-field-icon" size={17} aria-hidden="true" />
+              <input
+                id="forgot-username"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                autoComplete="username"
+                placeholder="학번 또는 교사번호를 입력해주세요."
+                autoFocus
+                required
+              />
+            </span>
           </label>
           <fieldset className="auth-recovery-method">
             <legend>인증 방법</legend>
@@ -198,17 +196,20 @@ export function PasswordResetPage() {
         <form className="auth-form" onSubmit={submitConfirm}>
           {notice ? <FormMessage success>{notice}</FormMessage> : null}
           <label htmlFor="confirmation-code">
-            <span>인증 코드</span>
-            <input
-              id="confirmation-code"
-              value={confirmationCode}
-              onChange={(event) => setConfirmationCode(event.target.value.replace(/\s/g, ''))}
-              autoComplete="one-time-code"
-              inputMode="numeric"
-              placeholder="인증코드"
-              autoFocus
-              required
-            />
+            <span className="sr-only">인증 코드</span>
+            <span className="auth-input-shell">
+              <KeyRound className="auth-field-icon" size={17} aria-hidden="true" />
+              <input
+                id="confirmation-code"
+                value={confirmationCode}
+                onChange={(event) => setConfirmationCode(event.target.value.replace(/\s/g, ''))}
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                placeholder="인증코드를 입력해주세요."
+                autoFocus
+                required
+              />
+            </span>
           </label>
           <PasswordField
             id="reset-password"
@@ -216,7 +217,7 @@ export function PasswordResetPage() {
             value={newPassword}
             onChange={setNewPassword}
             autoComplete="new-password"
-            placeholder="새 비밀번호"
+            placeholder="새 비밀번호를 입력해주세요."
           />
           <PasswordField
             id="reset-password-confirm"
@@ -224,7 +225,7 @@ export function PasswordResetPage() {
             value={newPasswordConfirm}
             onChange={setNewPasswordConfirm}
             autoComplete="new-password"
-            placeholder="새 비밀번호 확인"
+            placeholder="새 비밀번호를 다시 입력해주세요."
           />
           <p className="auth-help">
             8자 이상으로 입력하고, 이름이나 학번과 다른 비밀번호를 사용하세요.

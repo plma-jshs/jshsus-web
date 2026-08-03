@@ -255,6 +255,20 @@ export class AuthController {
     return this.accountActivationService.complete(body, inferCognitoSurface(request));
   }
 
+  @Post('account-activation/lookup')
+  @RateLimit({ max: 10, windowSeconds: 900 })
+  lookupAccountActivation(@Body() body: unknown, @Req() request: Request) {
+    assertTrustedCredentialRequest(request);
+    return this.accountActivationService.lookup(body);
+  }
+
+  @Post('account-activation/phone/request')
+  @RateLimit({ max: 5, windowSeconds: 900 })
+  requestAccountActivationPhoneCode(@Body() body: unknown, @Req() request: Request) {
+    assertTrustedCredentialRequest(request);
+    return this.accountActivationService.requestPhoneVerification(body);
+  }
+
   private setSessionCookies(
     request: Request,
     response: Response,

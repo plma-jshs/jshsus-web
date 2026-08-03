@@ -88,6 +88,7 @@ export const accountActivationCodes = mysqlTable(
     identityType: mysqlEnum('identity_type', ['student', 'staff']).notNull(),
     identityNumber: int('identity_number').notNull(),
     codeHash: varchar('code_hash', { length: 128 }).notNull(),
+    codeLookupHash: varchar('code_lookup_hash', { length: 64 }),
     attemptCount: int('attempt_count').notNull().default(0),
     issuedById: int('issued_by_id').references(() => users.id),
     usedById: int('used_by_id').references(() => users.id),
@@ -101,6 +102,7 @@ export const accountActivationCodes = mysqlTable(
     ),
     issuerIdx: index('account_activation_issuer_idx').on(table.issuedById),
     usedIdx: index('account_activation_used_idx').on(table.usedAt),
+    codeLookupIdx: uniqueIndex('account_activation_code_lookup_idx').on(table.codeLookupHash),
   }),
 );
 
