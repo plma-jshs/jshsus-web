@@ -10,6 +10,7 @@ import {
 import { AppShell } from '../components/layout/AppShell';
 import { PageScaffold, PageState } from '../components/page/PageScaffold';
 import { getSession } from '../features/auth/api';
+import { LoginPage } from '../features/auth/LoginPage';
 import '../styles/not-found.css';
 
 const tablePageSizes = [20, 50, 100] as const;
@@ -464,7 +465,7 @@ const loginRoute = createRoute({
   validateSearch: (search: Record<string, unknown>) => ({
     returnTo: typeof search.returnTo === 'string' ? search.returnTo : undefined,
   }),
-  component: lazyRouteComponent(() => import('../features/auth/LoginPage'), 'LoginPage'),
+  component: LoginPage,
 });
 
 const forgotPasswordRoute = createRoute({

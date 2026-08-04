@@ -26,13 +26,11 @@ export function AuthLayout({
               width="32"
               height="32"
             />
-            <span className="auth-brand-copy">
-              <strong>과구리</strong>
-              <span className="auth-intro__wordmark" aria-hidden="true">
-                JSHSUS
-              </span>
-            </span>
+            <strong>과구리</strong>
           </Link>
+          <span className="auth-intro__wordmark" aria-hidden="true">
+            JSHSUS
+          </span>
         </aside>
 
         <section className="auth-panel">
