@@ -79,9 +79,9 @@
   display: block;
   margin-top: 18px;
   color: rgb(255 255 255 / 68%);
-  font-size: 50px;
-  font-weight: 600;
-  letter-spacing: 0.3em;
+  font-size: 35px;
+  font-weight: 200;
+  letter-spacing: 0.1em;
   line-height: 1;
   text-shadow: none;
 }
@@ -89,10 +89,13 @@
 .auth-panel {
   position: relative;
   z-index: 1;
+  display: flex;
   width: 100%;
   min-width: 0;
   padding: 48px 52px 42px;
   align-self: stretch;
+  flex-direction: column;
+  justify-content: center;
   background: #fff;
 }
 
