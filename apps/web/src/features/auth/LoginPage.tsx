@@ -1,10 +1,19 @@
 import type { FormEvent, ReactNode } from 'react';
-import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
+import { useEffect, useRef, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Eye, EyeOff, LoaderCircle, LockKeyhole, UserRound } from 'lucide-react';
 import { safeInternalReturnTo } from '../../shared/lib/route';
-import { completeNewPassword, getAuthErrorCode, getAuthErrorMessage, login } from './api';
+import {
+  completeNewPassword,
+  continueSso,
+  describeSsoRequest,
+  getAuthErrorCode,
+  getAuthErrorMessage,
+  getSession,
+  getSsoConfig,
+  login,
+  startSso,
+} from './api';
 import { AuthLayout } from './AuthLayout';
 
 type AuthMode = 'login' | 'new-password';
@@ -58,6 +67,11 @@ function FormMessage({ children, success = false }: { children: ReactNode; succe
 
 export function LoginPage() {
   const queryClient = useQueryClient();
+  const searchParams = new URLSearchParams(window.location.search);
+  const ssoRequestId = searchParams.get('sso');
+  const requestedReturnTo = searchParams.get('returnTo') ?? '/';
+  const redirectStarted = useRef(false);
+  const continueStarted = useRef(false);
   const [mode, setMode] = useState<AuthMode>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -68,10 +82,67 @@ export function LoginPage() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  const configQuery = useQuery({
+    queryKey: ['sso-config'],
+    queryFn: getSsoConfig,
+    retry: false,
+  });
+  const requestQuery = useQuery({
+    queryKey: ['sso-request', ssoRequestId],
+    queryFn: () => describeSsoRequest(ssoRequestId ?? ''),
+    enabled: configQuery.data?.isAuthOrigin === true && Boolean(ssoRequestId),
+    retry: false,
+  });
+  const centralSessionQuery = useQuery({
+    queryKey: ['session'],
+    queryFn: getSession,
+    enabled: configQuery.data?.isAuthOrigin === true && Boolean(ssoRequestId),
+    retry: false,
+  });
+  const startSsoMutation = useMutation({
+    mutationFn: startSso,
+    onSuccess: ({ authorizationUrl }) => window.location.replace(authorizationUrl),
+  });
+  const continueSsoMutation = useMutation({
+    mutationFn: continueSso,
+    onSuccess: ({ redirectUrl }) => window.location.replace(redirectUrl),
+  });
+  const startSsoRequest = startSsoMutation.mutate;
+  const continueSsoRequest = continueSsoMutation.mutate;
+
+  useEffect(() => {
+    const config = configQuery.data;
+    if (!config || config.isAuthOrigin || !config.client || redirectStarted.current) return;
+    redirectStarted.current = true;
+    startSsoRequest(safeInternalReturnTo(requestedReturnTo, window.location.origin));
+  }, [configQuery.data, requestedReturnTo, startSsoRequest]);
+
+  useEffect(() => {
+    if (
+      !ssoRequestId ||
+      !centralSessionQuery.data?.isLogined ||
+      continueStarted.current ||
+      requestQuery.isError
+    ) {
+      return;
+    }
+    continueStarted.current = true;
+    continueSsoRequest(ssoRequestId);
+  }, [centralSessionQuery.data, continueSsoRequest, requestQuery.isError, ssoRequestId]);
+
   const finishLogin = async () => {
     await queryClient.invalidateQueries({ queryKey: ['session'] });
+    if (ssoRequestId) {
+      continueStarted.current = true;
+      continueSsoMutation.mutate(ssoRequestId);
+      return;
+    }
     const returnTo = new URLSearchParams(window.location.search).get('returnTo');
-    window.location.assign(safeInternalReturnTo(returnTo, window.location.origin));
+    if (returnTo) {
+      window.location.assign(safeInternalReturnTo(returnTo, window.location.origin));
+      return;
+    }
+    window.location.assign(configQuery.data?.defaultServiceOrigin ?? '/');
   };
 
   const loginMutation = useMutation({
@@ -91,7 +162,12 @@ export function LoginPage() {
     onError: (error) => {
       if (getAuthErrorCode(error) === 'AUTH_PASSWORD_RESET_REQUIRED') {
         setPassword('');
-        window.location.assign(`/forgot-password?username=${encodeURIComponent(username.trim())}`);
+        const forgotUrl = new URL('/forgot-password', window.location.origin);
+        forgotUrl.searchParams.set('username', username.trim());
+        if (ssoRequestId) {
+          forgotUrl.searchParams.set('returnTo', `/login?sso=${ssoRequestId}`);
+        }
+        window.location.assign(`${forgotUrl.pathname}${forgotUrl.search}`);
       }
     },
   });
@@ -149,16 +225,67 @@ export function LoginPage() {
   const title = mode === 'login' ? '전남과학고 통합로그인' : '새 비밀번호 설정';
   const normalizedUsername = username.trim();
   const forgotPasswordHref = normalizedUsername
-    ? `/forgot-password?username=${encodeURIComponent(normalizedUsername)}`
-    : '/forgot-password';
+    ? `/forgot-password?username=${encodeURIComponent(normalizedUsername)}${
+        ssoRequestId ? `&returnTo=${encodeURIComponent(`/login?sso=${ssoRequestId}`)}` : ''
+      }`
+    : ssoRequestId
+      ? `/forgot-password?returnTo=${encodeURIComponent(`/login?sso=${ssoRequestId}`)}`
+      : '/forgot-password';
 
   const activeError =
     validationError ??
+    (continueSsoMutation.isError
+      ? getAuthErrorMessage(
+          continueSsoMutation.error,
+          '통합로그인 요청을 완료하지 못했습니다. 이용할 서비스에서 다시 시작해 주세요.',
+        )
+      : null) ??
     (mode === 'login' && loginMutation.isError
       ? getAuthErrorMessage(loginMutation.error, '학번·교사번호 또는 비밀번호를 확인해 주세요.')
       : mode === 'new-password' && newPasswordMutation.isError
         ? getAuthErrorMessage(newPasswordMutation.error, '비밀번호를 변경하지 못했습니다.')
         : null);
+
+  if (configQuery.isError) {
+    return (
+      <AuthLayout active="login" title="통합로그인을 불러오지 못했습니다">
+        <FormMessage>잠시 후 페이지를 새로고침해 주세요.</FormMessage>
+      </AuthLayout>
+    );
+  }
+
+  if (configQuery.isPending || (configQuery.data && !configQuery.data.isAuthOrigin)) {
+    return (
+      <AuthLayout active="login" title="통합로그인으로 이동 중">
+        <p className="auth-help" role="status">
+          안전한 통합로그인 페이지로 연결하고 있습니다.
+        </p>
+        {startSsoMutation.isError ? (
+          <FormMessage>
+            통합로그인 페이지로 이동하지 못했습니다. 잠시 후 다시 시도해 주세요.
+          </FormMessage>
+        ) : null}
+      </AuthLayout>
+    );
+  }
+
+  if (ssoRequestId && (requestQuery.isPending || centralSessionQuery.isPending)) {
+    return (
+      <AuthLayout active="login" title="통합로그인 확인 중">
+        <p className="auth-help" role="status">
+          요청한 서비스를 확인하고 있습니다.
+        </p>
+      </AuthLayout>
+    );
+  }
+
+  if (ssoRequestId && requestQuery.isError) {
+    return (
+      <AuthLayout active="login" title="로그인 요청 만료">
+        <FormMessage>이용할 서비스로 돌아가 로그인을 다시 시작해 주세요.</FormMessage>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout
@@ -222,7 +349,16 @@ export function LoginPage() {
             )}
           </button>
           <p className="auth-signup-prompt">
-            통합로그인 계정이 없나요? <Link to="/account-activation">계정 생성하기</Link>
+            통합로그인 계정이 없나요?{' '}
+            <a
+              href={
+                ssoRequestId
+                  ? `/account-activation?returnTo=${encodeURIComponent(`/login?sso=${ssoRequestId}`)}`
+                  : '/account-activation'
+              }
+            >
+              계정 생성하기
+            </a>
           </p>
         </form>
       ) : null}

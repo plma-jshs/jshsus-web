@@ -1,7 +1,6 @@
 import type { FormEvent, ReactNode } from 'react';
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import type { AccountActivationIdentityType, StudentGender } from '@jshsus/types';
 import { ArrowLeft, Eye, EyeOff, LockKeyhole } from 'lucide-react';
 import {
@@ -64,7 +63,14 @@ function normalizedPhone(value: string) {
   return digits.length === 10 && digits.startsWith('10') ? `0${digits}` : digits;
 }
 
+function initialReturnTo() {
+  if (typeof window === 'undefined') return undefined;
+  const value = new URLSearchParams(window.location.search).get('returnTo');
+  return value?.startsWith('/') && !value.startsWith('//') ? value : undefined;
+}
+
 export function AccountActivationPage() {
+  const loginReturnHref = initialReturnTo() ?? '/login';
   const [activationCode, setActivationCode] = useState('');
   const [identity, setIdentity] = useState<{
     identityType: AccountActivationIdentityType;
@@ -202,9 +208,9 @@ export function AccountActivationPage() {
           <FormMessage success>
             계정을 만들었습니다. 학번 또는 교사번호와 설정한 비밀번호로 로그인해 주세요.
           </FormMessage>
-          <Link className="auth-submit" to="/login" search={{ returnTo: undefined }} replace>
+          <a className="auth-submit" href={loginReturnHref}>
             로그인하기
-          </Link>
+          </a>
         </div>
       ) : !identity ? (
         <form className="auth-form" onSubmit={submitLookup}>
@@ -224,9 +230,9 @@ export function AccountActivationPage() {
           <button className="auth-submit" type="submit" disabled={lookupMutation.isPending}>
             {lookupMutation.isPending ? '확인 중' : '다음'}
           </button>
-          <Link className="auth-back-button" to="/login" search={{ returnTo: undefined }}>
+          <a className="auth-back-button" href={loginReturnHref}>
             <ArrowLeft size={15} aria-hidden="true" /> 로그인으로 돌아가기
-          </Link>
+          </a>
         </form>
       ) : (
         <form className="auth-form" onSubmit={submitActivation}>

@@ -31,9 +31,11 @@ const legacySessionSchema = z.object({
   identityType: z.enum(['student', 'staff', 'local']).optional(),
   name: z.string().optional(),
   jshsus: z.string().optional(),
+  persistent: z.boolean().optional().default(false),
 });
 
-export type AuthSession = z.infer<typeof legacySessionSchema> & {
+export type AuthSession = Omit<z.infer<typeof legacySessionSchema>, 'persistent'> & {
+  persistent?: boolean;
   isLogined: true;
 };
 
@@ -238,6 +240,7 @@ export class AuthService {
       identityType: identity.identityType,
       name: account.name,
       jshsus: identity.identifier,
+      persistent: ttlSeconds === env.IAM_REMEMBER_TOKEN_TTL_SECONDS,
       isLogined: true,
     };
 
@@ -940,6 +943,39 @@ export class AuthService {
     } catch {
       return false;
     }
+  }
+
+  async issueDelegatedSession(source: AuthSession): Promise<{
+    token: string;
+    session: AuthSession;
+    csrfToken: string;
+    persistent: boolean;
+  }> {
+    const persistent = source.persistent === true;
+    const ttlSeconds = persistent ? env.IAM_REMEMBER_TOKEN_TTL_SECONDS : env.IAM_TOKEN_TTL_SECONDS;
+    const token = randomUUID();
+    const session: AuthSession = {
+      ...source,
+      expiresAt: Date.now() + ttlSeconds * 1000,
+      persistent,
+      isLogined: true,
+    };
+
+    await this.redis.setJson(`iam_token:${token}`, session, ttlSeconds);
+    await this.redis.addToSet(`iam_user_sessions:${source.userId}`, token, ttlSeconds);
+    await this.database.writeAudit({
+      actorId: source.userId,
+      action: 'auth.sso.exchange',
+      targetType: 'users',
+      targetId: source.userId,
+    });
+
+    return {
+      token,
+      session,
+      csrfToken: this.createCsrfToken(token),
+      persistent,
+    };
   }
 
   async logout(token: string): Promise<void> {

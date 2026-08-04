@@ -620,7 +620,7 @@ export function UsersPage() {
       id: 'status',
       accessorKey: 'status',
       header: '상태',
-      cell: ({ row }) => (row.original.status === 'deleted' ? '전근·퇴직' : '재직·휴직'),
+      cell: ({ row }) => (row.original.status === 'deleted' ? '전근·퇴직' : '재직'),
       meta: { align: 'center', width: 112 },
     },
     {

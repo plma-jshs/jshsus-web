@@ -65,6 +65,60 @@ export function getSession() {
   return request<SessionUser>('/api/auth/session');
 }
 
+export type SsoConfig = {
+  authOrigin: string;
+  defaultServiceOrigin: string | null;
+  isAuthOrigin: boolean;
+  client: 'web' | 'admin' | null;
+};
+
+export function getSsoConfig() {
+  return request<SsoConfig>('/api/auth/sso/config');
+}
+
+export function startSso(returnTo?: string) {
+  return request<{ authorizationUrl: string }>('/api/auth/sso/start', {
+    method: 'POST',
+    body: { returnTo },
+    csrf: false,
+  });
+}
+
+export function describeSsoRequest(requestId: string) {
+  return request<{ client: 'web' | 'admin'; serviceName: string }>(
+    `/api/auth/sso/requests/${encodeURIComponent(requestId)}`,
+  );
+}
+
+export function continueSso(requestId: string) {
+  return request<{ redirectUrl: string }>('/api/auth/sso/continue', {
+    method: 'POST',
+    body: { requestId },
+  });
+}
+
+export function exchangeSso(input: { code: string; state: string }) {
+  return request<{ status: 'AUTHENTICATED'; returnTo: string }>('/api/auth/sso/exchange', {
+    method: 'POST',
+    body: input,
+    csrf: false,
+  }).then((result) => {
+    clearCsrfToken();
+    return result;
+  });
+}
+
+export function logoutSso(returnTo: string) {
+  return request<{ redirectUrl: string }>('/api/auth/sso/logout', {
+    method: 'POST',
+    body: { returnTo },
+    csrf: false,
+  }).then((result) => {
+    clearCsrfToken();
+    return result;
+  });
+}
+
 export function login(input: { username: string; password: string; remember: boolean }) {
   return request<LoginResult>('/api/auth/login', {
     method: 'POST',

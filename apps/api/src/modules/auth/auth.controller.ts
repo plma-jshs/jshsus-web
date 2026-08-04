@@ -4,6 +4,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  Param,
   Post,
   Req,
   Res,
@@ -20,6 +21,7 @@ import type { AuthenticatedRequest } from '../../shared/auth/request-auth';
 import { CsrfGuard } from '../../shared/auth/csrf.guard';
 import { RateLimit } from '../../shared/security/rate-limit.guard';
 import type { CognitoSurface } from './cognito-auth.service';
+import { SsoService } from './sso.service';
 
 const loginSchema = z.object({
   username: z.string().trim().min(1).max(128),
@@ -41,6 +43,23 @@ const confirmPasswordSchema = z.object({
   username: z.string().trim().min(1).max(128),
   code: z.string().trim().min(4).max(16),
   newPassword: z.string().min(8).max(256),
+});
+
+const ssoStartSchema = z.object({
+  returnTo: z.string().max(1_000).optional(),
+});
+
+const ssoContinueSchema = z.object({
+  requestId: z.string().uuid(),
+});
+
+const ssoExchangeSchema = z.object({
+  code: z.string().min(32).max(256),
+  state: z.string().min(32).max(256),
+});
+
+const ssoLogoutSchema = z.object({
+  returnTo: z.string().url().max(1_000).optional(),
 });
 
 function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
@@ -66,8 +85,21 @@ function normalizeOrigin(value: string): string | null {
   }
 }
 
+function requestOrigin(request: Request): string | null {
+  const origin = firstHeaderValue(request.headers.origin);
+  if (origin) return normalizeOrigin(origin);
+
+  const host = firstHeaderValue(request.headers.host);
+  if (!host) return null;
+  const forwardedProto = firstHeaderValue(request.headers['x-forwarded-proto']);
+  const protocol = forwardedProto?.split(',', 1)[0]?.trim() || request.protocol || 'http';
+  return normalizeOrigin(`${protocol}://${host}`);
+}
+
 const allowedCredentialOrigins = new Set(
-  env.CORS_ORIGINS.map(normalizeOrigin).filter((origin): origin is string => origin !== null),
+  [...env.CORS_ORIGINS, env.SSO_PUBLIC_ORIGIN]
+    .map(normalizeOrigin)
+    .filter((origin): origin is string => origin !== null),
 );
 
 export function assertTrustedCredentialRequest(request: Request): void {
@@ -152,7 +184,101 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly accountActivationService: AccountActivationService,
+    private readonly ssoService: SsoService,
   ) {}
+
+  @Get('sso/config')
+  ssoConfig(@Req() request: Request) {
+    return this.ssoService.getConfig(requestOrigin(request));
+  }
+
+  @Post('sso/start')
+  @RateLimit({ max: 20, windowSeconds: 60 })
+  async startSso(
+    @Body() body: unknown,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    assertTrustedCredentialRequest(request);
+    const input = parseBody(ssoStartSchema, body);
+    const result = await this.ssoService.start(requestOrigin(request) ?? '', input.returnTo);
+    response.cookie(env.SSO_ATTEMPT_COOKIE_NAME, result.browserBinding, {
+      ...cookieBaseOptions(request),
+      httpOnly: true,
+      maxAge: env.SSO_REQUEST_TTL_SECONDS * 1_000,
+    });
+    return { authorizationUrl: result.authorizationUrl };
+  }
+
+  @Get('sso/requests/:requestId')
+  describeSsoRequest(@Param('requestId') requestId: string, @Req() request: Request) {
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
+    if (!z.string().uuid().safeParse(requestId).success) {
+      throw new BadRequestException({
+        code: 'SSO_REQUEST_INVALID',
+        message: '로그인 요청을 확인할 수 없습니다.',
+      });
+    }
+    return this.ssoService.describeRequest(requestId);
+  }
+
+  @Post('sso/continue')
+  @UseGuards(SessionGuard, CsrfGuard)
+  async continueSso(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
+    const input = parseBody(ssoContinueSchema, body);
+    return this.ssoService.continue(input.requestId, request.authToken ?? '');
+  }
+
+  @Post('sso/exchange')
+  @RateLimit({ max: 20, windowSeconds: 60 })
+  async exchangeSso(
+    @Body() body: unknown,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    assertTrustedCredentialRequest(request);
+    const input = parseBody(ssoExchangeSchema, body);
+    const browserBinding = request.cookies?.[env.SSO_ATTEMPT_COOKIE_NAME];
+    try {
+      const exchange = await this.ssoService.exchange(
+        requestOrigin(request) ?? '',
+        input.code,
+        input.state,
+        typeof browserBinding === 'string' ? browserBinding : '',
+      );
+      this.setSessionCookies(request, response, exchange.result);
+      return { status: 'AUTHENTICATED' as const, returnTo: exchange.returnTo };
+    } finally {
+      response.clearCookie(env.SSO_ATTEMPT_COOKIE_NAME, {
+        ...cookieBaseOptions(request),
+        httpOnly: true,
+      });
+    }
+  }
+
+  @Post('sso/logout')
+  @RateLimit({ max: 20, windowSeconds: 60 })
+  async logoutSso(
+    @Body() body: unknown,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    assertTrustedCredentialRequest(request);
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
+    const input = parseBody(ssoLogoutSchema, body);
+    const token = this.authService.extractToken(request);
+    if (token) {
+      const session = await this.authService.getSessionFromToken(token);
+      if (session?.userId) {
+        await this.authService.invalidateUserSessions(session.userId);
+      } else {
+        await this.authService.logout(token);
+      }
+    }
+    this.clearSessionCookies(request, response);
+    return { redirectUrl: this.ssoService.validateLogoutTarget(input.returnTo) };
+  }
 
   @Get('session')
   async session(@Req() request: Request) {
@@ -182,6 +308,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     assertTrustedCredentialRequest(request);
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
     const input = parseBody(loginSchema, body);
     const result = await this.authService.login({
       username: input.username,
@@ -207,6 +334,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     assertTrustedCredentialRequest(request);
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
     const input = parseBody(newPasswordSchema, body);
     const result = await this.authService.completeNewPassword(
       input.flowId,
@@ -229,6 +357,7 @@ export class AuthController {
   @RateLimit({ max: 5, windowSeconds: 900 })
   forgotPassword(@Body() body: unknown, @Req() request: Request) {
     assertTrustedCredentialRequest(request);
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
     const input = parseBody(forgotPasswordSchema, body);
     return this.authService.requestPasswordReset(
       input.username,
@@ -241,6 +370,7 @@ export class AuthController {
   @RateLimit({ max: 10, windowSeconds: 900 })
   confirmPassword(@Body() body: unknown, @Req() request: Request) {
     assertTrustedCredentialRequest(request);
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
     const input = parseBody(confirmPasswordSchema, body);
     return this.authService.confirmPasswordReset({
       ...input,
@@ -252,6 +382,7 @@ export class AuthController {
   @RateLimit({ max: 5, windowSeconds: 900 })
   completeAccountActivation(@Body() body: unknown, @Req() request: Request) {
     assertTrustedCredentialRequest(request);
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
     return this.accountActivationService.complete(body, inferCognitoSurface(request));
   }
 
@@ -259,6 +390,7 @@ export class AuthController {
   @RateLimit({ max: 10, windowSeconds: 900 })
   lookupAccountActivation(@Body() body: unknown, @Req() request: Request) {
     assertTrustedCredentialRequest(request);
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
     return this.accountActivationService.lookup(body);
   }
 
@@ -266,6 +398,7 @@ export class AuthController {
   @RateLimit({ max: 5, windowSeconds: 900 })
   requestAccountActivationPhoneCode(@Body() body: unknown, @Req() request: Request) {
     assertTrustedCredentialRequest(request);
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
     return this.accountActivationService.requestPhoneVerification(body);
   }
 
@@ -273,13 +406,14 @@ export class AuthController {
   @RateLimit({ max: 5, windowSeconds: 900 })
   requestAccountActivationEmailCode(@Body() body: unknown, @Req() request: Request) {
     assertTrustedCredentialRequest(request);
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
     return this.accountActivationService.requestEmailVerification(body);
   }
 
   private setSessionCookies(
     request: Request,
     response: Response,
-    result: Extract<Awaited<ReturnType<AuthService['login']>>, { status: 'AUTHENTICATED' }>,
+    result: { token: string; csrfToken: string; persistent: boolean },
   ) {
     response.cookie(env.IAM_COOKIE_NAME, result.token, {
       ...cookieBaseOptions(request),
@@ -293,15 +427,7 @@ export class AuthController {
     });
   }
 
-  @Post('logout')
-  @UseGuards(SessionGuard, CsrfGuard)
-  async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
-    const token = this.authService.extractToken(request);
-
-    if (token) {
-      await this.authService.logout(token);
-    }
-
+  private clearSessionCookies(request: Request, response: Response) {
     response.clearCookie(env.IAM_COOKIE_NAME, {
       ...cookieBaseOptions(request),
       httpOnly: true,
@@ -311,6 +437,23 @@ export class AuthController {
       ...cookieBaseOptions(request),
       httpOnly: false,
     });
+  }
+
+  @Post('logout')
+  @UseGuards(SessionGuard, CsrfGuard)
+  async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
+    const token = this.authService.extractToken(request);
+
+    if (token) {
+      const session = await this.authService.getSessionFromToken(token);
+      if (session?.userId) {
+        await this.authService.invalidateUserSessions(session.userId);
+      } else {
+        await this.authService.logout(token);
+      }
+    }
+
+    this.clearSessionCookies(request, response);
 
     return { ok: true };
   }

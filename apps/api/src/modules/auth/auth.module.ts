@@ -10,6 +10,7 @@ import { AccountActivationService } from './account-activation.service';
 import { CognitoAuthService } from './cognito-auth.service';
 import { SendonPasswordResetService } from './sendon-password-reset.service';
 import { EmailVerificationService } from './email-verification.service';
+import { SsoService } from './sso.service';
 
 @Global()
 @Module({
@@ -20,6 +21,7 @@ import { EmailVerificationService } from './email-verification.service';
     AccountActivationService,
     SendonPasswordResetService,
     EmailVerificationService,
+    SsoService,
     SessionGuard,
     OptionalSessionGuard,
     RolesGuard,
@@ -32,6 +34,7 @@ import { EmailVerificationService } from './email-verification.service';
     AccountActivationService,
     SendonPasswordResetService,
     EmailVerificationService,
+    SsoService,
     SessionGuard,
     OptionalSessionGuard,
     RolesGuard,

@@ -953,13 +953,13 @@
 }
 
 .my-page .status-activity {
-  padding: 0 28px 18px;
+  padding: 18px 20px 19px;
 }
 
 .my-page .status-activity > header {
-  height: 48px;
-  min-height: 48px;
-  padding: 0;
+  height: auto;
+  min-height: 0;
+  padding: 0 0 10px;
 }
 
 .my-page .status-activity__row {

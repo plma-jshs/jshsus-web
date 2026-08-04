@@ -14,7 +14,7 @@ import {
   User,
   X,
 } from 'lucide-react';
-import { getSession, logout } from '../../features/auth/api';
+import { getSession, getSsoConfig, logout } from '../../features/auth/api';
 import { getMyStatus } from '../../features/my-status/api';
 import { getAdminSiteHref } from '../../shared/lib/adminSiteHref';
 import { UserAvatar } from '../page/UserAvatar';
@@ -358,6 +358,13 @@ function PortalShell() {
     mutationFn: logout,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['session'] });
+      const config = await getSsoConfig().catch(() => null);
+      if (config?.authOrigin) {
+        const logoutUrl = new URL('/logout', config.authOrigin);
+        logoutUrl.searchParams.set('returnTo', window.location.origin);
+        window.location.assign(logoutUrl.toString());
+        return;
+      }
       window.location.assign('/');
     },
   });
@@ -497,15 +504,38 @@ function PortalShell() {
 }
 
 export function AppShell() {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const pathname = useRouterState({
+    select: (state) => state.matches[state.matches.length - 1]?.pathname ?? state.location.pathname,
+  });
   const normalizedPathname = pathname === '/' ? pathname : pathname.replace(/\/+$/, '');
-  const isAuthPage = ['/login', '/forgot-password', '/account-activation'].includes(
-    normalizedPathname,
-  );
+  const ssoConfigQuery = useQuery({
+    queryKey: ['sso-config'],
+    queryFn: getSsoConfig,
+    retry: false,
+  });
+  const isAuthPage = [
+    '/login',
+    '/forgot-password',
+    '/account-activation',
+    '/auth/callback',
+    '/logout',
+  ].includes(normalizedPathname);
   const isNotFound = useRouterState({
     select: (state) =>
-      state.statusCode === 404 || state.matches.some((match) => match.status === 'notFound'),
+      !state.isLoading &&
+      (state.statusCode === 404 || state.matches.some((match) => match.status === 'notFound')),
   });
+  const obviousAuthHost = ['auth.jshsus.kr', 'auth.localhost'].includes(window.location.hostname);
+  const isCentralAuthHost = ssoConfigQuery.data?.isAuthOrigin ?? obviousAuthHost;
+
+  useEffect(() => {
+    if (!isCentralAuthHost || isAuthPage || !ssoConfigQuery.data?.defaultServiceOrigin) return;
+    const destination = new URL(
+      `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      ssoConfigQuery.data.defaultServiceOrigin,
+    );
+    window.location.replace(destination.toString());
+  }, [isAuthPage, isCentralAuthHost, ssoConfigQuery.data?.defaultServiceOrigin]);
 
   useEffect(() => {
     if (isNotFound) {
@@ -516,8 +546,20 @@ export function AppShell() {
       document.title = '비밀번호 찾기 | 과구리';
     } else if (normalizedPathname === '/account-activation') {
       document.title = '통합로그인 계정 만들기 | 과구리';
+    } else if (normalizedPathname === '/auth/callback') {
+      document.title = '통합로그인 확인 | 과구리';
     }
   }, [isNotFound, normalizedPathname]);
+
+  if (isCentralAuthHost && !isAuthPage) {
+    return (
+      <main id="main-content" className="auth-shell">
+        <p className="sr-only" role="status">
+          과구리 서비스로 이동하고 있습니다.
+        </p>
+      </main>
+    );
+  }
 
   if (isNotFound) {
     return (

@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     port: Number(process.env.WEB_PORT ?? 5173),
     strictPort: true,
+    allowedHosts: ['auth.localhost'],
     proxy: {
       '/api': {
         target: process.env.API_ORIGIN ?? 'http://localhost:4000',

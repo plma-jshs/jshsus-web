@@ -31,7 +31,8 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { LoginPage } from '../features/auth/LoginPage';
+import { SsoCallbackPage } from '../features/auth/SsoCallbackPage';
+import { SsoLoginPage } from '../features/auth/SsoLoginPage';
 import { api } from '../shared/api/adminApi';
 
 type AdminNavEntry = {
@@ -254,15 +255,25 @@ function AdminShell() {
     mutationFn: api.logout,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin-session'] });
+      const config = await api.ssoConfig().catch(() => null);
+      if (config?.authOrigin) {
+        const logoutUrl = new URL('/logout', config.authOrigin);
+        logoutUrl.searchParams.set('returnTo', window.location.origin);
+        window.location.assign(logoutUrl.toString());
+      }
     },
   });
+
+  if (pathname === '/auth/callback') {
+    return <SsoCallbackPage />;
+  }
 
   if (sessionQuery.isLoading) {
     return <main className="login-shell">세션을 확인하는 중입니다.</main>;
   }
 
   if (!sessionQuery.data?.isLogined) {
-    return <LoginPage />;
+    return <SsoLoginPage />;
   }
 
   const roles = (sessionQuery.data.roles ?? []).map(String);
@@ -578,6 +589,12 @@ const systemRoute = createRoute({
   component: lazyRouteComponent(() => import('../features/system/SystemPage'), 'SystemPage'),
 });
 
+const ssoCallbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/auth/callback',
+  component: () => null,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   pointsRoute,
@@ -599,6 +616,7 @@ const routeTree = rootRoute.addChildren([
   iamRoute,
   auditLogsRoute,
   systemRoute,
+  ssoCallbackRoute,
 ]);
 
 export const router = createRouter({ routeTree });

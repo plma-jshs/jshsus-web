@@ -609,7 +609,14 @@ jobs:
           printf '%s\n' "$PRODUCTION_ENV_FILE" > .env.production
           set_env_value NEIS_API_KEY "$NEIS_API_KEY"
           set_env_value YOUTUBE_API_KEY "$YOUTUBE_API_KEY"
-          set_env_value AUTH_MODE hybrid
+          set_env_value AUTH_MODE cognito
+          set_env_value CORS_ORIGINS https://v26.jshsus.kr,https://admin-v26.jshsus.kr,https://auth.jshsus.kr
+          set_env_value SSO_PUBLIC_ORIGIN https://auth.jshsus.kr
+          set_env_value SSO_WEB_ORIGINS https://v26.jshsus.kr
+          set_env_value SSO_ADMIN_ORIGINS https://admin-v26.jshsus.kr
+          set_env_value SSO_REQUEST_TTL_SECONDS 300
+          set_env_value SSO_CODE_TTL_SECONDS 60
+          set_env_value SSO_ATTEMPT_COOKIE_NAME __Host-jshsus-v26.sso_attempt
           set_env_value SESSION_COOKIE_HOST_ONLY true
           set_env_value SESSION_COOKIE_SECURE true
           set_env_value IAM_COOKIE_NAME __Host-jshsus-v26.sid

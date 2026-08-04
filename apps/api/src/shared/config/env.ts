@@ -12,7 +12,7 @@ const envSchema = z
     API_PORT: z.coerce.number().int().positive().default(4000),
     CORS_ORIGINS: z
       .string()
-      .default('http://localhost:5173')
+      .default('http://localhost:5173,http://localhost:5174,http://auth.localhost:5173')
       .transform((value) =>
         value
           .split(',')
@@ -23,6 +23,28 @@ const envSchema = z
     DATABASE_SSL_MODE: z.enum(['disabled', 'required', 'verify_identity']).default('disabled'),
     DATABASE_SSL_CA_PATH: z.string().default(''),
     REDIS_URL: z.string().default('redis://localhost:6379/0'),
+    SSO_PUBLIC_ORIGIN: z.string().url().default('http://auth.localhost:5173'),
+    SSO_WEB_ORIGINS: z
+      .string()
+      .default('http://localhost:5173')
+      .transform((value) =>
+        value
+          .split(',')
+          .map((origin) => origin.trim().replace(/\/$/, ''))
+          .filter(Boolean),
+      ),
+    SSO_ADMIN_ORIGINS: z
+      .string()
+      .default('http://localhost:5174')
+      .transform((value) =>
+        value
+          .split(',')
+          .map((origin) => origin.trim().replace(/\/$/, ''))
+          .filter(Boolean),
+      ),
+    SSO_REQUEST_TTL_SECONDS: z.coerce.number().int().min(120).max(900).default(300),
+    SSO_CODE_TTL_SECONDS: z.coerce.number().int().min(30).max(120).default(60),
+    SSO_ATTEMPT_COOKIE_NAME: z.string().default('jshsus.sso_attempt'),
     SESSION_COOKIE_DOMAIN: z.string().default('localhost'),
     SESSION_COOKIE_HOST_ONLY: booleanFromString.default(false),
     SESSION_COOKIE_SECURE: booleanFromString.default(false),
@@ -142,6 +164,22 @@ const envSchema = z
   })
   .superRefine((value, context) => {
     if (value.NODE_ENV === 'production') {
+      const ssoOrigin = new URL(value.SSO_PUBLIC_ORIGIN).origin;
+      if (!ssoOrigin.startsWith('https://')) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['SSO_PUBLIC_ORIGIN'],
+          message: 'Production SSO_PUBLIC_ORIGIN must use HTTPS.',
+        });
+      }
+      if ([...value.SSO_WEB_ORIGINS, ...value.SSO_ADMIN_ORIGINS].includes(ssoOrigin)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['SSO_PUBLIC_ORIGIN'],
+          message: 'The central authentication origin must be separate from service origins.',
+        });
+      }
+
       if (value.CSRF_SECRET === 'change-this-csrf-secret' || value.CSRF_SECRET.length < 32) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
@@ -224,6 +262,14 @@ const envSchema = z
           path: ['CSRF_COOKIE_NAME'],
           message:
             'Cognito-backed production CSRF cookies require a dedicated __Host- cookie name.',
+        });
+      }
+
+      if (!value.SSO_ATTEMPT_COOKIE_NAME.startsWith('__Host-')) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['SSO_ATTEMPT_COOKIE_NAME'],
+          message: 'Production SSO browser binding requires a dedicated __Host- cookie name.',
         });
       }
 

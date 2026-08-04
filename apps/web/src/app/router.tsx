@@ -11,6 +11,8 @@ import { AppShell } from '../components/layout/AppShell';
 import { PageScaffold, PageState } from '../components/page/PageScaffold';
 import { getSession } from '../features/auth/api';
 import { LoginPage } from '../features/auth/LoginPage';
+import { SsoCallbackPage } from '../features/auth/SsoCallbackPage';
+import { SsoLogoutPage } from '../features/auth/SsoLogoutPage';
 import '../styles/not-found.css';
 
 const tablePageSizes = [20, 50, 100] as const;
@@ -468,6 +470,18 @@ const loginRoute = createRoute({
   component: LoginPage,
 });
 
+const ssoCallbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/auth/callback',
+  component: SsoCallbackPage,
+});
+
+const ssoLogoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/logout',
+  component: SsoLogoutPage,
+});
+
 const forgotPasswordRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/forgot-password',
@@ -527,6 +541,8 @@ const routeTree = rootRoute.addChildren([
   privacyRoute,
   termsRoute,
   loginRoute,
+  ssoCallbackRoute,
+  ssoLogoutRoute,
   forgotPasswordRoute,
   accountActivationRoute,
 ]);

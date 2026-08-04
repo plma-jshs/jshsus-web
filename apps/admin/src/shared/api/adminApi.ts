@@ -85,18 +85,6 @@ type ApiErrorPayload = {
   code?: string;
 };
 
-export type AdminLoginResponse =
-  | {
-      status: 'AUTHENTICATED';
-      session: Extract<SessionUser, { isLogined: true }>;
-    }
-  | {
-      status: 'NEW_PASSWORD_REQUIRED';
-      flowId: string;
-    };
-
-export type AdminAuthenticatedResponse = Extract<AdminLoginResponse, { status: 'AUTHENTICATED' }>;
-
 export type SchoolEventInput = Omit<ManagedSchoolEvent, 'id'>;
 
 export type AdminSchoolCalendarEvent = AcademicEvent & {
@@ -199,32 +187,15 @@ async function uploadRequest<T>(path: string, formData: FormData): Promise<T> {
 
 export const api = {
   session: () => request<SessionUser>('/api/auth/session'),
-  login: (input: { username: string; password: string; remember: boolean }) =>
-    request<AdminLoginResponse>('/api/auth/login', {
+  ssoConfig: () => request<{ authOrigin: string }>('/api/auth/sso/config'),
+  startSso: (returnTo = '/') =>
+    request<{ authorizationUrl: string }>('/api/auth/sso/start', {
       method: 'POST',
-      body: input,
-      csrf: false,
-    }).then((result) => {
-      csrfTokenCache = null;
-      return result;
-    }),
-  completeNewPassword: (input: { flowId: string; newPassword: string }) =>
-    request<AdminAuthenticatedResponse>('/api/auth/challenges/new-password', {
-      method: 'POST',
-      body: input,
-      csrf: false,
-    }).then((result) => {
-      csrfTokenCache = null;
-      return result;
-    }),
-  requestPasswordReset: (input: { username: string; delivery: 'phone' | 'email' }) =>
-    request<{ ok: true }>('/api/auth/password/forgot', {
-      method: 'POST',
-      body: input,
+      body: { returnTo },
       csrf: false,
     }),
-  confirmPasswordReset: (input: { username: string; code: string; newPassword: string }) =>
-    request<{ ok: true }>('/api/auth/password/confirm', {
+  exchangeSso: (input: { code: string; state: string }) =>
+    request<{ status: 'AUTHENTICATED'; returnTo: string }>('/api/auth/sso/exchange', {
       method: 'POST',
       body: input,
       csrf: false,

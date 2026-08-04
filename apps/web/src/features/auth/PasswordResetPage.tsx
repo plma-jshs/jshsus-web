@@ -1,7 +1,6 @@
 import type { FormEvent, ReactNode } from 'react';
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import { ArrowLeft, Eye, EyeOff, KeyRound, LockKeyhole, UserRound } from 'lucide-react';
 import {
   confirmPasswordReset,
@@ -81,6 +80,7 @@ function initialReturnTo() {
 
 export function PasswordResetPage() {
   const returnTo = initialReturnTo();
+  const loginReturnHref = returnTo ?? '/login';
   const [step, setStep] = useState<ResetStep>('request');
   const [username, setUsername] = useState(initialUsername);
   const [delivery, setDelivery] = useState<PasswordResetDelivery>('phone');
@@ -193,15 +193,10 @@ export function PasswordResetPage() {
           <button className="auth-submit" type="submit" disabled={requestMutation.isPending}>
             {requestMutation.isPending ? '전송 중' : '인증 코드 받기'}
           </button>
-          {returnTo === '/my-status' ? (
-            <Link className="auth-back-button" to="/my-status">
-              <ArrowLeft size={15} aria-hidden="true" /> 마이페이지로 돌아가기
-            </Link>
-          ) : (
-            <Link className="auth-back-button" to="/login" search={{ returnTo: undefined }}>
-              <ArrowLeft size={15} aria-hidden="true" /> 로그인으로 돌아가기
-            </Link>
-          )}
+          <a className="auth-back-button" href={loginReturnHref}>
+            <ArrowLeft size={15} aria-hidden="true" />{' '}
+            {returnTo === '/my-status' ? '마이페이지로 돌아가기' : '로그인으로 돌아가기'}
+          </a>
         </form>
       ) : null}
 
@@ -274,15 +269,9 @@ export function PasswordResetPage() {
       {step === 'done' ? (
         <div className="auth-form">
           {notice ? <FormMessage success>{notice}</FormMessage> : null}
-          {returnTo === '/my-status' ? (
-            <Link className="auth-submit" to="/my-status">
-              마이페이지로 돌아가기
-            </Link>
-          ) : (
-            <Link className="auth-submit" to="/login" search={{ returnTo: undefined }}>
-              로그인하기
-            </Link>
-          )}
+          <a className="auth-submit" href={loginReturnHref}>
+            {returnTo === '/my-status' ? '마이페이지로 돌아가기' : '로그인하기'}
+          </a>
         </div>
       ) : null}
     </AuthLayout>
