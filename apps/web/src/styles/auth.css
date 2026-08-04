@@ -7,6 +7,8 @@
 .auth-page {
   position: relative;
   display: grid;
+  width: 100%;
+  max-width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
   padding: 48px 24px 58px;
@@ -20,6 +22,8 @@
   z-index: 1;
   display: grid;
   width: min(100%, 940px);
+  max-width: 100%;
+  min-width: 0;
   min-height: 560px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   overflow: visible;
@@ -37,6 +41,7 @@
   flex-direction: column;
   justify-content: flex-start;
   color: #fff;
+  min-width: 0;
   background: transparent;
   text-shadow: none;
 }
@@ -550,7 +555,7 @@
 .auth-page-footer nav {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 14px;
 }
 
@@ -571,43 +576,67 @@
 
 @media (max-width: 760px) {
   .auth-page {
-    padding: 22px 16px 74px;
-    align-items: start;
+    display: block;
+    min-height: 100dvh;
+    padding: 0;
+    background: #fff;
   }
 
   .auth-card {
-    width: min(100%, 520px);
+    display: flex;
+    width: 100%;
+    max-width: none;
     min-height: 0;
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    box-shadow: none;
   }
 
   .auth-intro {
-    min-height: 128px;
-    padding: 22px 24px;
-    background-size: cover;
-    background-position: center;
-    background-attachment: scroll;
+    min-height: clamp(230px, 58vw, 380px);
+    padding: 26px clamp(20px, 7vw, 48px);
+    background:
+      linear-gradient(180deg, rgb(8 27 48 / 46%), rgb(8 27 48 / 70%)),
+      url('/images/auth-campus.png') center / cover no-repeat;
+  }
+
+  .auth-intro::before {
+    display: none;
+  }
+
+  .auth-brand,
+  .auth-intro__wordmark {
+    position: relative;
+    z-index: 1;
   }
 
   .auth-panel {
-    padding: 32px 30px 30px;
+    padding: 34px clamp(20px, 7vw, 44px) 32px;
+    align-self: stretch;
   }
 
   .auth-page-footer {
-    align-items: center;
-    flex-direction: column;
-    gap: 7px;
+    position: static;
+    width: 100%;
+    padding: 14px 16px calc(20px + env(safe-area-inset-bottom));
+    transform: none;
+    color: var(--j-color-text-muted);
+    background: #fff;
+  }
+
+  .auth-page-footer nav {
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .auth-page-footer nav > span {
+    display: none;
   }
 }
 
 @media (max-width: 479px) {
-  .auth-page {
-    padding-inline: 10px;
-  }
-
   .auth-intro {
-    min-height: 100px;
-    padding: 18px;
+    min-height: 250px;
+    padding: 22px 18px;
   }
 
   .auth-intro__wordmark {

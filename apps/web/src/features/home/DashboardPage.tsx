@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, MoonStar, Sunrise, Sun, Users } from 'lucide-react';
 import type {
   AcademicEvent,
@@ -347,13 +347,31 @@ function CalendarDay({
   isCurrentMonth: boolean;
 }) {
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
+  const dayRef = useRef<HTMLButtonElement>(null);
   const isToday = year === today.year && month === today.month && day === today.day;
   const hasHoliday = events.some((event) => event.isHoliday || event.category === 'holiday');
   const className = `mini-calendar__day${isCurrentMonth ? '' : ' is-outside-month'}${isToday ? ' is-today' : ''}${hasHoliday ? ' is-holiday' : ''}${events.length ? ' has-events' : ''}`;
   const tooltipId = `calendar-events-${year}-${month}-${day}`;
 
+  useEffect(() => {
+    if (!isTooltipOpen) return undefined;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (!dayRef.current?.contains(event.target as Node)) setIsTooltipOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsTooltipOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isTooltipOpen]);
+
   return (
     <button
+      ref={dayRef}
       className={`${className}${isTooltipOpen ? ' is-tooltip-open' : ''}`}
       type="button"
       onClick={() => {

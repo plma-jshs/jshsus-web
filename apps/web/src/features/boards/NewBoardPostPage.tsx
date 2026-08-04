@@ -74,7 +74,6 @@ export function NewBoardPostPage() {
   const [title, setTitle] = useState('');
   const [editorValue, setEditorValue] = useState<RichTextEditorValue>(emptyEditorValue);
   const [editorKey, setEditorKey] = useState(0);
-  const [draftId, setDraftId] = useState<number | null>(null);
   const [lastSavedSnapshot, setLastSavedSnapshot] = useState(() =>
     draftSnapshot('', emptyEditorValue),
   );
@@ -127,7 +126,6 @@ export function NewBoardPostPage() {
           : await createBoardPostDraft(input);
         const nextId = result.post.id;
         draftIdRef.current = nextId;
-        setDraftId(nextId);
         setLastSavedSnapshot(snapshot);
         if (manual) showToast({ title: '임시저장했습니다.', tone: 'info' });
         return nextId;
@@ -238,7 +236,6 @@ export function NewBoardPostPage() {
     setEditorValue(resumedValue);
     setEditorKey((current) => current + 1);
     draftIdRef.current = resumeDraft.id;
-    setDraftId(resumeDraft.id);
     setLastSavedSnapshot(
       draftSnapshot(resumeDraft.title === '제목 없는 초안' ? '' : resumeDraft.title, resumedValue),
     );
@@ -388,11 +385,6 @@ export function NewBoardPostPage() {
             </button>
           </div>
         </div>
-        {draftId && !isDirty && !mutation.isPending ? (
-          <p className="editor-draft-state" role="status">
-            서버에 임시저장됨
-          </p>
-        ) : null}
       </form>
 
       {resumeDraft ? (

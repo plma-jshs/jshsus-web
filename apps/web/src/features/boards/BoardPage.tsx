@@ -127,8 +127,7 @@ export function BoardPage() {
                     </th>
                     <th scope="col">작성일</th>
                     <th className="data-table__views" scope="col">
-                      <Eye size={14} aria-hidden="true" />
-                      <span className="sr-only">조회</span>
+                      조회
                     </th>
                   </tr>
                 </thead>

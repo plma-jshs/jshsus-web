@@ -4,14 +4,30 @@
   font-family: var(--j-font-sans);
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html {
+  width: 100%;
+  max-width: 100%;
   scroll-behavior: smooth;
 }
 
 body {
+  width: 100%;
+  max-width: 100%;
   min-height: 100vh;
+  overflow-x: hidden;
   background: var(--j-color-canvas);
   line-height: var(--j-leading-normal);
+}
+
+#root {
+  min-width: 0;
+  max-width: 100%;
 }
 
 a {

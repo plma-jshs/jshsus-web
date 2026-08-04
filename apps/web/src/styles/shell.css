@@ -1,7 +1,10 @@
 .app-shell {
   display: flex;
+  width: 100%;
+  max-width: 100%;
   min-height: 100vh;
   flex-direction: column;
+  overflow-x: clip;
   background:
     linear-gradient(180deg, rgb(237 249 246 / 74%) 0, rgb(247 251 250 / 92%) 340px), #f7faf9;
 }
@@ -335,6 +338,7 @@
 
 .main-panel {
   width: min(calc(100% - 5rem), 1280px);
+  max-width: 100%;
   min-width: 0;
   margin-inline: auto;
   padding-block: var(--j-space-8) var(--j-space-12);
@@ -382,12 +386,14 @@
 
 .portal-footer__links {
   display: inline-flex;
+  min-width: 0;
   align-items: center;
   gap: 6px;
 }
 
 .portal-footer__business--mobile {
   display: none;
+  min-width: 0;
 }
 
 .portal-footer__copyright {

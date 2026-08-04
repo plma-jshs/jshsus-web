@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import type { MouseEvent, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   FontSizeMark,
   FontFamilyMark,
@@ -563,18 +564,55 @@ function ToolbarMore({
   active?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setMenuPosition(null);
+      return undefined;
+    }
+
+    const updatePosition = () => {
+      const button = buttonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      const estimatedHeight = Math.min(300, window.innerHeight - 24);
+      const top =
+        rect.bottom + 8 + estimatedHeight <= window.innerHeight
+          ? rect.bottom + 8
+          : Math.max(12, rect.top - estimatedHeight - 8);
+      const left = Math.min(Math.max(12, rect.left), Math.max(12, window.innerWidth - 176));
+      setMenuPosition({ top, left });
+    };
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!buttonRef.current?.contains(target) && !menuRef.current?.contains(target)) {
+        setOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+
+    updatePosition();
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    document.addEventListener('keydown', closeOnEscape);
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer);
+      document.removeEventListener('keydown', closeOnEscape);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [open]);
 
   return (
-    <div
-      className={`rich-text-toolbar-more${active ? ' is-active' : ''}`}
-      onBlur={(event) => {
-        const nextTarget = event.relatedTarget;
-        if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
-          setOpen(false);
-        }
-      }}
-    >
+    <div className={`rich-text-toolbar-more${active ? ' is-active' : ''}`}>
       <button
+        ref={buttonRef}
         aria-expanded={open}
         aria-label="더보기"
         className={active ? 'is-active' : undefined}
@@ -584,25 +622,34 @@ function ToolbarMore({
       >
         <Ellipsis size={18} />
       </button>
-      {open ? (
-        <div className="rich-text-toolbar-more__menu" role="menu" aria-label="추가 서식">
-          {actions.map((action) => (
-            <button
-              className={action.active ? 'is-active' : undefined}
-              key={action.label}
-              onClick={() => {
-                action.onClick();
-                setOpen(false);
-              }}
-              role="menuitem"
-              type="button"
+      {open && menuPosition && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              ref={menuRef}
+              className="rich-text-toolbar-more__menu rich-text-toolbar-more__menu--portal"
+              role="menu"
+              aria-label="추가 서식"
+              style={{ top: menuPosition.top, left: menuPosition.left }}
             >
-              {action.icon}
-              <span>{action.label}</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
+              {actions.map((action) => (
+                <button
+                  className={action.active ? 'is-active' : undefined}
+                  key={action.label}
+                  onClick={() => {
+                    action.onClick();
+                    setOpen(false);
+                  }}
+                  role="menuitem"
+                  type="button"
+                >
+                  {action.icon}
+                  <span>{action.label}</span>
+                </button>
+              ))}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

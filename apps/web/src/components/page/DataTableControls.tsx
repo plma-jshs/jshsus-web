@@ -6,6 +6,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Search,
+  SlidersHorizontal,
   X,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -39,6 +40,25 @@ const defaultSearchFieldOptions: readonly DataTableSearchFieldOption[] = [
   { value: 'author', label: '작성자' },
 ];
 
+function useCompactViewport() {
+  const [isCompact, setIsCompact] = useState(() =>
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(max-width: 767px)').matches
+      : false,
+  );
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return undefined;
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsCompact(mediaQuery.matches);
+    update();
+    mediaQuery.addEventListener?.('change', update);
+    return () => mediaQuery.removeEventListener?.('change', update);
+  }, []);
+
+  return isCompact;
+}
+
 export type ToolbarSelectOption<TValue extends string | number> = {
   value: TValue;
   label: string;
@@ -56,8 +76,29 @@ export function ToolbarSelect<TValue extends string | number>({
   onChange: (value: TValue) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const isCompactViewport = useCompactViewport();
   const listboxId = useId();
   const selected = options.find((option) => option.value === value) ?? options[0];
+
+  if (isCompactViewport) {
+    return (
+      <select
+        aria-label={ariaLabel}
+        className="data-table-toolbar-select__native"
+        value={String(value)}
+        onChange={(event) => {
+          const nextOption = options.find((option) => String(option.value) === event.target.value);
+          if (nextOption) onChange(nextOption.value);
+        }}
+      >
+        {options.map((option) => (
+          <option key={String(option.value)} value={String(option.value)}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
 
   return (
     <div
@@ -172,6 +213,18 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
     return () => window.clearTimeout(timer);
   }, [draftField, draftQuery]);
 
+  useEffect(() => {
+    if (!isFilterOpen) return undefined;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousDocumentOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousDocumentOverflow;
+    };
+  }, [isFilterOpen]);
+
   return (
     <form
       className={`data-table-toolbar${isFilterOpen ? ' is-filter-open' : ''}`}
@@ -243,9 +296,10 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
           type="button"
           aria-controls={filterPanelId}
           aria-expanded={isFilterOpen}
+          aria-label={isFilterOpen ? '필터 닫기' : '필터 열기'}
           onClick={() => setIsFilterOpen((current) => !current)}
         >
-          필터 <ChevronDown size={15} aria-hidden="true" />
+          <SlidersHorizontal size={17} aria-hidden="true" />
         </button>
         <button className="sr-only" type="submit">
           검색
@@ -301,55 +355,78 @@ export function DataTablePagination({
 
   return (
     <nav className="data-table-pagination" aria-label="목록 페이지">
-      <button
-        type="button"
-        aria-label="첫 페이지"
-        disabled={safePage === 1}
-        onClick={() => onChange(1)}
-      >
-        <ChevronsLeft size={18} aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        aria-label="이전 페이지"
-        disabled={safePage === 1}
-        onClick={() => onChange(safePage - 1)}
-      >
-        <ChevronLeft size={18} aria-hidden="true" />
-      </button>
-      {getPaginationItems(safePage, totalPages).map((item) =>
-        typeof item === 'number' ? (
-          <button
-            type="button"
-            className={item === safePage ? 'is-current' : undefined}
-            aria-current={item === safePage ? 'page' : undefined}
-            onClick={() => onChange(item)}
-            key={item}
-          >
-            {item}
-          </button>
-        ) : (
-          <span aria-hidden="true" key={item}>
-            ···
-          </span>
-        ),
-      )}
-      <button
-        type="button"
-        aria-label="다음 페이지"
-        disabled={safePage === totalPages}
-        onClick={() => onChange(safePage + 1)}
-      >
-        <ChevronRight size={18} aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        aria-label="마지막 페이지"
-        disabled={safePage === totalPages}
-        onClick={() => onChange(totalPages)}
-      >
-        <ChevronsRight size={18} aria-hidden="true" />
-      </button>
+      <div className="data-table-pagination__full">
+        <button
+          type="button"
+          aria-label="첫 페이지"
+          disabled={safePage === 1}
+          onClick={() => onChange(1)}
+        >
+          <ChevronsLeft size={18} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          aria-label="이전 페이지"
+          disabled={safePage === 1}
+          onClick={() => onChange(safePage - 1)}
+        >
+          <ChevronLeft size={18} aria-hidden="true" />
+        </button>
+        {getPaginationItems(safePage, totalPages).map((item) =>
+          typeof item === 'number' ? (
+            <button
+              type="button"
+              className={item === safePage ? 'is-current' : undefined}
+              aria-current={item === safePage ? 'page' : undefined}
+              onClick={() => onChange(item)}
+              key={item}
+            >
+              {item}
+            </button>
+          ) : (
+            <span aria-hidden="true" key={item}>
+              ···
+            </span>
+          ),
+        )}
+        <button
+          type="button"
+          aria-label="다음 페이지"
+          disabled={safePage === totalPages}
+          onClick={() => onChange(safePage + 1)}
+        >
+          <ChevronRight size={18} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          aria-label="마지막 페이지"
+          disabled={safePage === totalPages}
+          onClick={() => onChange(totalPages)}
+        >
+          <ChevronsRight size={18} aria-hidden="true" />
+        </button>
+      </div>
+      <div className="data-table-pagination__compact">
+        <button
+          type="button"
+          aria-label="이전 페이지"
+          disabled={safePage === 1}
+          onClick={() => onChange(safePage - 1)}
+        >
+          <ChevronLeft size={18} aria-hidden="true" />
+        </button>
+        <span aria-current="page">
+          {safePage} / {totalPages}
+        </span>
+        <button
+          type="button"
+          aria-label="다음 페이지"
+          disabled={safePage === totalPages}
+          onClick={() => onChange(safePage + 1)}
+        >
+          <ChevronRight size={18} aria-hidden="true" />
+        </button>
+      </div>
     </nav>
   );
 }
