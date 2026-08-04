@@ -6,6 +6,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Req,
   Res,
   UnsupportedMediaTypeException,
@@ -210,6 +211,23 @@ export class AuthController {
     return { authorizationUrl: result.authorizationUrl };
   }
 
+  @Get('sso/authorize')
+  @RateLimit({ max: 20, windowSeconds: 60 })
+  async redirectToSso(
+    @Query('returnTo') returnTo: unknown,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const input = parseBody(ssoStartSchema, { returnTo });
+    const result = await this.ssoService.start(requestOrigin(request) ?? '', input.returnTo);
+    response.cookie(env.SSO_ATTEMPT_COOKIE_NAME, result.browserBinding, {
+      ...cookieBaseOptions(request),
+      httpOnly: true,
+      maxAge: env.SSO_REQUEST_TTL_SECONDS * 1_000,
+    });
+    return response.redirect(302, result.authorizationUrl);
+  }
+
   @Get('sso/requests/:requestId')
   describeSsoRequest(@Param('requestId') requestId: string, @Req() request: Request) {
     this.ssoService.assertAuthOrigin(requestOrigin(request));
@@ -220,6 +238,33 @@ export class AuthController {
       });
     }
     return this.ssoService.describeRequest(requestId);
+  }
+
+  @Get('sso/authorize-request')
+  @RateLimit({ max: 20, windowSeconds: 60 })
+  async authorizeSsoRequest(
+    @Query('sso') requestId: unknown,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
+    if (!z.string().uuid().safeParse(requestId).success) {
+      throw new BadRequestException({
+        code: 'SSO_REQUEST_INVALID',
+        message: '로그인 요청을 확인할 수 없습니다.',
+      });
+    }
+
+    const token = this.authService.extractToken(request);
+    const session = token ? await this.authService.getSessionFromToken(token) : null;
+    if (!token || !session?.userId) {
+      const loginUrl = new URL('/login', env.SSO_PUBLIC_ORIGIN);
+      loginUrl.searchParams.set('sso', String(requestId));
+      return response.redirect(302, loginUrl.toString());
+    }
+
+    const continuation = await this.ssoService.continue(String(requestId), token);
+    return response.redirect(302, continuation.redirectUrl);
   }
 
   @Post('sso/continue')
@@ -257,6 +302,37 @@ export class AuthController {
     }
   }
 
+  @Get('sso/callback')
+  @RateLimit({ max: 20, windowSeconds: 60 })
+  async exchangeSsoAndRedirect(
+    @Query() query: unknown,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const input = parseBody(ssoExchangeSchema, query);
+    const browserBinding = request.cookies?.[env.SSO_ATTEMPT_COOKIE_NAME];
+    try {
+      const exchange = await this.ssoService.exchange(
+        requestOrigin(request) ?? '',
+        input.code,
+        input.state,
+        typeof browserBinding === 'string' ? browserBinding : '',
+      );
+      this.setSessionCookies(request, response, exchange.result);
+      response.clearCookie(env.SSO_ATTEMPT_COOKIE_NAME, {
+        ...cookieBaseOptions(request),
+        httpOnly: true,
+      });
+      return response.redirect(302, exchange.returnTo);
+    } catch (error) {
+      response.clearCookie(env.SSO_ATTEMPT_COOKIE_NAME, {
+        ...cookieBaseOptions(request),
+        httpOnly: true,
+      });
+      throw error;
+    }
+  }
+
   @Post('sso/logout')
   @RateLimit({ max: 20, windowSeconds: 60 })
   async logoutSso(
@@ -278,6 +354,28 @@ export class AuthController {
     }
     this.clearSessionCookies(request, response);
     return { redirectUrl: this.ssoService.validateLogoutTarget(input.returnTo) };
+  }
+
+  @Get('sso/logout-redirect')
+  @RateLimit({ max: 20, windowSeconds: 60 })
+  async logoutSsoAndRedirect(
+    @Query('returnTo') returnTo: unknown,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
+    const input = parseBody(ssoLogoutSchema, { returnTo });
+    const token = this.authService.extractToken(request);
+    if (token) {
+      const session = await this.authService.getSessionFromToken(token);
+      if (session?.userId) {
+        await this.authService.invalidateUserSessions(session.userId);
+      } else {
+        await this.authService.logout(token);
+      }
+    }
+    this.clearSessionCookies(request, response);
+    return response.redirect(302, this.ssoService.validateLogoutTarget(input.returnTo));
   }
 
   @Get('session')

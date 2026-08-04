@@ -18,6 +18,7 @@ import {
 import { useToast } from '../../components/feedback/Toast';
 import { PageState } from '../../components/page/PageScaffold';
 import { ApiError } from '../../shared/api/http';
+import { getPasswordResetHref } from '../../shared/lib/authSiteHref';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
 import {
   deleteProfileImage,
@@ -563,12 +564,9 @@ export function MyStatusPage() {
             <div className="status-contact-row">
               <KeyRound size={18} aria-hidden="true" />
               <span>비밀번호</span>
-              <Link
-                to="/forgot-password"
-                search={{ username: String(status.student.studentNo), returnTo: '/my-status' }}
-              >
+              <a href={getPasswordResetHref(String(status.student.studentNo), '/my-status')}>
                 수정
-              </Link>
+              </a>
             </div>
           </div>
         </div>

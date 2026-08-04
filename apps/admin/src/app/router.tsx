@@ -257,9 +257,9 @@ function AdminShell() {
       await queryClient.invalidateQueries({ queryKey: ['admin-session'] });
       const config = await api.ssoConfig().catch(() => null);
       if (config?.authOrigin) {
-        const logoutUrl = new URL('/logout', config.authOrigin);
+        const logoutUrl = new URL('/api/auth/sso/logout-redirect', config.authOrigin);
         logoutUrl.searchParams.set('returnTo', window.location.origin);
-        window.location.assign(logoutUrl.toString());
+        window.location.replace(logoutUrl.toString());
       }
     },
   });
@@ -269,7 +269,7 @@ function AdminShell() {
   }
 
   if (sessionQuery.isLoading) {
-    return <main className="login-shell">세션을 확인하는 중입니다.</main>;
+    return null;
   }
 
   if (!sessionQuery.data?.isLogined) {

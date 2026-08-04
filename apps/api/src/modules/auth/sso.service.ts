@@ -82,7 +82,7 @@ export class SsoService {
 
     await this.redis.setJson(this.requestKey(requestId), request, env.SSO_REQUEST_TTL_SECONDS);
 
-    const authorizationUrl = new URL('/login', this.publicOrigin);
+    const authorizationUrl = new URL('/api/auth/sso/authorize-request', this.publicOrigin);
     authorizationUrl.searchParams.set('sso', requestId);
 
     return { authorizationUrl: authorizationUrl.toString(), browserBinding };
@@ -124,7 +124,7 @@ export class SsoService {
     };
     await this.redis.setJson(this.codeKey(code), codePayload, env.SSO_CODE_TTL_SECONDS);
 
-    const redirectUrl = new URL('/auth/callback', request.callbackOrigin);
+    const redirectUrl = new URL('/api/auth/sso/callback', request.callbackOrigin);
     redirectUrl.searchParams.set('code', code);
     redirectUrl.searchParams.set('state', request.state);
     return { redirectUrl: redirectUrl.toString() };

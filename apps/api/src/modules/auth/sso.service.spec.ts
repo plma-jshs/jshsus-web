@@ -58,6 +58,7 @@ describe('SsoService', () => {
     });
 
     const started = await service.start('http://localhost:5173', '//evil.example');
+    expect(new URL(started.authorizationUrl).pathname).toBe('/api/auth/sso/authorize-request');
     const requestId = new URL(started.authorizationUrl).searchParams.get('sso');
     const stored = JSON.parse((await redis.get(`sso:request:${requestId}`)) ?? '{}') as {
       returnTo?: string;
@@ -75,6 +76,7 @@ describe('SsoService', () => {
     const requestId = new URL(started.authorizationUrl).searchParams.get('sso') ?? '';
     const continued = await service.continue(requestId, 'central-token');
     const callback = new URL(continued.redirectUrl);
+    expect(callback.pathname).toBe('/api/auth/sso/callback');
     const code = callback.searchParams.get('code') ?? '';
     const state = callback.searchParams.get('state') ?? '';
 

@@ -1,5 +1,5 @@
 import type { FormEvent, ReactNode } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Eye, EyeOff, LoaderCircle, LockKeyhole, UserRound } from 'lucide-react';
 import { safeInternalReturnTo } from '../../shared/lib/route';
@@ -12,7 +12,6 @@ import {
   getSession,
   getSsoConfig,
   login,
-  startSso,
 } from './api';
 import { AuthLayout } from './AuthLayout';
 
@@ -70,6 +69,7 @@ export function LoginPage() {
   const searchParams = new URLSearchParams(window.location.search);
   const ssoRequestId = searchParams.get('sso');
   const requestedReturnTo = searchParams.get('returnTo') ?? '/';
+  const isCentralAuthHost = ['auth.jshsus.kr', 'auth.localhost'].includes(window.location.hostname);
   const redirectStarted = useRef(false);
   const continueStarted = useRef(false);
   const [mode, setMode] = useState<AuthMode>('login');
@@ -99,23 +99,22 @@ export function LoginPage() {
     enabled: configQuery.data?.isAuthOrigin === true && Boolean(ssoRequestId),
     retry: false,
   });
-  const startSsoMutation = useMutation({
-    mutationFn: startSso,
-    onSuccess: ({ authorizationUrl }) => window.location.replace(authorizationUrl),
-  });
   const continueSsoMutation = useMutation({
     mutationFn: continueSso,
     onSuccess: ({ redirectUrl }) => window.location.replace(redirectUrl),
   });
-  const startSsoRequest = startSsoMutation.mutate;
   const continueSsoRequest = continueSsoMutation.mutate;
 
-  useEffect(() => {
-    const config = configQuery.data;
-    if (!config || config.isAuthOrigin || !config.client || redirectStarted.current) return;
+  useLayoutEffect(() => {
+    if (isCentralAuthHost || redirectStarted.current) return;
     redirectStarted.current = true;
-    startSsoRequest(safeInternalReturnTo(requestedReturnTo, window.location.origin));
-  }, [configQuery.data, requestedReturnTo, startSsoRequest]);
+    const authorizeUrl = new URL('/api/auth/sso/authorize', window.location.origin);
+    authorizeUrl.searchParams.set(
+      'returnTo',
+      safeInternalReturnTo(requestedReturnTo, window.location.origin),
+    );
+    window.location.replace(authorizeUrl.toString());
+  }, [isCentralAuthHost, requestedReturnTo]);
 
   useEffect(() => {
     if (
@@ -246,35 +245,12 @@ export function LoginPage() {
         ? getAuthErrorMessage(newPasswordMutation.error, '비밀번호를 변경하지 못했습니다.')
         : null);
 
+  if (!isCentralAuthHost) return null;
+
   if (configQuery.isError) {
     return (
       <AuthLayout active="login" title="통합로그인을 불러오지 못했습니다">
         <FormMessage>잠시 후 페이지를 새로고침해 주세요.</FormMessage>
-      </AuthLayout>
-    );
-  }
-
-  if (configQuery.isPending || (configQuery.data && !configQuery.data.isAuthOrigin)) {
-    return (
-      <AuthLayout active="login" title="통합로그인으로 이동 중">
-        <p className="auth-help" role="status">
-          안전한 통합로그인 페이지로 연결하고 있습니다.
-        </p>
-        {startSsoMutation.isError ? (
-          <FormMessage>
-            통합로그인 페이지로 이동하지 못했습니다. 잠시 후 다시 시도해 주세요.
-          </FormMessage>
-        ) : null}
-      </AuthLayout>
-    );
-  }
-
-  if (ssoRequestId && (requestQuery.isPending || centralSessionQuery.isPending)) {
-    return (
-      <AuthLayout active="login" title="통합로그인 확인 중">
-        <p className="auth-help" role="status">
-          요청한 서비스를 확인하고 있습니다.
-        </p>
       </AuthLayout>
     );
   }

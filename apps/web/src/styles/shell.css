@@ -318,6 +318,16 @@
   background: var(--j-color-danger-subtle);
 }
 
+.header-user-dropdown__spinner {
+  animation: header-user-spinner 0.75s linear infinite;
+}
+
+@keyframes header-user-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .mobile-menu,
 .mobile-tabbar {
   display: none;

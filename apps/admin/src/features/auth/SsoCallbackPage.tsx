@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { LoaderCircle } from 'lucide-react';
 import { api } from '../../shared/api/adminApi';
 
 export function SsoCallbackPage() {
@@ -25,6 +24,8 @@ export function SsoCallbackPage() {
   }, [code, exchange, state]);
 
   const hasInvalidInput = !code || !state;
+  if (!hasInvalidInput && !exchangeMutation.isError) return null;
+
   return (
     <main className="login-shell">
       <section className="login-panel" aria-live="polite">
@@ -33,25 +34,14 @@ export function SsoCallbackPage() {
           <strong>전남과학고등학교 학생부 전산망</strong>
         </div>
         <header className="login-heading">
-          <h1>
-            {hasInvalidInput || exchangeMutation.isError ? '로그인 확인 실패' : '로그인 확인 중'}
-          </h1>
+          <h1>로그인 확인 실패</h1>
         </header>
-        {hasInvalidInput || exchangeMutation.isError ? (
-          <>
-            <p className="login-error" role="alert">
-              로그인 확인 코드가 만료되었거나 이미 사용되었습니다.
-            </p>
-            <a className="login-submit login-submit--link" href="/">
-              다시 로그인
-            </a>
-          </>
-        ) : (
-          <p className="login-notice" role="status">
-            <LoaderCircle className="login-loading-icon" size={18} aria-hidden="true" />
-            학생부 전산망 세션을 연결하고 있습니다.
-          </p>
-        )}
+        <p className="login-error" role="alert">
+          로그인 확인 코드가 만료되었거나 이미 사용되었습니다.
+        </p>
+        <a className="login-submit login-submit--link" href="/">
+          다시 로그인
+        </a>
       </section>
     </main>
   );

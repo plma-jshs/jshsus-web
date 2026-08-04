@@ -18,17 +18,13 @@ export function SsoLogoutPage() {
     completeLogout(returnTo);
   }, [completeLogout, returnTo]);
 
+  if (!logoutMutation.isError) return null;
+
   return (
-    <AuthLayout active="login" title={logoutMutation.isError ? '로그아웃 실패' : '로그아웃 중'}>
-      {logoutMutation.isError ? (
-        <p className="auth-error" role="alert">
-          통합로그아웃을 완료하지 못했습니다. 창을 닫고 다시 시도해 주세요.
-        </p>
-      ) : (
-        <p className="auth-help" role="status">
-          연결된 서비스의 로그인 세션을 정리하고 있습니다.
-        </p>
-      )}
+    <AuthLayout active="login" title="로그아웃 실패">
+      <p className="auth-error" role="alert">
+        통합로그아웃을 완료하지 못했습니다. 창을 닫고 다시 시도해 주세요.
+      </p>
     </AuthLayout>
   );
 }

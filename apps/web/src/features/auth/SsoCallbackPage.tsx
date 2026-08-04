@@ -30,22 +30,16 @@ export function SsoCallbackPage() {
           )
         : null;
 
+  if (!error) return null;
+
   return (
-    <AuthLayout active="login" title={error ? '로그인을 완료하지 못했습니다' : '로그인 확인 중'}>
-      {error ? (
-        <>
-          <p className="auth-error" role="alert">
-            {error}
-          </p>
-          <a className="auth-submit auth-submit--link" href="/login">
-            다시 로그인
-          </a>
-        </>
-      ) : (
-        <p className="auth-help" role="status">
-          안전하게 로그인 세션을 연결하고 있습니다.
-        </p>
-      )}
+    <AuthLayout active="login" title="로그인을 완료하지 못했습니다">
+      <p className="auth-error" role="alert">
+        {error}
+      </p>
+      <a className="auth-submit auth-submit--link" href="/login">
+        다시 로그인
+      </a>
     </AuthLayout>
   );
 }

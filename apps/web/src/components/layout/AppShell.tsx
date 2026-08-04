@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ClipboardCheck,
   Home,
+  LoaderCircle,
   LogOut,
   Menu,
   MessageSquareText,
@@ -330,8 +331,21 @@ function UserMenu({
             onClick={onLogout}
             disabled={loggingOut}
           >
-            <LogOut aria-hidden="true" size={16} />
-            {loggingOut ? '로그아웃 중' : '로그아웃'}
+            {loggingOut ? (
+              <>
+                <LoaderCircle
+                  className="header-user-dropdown__spinner"
+                  aria-hidden="true"
+                  size={16}
+                />
+                <span className="sr-only">로그아웃 중</span>
+              </>
+            ) : (
+              <>
+                <LogOut aria-hidden="true" size={16} />
+                로그아웃
+              </>
+            )}
           </button>
         </div>
       ) : null}
@@ -360,9 +374,9 @@ function PortalShell() {
       await queryClient.invalidateQueries({ queryKey: ['session'] });
       const config = await getSsoConfig().catch(() => null);
       if (config?.authOrigin) {
-        const logoutUrl = new URL('/logout', config.authOrigin);
+        const logoutUrl = new URL('/api/auth/sso/logout-redirect', config.authOrigin);
         logoutUrl.searchParams.set('returnTo', window.location.origin);
-        window.location.assign(logoutUrl.toString());
+        window.location.replace(logoutUrl.toString());
         return;
       }
       window.location.assign('/');
