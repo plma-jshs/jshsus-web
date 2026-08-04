@@ -123,6 +123,10 @@
   justify-content: center;
 }
 
+.meal-tabs {
+  display: none;
+}
+
 .meal-card__header h2,
 .schedule-card__header h2 {
   position: absolute;
@@ -475,6 +479,11 @@
   text-decoration: none;
 }
 
+.mini-calendar > button {
+  font: inherit;
+  cursor: pointer;
+}
+
 .mini-calendar__weekday {
   color: var(--j-color-text-muted);
   font-weight: var(--j-weight-medium);
@@ -629,6 +638,11 @@
 }
 .mini-calendar__day:hover .calendar-day-popover,
 .mini-calendar__day:focus-visible .calendar-day-popover {
+  visibility: visible;
+  opacity: 1;
+}
+
+.mini-calendar__day.is-tooltip-open .calendar-day-popover {
   visibility: visible;
   opacity: 1;
 }

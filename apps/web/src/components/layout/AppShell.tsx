@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   BadgeCheck,
   ChevronDown,
@@ -163,7 +164,13 @@ function DesktopNavigation() {
   );
 }
 
-function MobileMenu() {
+function MobileMenu({
+  displayName,
+  profileImageUrl,
+}: {
+  displayName?: string;
+  profileImageUrl?: string;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -220,46 +227,58 @@ function MobileMenu() {
       >
         <Menu aria-hidden="true" size={20} />
       </button>
-      {isOpen ? (
-        <>
-          <button
-            className="mobile-menu__scrim"
-            type="button"
-            aria-label="전체 메뉴 닫기"
-            onClick={closeMenuAndRestoreFocus}
-          />
-          <div
-            ref={panelRef}
-            id="mobile-menu-panel"
-            className="mobile-menu__panel"
-            role="dialog"
-            aria-modal="true"
-            aria-label="전체 메뉴"
-          >
-            <div className="mobile-menu__header">
-              <strong>전체 메뉴</strong>
+      {isOpen
+        ? createPortal(
+            <>
               <button
-                ref={closeButtonRef}
+                className="mobile-menu__scrim"
                 type="button"
                 aria-label="전체 메뉴 닫기"
                 onClick={closeMenuAndRestoreFocus}
+              />
+              <div
+                ref={panelRef}
+                id="mobile-menu-panel"
+                className="mobile-menu__panel"
+                role="dialog"
+                aria-modal="true"
+                aria-label="전체 메뉴"
               >
-                <X aria-hidden="true" size={20} />
-              </button>
-            </div>
-            <nav className="mobile-menu__links" aria-label="전체 서비스">
-              {navigationCategories.map((category) => (
-                <div className="mobile-menu__group" key={category.label}>
-                  <strong>{category.label}</strong>
-                  {category.links.map((item) => (
-                    <PortalNavigationLink item={item} onNavigate={closeMenu} key={item.label} />
-                  ))}
+                <div className="mobile-menu__header">
+                  <strong>전체 메뉴</strong>
+                  <button
+                    ref={closeButtonRef}
+                    type="button"
+                    aria-label="전체 메뉴 닫기"
+                    onClick={closeMenuAndRestoreFocus}
+                  >
+                    <X aria-hidden="true" size={20} />
+                  </button>
                 </div>
-              ))}
-            </nav>
-          </div>
-        </>
-      ) : null}
+                {displayName ? (
+                  <div className="mobile-menu__user">
+                    <UserAvatar imageUrl={profileImageUrl} className="user-avatar--menu" />
+                    <div>
+                      <span>현재 로그인한 계정</span>
+                      <strong>{displayName}</strong>
+                    </div>
+                  </div>
+                ) : null}
+                <nav className="mobile-menu__links" aria-label="전체 서비스">
+                  {navigationCategories.map((category) => (
+                    <div className="mobile-menu__group" key={category.label}>
+                      <strong>{category.label}</strong>
+                      {category.links.map((item) => (
+                        <PortalNavigationLink item={item} onNavigate={closeMenu} key={item.label} />
+                      ))}
+                    </div>
+                  ))}
+                </nav>
+              </div>
+            </>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
@@ -384,7 +403,7 @@ function PortalShell() {
   });
 
   const sessionDisplayName = session?.isLogined
-    ? [session.stuid, session.name ?? '사용자'].filter(Boolean).join(' ')
+    ? [session.identifier ?? session.stuid, session.name ?? '사용자'].filter(Boolean).join(' ')
     : '';
 
   useEffect(() => {
@@ -447,7 +466,10 @@ function PortalShell() {
                 로그인
               </Link>
             )}
-            <MobileMenu />
+            <MobileMenu
+              displayName={session?.isLogined ? sessionDisplayName : undefined}
+              profileImageUrl={myStatusQuery.data?.student.profileImageUrl}
+            />
           </div>
         </div>
       </header>
@@ -505,12 +527,29 @@ function PortalShell() {
           <Link className="portal-footer__brand" to="/about">
             과구리
           </Link>
-          <span>
+          <span className="portal-footer__divider" aria-hidden="true">
+            |
+          </span>
+          <div className="portal-footer__links">
+            <Link to="/terms">이용약관</Link>
+            <span aria-hidden="true">·</span>
+            <Link to="/privacy">개인정보처리방침</Link>
+          </div>
+          <span className="portal-footer__divider" aria-hidden="true">
+            |
+          </span>
+          <span className="portal-footer__business portal-footer__business--desktop">
             호스팅서비스사업자: 아이디비아이 | 사업자 등록번호: 332-44-01176 | 사업자 대표: 강재환
           </span>
-          <Link to="/terms">서비스 이용약관</Link>
-          <Link to="/privacy">개인정보처리방침</Link>
-          <span>Copyright © 2026 전남과학고등학교 IT부</span>
+          <details className="portal-footer__business portal-footer__business--mobile">
+            <summary>
+              사업자 정보 <ChevronDown aria-hidden="true" size={14} />
+            </summary>
+            <span>
+              호스팅서비스사업자: 아이디비아이 | 사업자 등록번호: 332-44-01176 | 사업자 대표: 강재환
+            </span>
+          </details>
+          <span className="portal-footer__copyright">Copyright © 2026 전남과학고등학교 IT부</span>
         </div>
       </footer>
     </div>

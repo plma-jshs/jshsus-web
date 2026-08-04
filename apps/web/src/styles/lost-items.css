@@ -709,6 +709,11 @@
     margin-bottom: 18px;
   }
 
+  .lost-items-view .page-toolbar--split {
+    align-items: center;
+    flex-direction: row;
+  }
+
   .lost-item-detail__summary {
     padding: 24px 0;
   }

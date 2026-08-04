@@ -33,6 +33,23 @@
   gap: var(--j-space-4);
 }
 
+.wake-song-history > .wake-song-section-title {
+  align-items: center;
+}
+
+.wake-song-history > .wake-song-section-title > div {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 9px;
+}
+
+.wake-song-history > .wake-song-section-title > div > span,
+.wake-song-history > .wake-song-section-title > small {
+  margin: 0;
+  white-space: nowrap;
+}
+
 .wake-song-section-title span,
 .wake-song-track-summary > span {
   display: block;

@@ -539,6 +539,12 @@
     flex-direction: column;
   }
 
+  .petition-list-section .page-toolbar--split,
+  .petition-table-section .page-toolbar--split {
+    align-items: center;
+    flex-direction: row;
+  }
+
   .petition-list-section .page-search-field,
   .petition-table-section .page-search-field {
     width: 100%;

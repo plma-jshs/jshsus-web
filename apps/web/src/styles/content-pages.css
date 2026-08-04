@@ -10,7 +10,7 @@
 .content-detail-header {
   display: grid;
   padding-bottom: var(--j-space-5);
-  gap: var(--j-space-2);
+  gap: var(--j-space-1);
   border-bottom: 1px solid var(--j-color-border);
 }
 
@@ -24,8 +24,8 @@
 .content-detail-header h1 {
   margin: 0;
   color: var(--j-color-text);
-  font-size: clamp(1.35rem, 3vw, 1.55rem);
-  font-weight: var(--j-weight-bold);
+  font-size: clamp(1.25rem, 2.7vw, 1.48rem);
+  font-weight: var(--j-weight-semibold);
   letter-spacing: -0.025em;
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -563,11 +563,11 @@
 @media (max-width: 767px) {
   .reading-surface,
   .comment-surface {
-    padding: var(--j-space-4);
+    padding: 20px 18px;
   }
 
   .reading-body {
-    padding-top: var(--j-space-3);
+    padding-top: var(--j-space-4);
   }
 
   .detail-comment-form button {
@@ -575,13 +575,29 @@
   }
 
   .detail-comment-list article > div:first-child {
-    padding-right: 0;
+    min-width: 0;
+    padding-right: 108px;
   }
 
   .comment-item-actions {
-    position: static;
-    margin-top: var(--j-space-2);
+    top: var(--j-space-2);
+    right: 0;
+    margin-top: 0;
     justify-content: flex-end;
+  }
+
+  .comment-item-actions button,
+  .comment-item-actions .comment-report-login-link {
+    min-height: 32px;
+    padding-inline: 4px;
+  }
+
+  .detail-comment-list article > div:first-child > strong,
+  .detail-comment-list article > div:first-child > time {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .comment-login-prompt {

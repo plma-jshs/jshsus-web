@@ -35,6 +35,9 @@ const mealLabels: Record<'breakfast' | 'lunch' | 'dinner', string> = {
   dinner: '저녁',
 };
 
+const mealTypes = ['breakfast', 'lunch', 'dinner'] as const;
+type MobileMealType = (typeof mealTypes)[number];
+
 const petitionStatus: Record<string, { label: string; tone: string }> = {
   open: { label: '진행 중', tone: 'positive' },
   awaiting_answer: { label: '답변 대기', tone: 'warning' },
@@ -131,6 +134,18 @@ function formatUpcomingDate(value: string) {
   );
 }
 
+function getCurrentMealType(): MobileMealType {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: KOREA_TIME_ZONE,
+    hour: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date());
+  const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? 12);
+  if (hour < 10) return 'breakfast';
+  if (hour < 14) return 'lunch';
+  return 'dinner';
+}
+
 function calendarEventTone(event: AcademicEvent) {
   if (event.isHoliday || event.category === 'holiday') return 'holiday';
   return event.category === 'observance' ? 'observance' : 'school';
@@ -169,16 +184,18 @@ function MealColumn({
   meal,
   loading,
   showEmpty,
+  active,
 }: {
-  type: 'breakfast' | 'lunch' | 'dinner';
+  type: MobileMealType;
   meal?: SchoolMeal;
   loading: boolean;
   showEmpty: boolean;
+  active: boolean;
 }) {
   const Icon = mealIcons[type];
 
   return (
-    <div className="meal-column">
+    <div className={`meal-column${active ? ' is-active' : ''}`}>
       <Icon aria-hidden="true" size={28} />
       <strong>{mealLabels[type]}</strong>
       {loading ? (
@@ -209,6 +226,7 @@ function MealCard({
   onRetryInitial: () => void;
 }) {
   const [selectedDate, setSelectedDate] = useState(initialDate);
+  const [selectedMeal, setSelectedMeal] = useState<MobileMealType>(getCurrentMealType);
   const usesInitialData = selectedDate === initialDate;
   const mealsQuery = useQuery({
     queryKey: ['school-meals', selectedDate],
@@ -264,6 +282,20 @@ function MealCard({
           </button>
         </div>
       </header>
+      <nav className="meal-tabs" aria-label="식단 구분" role="tablist">
+        {mealTypes.map((type) => (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={selectedMeal === type}
+            className={selectedMeal === type ? 'is-active' : undefined}
+            onClick={() => setSelectedMeal(type)}
+            key={type}
+          >
+            {mealLabels[type]}
+          </button>
+        ))}
+      </nav>
       {hasDataError ? (
         <div className="home-inline-error" role="alert">
           <span>선택한 날짜의 식단 정보를 확인할 수 없습니다.</span>
@@ -278,18 +310,21 @@ function MealCard({
           meal={mealsByType.get('breakfast')}
           loading={cardState === 'loading'}
           showEmpty={showEmpty}
+          active={selectedMeal === 'breakfast'}
         />
         <MealColumn
           type="lunch"
           meal={mealsByType.get('lunch')}
           loading={cardState === 'loading'}
           showEmpty={showEmpty}
+          active={selectedMeal === 'lunch'}
         />
         <MealColumn
           type="dinner"
           meal={mealsByType.get('dinner')}
           loading={cardState === 'loading'}
           showEmpty={showEmpty}
+          active={selectedMeal === 'dinner'}
         />
       </div>
     </section>
@@ -311,52 +346,44 @@ function CalendarDay({
   today: ReturnType<typeof getKoreaDateParts>;
   isCurrentMonth: boolean;
 }) {
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const isToday = year === today.year && month === today.month && day === today.day;
   const hasHoliday = events.some((event) => event.isHoliday || event.category === 'holiday');
   const className = `mini-calendar__day${isCurrentMonth ? '' : ' is-outside-month'}${isToday ? ' is-today' : ''}${hasHoliday ? ' is-holiday' : ''}${events.length ? ' has-events' : ''}`;
   const tooltipId = `calendar-events-${year}-${month}-${day}`;
-  const selectedDate = dateKey(year, month, day);
-
-  if (!events.length) {
-    return (
-      <Link
-        className={className}
-        to="/calendar"
-        search={{ date: selectedDate }}
-        aria-current={isToday ? 'date' : undefined}
-      >
-        <span className="mini-calendar__date-number">{day}</span>
-      </Link>
-    );
-  }
 
   return (
-    <Link
-      role="group"
-      className={className}
-      to="/calendar"
-      search={{ date: selectedDate }}
+    <button
+      className={`${className}${isTooltipOpen ? ' is-tooltip-open' : ''}`}
+      type="button"
+      onClick={() => {
+        if (events.length) setIsTooltipOpen((current) => !current);
+      }}
       aria-current={isToday ? 'date' : undefined}
-      aria-describedby={tooltipId}
-      aria-label={`${year}년 ${month}월 ${day}일, 일정 ${events.length}개`}
+      aria-describedby={events.length ? tooltipId : undefined}
+      aria-label={`${year}년 ${month}월 ${day}일${events.length ? `, 일정 ${events.length}개` : ''}`}
     >
       <span className="mini-calendar__date-number">{day}</span>
-      <span className="calendar-event-dots" aria-hidden="true">
-        <i />
-      </span>
-      <span className="calendar-day-popover" id={tooltipId} role="tooltip">
-        <strong className={hasHoliday ? 'is-holiday' : undefined}>
-          {formatCalendarPopoverDate(year, month, day)}
-        </strong>
-        {events.slice(0, 3).map((event) => (
-          <span className="calendar-day-popover__event" key={event.id}>
-            <i className={`is-${calendarEventTone(event)}`} aria-hidden="true" />
-            <span>{event.title}</span>
+      {events.length ? (
+        <>
+          <span className="calendar-event-dots" aria-hidden="true">
+            <i />
           </span>
-        ))}
-        {events.length > 3 ? <small>외 {events.length - 3}개 일정</small> : null}
-      </span>
-    </Link>
+          <span className="calendar-day-popover" id={tooltipId} role="tooltip">
+            <strong className={hasHoliday ? 'is-holiday' : undefined}>
+              {formatCalendarPopoverDate(year, month, day)}
+            </strong>
+            {events.slice(0, 3).map((event) => (
+              <span className="calendar-day-popover__event" key={event.id}>
+                <i className={`is-${calendarEventTone(event)}`} aria-hidden="true" />
+                <span>{event.title}</span>
+              </span>
+            ))}
+            {events.length > 3 ? <small>외 {events.length - 3}개 일정</small> : null}
+          </span>
+        </>
+      ) : null}
+    </button>
   );
 }
 
@@ -453,6 +480,9 @@ function CalendarCard({
             <ChevronRight aria-hidden="true" size={17} />
           </button>
         </div>
+        <Link className="home-card__more-link" to="/calendar">
+          더보기 <ChevronRight aria-hidden="true" size={16} />
+        </Link>
       </header>
 
       {hasDataError ? (

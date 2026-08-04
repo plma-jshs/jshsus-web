@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
-import { PenLine } from 'lucide-react';
+import { Eye, PenLine } from 'lucide-react';
 import {
   DataTablePagination,
   type DataTablePageSize,
@@ -127,7 +127,8 @@ export function NoticesPage() {
                     </th>
                     <th scope="col">작성일</th>
                     <th className="data-table__views" scope="col">
-                      조회
+                      <Eye size={14} aria-hidden="true" />
+                      <span className="sr-only">조회</span>
                     </th>
                   </tr>
                 </thead>
@@ -152,7 +153,10 @@ export function NoticesPage() {
                         </time>
                       </td>
                       <td className="data-table__views">
-                        {notice.viewCount.toLocaleString('ko-KR')}
+                        <span className="data-table__view-count">
+                          <Eye size={14} aria-hidden="true" />
+                          {notice.viewCount.toLocaleString('ko-KR')}
+                        </span>
                       </td>
                     </tr>
                   ))}

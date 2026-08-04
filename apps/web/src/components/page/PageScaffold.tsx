@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
-import { ChevronRight, Inbox, Search, TriangleAlert, X } from 'lucide-react';
+import { ChevronRight, Inbox, Search, SlidersHorizontal, TriangleAlert, X } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import type { BreadcrumbItem } from './pageHierarchy';
 
@@ -61,8 +62,50 @@ export function PageScaffold({
   );
 }
 
-export function PageToolbar({ children }: { children: ReactNode }) {
-  return <div className="page-toolbar">{children}</div>;
+export function PageToolbar({
+  children,
+  filters,
+  search,
+}: {
+  children?: ReactNode;
+  filters?: ReactNode;
+  search?: ReactNode;
+}) {
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const hasSplitControls = filters !== undefined || search !== undefined;
+
+  if (!hasSplitControls) return <div className="page-toolbar">{children}</div>;
+
+  return (
+    <div className={`page-toolbar page-toolbar--split${isFilterOpen ? ' is-filter-open' : ''}`}>
+      <div className="page-toolbar__filters-content">
+        <div className="page-toolbar__filters-heading">
+          <strong>필터</strong>
+          <button type="button" aria-label="필터 닫기" onClick={() => setIsFilterOpen(false)}>
+            <X size={17} aria-hidden="true" />
+          </button>
+        </div>
+        {filters}
+      </div>
+      <div className="page-toolbar__search-content">{search}</div>
+      <button
+        className="page-toolbar__filter-trigger"
+        type="button"
+        aria-expanded={isFilterOpen}
+        onClick={() => setIsFilterOpen((current) => !current)}
+      >
+        <SlidersHorizontal size={15} aria-hidden="true" /> 필터
+      </button>
+      {isFilterOpen ? (
+        <button
+          className="page-toolbar__filter-scrim"
+          type="button"
+          aria-label="필터 닫기"
+          onClick={() => setIsFilterOpen(false)}
+        />
+      ) : null}
+    </div>
+  );
 }
 
 export function SearchField({

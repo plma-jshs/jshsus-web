@@ -376,6 +376,24 @@
   font-weight: var(--j-weight-medium);
 }
 
+.portal-footer__divider {
+  color: var(--j-color-border-strong);
+}
+
+.portal-footer__links {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.portal-footer__business--mobile {
+  display: none;
+}
+
+.portal-footer__copyright {
+  white-space: nowrap;
+}
+
 .portal-footer a {
   color: inherit;
   font-weight: var(--j-weight-regular);

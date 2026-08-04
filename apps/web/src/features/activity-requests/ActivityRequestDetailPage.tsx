@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Clock3, MapPin } from 'lucide-react';
 import { ContentMoreMenu } from '../../components/page/ContentMoreMenu';
 import { useToast } from '../../components/feedback/Toast';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
@@ -149,16 +149,8 @@ export function ActivityRequestDetailPage() {
   return (
     <PageScaffold
       breadcrumbs={detailBreadcrumbs('activityRequests')}
-      title={request.purpose}
       width="reading"
       variant="document"
-      meta={
-        <>
-          <span className={`activity-status is-${request.status}`}>
-            {activityStatusLabels[request.status]}
-          </span>
-        </>
-      }
     >
       <article className="activity-document">
         {request.status === 'submitted' && canEdit ? (
@@ -182,6 +174,52 @@ export function ActivityRequestDetailPage() {
             />
           </div>
         ) : null}
+        <header className="activity-detail-summary">
+          <div className="activity-detail-summary__title">
+            <span className={`activity-status is-${request.status}`}>
+              {activityStatusLabels[request.status]}
+            </span>
+            <h1>{request.purpose}</h1>
+          </div>
+          <div className="activity-detail-summary__facts">
+            <div>
+              <CalendarDays size={17} aria-hidden="true" />
+              <span>
+                <small>활동일</small>
+                <strong>{activityDateFormatter.format(new Date(request.startsAt))}</strong>
+              </span>
+            </div>
+            <div>
+              <Clock3 size={17} aria-hidden="true" />
+              <span>
+                <small>시간</small>
+                <strong>
+                  {formatActivityPeriodLabel(
+                    activityDate,
+                    request.startsAt,
+                    request.endsAt,
+                    request.activitySlotIds,
+                  )}
+                </strong>
+                <small>
+                  {formatActivityTimeRanges(
+                    activityDate,
+                    request.startsAt,
+                    request.endsAt,
+                    request.activitySlotIds,
+                  )}
+                </small>
+              </span>
+            </div>
+            <div>
+              <MapPin size={17} aria-hidden="true" />
+              <span>
+                <small>장소</small>
+                <strong>{request.location}</strong>
+              </span>
+            </div>
+          </div>
+        </header>
         <section aria-labelledby="activity-information-title">
           <div className="activity-document__heading">
             <h2 id="activity-information-title">신청 정보</h2>

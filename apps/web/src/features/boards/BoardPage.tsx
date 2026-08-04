@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
-import { BookOpen, PenLine, X } from 'lucide-react';
+import { BookOpen, Eye, PenLine, X } from 'lucide-react';
 import {
   DataTablePagination,
   type DataTablePageSize,
@@ -127,7 +127,8 @@ export function BoardPage() {
                     </th>
                     <th scope="col">작성일</th>
                     <th className="data-table__views" scope="col">
-                      조회
+                      <Eye size={14} aria-hidden="true" />
+                      <span className="sr-only">조회</span>
                     </th>
                   </tr>
                 </thead>
@@ -159,7 +160,10 @@ export function BoardPage() {
                         </time>
                       </td>
                       <td className="data-table__views">
-                        {post.viewCount.toLocaleString('ko-KR')}
+                        <span className="data-table__view-count">
+                          <Eye size={14} aria-hidden="true" />
+                          {post.viewCount.toLocaleString('ko-KR')}
+                        </span>
                       </td>
                     </tr>
                   ))}

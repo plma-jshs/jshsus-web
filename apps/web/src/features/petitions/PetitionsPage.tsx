@@ -81,41 +81,47 @@ export function PetitionsPage() {
       }
     >
       <section className="workflow-table-section petition-list-section" aria-label="청원 목록">
-        <PageToolbar>
-          <FilterChips
-            value={filter}
-            onChange={(value) => {
-              setFilter(value);
-              setPage(1);
-            }}
-            label="청원 상태"
-            options={filterOptions}
-          />
-          <div className="petition-search-controls">
-            <ToolbarSelect
-              ariaLabel="검색 기준"
-              value={searchField}
-              options={[
-                { value: 'title_content', label: '제목+내용' },
-                { value: 'title', label: '제목' },
-                { value: 'author', label: '작성자' },
-              ]}
-              onChange={(value) => {
-                setSearchField(value);
-                setPage(1);
-              }}
-            />
-            <SearchField
-              value={query}
-              onChange={(value) => {
-                setQuery(value);
-                setPage(1);
-              }}
-              label="청원 검색"
-              placeholder="검색어를 입력하세요"
-            />
-          </div>
-        </PageToolbar>
+        <PageToolbar
+          filters={
+            <>
+              <FilterChips
+                value={filter}
+                onChange={(value) => {
+                  setFilter(value);
+                  setPage(1);
+                }}
+                label="청원 상태"
+                options={filterOptions}
+              />
+              <ToolbarSelect
+                ariaLabel="검색 기준"
+                value={searchField}
+                options={[
+                  { value: 'title_content', label: '제목+내용' },
+                  { value: 'title', label: '제목' },
+                  { value: 'author', label: '작성자' },
+                ]}
+                onChange={(value) => {
+                  setSearchField(value);
+                  setPage(1);
+                }}
+              />
+            </>
+          }
+          search={
+            <div className="petition-search-controls">
+              <SearchField
+                value={query}
+                onChange={(value) => {
+                  setQuery(value);
+                  setPage(1);
+                }}
+                label="청원 검색"
+                placeholder="검색어를 입력하세요"
+              />
+            </div>
+          }
+        />
 
         <div className="workflow-table-summary petition-table-summary" aria-live="polite">
           {query.trim() || filter !== 'all'

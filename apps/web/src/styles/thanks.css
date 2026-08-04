@@ -266,6 +266,11 @@
 }
 
 @media (max-width: 640px) {
+  .thanks-summary-list {
+    max-height: 220px;
+    padding-bottom: 12px;
+  }
+
   .thanks-messages {
     padding: 16px;
   }

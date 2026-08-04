@@ -54,24 +54,28 @@ export function LostItemsPage() {
       variant="workspace"
     >
       <section className="lost-items-view" aria-label="분실물 목록">
-        <PageToolbar>
-          <FilterChips
-            value={filter}
-            onChange={setFilter}
-            label="분실물 종류"
-            options={[
-              { value: 'all', label: '전체' },
-              { value: 'lost', label: '분실' },
-              { value: 'found', label: '습득' },
-            ]}
-          />
-          <SearchField
-            value={query}
-            onChange={setQuery}
-            label="분실물 검색"
-            placeholder="물건 이름 또는 장소 검색"
-          />
-        </PageToolbar>
+        <PageToolbar
+          filters={
+            <FilterChips
+              value={filter}
+              onChange={setFilter}
+              label="분실물 종류"
+              options={[
+                { value: 'all', label: '전체' },
+                { value: 'lost', label: '분실' },
+                { value: 'found', label: '습득' },
+              ]}
+            />
+          }
+          search={
+            <SearchField
+              value={query}
+              onChange={setQuery}
+              label="분실물 검색"
+              placeholder="물건 이름 또는 장소 검색"
+            />
+          }
+        />
 
         {itemsQuery.isLoading ? (
           <PageState kind="loading" title="분실물 정보를 불러오는 중입니다." variant="section" />

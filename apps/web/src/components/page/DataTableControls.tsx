@@ -134,6 +134,8 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
     defaultSearchFieldOptions) as readonly DataTableSearchFieldOption<TField>[];
   const [draftField, setDraftField] = useState(field);
   const [draftQuery, setDraftQuery] = useState(query);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterPanelId = useId();
   const onSearchRef = useRef(onSearch);
   const externalSearchRef = useRef({ field, query });
   const lastSearchRef = useRef({ field, query: query.trim() });
@@ -172,7 +174,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
 
   return (
     <form
-      className="data-table-toolbar"
+      className={`data-table-toolbar${isFilterOpen ? ' is-filter-open' : ''}`}
       role="search"
       onSubmit={(event) => {
         event.preventDefault();
@@ -187,21 +189,35 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
         </span>
       </div>
       <div className="data-table-toolbar__controls">
-        <ToolbarSelect
-          ariaLabel="페이지당 표시 건수"
-          value={pageSize}
-          options={([20, 50, 100] as const).map((size) => ({ value: size, label: `${size}건` }))}
-          onChange={onPageSizeChange}
-        />
-        {extraControls}
-        {showSearchField ? (
+        <div
+          className="data-table-toolbar__filters"
+          id={filterPanelId}
+          aria-label="목록 필터"
+          role={isFilterOpen ? 'dialog' : undefined}
+          aria-modal={isFilterOpen ? true : undefined}
+        >
+          <div className="data-table-toolbar__filters-heading">
+            <strong>필터</strong>
+            <button type="button" aria-label="필터 닫기" onClick={() => setIsFilterOpen(false)}>
+              <X size={17} aria-hidden="true" />
+            </button>
+          </div>
           <ToolbarSelect
-            ariaLabel="검색 범위"
-            value={draftField}
-            options={effectiveSearchFieldOptions}
-            onChange={setDraftField}
+            ariaLabel="페이지당 표시 건수"
+            value={pageSize}
+            options={([20, 50, 100] as const).map((size) => ({ value: size, label: `${size}건` }))}
+            onChange={onPageSizeChange}
           />
-        ) : null}
+          {extraControls}
+          {showSearchField ? (
+            <ToolbarSelect
+              ariaLabel="검색 범위"
+              value={draftField}
+              options={effectiveSearchFieldOptions}
+              onChange={setDraftField}
+            />
+          ) : null}
+        </div>
         <div className="data-table-toolbar__query">
           <Search size={15} aria-hidden="true" />
           <input
@@ -222,10 +238,27 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
             </button>
           ) : null}
         </div>
+        <button
+          className="data-table-toolbar__filter-trigger"
+          type="button"
+          aria-controls={filterPanelId}
+          aria-expanded={isFilterOpen}
+          onClick={() => setIsFilterOpen((current) => !current)}
+        >
+          필터 <ChevronDown size={15} aria-hidden="true" />
+        </button>
         <button className="sr-only" type="submit">
           검색
         </button>
       </div>
+      {isFilterOpen ? (
+        <button
+          className="data-table-toolbar__filter-scrim"
+          type="button"
+          aria-label="필터 닫기"
+          onClick={() => setIsFilterOpen(false)}
+        />
+      ) : null}
     </form>
   );
 }
