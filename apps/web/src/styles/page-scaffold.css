@@ -471,9 +471,7 @@
   }
 
   .page-breadcrumbs {
-    overflow: hidden;
-    flex-wrap: nowrap;
-    white-space: nowrap;
+    display: none;
   }
 
   .detail-page-header {
@@ -490,7 +488,8 @@
   }
 
   .detail-page-header h1 {
-    font-size: 1.65rem;
+    font-size: 1.5rem;
+    font-weight: var(--j-weight-semibold);
   }
 
   .detail-page-header__action,

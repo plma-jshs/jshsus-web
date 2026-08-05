@@ -42,6 +42,9 @@ type NavigationItem =
 
 type NavigationCategory = { label: string; links: readonly NavigationItem[] };
 
+const businessInfoText =
+  '호스팅서비스사업자: 아이디비아이 | 사업자 등록번호: 332-44-01176 | 사업자 대표: 강재환';
+
 const navigationCategories = [
   {
     label: '소식·일정',
@@ -256,13 +259,17 @@ function MobileMenu({
                   </button>
                 </div>
                 {displayName ? (
-                  <div className="mobile-menu__user">
+                  <Link
+                    className="mobile-menu__user"
+                    to="/my-status"
+                    aria-label={`${displayName} 마이페이지로 이동`}
+                    onClick={closeMenu}
+                  >
                     <UserAvatar imageUrl={profileImageUrl} className="user-avatar--menu" />
                     <div>
-                      <span>현재 로그인한 계정</span>
                       <strong>{displayName}</strong>
                     </div>
-                  </div>
+                  </Link>
                 ) : null}
                 <nav className="mobile-menu__links" aria-label="전체 서비스">
                   {navigationCategories.map((category) => (
@@ -280,6 +287,29 @@ function MobileMenu({
           )
         : null}
     </div>
+  );
+}
+
+function BusinessInfoModal({ onClose }: { onClose: () => void }) {
+  return createPortal(
+    <div className="portal-footer__business-modal" role="presentation" onClick={onClose}>
+      <section
+        className="portal-footer__business-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="business-info-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header>
+          <strong id="business-info-title">사업자 정보</strong>
+          <button type="button" aria-label="사업자 정보 닫기" onClick={onClose}>
+            <X aria-hidden="true" size={18} />
+          </button>
+        </header>
+        <p>{businessInfoText}</p>
+      </section>
+    </div>,
+    document.body,
   );
 }
 
@@ -375,6 +405,7 @@ function UserMenu({
 function PortalShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [routeLabel, setRouteLabel] = useState('페이지를 이동했습니다.');
+  const [isBusinessInfoOpen, setIsBusinessInfoOpen] = useState(false);
   const queryClient = useQueryClient();
   const sessionQuery = useQuery({
     queryKey: ['session'],
@@ -405,6 +436,20 @@ function PortalShell() {
   const sessionDisplayName = session?.isLogined
     ? [session.identifier ?? session.stuid, session.name ?? '사용자'].filter(Boolean).join(' ')
     : '';
+
+  useEffect(() => {
+    if (!isBusinessInfoOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsBusinessInfoOpen(false);
+    };
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isBusinessInfoOpen]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
@@ -485,7 +530,7 @@ function PortalShell() {
           activeOptions={{ exact: true }}
           activeProps={{ className: 'mobile-tab is-active' }}
         >
-          <Home aria-hidden="true" fill="currentColor" size={18} />
+          <Home aria-hidden="true" size={18} />
           <span>홈</span>
         </Link>
         <Link
@@ -493,7 +538,7 @@ function PortalShell() {
           className="mobile-tab"
           activeProps={{ className: 'mobile-tab is-active' }}
         >
-          <Megaphone aria-hidden="true" fill="currentColor" size={18} />
+          <Megaphone aria-hidden="true" size={18} />
           <span>공지</span>
         </Link>
         <Link
@@ -501,7 +546,7 @@ function PortalShell() {
           className="mobile-tab"
           activeProps={{ className: 'mobile-tab is-active' }}
         >
-          <MessageSquareText aria-hidden="true" fill="currentColor" size={18} />
+          <MessageSquareText aria-hidden="true" size={18} />
           <span>게시판</span>
         </Link>
         <Link
@@ -509,7 +554,7 @@ function PortalShell() {
           className="mobile-tab"
           activeProps={{ className: 'mobile-tab is-active' }}
         >
-          <ClipboardCheck aria-hidden="true" fill="currentColor" size={18} />
+          <ClipboardCheck aria-hidden="true" size={18} />
           <span>탐활서</span>
         </Link>
         <Link
@@ -517,7 +562,7 @@ function PortalShell() {
           className="mobile-tab"
           activeProps={{ className: 'mobile-tab is-active' }}
         >
-          <BadgeCheck aria-hidden="true" fill="currentColor" size={18} />
+          <BadgeCheck aria-hidden="true" size={18} />
           <span>마이페이지</span>
         </Link>
       </nav>
@@ -539,19 +584,23 @@ function PortalShell() {
             |
           </span>
           <span className="portal-footer__business portal-footer__business--desktop">
-            호스팅서비스사업자: 아이디비아이 | 사업자 등록번호: 332-44-01176 | 사업자 대표: 강재환
+            {businessInfoText}
           </span>
-          <details className="portal-footer__business portal-footer__business--mobile">
-            <summary>
-              사업자 정보 <ChevronDown aria-hidden="true" size={14} />
-            </summary>
-            <span>
-              호스팅서비스사업자: 아이디비아이 | 사업자 등록번호: 332-44-01176 | 사업자 대표: 강재환
-            </span>
-          </details>
+          <button
+            className="portal-footer__business portal-footer__business--mobile"
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={isBusinessInfoOpen}
+            onClick={() => setIsBusinessInfoOpen(true)}
+          >
+            사업자 정보 <ChevronDown aria-hidden="true" size={14} />
+          </button>
           <span className="portal-footer__copyright">Copyright © 2026 전남과학고등학교 IT부</span>
         </div>
       </footer>
+      {isBusinessInfoOpen ? (
+        <BusinessInfoModal onClose={() => setIsBusinessInfoOpen(false)} />
+      ) : null}
     </div>
   );
 }

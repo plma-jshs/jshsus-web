@@ -14,7 +14,17 @@
   padding: 48px 24px 58px;
   place-items: center;
   overflow-x: hidden;
+  isolation: isolate;
+  background: #081b30;
+}
+
+.auth-page::before {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
   background: url('/images/auth-campus.png') center / cover no-repeat;
+  content: '';
+  transform: scale(1.12);
 }
 
 .auth-card {
@@ -580,24 +590,33 @@
 
 @media (max-width: 899px) {
   .auth-page {
-    display: block;
+    display: flex;
+    height: 100dvh;
     min-height: 100dvh;
     padding: 0;
+    overflow: hidden;
+    flex-direction: column;
     background: #fff;
+  }
+
+  .auth-page::before {
+    display: none;
   }
 
   .auth-card {
     display: flex;
     width: 100%;
     max-width: none;
+    height: 100%;
     min-height: 0;
+    flex: 1 1 auto;
     flex-direction: column;
     box-shadow: none;
   }
 
   .auth-intro {
-    height: 340px;
-    min-height: 340px;
+    height: 280px;
+    min-height: 280px;
     padding: 26px clamp(20px, 7vw, 48px);
     background:
       linear-gradient(180deg, rgb(8 27 48 / 46%), rgb(8 27 48 / 70%)),
@@ -620,13 +639,20 @@
 
   .auth-panel {
     padding: 34px clamp(20px, 7vw, 44px) 32px;
+    min-height: 0;
     align-self: stretch;
+    flex: 1 1 auto;
+    overflow: hidden;
   }
 
   .auth-page-footer {
-    position: static;
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    bottom: 0;
+    left: 0;
     width: 100%;
-    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
     transform: none;
     color: var(--j-color-text-muted);
     background: #fff;
@@ -646,8 +672,8 @@
 
 @media (max-width: 479px) {
   .auth-intro {
-    height: 340px;
-    min-height: 340px;
+    height: 250px;
+    min-height: 250px;
     padding: 22px 18px;
   }
 
@@ -656,7 +682,7 @@
   }
 
   .auth-panel {
-    padding: 28px 20px 25px;
+    padding: 28px 20px 76px;
   }
 
   .auth-form-grid.two,

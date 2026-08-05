@@ -492,7 +492,9 @@ function CalendarCard({
             <ChevronLeft aria-hidden="true" size={17} />
           </button>
           <span className="home-card__meta">
-            {visibleMonth.year}년 {visibleMonth.month}월
+            {visibleMonth.year === today.year
+              ? `${visibleMonth.month}월`
+              : `${visibleMonth.year}년 ${visibleMonth.month}월`}
           </span>
           <button type="button" aria-label="다음 달" onClick={() => moveMonth(1)}>
             <ChevronRight aria-hidden="true" size={17} />

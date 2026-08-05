@@ -287,7 +287,7 @@ export class MeService {
             .leftJoin(schema.users, eq(schema.activityRequests.advisorTeacherId, schema.users.id))
             .where(eq(schema.activityRequestParticipants.studentId, student.id))
             .orderBy(desc(schema.activityRequests.startsAt), desc(schema.activityRequests.id))
-            .limit(1),
+            .limit(2),
         ]);
 
       const records: PointRecord[] = pointRows.map((row) => ({
@@ -342,6 +342,7 @@ export class MeService {
             }
           : undefined,
         deviceCases: deviceCaseSummaries,
+        latestActivityRequests: activityRows.map(toActivitySummary),
         latestActivityRequest: activityRows[0] ? toActivitySummary(activityRows[0]) : undefined,
       };
     });

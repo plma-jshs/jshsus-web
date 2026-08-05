@@ -126,14 +126,15 @@
   }
   .mobile-menu__group > strong {
     padding-top: 0;
+    padding-left: 4px;
     color: var(--j-color-brand-strong);
     font-weight: 600;
   }
   .mobile-menu__header > strong {
-    padding: 0;
+    padding: 0 0 0 4px;
     color: var(--j-color-text-secondary);
     font-size: var(--j-text-sm);
-    font-weight: var(--j-weight-medium);
+    font-weight: var(--j-weight-regular);
   }
   .mobile-menu__user {
     display: flex;
@@ -144,6 +145,13 @@
     gap: var(--j-space-3);
     border-radius: var(--j-radius-md);
     background: var(--j-color-surface-subtle);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .mobile-menu__user:hover,
+  .mobile-menu__user:focus-visible {
+    background: var(--j-color-surface-hover);
   }
   .mobile-menu__user > div {
     display: grid;
@@ -170,7 +178,7 @@
   .mobile-menu__panel a {
     display: flex;
     min-height: 44px;
-    padding-inline: var(--j-space-6) var(--j-space-2);
+    padding-inline: var(--j-space-8) var(--j-space-2);
     align-items: center;
     border-radius: var(--j-radius-md);
     color: var(--j-color-text-secondary);
@@ -189,8 +197,10 @@
     min-height: 0;
     padding-block: var(--j-space-4);
     align-items: center;
+    justify-content: center;
     flex-wrap: nowrap;
     gap: var(--j-space-2) var(--j-space-3);
+    text-align: center;
   }
 
   .portal-footer__business--desktop {
@@ -198,38 +208,25 @@
   }
 
   .portal-footer__business--mobile {
-    display: block;
-    flex: 0 0 auto;
-    color: var(--j-color-text-secondary);
-  }
-
-  .portal-footer__business--mobile summary {
     display: inline-flex;
+    flex: 0 0 auto;
+    min-height: 0;
+    padding: 0;
     align-items: center;
     gap: 3px;
-    color: inherit;
+    border: 0;
+    color: var(--j-color-text-secondary);
+    background: transparent;
+    font: inherit;
     cursor: pointer;
-    list-style: none;
   }
 
-  .portal-footer__business--mobile summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .portal-footer__business--mobile summary svg {
+  .portal-footer__business--mobile svg {
     transition: transform var(--j-motion-fast);
   }
 
-  .portal-footer__business--mobile[open] summary svg {
+  .portal-footer__business--mobile[aria-expanded='true'] svg {
     transform: rotate(180deg);
-  }
-
-  .portal-footer__business--mobile > span {
-    display: block;
-    width: min(100%, 560px);
-    padding-top: var(--j-space-2);
-    color: var(--j-color-text-muted);
-    line-height: 1.6;
   }
 
   .portal-footer__brand,
@@ -242,7 +239,7 @@
 
   .portal-footer__copyright {
     flex: 0 1 auto;
-    margin-left: auto;
+    margin-left: 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -279,8 +276,8 @@
     inset-inline: 0;
     bottom: 0;
     display: grid;
-    width: 100%;
-    max-width: none;
+    width: 100vw;
+    max-width: 100vw;
     margin: 0;
     padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -314,6 +311,9 @@
     font-weight: var(--j-weight-bold);
     background: transparent;
   }
+  .mobile-tab.is-active svg {
+    fill: currentColor;
+  }
   .portal-footer {
     padding: 0;
     text-align: left;
@@ -322,8 +322,10 @@
     width: min(calc(100% - 2rem), 1280px);
     padding-block: var(--j-space-4) calc(80px + env(safe-area-inset-bottom));
     align-items: flex-start;
+    justify-content: center;
     flex-direction: column;
     gap: var(--j-space-2);
+    text-align: center;
   }
   .home-dashboard {
     gap: var(--j-space-4);
@@ -338,6 +340,15 @@
   }
   .home-card {
     padding: var(--j-space-5);
+  }
+
+  .home-card__header h2 {
+    font-size: 1rem;
+    font-weight: var(--j-weight-semibold);
+  }
+
+  .notices-card .home-card__header {
+    margin-bottom: 8px;
   }
   .home-primary-grid > .home-card,
   .home-community-grid > .home-card {
@@ -621,6 +632,42 @@
     margin-top: var(--j-space-3);
   }
 
+  .meals-card {
+    display: flex;
+    height: 360px;
+    min-height: 360px;
+    overflow: hidden;
+    flex-direction: column;
+  }
+
+  .meals-card .meal-grid {
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  .meals-card .meal-column.is-active {
+    position: relative;
+    min-height: 0;
+    padding-bottom: 30px;
+  }
+
+  .meals-card .meal-column.is-active ul {
+    max-height: calc(10.4em + 35px);
+    overflow: hidden;
+    line-height: 1.3;
+  }
+
+  .meals-card .meal-column.is-active .meal-column__calories {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    text-align: right;
+  }
+
   .schedule-card {
     min-height: 330px !important;
   }
@@ -640,9 +687,11 @@
     padding-inline: 12px;
     flex-direction: row;
     align-items: center;
+    justify-content: center;
     flex-wrap: nowrap;
     overflow: hidden;
     gap: var(--j-space-2) var(--j-space-3);
+    text-align: center;
   }
 
   .portal-footer__copyright {

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearch } from '@tanstack/react-router';
-import { FilePlus2 } from 'lucide-react';
+import { CalendarDays, FilePlus2, MapPin, UserRound, Users } from 'lucide-react';
 import {
   DataTablePagination,
   type DataTablePageSize,
@@ -287,6 +287,65 @@ export function ActivityRequestsPage() {
                 })}
               </tbody>
             </table>
+          </div>
+        ) : null}
+        {filtered.length ? (
+          <div className="activity-card-list" aria-label="탐구활동서 신청 카드 목록">
+            {visibleRequests.map((request) => {
+              const date = activityDayFormatter.format(new Date(request.startsAt));
+              const period = formatActivityPeriodLabel(
+                koreaDateInput(new Date(request.startsAt)),
+                request.startsAt,
+                request.endsAt,
+                request.activitySlotIds,
+              );
+              const timeRanges = formatActivityTimeRanges(
+                koreaDateInput(new Date(request.startsAt)),
+                request.startsAt,
+                request.endsAt,
+                request.activitySlotIds,
+              ).replaceAll('~', ' – ');
+              const participants = formatActivityParticipants(request.participants, request);
+
+              return (
+                <article className="activity-request-card" key={request.id}>
+                  <div className="activity-request-card__heading">
+                    <Link
+                      to="/activity-requests/$requestId"
+                      params={{ requestId: String(request.id) }}
+                    >
+                      {request.purpose}
+                    </Link>
+                    <span className={`activity-status is-${request.status}`}>
+                      {activityStatusLabels[request.status]}
+                    </span>
+                  </div>
+                  <div className="activity-request-card__details">
+                    <div className="activity-request-card__detail activity-request-card__detail--schedule">
+                      <CalendarDays size={15} aria-hidden="true" />
+                      <span>
+                        {date} <strong>({period}</strong>
+                        <em> / {timeRanges})</em>
+                      </span>
+                    </div>
+                    <div className="activity-request-card__detail">
+                      <MapPin size={15} aria-hidden="true" />
+                      <span>{request.location}</span>
+                    </div>
+                    <div className="activity-request-card__detail">
+                      <UserRound size={15} aria-hidden="true" />
+                      <span>
+                        지도교사: {request.advisorTeacherName ?? request.teacherName ?? '-'}
+                      </span>
+                    </div>
+                    <div className="activity-request-card__detail activity-request-card__detail--participants">
+                      <Users size={15} aria-hidden="true" />
+                      <span>참여자: {participants}</span>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         ) : null}
         {filtered.length ? (

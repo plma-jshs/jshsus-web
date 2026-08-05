@@ -430,6 +430,7 @@ export type StudentSelfStatus = {
   };
   deviceCase?: DeviceCase;
   deviceCases?: Array<DeviceCase & { label: string }>;
+  latestActivityRequests?: ActivityRequestSummary[];
   latestActivityRequest?: ActivityRequestSummary;
 };
 

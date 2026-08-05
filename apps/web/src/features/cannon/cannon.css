@@ -325,7 +325,14 @@
     top: 10px;
     right: 10px;
     left: 10px;
-    flex-wrap: wrap;
+    max-width: calc(100% - 20px);
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .cannon-toolbar::-webkit-scrollbar {
+    display: none;
   }
 
   .cannon-toolbar__status {
@@ -334,7 +341,7 @@
   }
 
   .cannon-settings {
-    top: 112px;
+    top: 68px;
     left: 10px;
     width: calc(100% - 20px);
     padding: 17px;

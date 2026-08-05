@@ -410,6 +410,13 @@ export function MyStatusPage() {
   }
 
   const status = statusQuery.data;
+  const activityRequests = (
+    status.latestActivityRequests?.length
+      ? status.latestActivityRequests
+      : status.latestActivityRequest
+        ? [status.latestActivityRequest]
+        : []
+  ).slice(0, 2);
   const cropGeometry = cropDraft ? getCropGeometry(cropDraft) : null;
   const deviceCases =
     status.deviceCases ??
@@ -620,32 +627,33 @@ export function MyStatusPage() {
             더보기 <ChevronRight size={14} aria-hidden="true" />
           </Link>
         </header>
-        {status.latestActivityRequest ? (
-          <Link
-            className="status-activity__row"
-            to="/activity-requests/$requestId"
-            params={{ requestId: String(status.latestActivityRequest.id) }}
-          >
-            <strong>{status.latestActivityRequest.purpose}</strong>
-            <span className="status-activity__meta">
-              <span>
-                <CalendarDays size={14} aria-hidden="true" />
-                {dateFormatter.format(new Date(status.latestActivityRequest.startsAt))}
-              </span>
-              <span>
-                <Clock3 size={14} aria-hidden="true" />
-                {activityTimeLabel(
-                  status.latestActivityRequest.activitySlotIds,
-                  status.latestActivityRequest.startsAt,
-                  status.latestActivityRequest.endsAt,
-                )}
-              </span>
-              <span>
-                <MapPin size={14} aria-hidden="true" />
-                {status.latestActivityRequest.location}
-              </span>
-            </span>
-          </Link>
+        {activityRequests.length ? (
+          <div className="status-activity__list">
+            {activityRequests.map((request) => (
+              <Link
+                className="status-activity__row"
+                to="/activity-requests/$requestId"
+                params={{ requestId: String(request.id) }}
+                key={request.id}
+              >
+                <strong>{request.purpose}</strong>
+                <span className="status-activity__meta">
+                  <span>
+                    <CalendarDays size={14} aria-hidden="true" />
+                    {dateFormatter.format(new Date(request.startsAt))}
+                  </span>
+                  <span>
+                    <Clock3 size={14} aria-hidden="true" />
+                    {activityTimeLabel(request.activitySlotIds, request.startsAt, request.endsAt)}
+                  </span>
+                  <span>
+                    <MapPin size={14} aria-hidden="true" />
+                    {request.location}
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
         ) : (
           <p className="status-activity__empty">최근 신청 내역이 없습니다.</p>
         )}

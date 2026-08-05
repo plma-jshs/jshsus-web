@@ -612,6 +612,7 @@
   }
 
   .data-table-toolbar__summary {
+    width: 100%;
     justify-content: space-between;
   }
 
@@ -753,10 +754,10 @@
 
   .data-table tbody tr {
     display: grid;
-    padding: var(--j-space-3) var(--j-space-2);
+    padding: 10px var(--j-space-2);
     grid-template-columns: minmax(0, 1fr) minmax(72px, max-content) max-content;
-    column-gap: 10px;
-    row-gap: 7px;
+    column-gap: 7px;
+    row-gap: 4px;
     border-bottom: 1px solid var(--j-color-border);
   }
 
@@ -806,7 +807,7 @@
 
   .data-table__views {
     grid-column: 3;
-    min-width: 44px;
+    min-width: 40px;
     text-align: right;
   }
 

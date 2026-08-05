@@ -400,6 +400,74 @@
   white-space: nowrap;
 }
 
+.portal-footer__business-modal {
+  position: fixed;
+  z-index: calc(var(--j-layer-modal) + 1);
+  inset: 0;
+  display: grid;
+  padding: 16px;
+  place-items: center;
+  background: var(--j-color-scrim);
+  animation: portal-footer-modal-in 160ms ease-out both;
+}
+
+.portal-footer__business-dialog {
+  width: min(420px, 100%);
+  padding: var(--j-space-5);
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-lg);
+  background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-overlay);
+}
+
+.portal-footer__business-dialog > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--j-space-3);
+}
+
+.portal-footer__business-dialog strong {
+  color: var(--j-color-text);
+  font-size: var(--j-text-md);
+}
+
+.portal-footer__business-dialog button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: var(--j-radius-sm);
+  color: var(--j-color-text-muted);
+  background: transparent;
+}
+
+.portal-footer__business-dialog button:hover {
+  color: var(--j-color-text);
+  background: var(--j-color-surface-hover);
+}
+
+.portal-footer__business-dialog p {
+  margin: var(--j-space-4) 0 0;
+  color: var(--j-color-text-secondary);
+  font-size: var(--j-text-sm);
+  line-height: 1.7;
+}
+
+@keyframes portal-footer-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .portal-footer a {
   color: inherit;
   font-weight: var(--j-weight-regular);

@@ -1,10 +1,10 @@
 import type { AcademicEvent } from '@jshsus/types';
-import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
-import { useMemo, useState } from 'react';
+import type { CSSProperties, KeyboardEvent, MouseEvent, TouchEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, X } from 'lucide-react';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter, toKoreanDateKey } from '../../shared/lib/date';
@@ -23,6 +23,7 @@ type CalendarPageContentProps = {
   initialSelectedDate: string;
 };
 type CalendarPopover = {
+  key: string;
   title: string;
   period: string;
   tone: 'school' | 'observance' | 'holiday';
@@ -139,6 +140,52 @@ function eventMergeKey(event: AcademicEvent) {
     event.source,
     event.description ?? '',
   ].join('\u001f');
+}
+
+function CalendarAgendaContent({
+  events,
+  isLoading,
+}: {
+  events: AcademicEvent[];
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div className="calendar-agenda__skeleton" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+    );
+  }
+
+  if (events.length === 0) {
+    return <p className="calendar-agenda__empty">등록된 일정이 없습니다.</p>;
+  }
+
+  return (
+    <div className="calendar-agenda__list">
+      {events.map((event) => (
+        <article key={event.id} style={styleForEvent(event)}>
+          <i
+            className={`calendar-source-dot is-${
+              event.isHoliday || event.category === 'holiday'
+                ? 'holiday'
+                : event.category === 'observance'
+                  ? 'observance'
+                  : 'school'
+            }`}
+            aria-hidden="true"
+          />
+          <div>
+            <h4>{displayEventTitle(event.title)}</h4>
+            <span className="calendar-agenda__meta">{formatEventRange(event)}</span>
+            {event.description ? <p>{event.description}</p> : null}
+          </div>
+        </article>
+      ))}
+    </div>
+  );
 }
 
 function nextDateKey(dateKey: string) {
@@ -302,6 +349,11 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
   });
   const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
   const [popover, setPopover] = useState<CalendarPopover | null>(null);
+  const [mobileAgendaMounted, setMobileAgendaMounted] = useState(false);
+  const [mobileAgendaClosing, setMobileAgendaClosing] = useState(false);
+  const mobileAgendaMountedRef = useRef(false);
+  const mobileAgendaClosingRef = useRef(false);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const cells = useMemo(() => monthGrid(visibleMonth), [visibleMonth]);
   const weeks = useMemo(() => calendarWeeks(cells), [cells]);
   const range = { from: cells[0].dateKey, to: cells[cells.length - 1].dateKey };
@@ -327,6 +379,10 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
   const calendarUnavailable = calendarQuery.isSuccess && !calendarQuery.data.schoolEventsAvailable;
   const emptyCurrentMonth =
     calendarQuery.isSuccess && calendarQuery.data.schoolEventsAvailable && !hasCurrentMonthEvents;
+  const calendarMonthLabel =
+    visibleMonth.getFullYear() === Number(todayKey.slice(0, 4))
+      ? `${visibleMonth.getMonth() + 1}월`
+      : `${visibleMonth.getFullYear()}년 ${visibleMonth.getMonth() + 1}월`;
 
   const focusDate = (dateKey: string) => {
     requestAnimationFrame(() => {
@@ -343,6 +399,7 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
       setVisibleMonth(new Date(date.getFullYear(), date.getMonth(), 1));
     }
     setSelectedDate(dateKey);
+    setPopover(null);
     if (moveFocus) focusDate(dateKey);
   };
 
@@ -350,6 +407,73 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
     const next = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + offset, 1);
     setVisibleMonth(next);
     setSelectedDate(toDateKey(next));
+    setPopover(null);
+  };
+
+  const openMobileAgenda = () => {
+    mobileAgendaMountedRef.current = true;
+    mobileAgendaClosingRef.current = false;
+    setMobileAgendaClosing(false);
+    setMobileAgendaMounted(true);
+  };
+
+  const closeMobileAgenda = useCallback(() => {
+    if (!mobileAgendaMountedRef.current || mobileAgendaClosingRef.current) return;
+    mobileAgendaClosingRef.current = true;
+    setMobileAgendaClosing(true);
+  }, [setMobileAgendaClosing]);
+
+  useEffect(() => {
+    if (!mobileAgendaClosing) return undefined;
+    const timer = window.setTimeout(() => {
+      mobileAgendaMountedRef.current = false;
+      mobileAgendaClosingRef.current = false;
+      setMobileAgendaMounted(false);
+      setMobileAgendaClosing(false);
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [mobileAgendaClosing]);
+
+  useEffect(() => {
+    if (!mobileAgendaMounted) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') closeMobileAgenda();
+    };
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [closeMobileAgenda, mobileAgendaMounted]);
+
+  useEffect(() => {
+    if (!popover) return undefined;
+    const closeOnOutsidePointer = (event: globalThis.PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Element && !target.closest('.full-calendar__event-bar')) {
+        setPopover(null);
+      }
+    };
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    return () => document.removeEventListener('pointerdown', closeOnOutsidePointer);
+  }, [popover]);
+
+  const handleCalendarTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    touchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
+  };
+
+  const handleCalendarTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = touchStartRef.current;
+    const touch = event.changedTouches[0];
+    touchStartRef.current = null;
+    if (!start || !touch) return;
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    if (Math.abs(deltaX) < 44 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+    moveMonth(deltaX < 0 ? 1 : -1);
   };
 
   const handleDateKeyDown = (event: KeyboardEvent<HTMLButtonElement>, dateKey: string) => {
@@ -381,9 +505,7 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
               <button type="button" onClick={() => moveMonth(-1)} aria-label="이전 달">
                 <ChevronLeft size={19} aria-hidden="true" />
               </button>
-              <h2 aria-live="polite">
-                {visibleMonth.getFullYear()}년 {visibleMonth.getMonth() + 1}월
-              </h2>
+              <h2 aria-live="polite">{calendarMonthLabel}</h2>
               <button type="button" onClick={() => moveMonth(1)} aria-label="다음 달">
                 <ChevronRight size={19} aria-hidden="true" />
               </button>
@@ -430,7 +552,12 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
 
         {!calendarQuery.isError ? (
           <div className="calendar-layout" aria-busy={calendarQuery.isLoading}>
-            <div className="full-calendar" aria-label="월간 학사일정">
+            <div
+              className="full-calendar"
+              aria-label="월간 학사일정"
+              onTouchStart={handleCalendarTouchStart}
+              onTouchEnd={handleCalendarTouchEnd}
+            >
               <div className="full-calendar__weekdays" aria-hidden="true">
                 {weekdays.map((weekday) => (
                   <span key={weekday}>{weekday}</span>
@@ -471,7 +598,13 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                             ]
                               .filter(Boolean)
                               .join(' ')}
-                            onClick={() => selectDate(date)}
+                            onClick={() => {
+                              selectDate(date);
+                              if (window.innerWidth <= 767) {
+                                if (dayEvents.length > 0) openMobileAgenda();
+                                else closeMobileAgenda();
+                              }
+                            }}
                             onKeyDown={(event) => handleDateKeyDown(event, dateKey)}
                             tabIndex={dateKey === selectedDate ? 0 : -1}
                             aria-label={`${ariaDateFormatter.format(date)}${eventSummary}`}
@@ -523,33 +656,32 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                                   gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
                                   gridRow: segment.lane + 1,
                                 }}
-                                onClick={(event) =>
-                                  selectDate(
-                                    clickedSegmentDate(
-                                      event,
-                                      week,
-                                      segment.startColumn,
-                                      segment.endColumn,
-                                    ),
-                                  )
-                                }
-                                onMouseEnter={(event) =>
-                                  setPopover({
-                                    title: displayEventTitle(segment.event.title),
-                                    period: formatEventRange(segment.event, 'never'),
-                                    tone: eventTone(segment.event),
-                                    x: event.clientX,
-                                    y: event.clientY,
-                                  })
-                                }
-                                onMouseMove={(event) =>
+                                onClick={(event) => {
+                                  const clickedDate = clickedSegmentDate(
+                                    event,
+                                    week,
+                                    segment.startColumn,
+                                    segment.endColumn,
+                                  );
+                                  selectDate(clickedDate);
+                                  if (window.innerWidth <= 767) {
+                                    openMobileAgenda();
+                                    return;
+                                  }
+                                  const popoverKey = `${segment.event.id}-${week[0].dateKey}`;
                                   setPopover((current) =>
-                                    current
-                                      ? { ...current, x: event.clientX, y: event.clientY }
-                                      : current,
-                                  )
-                                }
-                                onMouseLeave={() => setPopover(null)}
+                                    current?.key === popoverKey
+                                      ? null
+                                      : {
+                                          key: popoverKey,
+                                          title: displayEventTitle(segment.event.title),
+                                          period: formatEventRange(segment.event, 'never'),
+                                          tone: eventTone(segment.event),
+                                          x: event.clientX,
+                                          y: event.clientY,
+                                        },
+                                  );
+                                }}
                               >
                                 {segment.showLabel ? (
                                   <span>{displayEventTitle(segment.event.title)}</span>
@@ -562,38 +694,13 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
               </div>
             </div>
 
+            <div className="calendar-layout__agenda" aria-live="polite">
+              <strong>{selectedDateLabel}</strong>
+              <span>{selectedEvents.length}건</span>
+            </div>
+
             <aside className="calendar-agenda" aria-live="polite">
-              {calendarQuery.isLoading ? (
-                <div className="calendar-agenda__skeleton" aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-              ) : selectedEvents.length === 0 ? (
-                <p className="calendar-agenda__empty">등록된 일정이 없습니다.</p>
-              ) : (
-                <div className="calendar-agenda__list">
-                  {selectedEvents.map((event) => (
-                    <article key={event.id} style={styleForEvent(event)}>
-                      <i
-                        className={`calendar-source-dot is-${
-                          event.isHoliday || event.category === 'holiday'
-                            ? 'holiday'
-                            : event.category === 'observance'
-                              ? 'observance'
-                              : 'school'
-                        }`}
-                        aria-hidden="true"
-                      />
-                      <div>
-                        <h4>{displayEventTitle(event.title)}</h4>
-                        <span className="calendar-agenda__meta">{formatEventRange(event)}</span>
-                        {event.description ? <p>{event.description}</p> : null}
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
+              <CalendarAgendaContent events={selectedEvents} isLoading={calendarQuery.isLoading} />
             </aside>
           </div>
         ) : null}
@@ -614,6 +721,32 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                 <span className={popover.tone === 'holiday' ? 'is-holiday' : undefined}>
                   {popover.period}
                 </span>
+              </div>,
+              document.body,
+            )
+          : null}
+        {mobileAgendaMounted && selectedEvents.length > 0
+          ? createPortal(
+              <div
+                className={`calendar-mobile-modal${mobileAgendaClosing ? ' is-closing' : ''}`}
+                role="presentation"
+                onClick={closeMobileAgenda}
+              >
+                <section
+                  className="calendar-mobile-modal__dialog"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="calendar-mobile-modal-title"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <header>
+                    <strong id="calendar-mobile-modal-title">{selectedDateLabel}</strong>
+                    <button type="button" aria-label="일정 닫기" onClick={closeMobileAgenda}>
+                      <X size={18} aria-hidden="true" />
+                    </button>
+                  </header>
+                  <CalendarAgendaContent events={selectedEvents} isLoading={false} />
+                </section>
               </div>,
               document.body,
             )
