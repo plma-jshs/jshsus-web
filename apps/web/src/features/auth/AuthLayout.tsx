@@ -44,7 +44,13 @@ export function AuthLayout({
       <footer className="auth-page-footer">
         <nav aria-label="법적 고지">
           <Link to="/terms">서비스 이용약관</Link>
-          <Link to="/privacy">개인정보 처리 방침</Link>
+          <span className="auth-page-footer__separator" aria-hidden="true">
+            ·
+          </span>
+          <Link to="/privacy">개인정보 처리방침</Link>
+          <span className="auth-page-footer__separator" aria-hidden="true">
+            ·
+          </span>
           <span>Copyright © 2026 전남과학고등학교 IT부</span>
         </nav>
       </footer>

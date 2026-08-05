@@ -535,6 +535,11 @@
   gap: 4px;
 }
 
+.data-table__view-count > svg {
+  display: none;
+  flex: 0 0 auto;
+}
+
 .data-table__date {
   padding-inline: 10px !important;
   font-variant-numeric: tabular-nums;
@@ -612,7 +617,8 @@
 
   .data-table-toolbar__controls {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) 40px;
   }
 
   .data-table-toolbar__filters {
@@ -722,6 +728,7 @@
   }
 
   .data-table-toolbar__query {
+    width: 100%;
     grid-column: 1;
   }
 
@@ -805,6 +812,10 @@
 
   .data-table__view-count {
     justify-content: flex-end;
+  }
+
+  .data-table__view-count > svg {
+    display: block;
   }
 
   .data-table-pagination {

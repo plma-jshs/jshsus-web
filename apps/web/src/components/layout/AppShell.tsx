@@ -485,7 +485,7 @@ function PortalShell() {
           activeOptions={{ exact: true }}
           activeProps={{ className: 'mobile-tab is-active' }}
         >
-          <Home aria-hidden="true" size={19} />
+          <Home aria-hidden="true" fill="currentColor" size={18} />
           <span>홈</span>
         </Link>
         <Link
@@ -493,7 +493,7 @@ function PortalShell() {
           className="mobile-tab"
           activeProps={{ className: 'mobile-tab is-active' }}
         >
-          <Megaphone aria-hidden="true" size={19} />
+          <Megaphone aria-hidden="true" fill="currentColor" size={18} />
           <span>공지</span>
         </Link>
         <Link
@@ -501,7 +501,7 @@ function PortalShell() {
           className="mobile-tab"
           activeProps={{ className: 'mobile-tab is-active' }}
         >
-          <MessageSquareText aria-hidden="true" size={19} />
+          <MessageSquareText aria-hidden="true" fill="currentColor" size={18} />
           <span>게시판</span>
         </Link>
         <Link
@@ -509,7 +509,7 @@ function PortalShell() {
           className="mobile-tab"
           activeProps={{ className: 'mobile-tab is-active' }}
         >
-          <ClipboardCheck aria-hidden="true" size={19} />
+          <ClipboardCheck aria-hidden="true" fill="currentColor" size={18} />
           <span>탐활서</span>
         </Link>
         <Link
@@ -517,7 +517,7 @@ function PortalShell() {
           className="mobile-tab"
           activeProps={{ className: 'mobile-tab is-active' }}
         >
-          <BadgeCheck aria-hidden="true" size={19} />
+          <BadgeCheck aria-hidden="true" fill="currentColor" size={18} />
           <span>마이페이지</span>
         </Link>
       </nav>

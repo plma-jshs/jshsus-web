@@ -84,8 +84,8 @@
   display: block;
   margin-top: 18px;
   color: rgb(255 255 255 / 68%);
-  font-size: 35px;
-  font-weight: 200;
+  font-size: 30px;
+  font-weight: 300;
   letter-spacing: 0.1em;
   line-height: 1;
   text-shadow: none;
@@ -107,8 +107,8 @@
 .auth-heading h1 {
   margin: 0;
   color: var(--j-color-text);
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1.4;
 }
@@ -574,7 +574,11 @@
   white-space: nowrap;
 }
 
-@media (max-width: 760px) {
+.auth-page-footer__separator {
+  display: none;
+}
+
+@media (max-width: 899px) {
   .auth-page {
     display: block;
     min-height: 100dvh;
@@ -592,11 +596,12 @@
   }
 
   .auth-intro {
-    min-height: clamp(230px, 58vw, 380px);
+    height: 340px;
+    min-height: 340px;
     padding: 26px clamp(20px, 7vw, 48px);
     background:
       linear-gradient(180deg, rgb(8 27 48 / 46%), rgb(8 27 48 / 70%)),
-      url('/images/auth-campus.png') center / cover no-repeat;
+      url('/images/auth-campus.png') center / auto 180% no-repeat;
   }
 
   .auth-intro::before {
@@ -609,6 +614,10 @@
     z-index: 1;
   }
 
+  .auth-intro__wordmark {
+    display: none;
+  }
+
   .auth-panel {
     padding: 34px clamp(20px, 7vw, 44px) 32px;
     align-self: stretch;
@@ -617,25 +626,28 @@
   .auth-page-footer {
     position: static;
     width: 100%;
-    padding: 14px 16px calc(20px + env(safe-area-inset-bottom));
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
     transform: none;
     color: var(--j-color-text-muted);
     background: #fff;
   }
 
   .auth-page-footer nav {
+    width: 100%;
     justify-content: center;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 4px 8px;
   }
 
-  .auth-page-footer nav > span {
-    display: none;
+  .auth-page-footer__separator {
+    display: inline;
   }
 }
 
 @media (max-width: 479px) {
   .auth-intro {
-    min-height: 250px;
+    height: 340px;
+    min-height: 340px;
     padding: 22px 18px;
   }
 
