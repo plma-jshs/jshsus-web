@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { ArrowLeft, CalendarDays, Clock3, MapPin } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { ContentMoreMenu } from '../../components/page/ContentMoreMenu';
 import { useToast } from '../../components/feedback/Toast';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
@@ -181,44 +181,6 @@ export function ActivityRequestDetailPage() {
             </span>
             <h1>{request.purpose}</h1>
           </div>
-          <div className="activity-detail-summary__facts">
-            <div>
-              <CalendarDays size={17} aria-hidden="true" />
-              <span>
-                <small>활동일</small>
-                <strong>{activityDateFormatter.format(new Date(request.startsAt))}</strong>
-              </span>
-            </div>
-            <div>
-              <Clock3 size={17} aria-hidden="true" />
-              <span>
-                <small>시간</small>
-                <strong>
-                  {formatActivityPeriodLabel(
-                    activityDate,
-                    request.startsAt,
-                    request.endsAt,
-                    request.activitySlotIds,
-                  )}
-                </strong>
-                <small>
-                  {formatActivityTimeRanges(
-                    activityDate,
-                    request.startsAt,
-                    request.endsAt,
-                    request.activitySlotIds,
-                  )}
-                </small>
-              </span>
-            </div>
-            <div>
-              <MapPin size={17} aria-hidden="true" />
-              <span>
-                <small>장소</small>
-                <strong>{request.location}</strong>
-              </span>
-            </div>
-          </div>
         </header>
         <section aria-labelledby="activity-information-title">
           <div className="activity-document__heading">
@@ -226,19 +188,15 @@ export function ActivityRequestDetailPage() {
           </div>
           <dl className="activity-definition-list">
             <div>
-              <dt>활동 목적</dt>
-              <dd>{request.purpose}</dd>
-            </div>
-            <div>
-              <dt>활동 장소</dt>
+              <dt>장소</dt>
               <dd>{request.location}</dd>
             </div>
             <div>
-              <dt>활동 인원</dt>
+              <dt>인원</dt>
               <dd>{formatActivityParticipants(request.participants, request)}</dd>
             </div>
             <div>
-              <dt>활동일</dt>
+              <dt>날짜</dt>
               <dd>
                 <time dateTime={activityDate}>
                   {activityDateFormatter.format(new Date(request.startsAt))}
@@ -246,7 +204,7 @@ export function ActivityRequestDetailPage() {
               </dd>
             </div>
             <div>
-              <dt>활동기간</dt>
+              <dt>기간</dt>
               <dd>
                 <strong>
                   {formatActivityPeriodLabel(

@@ -166,7 +166,9 @@ export function NewNoticePage() {
     >
       <form className="editor-surface notice-editor-surface" onSubmit={submit}>
         <div className="editor-field">
-          <label htmlFor="notice-title">제목</label>
+          <label className="sr-only" htmlFor="notice-title">
+            제목
+          </label>
           <input
             id="notice-title"
             value={title}
@@ -174,10 +176,13 @@ export function NewNoticePage() {
             maxLength={255}
             autoFocus
             required
+            placeholder="제목을 입력하세요"
           />
         </div>
         <div className="editor-field notice-editor-author">
-          <label htmlFor="notice-department">작성자</label>
+          <label className="sr-only" htmlFor="notice-department">
+            작성자
+          </label>
           <input
             id="notice-department"
             value={department}
@@ -188,8 +193,14 @@ export function NewNoticePage() {
           />
         </div>
         <div className="editor-field">
-          <label htmlFor="notice-content">내용</label>
-          <RichTextEditor id="notice-content" onChange={setEditorValue} />
+          <label className="sr-only" htmlFor="notice-content">
+            내용
+          </label>
+          <RichTextEditor
+            id="notice-content"
+            onChange={setEditorValue}
+            placeholder="내용을 입력하세요"
+          />
         </div>
 
         <section className="editor-attachments" aria-labelledby="notice-attachments-title">

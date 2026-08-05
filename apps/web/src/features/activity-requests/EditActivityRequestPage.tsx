@@ -171,12 +171,13 @@ function EditForm({
         <div className="activity-form-section__heading">
           <span>1</span>
           <div>
-            <h2 id="activity-edit-purpose-title">활동 정보</h2>
-            <p>승인 전까지 목적, 장소, 일정과 담당 교사를 수정할 수 있습니다.</p>
+            <h2 id="activity-edit-purpose-title">활동 내용</h2>
           </div>
         </div>
         <div className="activity-form-field">
-          <label htmlFor="activity-edit-purpose">활동 목적</label>
+          <label className="sr-only" htmlFor="activity-edit-purpose">
+            활동 목적
+          </label>
           <textarea
             id="activity-edit-purpose"
             value={form.purpose}
@@ -184,7 +185,8 @@ function EditForm({
               setForm((current) => ({ ...current, purpose: event.target.value }))
             }
             maxLength={500}
-            rows={6}
+            rows={3}
+            placeholder="예: 전람회, R&E, 동아리 활동"
             aria-invalid={attempted && Boolean(errors.purpose)}
           />
           {attempted && errors.purpose ? (
@@ -203,13 +205,15 @@ function EditForm({
         </div>
         <div className="activity-participant-picker">
           <div className="activity-form-field">
-            <label htmlFor="activity-edit-student-search">학생 검색</label>
+            <label className="sr-only" htmlFor="activity-edit-student-search">
+              학생 검색
+            </label>
             <input
               id="activity-edit-student-search"
               type="search"
               value={studentSearch}
               onChange={(event) => setStudentSearch(event.target.value)}
-              placeholder="학번 또는 이름"
+              placeholder="학번 또는 이름을 입력하세요"
               autoComplete="off"
             />
           </div>
@@ -242,7 +246,7 @@ function EditForm({
           ) : null}
         </div>
         <div className="activity-participant-selection" aria-live="polite">
-          <strong>참여 학생 {participantStudentNos.length + 1}명</strong>
+          <strong className="sr-only">참여 학생 {participantStudentNos.length + 1}명</strong>
           <div>
             <span className="activity-participant-chip is-representative">
               <button

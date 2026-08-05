@@ -183,20 +183,22 @@ export function NewActivityRequestPage() {
           <div className="activity-form-section__heading">
             <span>1</span>
             <div>
-              <h2 id="activity-purpose-title">활동 정보</h2>
+              <h2 id="activity-purpose-title">활동 내용</h2>
               {/* <p>활동 내용을 작성해 주세요.</p> */}
             </div>
           </div>
           <div className="activity-form-field">
-            <label htmlFor="activity-purpose">활동 목적</label>
+            <label className="sr-only" htmlFor="activity-purpose">
+              활동 목적
+            </label>
             <textarea
               id="activity-purpose"
               value={form.purpose}
               onChange={(event) => updateField('purpose', event.target.value)}
               onBlur={() => setTouched((current) => ({ ...current, purpose: true }))}
               maxLength={500}
-              rows={7}
-              placeholder="예: 물리 탐구 보고서 작성을 위해 실험 장비를 사용하려고 합니다."
+              rows={3}
+              placeholder="예: 전람회, R&E, 동아리 활동"
               aria-invalid={showError('purpose')}
               aria-describedby={showError('purpose') ? 'activity-purpose-error' : undefined}
               autoFocus
@@ -207,7 +209,7 @@ export function NewActivityRequestPage() {
                   {errors.purpose}
                 </span>
               ) : (
-                <span>활동 목적을 입력해 주세요.</span>
+                <span className="sr-only">활동 목적을 입력해 주세요.</span>
               )}
               <span>{form.purpose.length} / 500</span>
             </div>
@@ -224,7 +226,9 @@ export function NewActivityRequestPage() {
           </div>
           <div className="activity-participant-picker">
             <div className="activity-form-field">
-              <label htmlFor="activity-participant-search">학생 검색</label>
+              <label className="sr-only" htmlFor="activity-participant-search">
+                학생 검색
+              </label>
               <input
                 id="activity-participant-search"
                 type="search"
@@ -266,7 +270,7 @@ export function NewActivityRequestPage() {
             ) : null}
           </div>
           <div className="activity-participant-selection" aria-live="polite">
-            <strong>참여 학생 {participantStudentNos.length + 1}명</strong>
+            <strong className="sr-only">참여 학생 {participantStudentNos.length + 1}명</strong>
             <div>
               <span className="activity-participant-chip is-representative">
                 <button

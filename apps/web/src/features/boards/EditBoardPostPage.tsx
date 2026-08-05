@@ -140,7 +140,9 @@ function BoardPostEditForm({ post }: { post: BoardPostDetail }) {
   return (
     <form className="editor-surface" onSubmit={submit}>
       <div className="editor-field">
-        <label htmlFor="board-post-title">제목</label>
+        <label className="sr-only" htmlFor="board-post-title">
+          제목
+        </label>
         <input
           autoFocus
           id="board-post-title"
@@ -149,16 +151,20 @@ function BoardPostEditForm({ post }: { post: BoardPostDetail }) {
           required
           type="text"
           value={title}
+          placeholder="제목을 입력하세요"
         />
       </div>
 
       <div className="editor-field">
-        <label htmlFor="board-post-content">내용</label>
+        <label className="sr-only" htmlFor="board-post-content">
+          내용
+        </label>
         <RichTextEditor
           id="board-post-content"
           allowPoll
           initialValue={post.contentDoc ?? plainTextToRichTextDocument(post.content)}
           onChange={setEditorValue}
+          placeholder="내용을 입력하세요"
         />
       </div>
 

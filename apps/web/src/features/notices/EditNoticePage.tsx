@@ -143,7 +143,9 @@ function NoticeEditForm({ notice }: { notice: NoticeDetail }) {
   return (
     <form className="editor-surface notice-editor-surface" onSubmit={submit}>
       <div className="editor-field">
-        <label htmlFor="notice-title">제목</label>
+        <label className="sr-only" htmlFor="notice-title">
+          제목
+        </label>
         <input
           id="notice-title"
           value={title}
@@ -151,24 +153,31 @@ function NoticeEditForm({ notice }: { notice: NoticeDetail }) {
           maxLength={255}
           autoFocus
           required
+          placeholder="제목을 입력하세요"
         />
       </div>
       <div className="editor-field notice-editor-author">
-        <label htmlFor="notice-department">작성자</label>
+        <label className="sr-only" htmlFor="notice-department">
+          작성자
+        </label>
         <input
           id="notice-department"
           value={department}
           onChange={(event) => setDepartment(event.target.value)}
           maxLength={80}
+          placeholder="예: 학생생활부, 방송부"
           required
         />
       </div>
       <div className="editor-field">
-        <label htmlFor="notice-content">내용</label>
+        <label className="sr-only" htmlFor="notice-content">
+          내용
+        </label>
         <RichTextEditor
           id="notice-content"
           initialValue={initialDocument}
           onChange={setEditorValue}
+          placeholder="내용을 입력하세요"
         />
       </div>
 

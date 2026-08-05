@@ -293,6 +293,7 @@
   border: 1px solid var(--j-color-border);
   border-radius: var(--j-radius-md);
   background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-overlay);
 }
 
 .content-more-menu__dropdown button {

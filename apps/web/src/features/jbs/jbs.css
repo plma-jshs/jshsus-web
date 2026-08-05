@@ -192,6 +192,10 @@
 }
 
 .jbs-form__url-row .detail-secondary-button {
+  width: 44px;
+  min-width: 44px;
+  padding-inline: 0;
+  justify-content: center;
   white-space: nowrap;
 }
 
@@ -276,7 +280,7 @@
   }
 
   .jbs-form__url-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) 44px;
   }
 
   .jbs-form__video-meta {

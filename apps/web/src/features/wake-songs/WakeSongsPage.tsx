@@ -616,93 +616,172 @@ export function WakeSongsPage() {
         ) : null}
 
         {requests.length ? (
-          <div className="wake-song-history-viewport">
-            <table className="workflow-table wake-song-history-table">
-              <colgroup>
-                <col style={{ width: '12%' }} />
-                <col style={{ width: '22%' }} />
-                <col style={{ width: '23%' }} />
-                <col style={{ width: '17%' }} />
-                <col style={{ width: '10%' }} />
-                <col style={{ width: '16%' }} />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th scope="col">신청일</th>
-                  <th scope="col">대상 주차</th>
-                  <th scope="col">영상</th>
-                  <th scope="col">재생 구간</th>
-                  <th scope="col">상태</th>
-                  <th scope="col">작업</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleRequests.map((request) => {
-                  const displayStatus = wakeSongStatusPresentation(request.status);
-                  return (
-                    <tr key={request.id}>
-                      <td data-label="신청일">
-                        <time dateTime={request.createdAt}>
-                          {dateFormatter.format(new Date(request.createdAt))}
-                        </time>
-                      </td>
-                      <td data-label="대상 주차">{request.candidateWeekLabel ?? '—'}</td>
-                      <td className="wake-song-history-title" data-label="영상">
-                        <a href={request.canonicalUrl} target="_blank" rel="noreferrer">
-                          {request.videoTitle}
-                        </a>
-                        <small>
-                          {request.channelTitle ?? 'YouTube'}
-                          {request.rejectionReason ? ` · ${request.rejectionReason}` : ''}
-                        </small>
-                      </td>
-                      <td data-label="재생 구간">
-                        {formatDuration(request.startSeconds)}–{formatDuration(request.endSeconds)}
-                        <small className="wake-song-table-subline">
-                          {formatPlaybackRate(request.playbackRate)} · 실제{' '}
-                          {formatDuration(request.effectiveDurationSeconds)}
-                        </small>
-                      </td>
-                      <td data-label="상태">
-                        <span className={`wake-song-status is-${displayStatus.tone}`}>
-                          {displayStatus.label}
-                        </span>
-                      </td>
-                      <td data-label="작업">
-                        {request.status === 'PENDING' ? (
-                          <div className="wake-song-table-actions">
-                            <button
-                              aria-label="신청 수정"
-                              title="신청 수정"
-                              type="button"
-                              onClick={() => beginEdit(request)}
-                            >
-                              <Pencil size={15} aria-hidden="true" />
-                            </button>
-                            <button
-                              aria-label="신청 취소"
-                              title="신청 취소"
-                              type="button"
-                              onClick={() => {
-                                if (window.confirm('이 기상곡 신청을 취소하시겠습니까?')) {
-                                  cancelMutation.mutate(request.id);
-                                }
-                              }}
-                              disabled={cancelMutation.isPending}
-                            >
-                              <X size={15} aria-hidden="true" />
-                            </button>
-                          </div>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="wake-song-history-viewport">
+              <table className="workflow-table wake-song-history-table">
+                <colgroup>
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '22%' }} />
+                  <col style={{ width: '23%' }} />
+                  <col style={{ width: '17%' }} />
+                  <col style={{ width: '10%' }} />
+                  <col style={{ width: '16%' }} />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col">신청일</th>
+                    <th scope="col">대상 주차</th>
+                    <th scope="col">영상</th>
+                    <th scope="col">재생 구간</th>
+                    <th scope="col">상태</th>
+                    <th scope="col">작업</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleRequests.map((request) => {
+                    const displayStatus = wakeSongStatusPresentation(request.status);
+                    return (
+                      <tr key={request.id}>
+                        <td data-label="신청일">
+                          <time dateTime={request.createdAt}>
+                            {dateFormatter.format(new Date(request.createdAt))}
+                          </time>
+                        </td>
+                        <td data-label="대상 주차">{request.candidateWeekLabel ?? '—'}</td>
+                        <td className="wake-song-history-title" data-label="영상">
+                          <a href={request.canonicalUrl} target="_blank" rel="noreferrer">
+                            {request.videoTitle}
+                          </a>
+                          <small>
+                            {request.channelTitle ?? 'YouTube'}
+                            {request.rejectionReason ? ` · ${request.rejectionReason}` : ''}
+                          </small>
+                        </td>
+                        <td data-label="재생 구간">
+                          {formatDuration(request.startSeconds)}–
+                          {formatDuration(request.endSeconds)}
+                          <small className="wake-song-table-subline">
+                            {formatPlaybackRate(request.playbackRate)} · 실제{' '}
+                            {formatDuration(request.effectiveDurationSeconds)}
+                          </small>
+                        </td>
+                        <td data-label="상태">
+                          <span className={`wake-song-status is-${displayStatus.tone}`}>
+                            {displayStatus.label}
+                          </span>
+                        </td>
+                        <td data-label="작업">
+                          {request.status === 'PENDING' ? (
+                            <div className="wake-song-table-actions">
+                              <button
+                                aria-label="신청 수정"
+                                title="신청 수정"
+                                type="button"
+                                onClick={() => beginEdit(request)}
+                              >
+                                <Pencil size={15} aria-hidden="true" />
+                              </button>
+                              <button
+                                aria-label="신청 취소"
+                                title="신청 취소"
+                                type="button"
+                                onClick={() => {
+                                  if (window.confirm('이 기상곡 신청을 취소하시겠습니까?')) {
+                                    cancelMutation.mutate(request.id);
+                                  }
+                                }}
+                                disabled={cancelMutation.isPending}
+                              >
+                                <X size={15} aria-hidden="true" />
+                              </button>
+                            </div>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="wake-song-history-card-list">
+              {visibleRequests.map((request) => {
+                const displayStatus = wakeSongStatusPresentation(request.status);
+                return (
+                  <article className="wake-song-history-card" key={request.id}>
+                    <div className="wake-song-history-card__heading">
+                      <a href={request.canonicalUrl} target="_blank" rel="noreferrer">
+                        {request.videoTitle}
+                      </a>
+                      <span className={`wake-song-status is-${displayStatus.tone}`}>
+                        {displayStatus.label}
+                      </span>
+                    </div>
+                    <small className="wake-song-history-card__channel">
+                      {request.channelTitle ?? 'YouTube'}
+                      {request.rejectionReason ? ` · ${request.rejectionReason}` : ''}
+                    </small>
+                    <dl>
+                      <div>
+                        <dt>신청일</dt>
+                        <dd>
+                          <time dateTime={request.createdAt}>
+                            {dateFormatter.format(new Date(request.createdAt))}
+                          </time>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>대상 주차</dt>
+                        <dd>{request.candidateWeekLabel ?? '—'}</dd>
+                      </div>
+                      <div>
+                        <dt>재생 구간</dt>
+                        <dd>
+                          {formatDuration(request.startSeconds)}–
+                          {formatDuration(request.endSeconds)}
+                          <small>
+                            {formatPlaybackRate(request.playbackRate)} · 실제{' '}
+                            {formatDuration(request.effectiveDurationSeconds)}
+                          </small>
+                        </dd>
+                      </div>
+                    </dl>
+                    <div className="wake-song-history-card__actions">
+                      {request.status === 'PENDING' ? (
+                        <div className="wake-song-table-actions">
+                          <button
+                            aria-label="신청 수정"
+                            title="신청 수정"
+                            type="button"
+                            onClick={() => beginEdit(request)}
+                          >
+                            <Pencil size={15} aria-hidden="true" />
+                          </button>
+                          <button
+                            aria-label="신청 취소"
+                            title="신청 취소"
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm('이 기상곡 신청을 취소하시겠습니까?')) {
+                                cancelMutation.mutate(request.id);
+                              }
+                            }}
+                            disabled={cancelMutation.isPending}
+                          >
+                            <X size={15} aria-hidden="true" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span>—</span>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </>
         ) : null}
         {requests.length > pageSize ? (
           <DataTablePagination page={safePage} totalPages={totalPages} onChange={setPage} />

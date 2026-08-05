@@ -1050,13 +1050,21 @@
     min-width: 0;
   }
 
-  .editor-actions--drafts,
-  .editor-actions__publish {
+  .editor-actions--drafts {
+    display: grid;
     width: 100%;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr);
+  }
+
+  .editor-actions__publish {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .editor-actions__publish > * {
-    flex: 1;
+    flex: none;
+    width: 100%;
     min-width: 0;
   }
 }

@@ -99,10 +99,11 @@ function formatDate(value: string, options?: Intl.DateTimeFormatOptions) {
 }
 
 function formatDashboardDate(value: string) {
+  const includeYear = value.slice(0, 4) !== String(getKoreaDateParts().year);
   return compactKoreanDateDots(
     new Intl.DateTimeFormat('ko-KR', {
       timeZone: KOREA_TIME_ZONE,
-      year: 'numeric',
+      ...(includeYear ? { year: 'numeric' as const } : {}),
       month: '2-digit',
       day: '2-digit',
       weekday: 'short',
@@ -201,15 +202,17 @@ function MealColumn({
       {loading ? (
         <span className="meal-column__empty">불러오는 중…</span>
       ) : meal ? (
-        <ul>
-          {meal.dishes.map((dish) => (
-            <li key={dish}>{dish}</li>
-          ))}
-        </ul>
+        <div className="meal-column__menu">
+          <ul>
+            {meal.dishes.map((dish) => (
+              <li key={dish}>{dish}</li>
+            ))}
+          </ul>
+          {meal.calories ? <small className="meal-column__calories">{meal.calories}</small> : null}
+        </div>
       ) : showEmpty ? (
         <span className="meal-column__empty">등록된 식단이 없습니다.</span>
       ) : null}
-      {meal?.calories ? <small className="meal-column__calories">{meal.calories}</small> : null}
     </div>
   );
 }

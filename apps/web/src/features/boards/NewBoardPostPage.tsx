@@ -55,13 +55,16 @@ function mutationErrorMessage(error: Error | null) {
 function formatDraftTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '이전에';
-  return new Intl.DateTimeFormat('ko-KR', {
+  const parts = new Intl.DateTimeFormat('ko-KR', {
     month: 'numeric',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  }).format(date);
+  }).formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? '';
+  return `${get('month')}. ${get('day')}. ${get('hour')}:${get('minute')}`;
 }
 
 export function NewBoardPostPage() {
@@ -288,7 +291,9 @@ export function NewBoardPostPage() {
     >
       <form className="editor-surface" onSubmit={submit}>
         <div className="editor-field">
-          <label htmlFor="board-post-title">제목</label>
+          <label className="sr-only" htmlFor="board-post-title">
+            제목
+          </label>
           <input
             autoFocus
             id="board-post-title"
@@ -297,17 +302,21 @@ export function NewBoardPostPage() {
             required
             type="text"
             value={title}
+            placeholder="제목을 입력하세요"
           />
         </div>
 
         <div className="editor-field">
-          <label htmlFor="board-post-content">내용</label>
+          <label className="sr-only" htmlFor="board-post-content">
+            내용
+          </label>
           <RichTextEditor
             key={editorKey}
             id="board-post-content"
             allowPoll
             initialValue={editorValue.contentDoc}
             onChange={setEditorValue}
+            placeholder="내용을 입력하세요"
           />
         </div>
 

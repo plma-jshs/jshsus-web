@@ -101,18 +101,18 @@ export function NewJbsPostPage() {
     >
       <form className="jbs-form" onSubmit={submit}>
         <label>
-          <span>제목</span>
+          <span className="sr-only">제목</span>
           <input
             value={title}
             maxLength={150}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="게시물 제목을 입력하세요"
+            placeholder="제목을 입력하세요"
             required
           />
         </label>
 
         <label>
-          <span>YouTube URL</span>
+          <span className="sr-only">YouTube URL</span>
           <div className="jbs-form__url-row">
             <input
               value={youtubeUrl}
@@ -126,17 +126,18 @@ export function NewJbsPostPage() {
               required
             />
             <button
-              className="detail-secondary-button"
+              className="detail-secondary-button jbs-form__preview-button"
               type="button"
               onClick={checkVideo}
               disabled={!normalizedUrl || previewMutation.isPending}
+              aria-label="영상 확인"
+              title="영상 확인"
             >
               {previewMutation.isPending ? (
                 <LoaderCircle className="spin" size={16} aria-hidden="true" />
               ) : (
                 <Search size={16} aria-hidden="true" />
               )}
-              영상 확인
             </button>
           </div>
           {previewMutation.isError ? (
@@ -173,7 +174,7 @@ export function NewJbsPostPage() {
         ) : null}
 
         <label>
-          <span>설명</span>
+          <span className="sr-only">설명</span>
           <textarea
             value={description}
             maxLength={5000}

@@ -2,7 +2,7 @@ import type { AcademicEvent } from '@jshsus/types';
 import type { CSSProperties, KeyboardEvent, MouseEvent, TouchEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Info, X } from 'lucide-react';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
@@ -30,6 +30,7 @@ type CalendarPopover = {
   x: number;
   y: number;
 };
+type CalendarSlideDirection = 'previous' | 'next';
 
 function toDateKey(date: Date) {
   const year = date.getFullYear();
@@ -353,19 +354,42 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
   const [mobileAgendaClosing, setMobileAgendaClosing] = useState(false);
   const mobileAgendaMountedRef = useRef(false);
   const mobileAgendaClosingRef = useRef(false);
+  const fullCalendarRef = useRef<HTMLDivElement>(null);
+  const pendingVisibleMonthRef = useRef<Date | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const cells = useMemo(() => monthGrid(visibleMonth), [visibleMonth]);
-  const weeks = useMemo(() => calendarWeeks(cells), [cells]);
-  const range = { from: cells[0].dateKey, to: cells[cells.length - 1].dateKey };
-  const calendarQuery = useQuery({
-    queryKey: ['school-calendar', range.from, range.to],
-    queryFn: () => getCalendar(range.from, range.to),
-  });
-  const allEvents = useMemo(
-    () => mergeAdjacentEvents(calendarQuery.data?.events ?? []),
-    [calendarQuery.data?.events],
+  const [calendarSlide, setCalendarSlide] = useState<CalendarSlideDirection | null>(null);
+  const [calendarDragOffset, setCalendarDragOffset] = useState(0);
+  const [isCalendarDragging, setIsCalendarDragging] = useState(false);
+  const [isCalendarResetting, setIsCalendarResetting] = useState(false);
+  const monthPanels = useMemo(
+    () =>
+      [-1, 0, 1].map((offset) => {
+        const month = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + offset, 1);
+        const cells = monthGrid(month);
+        return {
+          month,
+          cells,
+          weeks: calendarWeeks(cells),
+          range: { from: cells[0].dateKey, to: cells[cells.length - 1].dateKey },
+        };
+      }),
+    [visibleMonth],
   );
-  const events = allEvents;
+  const calendarQueries = useQueries({
+    queries: monthPanels.map((panel) => ({
+      queryKey: ['school-calendar', panel.range.from, panel.range.to],
+      queryFn: () => getCalendar(panel.range.from, panel.range.to),
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+  const renderedMonthPanels = monthPanels.map((panel, index) => ({
+    ...panel,
+    events: mergeAdjacentEvents(calendarQueries[index]?.data?.events ?? []),
+    isLoading: calendarQueries[index]?.isLoading ?? false,
+  }));
+  const currentMonthPanel = renderedMonthPanels[1]!;
+  const calendarQuery = calendarQueries[1]!;
+  const events = currentMonthPanel.events;
   const selectedEvents = events.filter((event) => eventTouchesDate(event, selectedDate));
   const selectedDateLabel = formatCalendarDate(selectedDate, false);
   const monthStartKey = toDateKey(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1));
@@ -384,6 +408,33 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
       ? `${visibleMonth.getMonth() + 1}월`
       : `${visibleMonth.getFullYear()}년 ${visibleMonth.getMonth() + 1}월`;
 
+  const completeMonthTransition = useCallback(() => {
+    const nextMonth = pendingVisibleMonthRef.current;
+    if (!nextMonth) return;
+    pendingVisibleMonthRef.current = null;
+    setIsCalendarResetting(true);
+    setVisibleMonth(nextMonth);
+    setCalendarSlide(null);
+    setCalendarDragOffset(0);
+    setIsCalendarDragging(false);
+    window.requestAnimationFrame(() => setIsCalendarResetting(false));
+  }, []);
+
+  useEffect(() => {
+    if (!calendarSlide) return undefined;
+    const timer = window.setTimeout(completeMonthTransition, 280);
+    return () => window.clearTimeout(timer);
+  }, [calendarSlide, completeMonthTransition]);
+
+  const startMonthTransition = (nextMonth: Date, direction: CalendarSlideDirection) => {
+    if (calendarSlide) return;
+    pendingVisibleMonthRef.current = nextMonth;
+    setPopover(null);
+    setCalendarDragOffset(0);
+    setIsCalendarDragging(false);
+    setCalendarSlide(direction);
+  };
+
   const focusDate = (dateKey: string) => {
     requestAnimationFrame(() => {
       document.querySelector<HTMLButtonElement>(`[data-calendar-date="${dateKey}"]`)?.focus();
@@ -392,11 +443,17 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
 
   const selectDate = (date: Date, moveFocus = false) => {
     const dateKey = toDateKey(date);
-    if (
-      date.getFullYear() !== visibleMonth.getFullYear() ||
-      date.getMonth() !== visibleMonth.getMonth()
-    ) {
-      setVisibleMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+    const monthOffset =
+      (date.getFullYear() - visibleMonth.getFullYear()) * 12 +
+      date.getMonth() -
+      visibleMonth.getMonth();
+    if (monthOffset !== 0) {
+      const nextMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+      if (Math.abs(monthOffset) === 1) {
+        startMonthTransition(nextMonth, monthOffset > 0 ? 'next' : 'previous');
+      } else {
+        setVisibleMonth(nextMonth);
+      }
     }
     setSelectedDate(dateKey);
     setPopover(null);
@@ -405,7 +462,11 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
 
   const moveMonth = (offset: number) => {
     const next = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + offset, 1);
-    setVisibleMonth(next);
+    if (Math.abs(offset) === 1) {
+      startMonthTransition(next, offset > 0 ? 'next' : 'previous');
+    } else {
+      setVisibleMonth(next);
+    }
     setSelectedDate(toDateKey(next));
     setPopover(null);
   };
@@ -461,19 +522,48 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
   }, [popover]);
 
   const handleCalendarTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (calendarSlide) return;
     const touch = event.touches[0];
     touchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
+    setIsCalendarDragging(Boolean(touch));
+    setCalendarDragOffset(0);
+  };
+
+  const handleCalendarTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    const start = touchStartRef.current;
+    const touch = event.touches[0];
+    if (!start || !touch || calendarSlide) return;
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    if (Math.abs(deltaX) <= Math.abs(deltaY)) return;
+    event.preventDefault();
+    const width = fullCalendarRef.current?.clientWidth ?? window.innerWidth;
+    const offset = Math.max(-width, Math.min(width, deltaX));
+    setCalendarDragOffset(offset);
   };
 
   const handleCalendarTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
     const start = touchStartRef.current;
     const touch = event.changedTouches[0];
     touchStartRef.current = null;
-    if (!start || !touch) return;
+    if (!start || !touch) {
+      setIsCalendarDragging(false);
+      setCalendarDragOffset(0);
+      return;
+    }
     const deltaX = touch.clientX - start.x;
     const deltaY = touch.clientY - start.y;
-    if (Math.abs(deltaX) < 44 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
-    moveMonth(deltaX < 0 ? 1 : -1);
+    const width = fullCalendarRef.current?.clientWidth ?? window.innerWidth;
+    const threshold = Math.max(44, width * 0.18);
+    if (Math.abs(deltaX) >= threshold && Math.abs(deltaX) > Math.abs(deltaY)) {
+      const offset = deltaX < 0 ? 1 : -1;
+      const next = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + offset, 1);
+      startMonthTransition(next, offset > 0 ? 'next' : 'previous');
+      setSelectedDate(toDateKey(next));
+      return;
+    }
+    setIsCalendarDragging(false);
+    setCalendarDragOffset(0);
   };
 
   const handleDateKeyDown = (event: KeyboardEvent<HTMLButtonElement>, dateKey: string) => {
@@ -555,8 +645,10 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
             <div
               className="full-calendar"
               aria-label="월간 학사일정"
+              ref={fullCalendarRef}
               onTouchStart={handleCalendarTouchStart}
               onTouchEnd={handleCalendarTouchEnd}
+              onTouchMove={handleCalendarTouchMove}
             >
               <div className="full-calendar__weekdays" aria-hidden="true">
                 {weekdays.map((weekday) => (
@@ -564,133 +656,165 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                 ))}
               </div>
               <div className="full-calendar__grid">
-                {weeks.map((week) => (
-                  <div className="full-calendar__week" key={week[0].dateKey}>
-                    <div className="full-calendar__week-days">
-                      {week.map((cell) => {
-                        const dateKey = cell.dateKey;
-                        const date = cell.date;
-                        const dayEvents = events.filter((event) =>
-                          eventTouchesDate(event, dateKey),
-                        );
-                        const isHolidayDate = dayEvents.some((event) => event.isHoliday);
-                        const hiddenEventCount = Math.max(
-                          0,
-                          dayEvents.length - maxVisibleEventBars,
-                        );
-                        const eventSummary = calendarQuery.isLoading
-                          ? ', 일정을 불러오는 중'
-                          : dayEvents.length
-                            ? `, 일정 ${dayEvents.length}개: ${dayEvents
-                                .slice(0, 2)
-                                .map((event) => displayEventTitle(event.title))
-                                .join(', ')}${hiddenEventCount ? ` 외 ${hiddenEventCount}개` : ''}`
-                            : ', 일정 없음';
-                        return (
-                          <button
-                            type="button"
-                            data-calendar-date={dateKey}
-                            className={[
-                              dateKey === selectedDate ? 'is-selected' : '',
-                              dateKey === todayKey ? 'is-today' : '',
-                              isHolidayDate ? 'is-holiday-date' : '',
-                              cell.inCurrentMonth ? '' : 'is-outside-month',
-                            ]
-                              .filter(Boolean)
-                              .join(' ')}
-                            onClick={() => {
-                              selectDate(date);
-                              if (window.innerWidth <= 767) {
-                                if (dayEvents.length > 0) openMobileAgenda();
-                                else closeMobileAgenda();
-                              }
-                            }}
-                            onKeyDown={(event) => handleDateKeyDown(event, dateKey)}
-                            tabIndex={dateKey === selectedDate ? 0 : -1}
-                            aria-label={`${ariaDateFormatter.format(date)}${eventSummary}`}
-                            aria-pressed={dateKey === selectedDate}
-                            aria-current={dateKey === todayKey ? 'date' : undefined}
-                            key={dateKey}
-                          >
-                            <span className="full-calendar__date">{cell.day}</span>
-                            {hiddenEventCount ? (
-                              <span className="full-calendar__more">+{hiddenEventCount}</span>
-                            ) : null}
-                          </button>
-                        );
-                      })}
+                <div
+                  className={`calendar-month-track${isCalendarDragging ? ' is-dragging' : ''}${
+                    isCalendarResetting ? ' is-resetting' : ''
+                  }`}
+                  style={{
+                    transform:
+                      calendarSlide === 'next'
+                        ? 'translate3d(-66.6667%, 0, 0)'
+                        : calendarSlide === 'previous'
+                          ? 'translate3d(0, 0, 0)'
+                          : `translate3d(calc(-33.3333% + ${calendarDragOffset}px), 0, 0)`,
+                  }}
+                >
+                  {renderedMonthPanels.map((panel) => (
+                    <div className="full-calendar__month-panel" key={panel.range.from}>
+                      {panel.weeks.map((week) => (
+                        <div
+                          className="full-calendar__week"
+                          key={`${panel.range.from}-${week[0].dateKey}`}
+                        >
+                          <div className="full-calendar__week-days">
+                            {week.map((cell) => {
+                              const dateKey = cell.dateKey;
+                              const date = cell.date;
+                              const dayEvents = panel.events.filter((event) =>
+                                eventTouchesDate(event, dateKey),
+                              );
+                              const isHolidayDate = dayEvents.some((event) => event.isHoliday);
+                              const hiddenEventCount = Math.max(
+                                0,
+                                dayEvents.length - maxVisibleEventBars,
+                              );
+                              const eventSummary = panel.isLoading
+                                ? ', 일정을 불러오는 중'
+                                : dayEvents.length
+                                  ? `, 일정 ${dayEvents.length}개: ${dayEvents
+                                      .slice(0, 2)
+                                      .map((event) => displayEventTitle(event.title))
+                                      .join(
+                                        ', ',
+                                      )}${hiddenEventCount ? ` 외 ${hiddenEventCount}개` : ''}`
+                                  : ', 일정 없음';
+                              return (
+                                <button
+                                  type="button"
+                                  data-calendar-date={dateKey}
+                                  className={[
+                                    dateKey === selectedDate ? 'is-selected' : '',
+                                    dateKey === todayKey ? 'is-today' : '',
+                                    isHolidayDate ? 'is-holiday-date' : '',
+                                    cell.inCurrentMonth ? '' : 'is-outside-month',
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' ')}
+                                  onClick={() => {
+                                    selectDate(date);
+                                    if (window.innerWidth <= 767) {
+                                      if (dayEvents.length > 0) openMobileAgenda();
+                                      else closeMobileAgenda();
+                                    }
+                                  }}
+                                  onKeyDown={(event) => handleDateKeyDown(event, dateKey)}
+                                  tabIndex={dateKey === selectedDate ? 0 : -1}
+                                  aria-label={`${ariaDateFormatter.format(date)}${eventSummary}`}
+                                  aria-pressed={dateKey === selectedDate}
+                                  aria-current={dateKey === todayKey ? 'date' : undefined}
+                                  key={dateKey}
+                                >
+                                  <span className="full-calendar__date">{cell.day}</span>
+                                  {hiddenEventCount ? (
+                                    <span className="full-calendar__more">+{hiddenEventCount}</span>
+                                  ) : null}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="full-calendar__bars">
+                            {panel.isLoading
+                              ? [
+                                  { column: '1 / 4', row: 1 },
+                                  { column: '5 / 8', row: 2 },
+                                ].map((placeholder) => (
+                                  <span
+                                    className="full-calendar__event-skeleton"
+                                    key={`${week[0].dateKey}-${placeholder.row}`}
+                                    style={{
+                                      gridColumn: placeholder.column,
+                                      gridRow: placeholder.row,
+                                    }}
+                                  />
+                                ))
+                              : weekEventSegments(week, panel.events, panel.cells[0].dateKey)
+                                  .filter((segment) => segment.lane < maxVisibleEventBars)
+                                  .map((segment) => {
+                                    const segmentIsOutsideMonth = week
+                                      .slice(segment.startColumn - 1, segment.endColumn)
+                                      .every((cell) => !cell.inCurrentMonth);
+                                    return (
+                                      <button
+                                        type="button"
+                                        aria-label={displayEventTitle(segment.event.title)}
+                                        className={`full-calendar__event-bar${
+                                          segment.event.isHoliday ? ' is-holiday' : ''
+                                        }${segment.isInline ? ' is-inline' : ''}${
+                                          segment.event.category === 'observance'
+                                            ? ' is-observance'
+                                            : ''
+                                        }${segment.endColumn > segment.startColumn ? ' is-multi-day' : ''}${
+                                          segment.showLabel ? '' : ' is-continuation'
+                                        }${segment.continuesBefore ? ' starts-before' : ''}${
+                                          segment.continuesAfter ? ' ends-after' : ''
+                                        }${segment.endColumn === 7 ? ' ends-week' : ''}${
+                                          segmentIsOutsideMonth ? ' is-outside-month' : ''
+                                        }`}
+                                        key={`${segment.event.id}-${week[0].dateKey}`}
+                                        style={{
+                                          ...styleForEvent(segment.event),
+                                          gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
+                                          gridRow: segment.lane + 1,
+                                        }}
+                                        onClick={(event) => {
+                                          const clickedDate = clickedSegmentDate(
+                                            event,
+                                            week,
+                                            segment.startColumn,
+                                            segment.endColumn,
+                                          );
+                                          selectDate(clickedDate);
+                                          if (window.innerWidth <= 767) {
+                                            openMobileAgenda();
+                                            return;
+                                          }
+                                          const popoverKey = `${segment.event.id}-${week[0].dateKey}`;
+                                          setPopover((current) =>
+                                            current?.key === popoverKey
+                                              ? null
+                                              : {
+                                                  key: popoverKey,
+                                                  title: displayEventTitle(segment.event.title),
+                                                  period: formatEventRange(segment.event, 'never'),
+                                                  tone: eventTone(segment.event),
+                                                  x: event.clientX,
+                                                  y: event.clientY,
+                                                },
+                                          );
+                                        }}
+                                      >
+                                        {segment.showLabel ? (
+                                          <span>{displayEventTitle(segment.event.title)}</span>
+                                        ) : null}
+                                      </button>
+                                    );
+                                  })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="full-calendar__bars">
-                      {calendarQuery.isLoading
-                        ? [
-                            { column: '1 / 4', row: 1 },
-                            { column: '5 / 8', row: 2 },
-                          ].map((placeholder) => (
-                            <span
-                              className="full-calendar__event-skeleton"
-                              key={`${week[0].dateKey}-${placeholder.row}`}
-                              style={{
-                                gridColumn: placeholder.column,
-                                gridRow: placeholder.row,
-                              }}
-                            />
-                          ))
-                        : weekEventSegments(week, events, cells[0].dateKey)
-                            .filter((segment) => segment.lane < maxVisibleEventBars)
-                            .map((segment) => (
-                              <button
-                                type="button"
-                                aria-label={displayEventTitle(segment.event.title)}
-                                className={`full-calendar__event-bar${
-                                  segment.event.isHoliday ? ' is-holiday' : ''
-                                }${
-                                  segment.isInline ? ' is-inline' : ''
-                                }${segment.endColumn > segment.startColumn ? ' is-multi-day' : ''}${
-                                  segment.showLabel ? '' : ' is-continuation'
-                                }${segment.continuesBefore ? ' starts-before' : ''}${
-                                  segment.continuesAfter ? ' ends-after' : ''
-                                }${segment.endColumn === 7 ? ' ends-week' : ''}`}
-                                key={`${segment.event.id}-${week[0].dateKey}`}
-                                style={{
-                                  ...styleForEvent(segment.event),
-                                  gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
-                                  gridRow: segment.lane + 1,
-                                }}
-                                onClick={(event) => {
-                                  const clickedDate = clickedSegmentDate(
-                                    event,
-                                    week,
-                                    segment.startColumn,
-                                    segment.endColumn,
-                                  );
-                                  selectDate(clickedDate);
-                                  if (window.innerWidth <= 767) {
-                                    openMobileAgenda();
-                                    return;
-                                  }
-                                  const popoverKey = `${segment.event.id}-${week[0].dateKey}`;
-                                  setPopover((current) =>
-                                    current?.key === popoverKey
-                                      ? null
-                                      : {
-                                          key: popoverKey,
-                                          title: displayEventTitle(segment.event.title),
-                                          period: formatEventRange(segment.event, 'never'),
-                                          tone: eventTone(segment.event),
-                                          x: event.clientX,
-                                          y: event.clientY,
-                                        },
-                                  );
-                                }}
-                              >
-                                {segment.showLabel ? (
-                                  <span>{displayEventTitle(segment.event.title)}</span>
-                                ) : null}
-                              </button>
-                            ))}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
 

@@ -3,6 +3,7 @@ import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
+  ArrowLeft,
   BadgeCheck,
   ChevronDown,
   ClipboardCheck,
@@ -42,8 +43,11 @@ type NavigationItem =
 
 type NavigationCategory = { label: string; links: readonly NavigationItem[] };
 
-const businessInfoText =
-  '호스팅서비스사업자: 아이디비아이 | 사업자 등록번호: 332-44-01176 | 사업자 대표: 강재환';
+const businessInfoText = [
+  '호스팅서비스사업자: 아이디비아이',
+  '사업자 등록번호: 332-44-01176',
+  '사업자 대표: 강재환',
+].join('\n');
 
 const navigationCategories = [
   {
@@ -79,6 +83,28 @@ const navigationCategories = [
     ],
   },
 ] as const satisfies readonly NavigationCategory[];
+
+function getMobilePortalHeaderTitle(pathname: string) {
+  const normalizedPathname = pathname.replace(/\/+$/, '') || '/';
+  if (normalizedPathname === '/notices/new') return '공지 작성';
+  if (/^\/notices\/[^/]+\/edit$/.test(normalizedPathname)) return '공지 수정';
+  if (/^\/notices\/[^/]+$/.test(normalizedPathname)) return '공지사항';
+  if (normalizedPathname === '/boards/free/new') return '게시글 작성';
+  if (/^\/boards\/free\/[^/]+\/edit$/.test(normalizedPathname)) return '게시글 수정';
+  if (/^\/boards\/free\/[^/]+$/.test(normalizedPathname)) return '자유게시판';
+  if (normalizedPathname === '/petitions/new') return '청원·제안 등록';
+  if (/^\/petitions\/[^/]+\/edit$/.test(normalizedPathname)) return '청원·제안 수정';
+  if (/^\/petitions\/[^/]+$/.test(normalizedPathname)) return '청원·제안';
+  if (normalizedPathname === '/jbs/new') return 'JBS 영상 등록';
+  if (/^\/jbs\/[^/]+\/edit$/.test(normalizedPathname)) return 'JBS 영상 수정';
+  if (/^\/jbs\/[^/]+$/.test(normalizedPathname)) return 'JBS';
+  if (normalizedPathname === '/activity-requests/new') return '탐구활동서 작성';
+  if (/^\/activity-requests\/[^/]+\/edit$/.test(normalizedPathname)) return '탐구활동서 수정';
+  if (/^\/activity-requests\/[^/]+$/.test(normalizedPathname)) return '탐구활동서';
+  if (normalizedPathname === '/lost-items/new') return '분실물 등록';
+  if (/^\/lost-items\/[^/]+$/.test(normalizedPathname)) return '분실물';
+  return null;
+}
 
 function PortalNavigationLink({
   item,
@@ -404,6 +430,7 @@ function UserMenu({
 
 function PortalShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const mobilePortalHeaderTitle = getMobilePortalHeaderTitle(pathname);
   const [routeLabel, setRouteLabel] = useState('페이지를 이동했습니다.');
   const [isBusinessInfoOpen, setIsBusinessInfoOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -484,12 +511,23 @@ function PortalShell() {
       <p className="sr-only" aria-live="polite">
         {routeLabel}
       </p>
-      <header className="portal-header">
+      <header className={`portal-header${mobilePortalHeaderTitle ? ' portal-header--back' : ''}`}>
         <div className="portal-header__inner">
-          <Link to="/" className="portal-brand" aria-label="과구리 홈">
+          <Link to="/" className="portal-brand portal-brand--home" aria-label="과구리 홈">
             <img src="/assets/lIcon.png" alt="" width="32" height="32" />
             <strong>과구리</strong>
           </Link>
+          {mobilePortalHeaderTitle ? (
+            <button
+              className="portal-brand portal-brand--back"
+              type="button"
+              aria-label="이전 페이지로 돌아가기"
+              onClick={() => window.history.back()}
+            >
+              <ArrowLeft aria-hidden="true" size={20} />
+              <strong>{mobilePortalHeaderTitle}</strong>
+            </button>
+          ) : null}
 
           <DesktopNavigation />
 

@@ -89,7 +89,9 @@ function PetitionEditForm({ petition }: { petition: PetitionDetail }) {
           </div>
         </div>
         <div className="petition-form-field">
-          <label htmlFor="petition-title">제안 제목</label>
+          <label className="sr-only" htmlFor="petition-title">
+            제안 제목
+          </label>
           <input
             id="petition-title"
             value={title}
@@ -98,6 +100,7 @@ function PetitionEditForm({ petition }: { petition: PetitionDetail }) {
             aria-invalid={attempted && Boolean(errors.title)}
             aria-describedby={attempted && errors.title ? 'petition-title-error' : undefined}
             autoFocus
+            placeholder="제안 제목을 입력하세요"
           />
           <div className="petition-form-field__meta">
             {attempted && errors.title ? (
@@ -126,7 +129,7 @@ function PetitionEditForm({ petition }: { petition: PetitionDetail }) {
             ariaLabel="청원 제안 내용"
             allowImages={false}
             onChange={setEditorValue}
-            placeholder=""
+            placeholder="제안 내용을 입력하세요"
           />
         </div>
         {attempted && errors.content ? (
