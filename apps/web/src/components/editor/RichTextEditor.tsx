@@ -366,6 +366,25 @@ export function isToolbarDropdownOptionSelected(
   return option.value === value || (!value && option.label === defaultLabel);
 }
 
+type FloatingMenuPosition = { top: number; left: number };
+
+function getFloatingMenuPosition(
+  trigger: HTMLElement,
+  width: number,
+  estimatedHeight: number,
+): FloatingMenuPosition {
+  const rect = trigger.getBoundingClientRect();
+  const viewportHeight = Math.max(window.innerHeight, 240);
+  const menuHeight = Math.min(estimatedHeight, viewportHeight - 24);
+  const top =
+    rect.bottom + 8 + menuHeight <= viewportHeight
+      ? rect.bottom + 8
+      : Math.max(12, rect.top - menuHeight - 8);
+  const maxLeft = Math.max(12, window.innerWidth - width - 12);
+  const left = Math.min(Math.max(12, rect.left), maxLeft);
+  return { top, left };
+}
+
 function ToolbarDropdown({
   className,
   defaultLabel,
@@ -382,60 +401,107 @@ function ToolbarDropdown({
   value: string;
 }) {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState<FloatingMenuPosition | null>(null);
+  const isSizeMenu = className?.includes('size') ?? false;
+  const menuWidth = isSizeMenu ? 88 : 174;
   const currentLabel =
     options.find((option) => option.value === value)?.label ?? (value ? value : defaultLabel);
   const visibleOptions = getToolbarDropdownOptions(options, defaultLabel);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const updatePosition = () => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+      setMenuPosition(getFloatingMenuPosition(trigger, menuWidth, 292));
+    };
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!triggerRef.current?.contains(target) && !menuRef.current?.contains(target)) {
+        setOpen(false);
+        setMenuPosition(null);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        setMenuPosition(null);
+      }
+    };
+
+    updatePosition();
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    document.addEventListener('keydown', closeOnEscape);
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer);
+      document.removeEventListener('keydown', closeOnEscape);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [menuWidth, open]);
 
   return (
     <div
       className={`rich-text-toolbar-select${open ? ' is-open' : ''}${
         className ? ` ${className}` : ''
       }`}
-      onBlur={(event) => {
-        const nextTarget = event.relatedTarget;
-        if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
-          setOpen(false);
-        }
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') setOpen(false);
-      }}
     >
       <button
+        ref={triggerRef}
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label={label}
         className="rich-text-toolbar-select__trigger"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          if (open) setMenuPosition(null);
+          setOpen(!open);
+        }}
         title={label}
         type="button"
       >
         <span className="rich-text-toolbar-select__value">{currentLabel}</span>
         <ChevronDown className="rich-text-toolbar-select__chevron" size={13} aria-hidden="true" />
       </button>
-      {open ? (
-        <div aria-label={label} className="rich-text-toolbar-select__menu" role="listbox">
-          {visibleOptions.map((option) => {
-            const selected = isToolbarDropdownOptionSelected(option, value, defaultLabel);
-            return (
-              <button
-                aria-selected={selected}
-                className={`rich-text-toolbar-select__option${selected ? ' is-selected' : ''}`}
-                key={option.value || 'default'}
-                onClick={() => {
-                  onChange(option.value);
-                  setOpen(false);
-                }}
-                role="option"
-                type="button"
-              >
-                <span>{option.label}</span>
-                {selected ? <Check aria-hidden="true" size={15} /> : null}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
+      {open && menuPosition && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              ref={menuRef}
+              aria-label={label}
+              className={`rich-text-toolbar-select__menu rich-text-toolbar-select__menu--portal${
+                isSizeMenu ? ' is-size' : ''
+              }`}
+              role="listbox"
+              style={{ top: menuPosition.top, left: menuPosition.left }}
+            >
+              {visibleOptions.map((option) => {
+                const selected = isToolbarDropdownOptionSelected(option, value, defaultLabel);
+                return (
+                  <button
+                    aria-selected={selected}
+                    className={`rich-text-toolbar-select__option${selected ? ' is-selected' : ''}`}
+                    key={option.value || 'default'}
+                    onClick={() => {
+                      onChange(option.value);
+                      setOpen(false);
+                      setMenuPosition(null);
+                    }}
+                    role="option"
+                    type="button"
+                  >
+                    <span>{option.label}</span>
+                    {selected ? <Check aria-hidden="true" size={15} /> : null}
+                  </button>
+                );
+              })}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
@@ -457,20 +523,51 @@ function ToolbarPalette({
 }) {
   const [open, setOpen] = useState(false);
   const [hexValue, setHexValue] = useState('');
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState<FloatingMenuPosition | null>(null);
   const activeColor = normalizeRichTextColor(value) ?? styles[value];
   const normalizedHexValue = normalizeRichTextColor(hexValue);
 
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const updatePosition = () => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+      setMenuPosition(getFloatingMenuPosition(trigger, 238, 180));
+    };
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!triggerRef.current?.contains(target) && !menuRef.current?.contains(target)) {
+        setOpen(false);
+        setMenuPosition(null);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        setMenuPosition(null);
+      }
+    };
+
+    updatePosition();
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    document.addEventListener('keydown', closeOnEscape);
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer);
+      document.removeEventListener('keydown', closeOnEscape);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [open]);
+
   return (
-    <div
-      className={`rich-text-toolbar-palette${open ? ' is-open' : ''}`}
-      onBlur={(event) => {
-        const nextTarget = event.relatedTarget;
-        if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
-          setOpen(false);
-        }
-      }}
-    >
+    <div className={`rich-text-toolbar-palette${open ? ' is-open' : ''}`}>
       <button
+        ref={triggerRef}
         type="button"
         aria-expanded={open}
         aria-label={label}
@@ -478,6 +575,7 @@ function ToolbarPalette({
         onClick={() => {
           const nextOpen = !open;
           if (nextOpen) setHexValue(activeColor ?? '');
+          else setMenuPosition(null);
           setOpen(nextOpen);
         }}
       >
@@ -489,64 +587,77 @@ function ToolbarPalette({
         />
         <ChevronDown className="rich-text-toolbar-palette__chevron" size={12} aria-hidden="true" />
       </button>
-      {open ? (
-        <div className="rich-text-toolbar-palette__menu" role="menu" aria-label={label}>
-          <div className="rich-text-toolbar-palette__grid">
-            {options.map((option) => (
-              <button
-                type="button"
-                role="menuitem"
-                className={value === option.value ? 'is-selected' : undefined}
-                key={option.value}
-                title={option.label}
-                onClick={() => {
-                  onChange(normalizeRichTextColor(option.value) ?? option.value);
-                  setOpen(false);
-                }}
-              >
-                <span
-                  style={{
-                    backgroundColor: normalizeRichTextColor(option.value) ?? styles[option.value],
-                  }}
-                  aria-hidden="true"
-                />
-                <span className="sr-only">{option.label}</span>
-              </button>
-            ))}
-          </div>
-          <div className="rich-text-toolbar-palette__hex">
-            <label>
-              <span className="sr-only">{label} HEX 코드</span>
-              <input
-                inputMode="text"
-                maxLength={7}
-                onChange={(event) => setHexValue(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key !== 'Enter') return;
-                  event.preventDefault();
-                  if (!normalizedHexValue) return;
-                  onChange(normalizedHexValue);
-                  setOpen(false);
-                }}
-                placeholder="#000000"
-                spellCheck={false}
-                value={hexValue}
-              />
-            </label>
-            <button
-              disabled={!normalizedHexValue}
-              type="button"
-              onClick={() => {
-                if (!normalizedHexValue) return;
-                onChange(normalizedHexValue);
-                setOpen(false);
-              }}
+      {open && menuPosition && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              ref={menuRef}
+              className="rich-text-toolbar-palette__menu rich-text-toolbar-palette__menu--portal"
+              role="menu"
+              aria-label={label}
+              style={{ top: menuPosition.top, left: menuPosition.left }}
             >
-              적용
-            </button>
-          </div>
-        </div>
-      ) : null}
+              <div className="rich-text-toolbar-palette__grid">
+                {options.map((option) => (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={value === option.value ? 'is-selected' : undefined}
+                    key={option.value}
+                    title={option.label}
+                    onClick={() => {
+                      onChange(normalizeRichTextColor(option.value) ?? option.value);
+                      setOpen(false);
+                      setMenuPosition(null);
+                    }}
+                  >
+                    <span
+                      style={{
+                        backgroundColor:
+                          normalizeRichTextColor(option.value) ?? styles[option.value],
+                      }}
+                      aria-hidden="true"
+                    />
+                    <span className="sr-only">{option.label}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="rich-text-toolbar-palette__hex">
+                <label>
+                  <span className="sr-only">{label} HEX 코드</span>
+                  <input
+                    inputMode="text"
+                    maxLength={7}
+                    onChange={(event) => setHexValue(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key !== 'Enter') return;
+                      event.preventDefault();
+                      if (!normalizedHexValue) return;
+                      onChange(normalizedHexValue);
+                      setOpen(false);
+                      setMenuPosition(null);
+                    }}
+                    placeholder="#000000"
+                    spellCheck={false}
+                    value={hexValue}
+                  />
+                </label>
+                <button
+                  disabled={!normalizedHexValue}
+                  type="button"
+                  onClick={() => {
+                    if (!normalizedHexValue) return;
+                    onChange(normalizedHexValue);
+                    setOpen(false);
+                    setMenuPosition(null);
+                  }}
+                >
+                  적용
+                </button>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
@@ -678,6 +789,18 @@ export function RichTextEditor({
   const [pollOpen, setPollOpen] = useState(false);
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOptions, setPollOptions] = useState(['', '']);
+
+  useEffect(() => {
+    if (!linkOpen && !pollOpen) return undefined;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousDocumentOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousDocumentOverflow;
+    };
+  }, [linkOpen, pollOpen]);
 
   useEffect(() => {
     onChangeRef.current = onChange;

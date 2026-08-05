@@ -83,6 +83,7 @@
     height: 100dvh;
     max-height: 100dvh;
     padding: var(--j-space-3) var(--j-space-3) calc(var(--j-space-6) + env(safe-area-inset-bottom));
+    padding-left: calc(var(--j-space-3) + 6px);
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-gutter: stable;
@@ -265,6 +266,10 @@
     font-weight: var(--j-weight-semibold);
   }
   .portal-header--back .portal-brand--back strong {
+    display: block;
+    min-width: 0;
+    font-size: 1rem;
+    line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -331,7 +336,8 @@
     background: transparent;
   }
   .mobile-tab.is-active svg {
-    fill: currentColor;
+    fill: none;
+    stroke-width: 2.25;
   }
   .portal-footer {
     padding: 0;
@@ -530,6 +536,14 @@
 }
 
 @media (max-width: 767px) {
+  .portal-header--back ~ .main-panel .detail-page-header {
+    display: none;
+  }
+
+  .content-detail-header__comment-meta {
+    display: none;
+  }
+
   .home-dashboard .home-card__header > a {
     display: none;
   }
@@ -641,33 +655,29 @@
   .meal-column.is-active ul {
     display: grid;
     min-width: 0;
-    width: auto;
+    width: 100%;
+    margin: 0;
     gap: 5px;
     justify-content: center;
     text-align: center;
   }
 
   .meal-column.is-active .meal-column__menu {
-    display: grid;
+    position: relative;
+    display: block;
     width: 100%;
     flex: 0 0 auto;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-    gap: 8px;
-    text-align: left;
-  }
-
-  .meal-column.is-active .meal-column__menu ul {
-    grid-column: 1;
+    text-align: center;
   }
 
   .meal-column.is-active .meal-column__calories {
+    position: absolute;
+    right: 0;
+    bottom: 0;
     width: auto;
     min-height: 0;
     padding: 0;
     margin: 0;
-    grid-column: 2;
-    align-self: end;
     text-align: right;
   }
 

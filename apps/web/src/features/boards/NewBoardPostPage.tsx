@@ -324,7 +324,6 @@ export function NewBoardPostPage() {
           <div className="editor-attachments__heading">
             <div>
               <h2 id="attachment-title">첨부 파일</h2>
-              <p>{ATTACHMENT_FORMAT_DESCRIPTION} · 파일당 최대 10MB</p>
             </div>
             <button
               className="editor-file-button"

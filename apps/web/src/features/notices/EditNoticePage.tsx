@@ -157,15 +157,13 @@ function NoticeEditForm({ notice }: { notice: NoticeDetail }) {
         />
       </div>
       <div className="editor-field notice-editor-author">
-        <label className="sr-only" htmlFor="notice-department">
-          작성자
-        </label>
+        <label htmlFor="notice-department">작성자</label>
         <input
           id="notice-department"
           value={department}
           onChange={(event) => setDepartment(event.target.value)}
           maxLength={80}
-          placeholder="예: 학생생활부, 방송부"
+          placeholder="작성자명을 입력해주세요 (예: 학생생활부, 방송부)"
           required
         />
       </div>
@@ -185,7 +183,6 @@ function NoticeEditForm({ notice }: { notice: NoticeDetail }) {
         <div className="editor-attachments__heading">
           <div>
             <h2 id="notice-attachments-title">첨부 파일</h2>
-            <p>{ATTACHMENT_FORMAT_DESCRIPTION} · 기존 첨부 파일은 유지됩니다.</p>
           </div>
           <button
             className="editor-file-button"

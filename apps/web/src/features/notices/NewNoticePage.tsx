@@ -1,6 +1,6 @@
 import type { ChangeEvent, FormEvent } from 'react';
 import { useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, FileText, Paperclip, Send, Trash2 } from 'lucide-react';
 import {
@@ -20,7 +20,6 @@ import {
   ATTACHMENT_FORMAT_DESCRIPTION,
   ATTACHMENT_INPUT_ACCEPT,
 } from '../../shared/lib/attachments';
-import { getSession } from '../auth/api';
 import { createNotice, deleteNotice, updateNotice } from './api';
 import { serializeRichNoticeContent } from './richNoticeContent';
 
@@ -37,17 +36,12 @@ export function NewNoticePage() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const attachmentInputRef = useRef<HTMLInputElement>(null);
-  const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
   const [title, setTitle] = useState('');
-  const [departmentInput, setDepartment] = useState<string | undefined>(undefined);
+  const [department, setDepartment] = useState('');
   const [editorValue, setEditorValue] = useState<RichTextEditorValue>(emptyEditorValue);
   const [pinned, setPinned] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [attachmentError, setAttachmentError] = useState('');
-
-  const department =
-    departmentInput ??
-    (sessionQuery.data?.isLogined && sessionQuery.data.name ? sessionQuery.data.name : '');
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -180,15 +174,13 @@ export function NewNoticePage() {
           />
         </div>
         <div className="editor-field notice-editor-author">
-          <label className="sr-only" htmlFor="notice-department">
-            작성자
-          </label>
+          <label htmlFor="notice-department">작성자</label>
           <input
             id="notice-department"
             value={department}
             onChange={(event) => setDepartment(event.target.value)}
             maxLength={80}
-            placeholder="예: 학생생활부, 방송부"
+            placeholder="작성자명을 입력해주세요 (예: 학생생활부, 방송부)"
             required
           />
         </div>
@@ -207,7 +199,6 @@ export function NewNoticePage() {
           <div className="editor-attachments__heading">
             <div>
               <h2 id="notice-attachments-title">첨부 파일</h2>
-              <p>{ATTACHMENT_FORMAT_DESCRIPTION} · 파일당 최대 10MB · 최대 5개</p>
             </div>
             <button
               className="editor-file-button"

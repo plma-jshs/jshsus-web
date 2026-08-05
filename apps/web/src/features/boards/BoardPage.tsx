@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { BookOpen, Eye, PenLine, X } from 'lucide-react';
@@ -16,6 +16,17 @@ import { getBoardPosts } from './api';
 
 export function BoardPage() {
   const [rulesOpen, setRulesOpen] = useState(false);
+  useEffect(() => {
+    if (!rulesOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    const previousDocumentOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.documentElement.style.overflow = previousDocumentOverflow;
+    };
+  }, [rulesOpen]);
   const rawSearch = useSearch({ from: '/boards/free' });
   const search = {
     page: rawSearch.page ?? 1,
@@ -53,14 +64,21 @@ export function BoardPage() {
       action={
         <div className="board-page-actions">
           <button
-            className="detail-secondary-button"
+            aria-label="규정 보기"
+            className="detail-secondary-button board-rules-trigger"
             type="button"
+            title="규정 보기"
             onClick={() => setRulesOpen(true)}
           >
-            <BookOpen size={16} aria-hidden="true" /> 규정 보기
+            <BookOpen size={17} aria-hidden="true" />
           </button>
-          <Link className="detail-primary-button" to="/boards/free/new">
-            <PenLine size={16} aria-hidden="true" /> 글쓰기
+          <Link
+            aria-label="글쓰기"
+            className="detail-primary-button board-compose-fab"
+            title="글쓰기"
+            to="/boards/free/new"
+          >
+            <PenLine size={20} aria-hidden="true" />
           </Link>
         </div>
       }

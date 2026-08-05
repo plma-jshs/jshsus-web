@@ -99,7 +99,9 @@ textarea {
 }
 input::placeholder,
 textarea::placeholder {
-  color: var(--j-color-text-muted);
+  color: color-mix(in srgb, var(--j-color-text-muted) 78%, transparent);
+  font-weight: var(--j-weight-regular);
+  opacity: 1;
 }
 
 input[type='checkbox'],

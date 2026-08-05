@@ -22,7 +22,7 @@
 }
 
 .content-detail-header h1 {
-  margin: 0;
+  margin: 0 0 6px;
   color: var(--j-color-text);
   font-size: clamp(1.25rem, 2.7vw, 1.48rem);
   font-weight: var(--j-weight-semibold);
@@ -96,6 +96,10 @@
   margin-inline: 9px;
   color: var(--j-color-border-strong);
   content: '·';
+}
+
+.content-detail-header__meta time + span::before {
+  margin-inline: 5px;
 }
 
 .reading-body {
@@ -502,6 +506,23 @@
     visibility var(--j-motion-fast);
 }
 
+.detail-comment-form .detail-comment-submit {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--j-color-text-inverse, #fff);
+  background: var(--j-color-brand);
+}
+
+.detail-comment-form .detail-comment-submit svg {
+  fill: currentColor;
+  stroke: currentColor;
+}
+
 .detail-comment-form:focus-within textarea,
 .detail-comment-form:has(textarea:not(:placeholder-shown)) textarea {
   min-height: 44px;
@@ -573,6 +594,12 @@
 
   .detail-comment-form button {
     width: auto;
+  }
+
+  .detail-bottom-actions,
+  .petition-bottom-actions,
+  .lost-item-detail__back {
+    display: none;
   }
 
   .detail-comment-list article > div:first-child {

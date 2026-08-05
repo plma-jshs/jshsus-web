@@ -185,7 +185,7 @@ function EditForm({
               setForm((current) => ({ ...current, purpose: event.target.value }))
             }
             maxLength={500}
-            rows={3}
+            rows={2}
             placeholder="예: 전람회, R&E, 동아리 활동"
             aria-invalid={attempted && Boolean(errors.purpose)}
           />
@@ -310,7 +310,6 @@ function EditForm({
           <span>3</span>
           <div>
             <h2 id="activity-edit-schedule-title">시간과 장소</h2>
-            <p>대기 중인 신청은 기존 활동일이 지나도 새 일정으로 수정할 수 있습니다.</p>
           </div>
         </div>
         <div className="activity-form-field">

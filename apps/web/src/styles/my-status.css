@@ -1260,3 +1260,28 @@
     border: 1px solid var(--j-color-border);
   }
 }
+
+@media (max-width: 767px) {
+  .status-crop-backdrop {
+    padding: 0;
+    place-items: end;
+  }
+
+  .status-crop-modal,
+  .status-contact-modal {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 10px);
+    border-radius: 20px 20px 0 0;
+  }
+
+  .status-crop-actions {
+    display: grid;
+    padding: 0 18px calc(18px + env(safe-area-inset-bottom));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .status-crop-actions > * {
+    width: 100%;
+  }
+}

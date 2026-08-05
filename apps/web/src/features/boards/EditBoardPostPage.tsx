@@ -172,7 +172,6 @@ function BoardPostEditForm({ post }: { post: BoardPostDetail }) {
         <div className="editor-attachments__heading">
           <div>
             <h2 id="attachment-title">첨부 파일</h2>
-            <p>{ATTACHMENT_FORMAT_DESCRIPTION} · 기존 첨부 파일은 유지됩니다.</p>
           </div>
           <button
             className="editor-file-button"

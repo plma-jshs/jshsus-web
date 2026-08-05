@@ -488,3 +488,17 @@
 .portal-footer a:hover {
   color: var(--j-color-brand-strong);
 }
+
+@media (max-width: 767px) {
+  .portal-footer__business-modal {
+    padding: 0;
+    place-items: end;
+  }
+
+  .portal-footer__business-dialog {
+    width: 100%;
+    max-height: calc(100dvh - 10px);
+    padding: var(--j-space-5) var(--j-space-5) calc(var(--j-space-5) + env(safe-area-inset-bottom));
+    border-radius: 20px 20px 0 0;
+  }
+}

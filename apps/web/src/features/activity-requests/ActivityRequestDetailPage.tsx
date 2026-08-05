@@ -176,16 +176,13 @@ export function ActivityRequestDetailPage() {
         ) : null}
         <header className="activity-detail-summary">
           <div className="activity-detail-summary__title">
+            <h1>{request.purpose}</h1>
             <span className={`activity-status is-${request.status}`}>
               {activityStatusLabels[request.status]}
             </span>
-            <h1>{request.purpose}</h1>
           </div>
         </header>
-        <section aria-labelledby="activity-information-title">
-          <div className="activity-document__heading">
-            <h2 id="activity-information-title">신청 정보</h2>
-          </div>
+        <section aria-label="활동 내용">
           <dl className="activity-definition-list">
             <div>
               <dt>장소</dt>

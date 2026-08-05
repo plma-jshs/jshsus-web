@@ -197,7 +197,7 @@ export function NewActivityRequestPage() {
               onChange={(event) => updateField('purpose', event.target.value)}
               onBlur={() => setTouched((current) => ({ ...current, purpose: true }))}
               maxLength={500}
-              rows={3}
+              rows={2}
               placeholder="예: 전람회, R&E, 동아리 활동"
               aria-invalid={showError('purpose')}
               aria-describedby={showError('purpose') ? 'activity-purpose-error' : undefined}

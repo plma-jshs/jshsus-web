@@ -206,7 +206,7 @@ export function JbsPostDetailPage() {
             <span className="sr-only">조회 </span>
             {post.viewCount}
           </span>
-          <span>
+          <span className="content-detail-header__comment-meta">
             <MessageCircle size={14} aria-hidden="true" />
             <span className="sr-only">댓글 </span>
             {post.commentCount}
@@ -378,11 +378,13 @@ export function JbsPostDetailPage() {
                 placeholder="댓글을 입력하세요"
               />
               <button
-                className="detail-primary-button"
+                aria-label="댓글 등록"
+                className="detail-comment-submit"
                 type="submit"
                 disabled={!comment.trim() || commentMutation.isPending}
+                title="댓글 등록"
               >
-                <Send size={15} aria-hidden="true" /> 등록
+                <Send size={16} aria-hidden="true" fill="currentColor" />
               </button>
             </form>
             {commentMutation.isError ? (

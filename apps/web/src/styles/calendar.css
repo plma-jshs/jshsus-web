@@ -887,6 +887,19 @@
   }
 }
 
+@media (max-width: 767px) {
+  .calendar-mobile-modal {
+    padding: 0;
+    place-items: end;
+  }
+
+  .calendar-mobile-modal__dialog {
+    width: 100%;
+    height: min(520px, calc(100dvh - 10px));
+    border-radius: 20px 20px 0 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .calendar-month-track {
     transition: none;

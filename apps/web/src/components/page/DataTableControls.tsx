@@ -407,25 +407,16 @@ export function DataTablePagination({
         </button>
       </div>
       <div className="data-table-pagination__compact">
-        <button
-          type="button"
-          aria-label="이전 페이지"
-          disabled={safePage === 1}
-          onClick={() => onChange(safePage - 1)}
-        >
-          <ChevronLeft size={18} aria-hidden="true" />
-        </button>
-        <span aria-current="page">
-          {safePage} / {totalPages}
-        </span>
-        <button
-          type="button"
-          aria-label="다음 페이지"
-          disabled={safePage === totalPages}
-          onClick={() => onChange(safePage + 1)}
-        >
-          <ChevronRight size={18} aria-hidden="true" />
-        </button>
+        {safePage < totalPages ? (
+          <button
+            className="data-table-pagination__load-more"
+            type="button"
+            onClick={() => onChange(safePage + 1)}
+          >
+            더보기
+            <ChevronDown size={17} aria-hidden="true" />
+          </button>
+        ) : null}
       </div>
     </nav>
   );
