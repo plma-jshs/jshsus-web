@@ -141,6 +141,11 @@
   margin: 0;
 }
 
+.schedule-card__header > .home-card__more-link {
+  position: absolute;
+  right: 0;
+}
+
 .home-card__meta {
   color: var(--j-color-text-secondary);
   font-size: var(--j-text-sm);

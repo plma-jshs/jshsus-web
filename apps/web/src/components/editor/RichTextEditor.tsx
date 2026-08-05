@@ -569,10 +569,7 @@ function ToolbarMore({
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
-    if (!open) {
-      setMenuPosition(null);
-      return undefined;
-    }
+    if (!open) return undefined;
 
     const updatePosition = () => {
       const button = buttonRef.current;
@@ -590,10 +587,14 @@ function ToolbarMore({
       const target = event.target as Node;
       if (!buttonRef.current?.contains(target) && !menuRef.current?.contains(target)) {
         setOpen(false);
+        setMenuPosition(null);
       }
     };
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') {
+        setOpen(false);
+        setMenuPosition(null);
+      }
     };
 
     updatePosition();
@@ -616,7 +617,10 @@ function ToolbarMore({
         aria-expanded={open}
         aria-label="더보기"
         className={active ? 'is-active' : undefined}
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          if (open) setMenuPosition(null);
+          setOpen(!open);
+        }}
         title="더보기"
         type="button"
       >
@@ -637,6 +641,7 @@ function ToolbarMore({
                   key={action.label}
                   onClick={() => {
                     action.onClick();
+                    setMenuPosition(null);
                     setOpen(false);
                   }}
                   role="menuitem"

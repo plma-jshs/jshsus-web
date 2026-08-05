@@ -495,14 +495,35 @@
   .schedule-card .upcoming-events {
     display: none;
   }
-
-  .schedule-card__header > .home-card__more-link {
-    position: absolute;
-    right: 0;
-  }
 }
 
 @media (max-width: 767px) {
+  .home-dashboard .home-card__header > a {
+    display: none;
+  }
+
+  .schedule-card__header {
+    justify-content: flex-end;
+  }
+
+  .schedule-card__header .calendar-heading {
+    margin-left: auto;
+    margin-right: 0;
+    gap: 0;
+    justify-content: flex-end;
+  }
+
+  .schedule-card .calendar-heading > button {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+  }
+
+  .schedule-card .calendar-heading > .home-card__meta {
+    min-width: 0;
+    padding-inline: 3px;
+  }
+
   .meal-card__header {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
