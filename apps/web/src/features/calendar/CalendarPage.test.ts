@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AcademicEvent } from '@jshsus/types';
-import { formatCalendarDate, formatEventRange } from './CalendarPage';
+import { calendarEventInteractionMode, formatCalendarDate, formatEventRange } from './CalendarPage';
 
 describe('formatCalendarDate', () => {
   it('uses the dotted Korean calendar heading format', () => {
@@ -40,5 +40,14 @@ describe('formatEventRange', () => {
     expect(
       formatEventRange(event('2026-12-31T00:00:00+09:00', '2027-01-01T00:00:00+09:00'), 'never'),
     ).toBe('12.31 (목) 〜 01.01 (금) 종일');
+  });
+});
+
+describe('calendarEventInteractionMode', () => {
+  it('keeps click interactions through tablet widths and uses hover on desktop', () => {
+    expect(calendarEventInteractionMode(767)).toBe('mobile-agenda');
+    expect(calendarEventInteractionMode(768)).toBe('click-popover');
+    expect(calendarEventInteractionMode(1023)).toBe('click-popover');
+    expect(calendarEventInteractionMode(1024)).toBe('hover-popover');
   });
 });

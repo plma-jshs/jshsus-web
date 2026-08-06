@@ -67,7 +67,7 @@
 
 @media (min-width: 768px) {
   .home-card {
-    box-shadow: none;
+    box-shadow: 0 4px 14px rgb(15 23 42 / 5%);
   }
 }
 
@@ -468,12 +468,13 @@
   margin-bottom: 6px;
   align-items: center;
   justify-content: center;
-  gap: var(--j-space-2);
+  gap: 0;
   color: var(--j-color-text);
 }
 
 .calendar-heading > .home-card__meta {
-  min-width: 104px;
+  min-width: 100px;
+  padding-inline: 4px;
   text-align: center;
 }
 

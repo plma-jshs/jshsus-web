@@ -332,6 +332,12 @@ export function formatEventRange(
     : `${startLabel} ${startTime} 〜 ${endLabel} ${endTime}`;
 }
 
+export function calendarEventInteractionMode(viewportWidth: number) {
+  if (viewportWidth <= 767) return 'mobile-agenda' as const;
+  if (viewportWidth < 1024) return 'click-popover' as const;
+  return 'hover-popover' as const;
+}
+
 export function CalendarPage() {
   const search = useSearch({ from: '/calendar' });
   const todayKey = toDateKey(new Date());
@@ -784,10 +790,14 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                                             segment.endColumn,
                                           );
                                           selectDate(clickedDate);
-                                          if (window.innerWidth <= 767) {
+                                          const interactionMode = calendarEventInteractionMode(
+                                            window.innerWidth,
+                                          );
+                                          if (interactionMode === 'mobile-agenda') {
                                             openMobileAgenda();
                                             return;
                                           }
+                                          if (interactionMode !== 'click-popover') return;
                                           const popoverKey = `${segment.event.id}-${week[0].dateKey}`;
                                           setPopover((current) =>
                                             current?.key === popoverKey
@@ -801,6 +811,28 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                                                   y: event.clientY,
                                                 },
                                           );
+                                        }}
+                                        onMouseEnter={(event) => {
+                                          if (
+                                            calendarEventInteractionMode(window.innerWidth) !==
+                                            'hover-popover'
+                                          )
+                                            return;
+                                          setPopover({
+                                            key: `${segment.event.id}-${week[0].dateKey}`,
+                                            title: displayEventTitle(segment.event.title),
+                                            period: formatEventRange(segment.event, 'never'),
+                                            tone: eventTone(segment.event),
+                                            x: event.clientX,
+                                            y: event.clientY,
+                                          });
+                                        }}
+                                        onMouseLeave={() => {
+                                          if (
+                                            calendarEventInteractionMode(window.innerWidth) ===
+                                            'hover-popover'
+                                          )
+                                            setPopover(null);
                                         }}
                                       >
                                         {segment.showLabel ? (
