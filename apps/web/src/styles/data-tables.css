@@ -567,6 +567,10 @@
   font-variant-numeric: tabular-nums;
 }
 
+.data-table__date-mobile {
+  display: none;
+}
+
 .data-table-pagination {
   display: flex;
   min-width: 0;
@@ -809,6 +813,12 @@
     border-bottom: 1px solid var(--j-color-border);
   }
 
+  .data-table tbody tr:has(.data-table__title-link:hover) td,
+  .data-table tbody tr:has(.data-table__title-link:focus-visible) td,
+  .data-table tbody tr:has(.data-table__title-link:active) td {
+    background: var(--j-color-surface-hover);
+  }
+
   .data-table td {
     display: block;
     width: auto;
@@ -851,6 +861,14 @@
     grid-column: 2;
     padding: 0 !important;
     text-align: right;
+  }
+
+  .data-table__date-desktop {
+    display: none;
+  }
+
+  .data-table__date-mobile {
+    display: inline;
   }
 
   .data-table__views {

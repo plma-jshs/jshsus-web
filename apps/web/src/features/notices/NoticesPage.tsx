@@ -19,6 +19,10 @@ const noticeDateFormatter = createKoreanDateFormatter({
   month: '2-digit',
   day: '2-digit',
 });
+const noticeMobileDateFormatter = createKoreanDateFormatter({
+  month: '2-digit',
+  day: '2-digit',
+});
 
 export function NoticesPage() {
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
@@ -147,8 +151,11 @@ export function NoticesPage() {
                       </td>
                       <td className="data-table__author">{notice.department}</td>
                       <td className="data-table__date">
-                        <time dateTime={notice.publishedAt}>
+                        <time className="data-table__date-desktop" dateTime={notice.publishedAt}>
                           {noticeDateFormatter.format(new Date(notice.publishedAt))}
+                        </time>
+                        <time className="data-table__date-mobile" dateTime={notice.publishedAt}>
+                          {noticeMobileDateFormatter.format(new Date(notice.publishedAt))}
                         </time>
                       </td>
                       <td className="data-table__views">

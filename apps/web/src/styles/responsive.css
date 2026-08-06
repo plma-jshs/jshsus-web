@@ -329,6 +329,12 @@
     width: 18px;
     height: 18px;
     flex: 0 0 auto;
+    fill: none !important;
+    stroke: currentColor !important;
+  }
+  .mobile-tab svg * {
+    fill: none !important;
+    stroke: currentColor !important;
   }
   .mobile-tab.is-active {
     color: var(--j-color-brand-strong);
@@ -336,8 +342,14 @@
     background: transparent;
   }
   .mobile-tab.is-active svg {
-    fill: none;
-    stroke-width: 2.25;
+    fill: none !important;
+    stroke: currentColor !important;
+    stroke-width: 2.25 !important;
+  }
+  .mobile-tab.is-active svg * {
+    fill: none !important;
+    stroke: currentColor !important;
+    stroke-width: 2.25 !important;
   }
   .portal-footer {
     padding: 0;
