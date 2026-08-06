@@ -122,7 +122,10 @@ export function BoardPage() {
           field={search.field}
           query={search.q}
           action={
-            <Link className="detail-primary-button data-table-toolbar__create" to="/boards/free/new">
+            <Link
+              className="detail-primary-button data-table-toolbar__create"
+              to="/boards/free/new"
+            >
               작성
             </Link>
           }

@@ -271,7 +271,10 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
               ariaLabel="페이지당 표시 건수"
               label="보기"
               value={pageSize}
-              options={([20, 50, 100] as const).map((size) => ({ value: size, label: `${size}건` }))}
+              options={([20, 50, 100] as const).map((size) => ({
+                value: size,
+                label: `${size}건`,
+              }))}
               onChange={onPageSizeChange}
             />
           </div>
