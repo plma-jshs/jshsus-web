@@ -665,6 +665,7 @@ function ToolbarPalette({
 function ToolbarMore({
   actions,
   active = false,
+  className,
 }: {
   actions: ReadonlyArray<{
     active?: boolean;
@@ -673,6 +674,7 @@ function ToolbarMore({
     onClick: () => void;
   }>;
   active?: boolean;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -722,7 +724,11 @@ function ToolbarMore({
   }, [open]);
 
   return (
-    <div className={`rich-text-toolbar-more${active ? ' is-active' : ''}`}>
+    <div
+      className={`rich-text-toolbar-more${active ? ' is-active' : ''}${
+        className ? ` ${className}` : ''
+      }`}
+    >
       <button
         ref={buttonRef}
         aria-expanded={open}
@@ -1022,6 +1028,33 @@ export function RichTextEditor({
     },
   ];
   const moreActive = moreActions.some((action) => action.active);
+  const mobileMoreActions = [
+    ...moreActions,
+    {
+      active: toolbar.bulletList,
+      icon: <List size={16} />,
+      label: '글머리 기호 목록',
+      onClick: () => editor.chain().focus().toggleBulletList().run(),
+    },
+    {
+      active: toolbar.orderedList,
+      icon: <ListOrdered size={16} />,
+      label: '번호 목록',
+      onClick: () => editor.chain().focus().toggleOrderedList().run(),
+    },
+    ...(allowPoll
+      ? [
+          {
+            icon: <ListChecks size={16} />,
+            label: '투표',
+            onClick: openPollEditor,
+          },
+        ]
+      : []),
+  ];
+  const mobileMoreActive = mobileMoreActions.some(
+    (action) => 'active' in action && Boolean(action.active),
+  );
 
   return (
     <div className="rich-text-editor">
@@ -1066,7 +1099,16 @@ export function RichTextEditor({
           >
             <Underline size={17} />
           </ToolbarButton>
-          <ToolbarMore actions={moreActions} active={moreActive} />
+          <ToolbarMore
+            actions={moreActions}
+            active={moreActive}
+            className="rich-text-toolbar-more--desktop"
+          />
+          <ToolbarMore
+            actions={mobileMoreActions}
+            active={mobileMoreActive}
+            className="rich-text-toolbar-more--mobile"
+          />
         </div>
         <div className="rich-text-toolbar__group rich-text-toolbar__color-controls">
           <ToolbarPalette
@@ -1086,7 +1128,7 @@ export function RichTextEditor({
             value={toolbar.highlight}
           />
         </div>
-        <div className="rich-text-toolbar__group">
+        <div className="rich-text-toolbar__group rich-text-toolbar__list-controls">
           <ToolbarButton
             active={toolbar.bulletList}
             label="글머리 기호 목록"

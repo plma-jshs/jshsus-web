@@ -106,6 +106,18 @@ function getMobilePortalHeaderTitle(pathname: string) {
   return null;
 }
 
+function isMobileEditorRoute(pathname: string) {
+  const normalizedPathname = pathname.replace(/\/+$/, '') || '/';
+  return (
+    normalizedPathname === '/notices/new' ||
+    /^\/notices\/[^/]+\/edit$/.test(normalizedPathname) ||
+    normalizedPathname === '/boards/free/new' ||
+    /^\/boards\/free\/[^/]+\/edit$/.test(normalizedPathname) ||
+    normalizedPathname === '/jbs/new' ||
+    /^\/jbs\/[^/]+\/edit$/.test(normalizedPathname)
+  );
+}
+
 function PortalNavigationLink({
   item,
   onNavigate,
@@ -431,6 +443,7 @@ function UserMenu({
 function PortalShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const mobilePortalHeaderTitle = getMobilePortalHeaderTitle(pathname);
+  const mobileEditorRoute = isMobileEditorRoute(pathname);
   const [routeLabel, setRouteLabel] = useState('페이지를 이동했습니다.');
   const [isBusinessInfoOpen, setIsBusinessInfoOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -511,7 +524,11 @@ function PortalShell() {
       <p className="sr-only" aria-live="polite">
         {routeLabel}
       </p>
-      <header className={`portal-header${mobilePortalHeaderTitle ? ' portal-header--back' : ''}`}>
+      <header
+        className={`portal-header${mobilePortalHeaderTitle ? ' portal-header--back' : ''}${
+          mobileEditorRoute ? ' portal-header--editor' : ''
+        }`}
+      >
         <div className="portal-header__inner">
           <Link to="/" className="portal-brand portal-brand--home" aria-label="과구리 홈">
             <img src="/assets/lIcon.png" alt="" width="32" height="32" />
@@ -524,7 +541,11 @@ function PortalShell() {
               aria-label="이전 페이지로 돌아가기"
               onClick={() => window.history.back()}
             >
-              <ArrowLeft aria-hidden="true" size={20} />
+              {mobileEditorRoute ? (
+                <X aria-hidden="true" size={20} strokeWidth={1.5} />
+              ) : (
+                <ArrowLeft aria-hidden="true" size={20} />
+              )}
               <strong>{mobilePortalHeaderTitle}</strong>
             </button>
           ) : null}
@@ -532,27 +553,39 @@ function PortalShell() {
           <DesktopNavigation />
 
           <div className="portal-header__actions">
-            {sessionQuery.isLoading ? (
-              <span className="header-session-skeleton" aria-hidden="true" />
-            ) : session?.isLogined ? (
-              <>
-                <NotificationMenu />
-                <UserMenu
-                  displayName={sessionDisplayName}
-                  profileImageUrl={myStatusQuery.data?.student.profileImageUrl}
-                  loggingOut={logoutMutation.isPending}
-                  onLogout={() => logoutMutation.mutate()}
-                />
-              </>
-            ) : (
-              <Link className="header-login-button" to="/login" search={{ returnTo: undefined }}>
-                로그인
-              </Link>
-            )}
-            <MobileMenu
-              displayName={session?.isLogined ? sessionDisplayName : undefined}
-              profileImageUrl={myStatusQuery.data?.student.profileImageUrl}
-            />
+            <div className="portal-header__standard-actions">
+              {sessionQuery.isLoading ? (
+                <span className="header-session-skeleton" aria-hidden="true" />
+              ) : session?.isLogined ? (
+                <>
+                  <NotificationMenu />
+                  <UserMenu
+                    displayName={sessionDisplayName}
+                    profileImageUrl={myStatusQuery.data?.student.profileImageUrl}
+                    loggingOut={logoutMutation.isPending}
+                    onLogout={() => logoutMutation.mutate()}
+                  />
+                </>
+              ) : (
+                <Link className="header-login-button" to="/login" search={{ returnTo: undefined }}>
+                  로그인
+                </Link>
+              )}
+              <MobileMenu
+                displayName={session?.isLogined ? sessionDisplayName : undefined}
+                profileImageUrl={myStatusQuery.data?.student.profileImageUrl}
+              />
+            </div>
+            {mobileEditorRoute ? (
+              <button
+                aria-label="게시"
+                className="portal-header__editor-action"
+                form="editor-form"
+                type="submit"
+              >
+                게시
+              </button>
+            ) : null}
           </div>
         </div>
       </header>

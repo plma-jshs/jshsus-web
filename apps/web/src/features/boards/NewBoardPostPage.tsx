@@ -289,8 +289,8 @@ export function NewBoardPostPage() {
       width="reading"
       variant="form"
     >
-      <form className="editor-surface" onSubmit={submit}>
-        <div className="editor-field">
+      <form className="editor-surface" id="editor-form" onSubmit={submit}>
+        <div className="editor-field editor-title-field">
           <label className="sr-only" htmlFor="board-post-title">
             제목
           </label>
@@ -302,6 +302,7 @@ export function NewBoardPostPage() {
             required
             type="text"
             value={title}
+            className="editor-title-input"
             placeholder="제목을 입력하세요"
           />
         </div>
@@ -320,17 +321,16 @@ export function NewBoardPostPage() {
           />
         </div>
 
-        <section className="editor-attachments" aria-labelledby="attachment-title">
+        <section className="editor-attachments" aria-label="첨부 파일">
           <div className="editor-attachments__heading">
-            <div>
-              <h2 id="attachment-title">첨부 파일</h2>
-            </div>
             <button
+              aria-label="파일 첨부"
               className="editor-file-button"
+              title="파일 첨부"
               onClick={() => attachmentInputRef.current?.click()}
               type="button"
             >
-              <Paperclip size={16} /> 파일 선택
+              <Paperclip size={18} />
             </button>
             <input
               ref={attachmentInputRef}

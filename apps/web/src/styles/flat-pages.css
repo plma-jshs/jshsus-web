@@ -1,0 +1,65 @@
+body,
+#root,
+.app-shell,
+.main-panel {
+  background: #fff;
+}
+
+body
+  .detail-page
+  > :is(
+    .data-table-section,
+    .workflow-table-section,
+    .reading-surface,
+    .comment-surface,
+    .editor-surface,
+    .jbs-form,
+    .jbs-detail,
+    .calendar-workspace,
+    .lost-items-view,
+    .lost-item-detail,
+    .lost-item-form,
+    .static-document,
+    .wake-song-builder,
+    .activity-document,
+    .activity-form,
+    .byte-calculator,
+    .cannon-workspace,
+    .page-state--page
+  ),
+body .my-page > :is(.status-profile-card, .status-overview, .status-activity),
+body .points-card > .status-records,
+body .thanks-page :is(.thanks-summary, .thanks-messages) {
+  border-inline: 0;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+}
+
+body
+  .detail-page
+  > :is(
+    .data-table-section,
+    .workflow-table-section,
+    .reading-surface,
+    .comment-surface,
+    .editor-surface,
+    .jbs-form,
+    .jbs-detail,
+    .calendar-workspace,
+    .lost-items-view,
+    .lost-item-detail,
+    .lost-item-form,
+    .static-document,
+    .wake-song-builder,
+    .activity-document,
+    .activity-form,
+    .byte-calculator,
+    .cannon-workspace,
+    .page-state--page
+  ),
+body .my-page > :is(.status-profile-card, .status-overview, .status-activity),
+body .points-card > .status-records,
+body .thanks-page :is(.thanks-summary, .thanks-messages) {
+  border-block-color: var(--j-color-border);
+}

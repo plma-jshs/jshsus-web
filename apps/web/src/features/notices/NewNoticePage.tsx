@@ -158,8 +158,8 @@ export function NewNoticePage() {
       width="reading"
       variant="form"
     >
-      <form className="editor-surface notice-editor-surface" onSubmit={submit}>
-        <div className="editor-field">
+      <form className="editor-surface notice-editor-surface" id="editor-form" onSubmit={submit}>
+        <div className="editor-field editor-title-field">
           <label className="sr-only" htmlFor="notice-title">
             제목
           </label>
@@ -170,6 +170,7 @@ export function NewNoticePage() {
             maxLength={255}
             autoFocus
             required
+            className="editor-title-input"
             placeholder="제목을 입력하세요"
           />
         </div>
@@ -195,18 +196,27 @@ export function NewNoticePage() {
           />
         </div>
 
-        <section className="editor-attachments" aria-labelledby="notice-attachments-title">
+        <section className="editor-attachments" aria-label="첨부 파일">
           <div className="editor-attachments__heading">
-            <div>
-              <h2 id="notice-attachments-title">첨부 파일</h2>
-            </div>
             <button
+              aria-label="파일 첨부"
               className="editor-file-button"
+              title="파일 첨부"
               type="button"
               onClick={() => attachmentInputRef.current?.click()}
             >
-              <Paperclip size={16} aria-hidden="true" /> 파일 선택
+              <Paperclip size={18} aria-hidden="true" />
             </button>
+            <label className="notice-editor-pin">
+              <input
+                type="checkbox"
+                checked={pinned}
+                onChange={(event) => setPinned(event.target.checked)}
+              />
+              <span>
+                <strong>고정</strong>
+              </span>
+            </label>
             <input
               ref={attachmentInputRef}
               className="sr-only"
@@ -241,17 +251,6 @@ export function NewNoticePage() {
           ) : null}
           {attachmentError ? <p className="editor-option-error">{attachmentError}</p> : null}
         </section>
-
-        <label className="notice-editor-pin">
-          <input
-            type="checkbox"
-            checked={pinned}
-            onChange={(event) => setPinned(event.target.checked)}
-          />
-          <span>
-            <strong>공지 목록 상단에 고정</strong>
-          </span>
-        </label>
 
         <div className="editor-actions">
           <Link className="detail-secondary-button" to="/notices">

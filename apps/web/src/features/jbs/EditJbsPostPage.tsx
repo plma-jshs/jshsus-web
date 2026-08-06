@@ -115,7 +115,7 @@ function JbsEditForm({ post }: { post: JbsPost }) {
   };
 
   return (
-    <form className="jbs-form" onSubmit={submit}>
+    <form className="jbs-form" id="editor-form" onSubmit={submit}>
       <label>
         <span className="sr-only">제목</span>
         <input

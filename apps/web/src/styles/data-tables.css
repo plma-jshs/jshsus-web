@@ -33,6 +33,8 @@
   padding: 0;
   place-items: center;
   border-radius: 50%;
+  color: var(--j-color-text-inverse);
+  background: var(--j-color-brand);
   box-shadow: var(--j-shadow-overlay);
 }
 
