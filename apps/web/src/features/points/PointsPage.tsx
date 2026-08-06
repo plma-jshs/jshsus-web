@@ -19,6 +19,10 @@ function formatRecordDate(value: string) {
 
 export function PointsPage() {
   const [page, setPage] = useState(1);
+  const [mobileVisibleState, setMobileVisibleState] = useState<{ key: string; count: number }>({
+    key: '',
+    count: 20,
+  });
   const statusQuery = useQuery({ queryKey: ['my-status'], queryFn: getMyStatus });
 
   if (statusQuery.isLoading) {
@@ -91,6 +95,14 @@ export function PointsPage() {
     (safePage - 1) * pageSize,
     safePage * pageSize,
   );
+  const mobileVisibleKey = String(safePage);
+  const mobileVisibleCount =
+    mobileVisibleState.key === mobileVisibleKey ? mobileVisibleState.count : pageSize;
+  const mobileAdditionalRecords =
+    safePage === 1 && mobileVisibleState.key === mobileVisibleKey
+      ? status.points.records.slice(pageSize, mobileVisibleCount)
+      : [];
+  const displayedRecords = [...visibleRecords, ...mobileAdditionalRecords];
 
   return (
     <PageScaffold
@@ -119,7 +131,7 @@ export function PointsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleRecords.map((record) => (
+                  {displayedRecords.map((record) => (
                     <tr key={record.id}>
                       <td>{formatRecordDate(record.baseDate)}</td>
                       <td>
@@ -140,7 +152,18 @@ export function PointsPage() {
             <PageState kind="empty" title="상벌점 기록이 없습니다." variant="table" />
           )}
           {status.points.records.length ? (
-            <DataTablePagination page={safePage} totalPages={totalPages} onChange={setPage} />
+            <DataTablePagination
+              page={safePage}
+              totalPages={totalPages}
+              hasMore={safePage === 1 && mobileVisibleCount < status.points.records.length}
+              onLoadMore={() =>
+                setMobileVisibleState({
+                  key: mobileVisibleKey,
+                  count: mobileVisibleCount + pageSize,
+                })
+              }
+              onChange={setPage}
+            />
           ) : null}
         </div>
       </section>

@@ -1153,18 +1153,41 @@
   }
 
   .notice-editor-author > label {
-    display: none;
+    display: block;
+    color: var(--j-color-text-muted);
+    font-size: var(--j-text-xs);
+    font-weight: var(--j-weight-medium);
   }
 
   .editor-title-input,
   .notice-editor-author input {
+    border: 0;
+    border-radius: 0;
+    outline: 0;
+    background: transparent;
+    box-shadow: none;
     font-size: 17px;
     font-weight: var(--j-weight-semibold);
+    padding-inline: 0;
+  }
+
+  .editor-title-input:focus,
+  .notice-editor-author input:focus,
+  .editor-title-input:focus-visible,
+  .notice-editor-author input:focus-visible {
+    border: 0;
+    outline: 0;
+    box-shadow: none;
   }
 
   .rich-text-editor {
     border: 0;
     border-radius: 0;
+    box-shadow: none;
+  }
+
+  .rich-text-editor:focus-within {
+    border: 0;
     box-shadow: none;
   }
 
@@ -1183,6 +1206,10 @@
     overflow-x: auto;
     overscroll-behavior-inline: contain;
     scrollbar-width: thin;
+    border-top: 1px solid var(--j-color-border);
+    border-bottom: 1px solid var(--j-color-border);
+    border-radius: 0;
+    background: #fff;
   }
 
   .rich-text-toolbar__group {
@@ -1201,12 +1228,16 @@
   .editor-attachments__heading,
   .editor-privacy {
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
   }
 
   .editor-file-button,
   .editor-check {
     justify-content: center;
+  }
+
+  .editor-file-button {
+    margin-top: 4px;
   }
 
   .editor-actions,
@@ -1218,4 +1249,11 @@
   font-family: var(--j-font-family, inherit);
   font-size: 15px;
   line-height: 1.75;
+}
+
+@media (max-width: 767px) {
+  .rich-text-editor__content.ProseMirror {
+    font-size: 17px;
+    line-height: 1.7;
+  }
 }

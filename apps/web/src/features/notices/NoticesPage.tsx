@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { Eye, PenLine } from 'lucide-react';
+import type { NoticeListItem } from '@jshsus/types';
 import {
   DataTablePagination,
   type DataTablePageSize,
@@ -41,6 +43,35 @@ export function NoticesPage() {
   });
   const result = noticesQuery.data;
   const notices = result?.items ?? [];
+  const mobileSearchKey = `${search.field}|${search.page}|${search.pageSize}|${search.q}`;
+  const [mobileAccumulation, setMobileAccumulation] = useState<{
+    key: string;
+    items: NoticeListItem[];
+    page: number;
+  }>({ key: '', items: [], page: search.page });
+  const [loadingMore, setLoadingMore] = useState(false);
+  const mobileAdditionalNotices =
+    mobileAccumulation.key === mobileSearchKey ? mobileAccumulation.items : [];
+  const mobileLoadedPage =
+    mobileAccumulation.key === mobileSearchKey ? mobileAccumulation.page : search.page;
+  const visibleNotices = [...notices, ...mobileAdditionalNotices];
+  const loadMoreMobileNotices = async () => {
+    if (!result || loadingMore || mobileLoadedPage >= result.totalPages) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = await getNotices({
+        ...search,
+        page: mobileLoadedPage + 1,
+      });
+      setMobileAccumulation((current) => ({
+        key: mobileSearchKey,
+        items: [...(current.key === mobileSearchKey ? current.items : []), ...nextPage.items],
+        page: nextPage.page,
+      }));
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const updateSearch = (
     next: Partial<{
@@ -106,7 +137,7 @@ export function NoticesPage() {
           />
         ) : null}
 
-        {noticesQuery.isSuccess && notices.length === 0 ? (
+        {noticesQuery.isSuccess && visibleNotices.length === 0 ? (
           <PageState
             kind="empty"
             variant="table"
@@ -114,7 +145,7 @@ export function NoticesPage() {
           />
         ) : null}
 
-        {result && notices.length > 0 ? (
+        {result && visibleNotices.length > 0 ? (
           <>
             <div className="data-table-viewport">
               <table className="data-table">
@@ -141,7 +172,7 @@ export function NoticesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {notices.map((notice) => (
+                  {visibleNotices.map((notice) => (
                     <tr className={notice.pinned ? 'is-pinned' : undefined} key={notice.id}>
                       <td className="data-table__number">{notice.publicNumber}</td>
                       <td className="data-table__title-cell">
@@ -177,6 +208,9 @@ export function NoticesPage() {
             <DataTablePagination
               page={result.page}
               totalPages={result.totalPages}
+              hasMore={mobileLoadedPage < result.totalPages}
+              loadingMore={loadingMore}
+              onLoadMore={loadMoreMobileNotices}
               onChange={(page) => updateSearch({ page })}
             />
           </>

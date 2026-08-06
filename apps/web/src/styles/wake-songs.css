@@ -730,14 +730,75 @@
 }
 
 @media (max-width: 640px) {
+  .wake-song-builder .wake-song-edit-bar,
+  .wake-song-builder .wake-song-studio,
+  .wake-song-studio .wake-song-segment-card,
+  .wake-song-history > .wake-song-section-title {
+    position: relative;
+  }
+
+  .wake-song-builder .wake-song-edit-bar,
+  .wake-song-history > .wake-song-section-title {
+    border-bottom: 0;
+  }
+
+  .wake-song-builder .wake-song-studio,
+  .wake-song-studio .wake-song-segment-card {
+    border-top: 0;
+  }
+
+  .wake-song-builder .wake-song-edit-bar::after,
+  .wake-song-history > .wake-song-section-title::after,
+  .wake-song-studio .wake-song-segment-card::before {
+    position: absolute;
+    right: 50%;
+    width: 100vw;
+    border-top: 1px solid var(--j-color-border);
+    content: '';
+    transform: translateX(50%);
+  }
+
+  .wake-song-builder .wake-song-edit-bar::after,
+  .wake-song-history > .wake-song-section-title::after {
+    bottom: 0;
+  }
+
+  .wake-song-studio .wake-song-segment-card::before {
+    top: 0;
+  }
+
   .wake-song-studio.has-preview {
     padding: var(--j-space-4);
   }
 
   .wake-song-url-field > div {
     align-items: stretch;
-    grid-template-columns: 1fr;
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .wake-song-candidate-week {
+    min-height: 28px;
+    padding-block: 4px;
+    border-bottom: 0;
+    background: transparent;
+  }
+
+  .wake-song-history {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .wake-song-history > .wake-song-section-title {
+    min-height: 52px;
+    padding: 10px var(--j-space-4);
+    border-bottom: 1px solid var(--j-color-border);
+  }
+
+  .wake-song-preview-empty {
+    width: 100%;
+    min-width: 100%;
+    box-sizing: border-box;
+    padding-inline: var(--j-space-4);
   }
 
   .wake-song-history > .wake-song-section-title {
@@ -848,11 +909,18 @@
 
   .wake-song-submit {
     width: 100%;
+    border-color: var(--j-color-brand);
+    color: var(--j-color-text-inverse);
+    background: var(--j-color-brand);
   }
 }
 
 @media (max-width: 480px) {
   .wake-song-segment-readout {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wake-song-segment-readout > .wake-song-field {
+    grid-column: 1 / -1;
   }
 }

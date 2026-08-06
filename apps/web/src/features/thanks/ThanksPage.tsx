@@ -26,6 +26,10 @@ export function ThanksPage() {
   const [activeTab, setActiveTab] = useState<'guide' | 'participate'>('participate');
   const [selectedSchoolNumber, setSelectedSchoolNumber] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [mobileVisibleState, setMobileVisibleState] = useState<{ key: string; count: number }>({
+    key: '',
+    count: pageSize,
+  });
   const data = thanksQuery.data;
   const messages = data?.messages ?? [];
   const filteredMessages = selectedSchoolNumber
@@ -46,6 +50,14 @@ export function ThanksPage() {
   const totalPages = Math.ceil(filteredMessages.length / pageSize);
   const safePage = Math.min(page, Math.max(totalPages, 1));
   const visibleMessages = filteredMessages.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const mobileVisibleKey = `${selectedSchoolNumber ?? ''}|${safePage}`;
+  const mobileVisibleCount =
+    mobileVisibleState.key === mobileVisibleKey ? mobileVisibleState.count : pageSize;
+  const mobileAdditionalMessages =
+    safePage === 1 && mobileVisibleState.key === mobileVisibleKey
+      ? filteredMessages.slice(pageSize, mobileVisibleCount)
+      : [];
+  const displayedMessages = [...visibleMessages, ...mobileAdditionalMessages];
 
   const toggleSchoolNumber = (schoolNumber: string) => {
     setSelectedSchoolNumber((current) => (current === schoolNumber ? null : schoolNumber));
@@ -192,9 +204,9 @@ export function ThanksPage() {
                 </div>
               ) : null}
 
-              {visibleMessages.length ? (
+              {displayedMessages.length ? (
                 <div className="thanks-message-list" aria-label="감사 메시지 목록">
-                  {visibleMessages.map((message) => (
+                  {displayedMessages.map((message) => (
                     <article className="thanks-message-card" key={message.id}>
                       <div className="thanks-message-card__meta">
                         <button
@@ -214,7 +226,18 @@ export function ThanksPage() {
               ) : null}
 
               {filteredMessages.length ? (
-                <DataTablePagination page={safePage} totalPages={totalPages} onChange={setPage} />
+                <DataTablePagination
+                  page={safePage}
+                  totalPages={totalPages}
+                  hasMore={safePage === 1 && mobileVisibleCount < filteredMessages.length}
+                  onLoadMore={() =>
+                    setMobileVisibleState({
+                      key: mobileVisibleKey,
+                      count: mobileVisibleCount + pageSize,
+                    })
+                  }
+                  onChange={setPage}
+                />
               ) : null}
             </div>
           </div>

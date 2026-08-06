@@ -1262,6 +1262,19 @@
 }
 
 @media (max-width: 767px) {
+  .my-page {
+    width: 100%;
+    padding: 16px 0 calc(72px + env(safe-area-inset-bottom));
+    gap: 0;
+  }
+
+  .my-page > section {
+    border: 0;
+    border-bottom: 1px solid var(--j-color-border);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
   .status-crop-backdrop {
     padding: 0;
     place-items: end;

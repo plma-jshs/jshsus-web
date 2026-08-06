@@ -476,7 +476,10 @@
 
   .detail-page-header {
     display: grid;
+    width: calc(100% + var(--j-space-1) + var(--j-space-1) + var(--j-space-4) + var(--j-space-4));
+    margin-inline: calc(0px - var(--j-space-1) - var(--j-space-4));
     padding-bottom: var(--j-space-5);
+    padding-inline: calc(var(--j-space-1) + var(--j-space-4));
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: var(--j-space-3);
@@ -539,7 +542,7 @@
     min-height: 36px;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid var(--j-color-border);
+    border-bottom: 0;
   }
 
   .page-toolbar__filters-heading strong {

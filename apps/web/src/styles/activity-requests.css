@@ -105,6 +105,13 @@
   line-height: 1;
 }
 
+.activity-date-range {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
 .activity-table-section .data-table-toolbar__query {
   width: min(30vw, 320px);
   min-width: 260px;
@@ -985,11 +992,36 @@
   }
 
   .activity-date-control {
-    width: 100%;
+    min-width: 0;
+    flex: 1 1 0;
   }
 
   .activity-date-control input {
     width: 100%;
+  }
+
+  .activity-date-range {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .activity-date-range .activity-date-separator {
+    width: 16px;
+    flex: 0 0 16px;
+  }
+
+  .activity-table-section .filter-chips {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .activity-table-section .filter-chips button {
+    min-width: 0;
+    flex: 1 1 0;
+    padding-inline: 7px;
   }
 
   .activity-date-separator {
@@ -1217,6 +1249,20 @@
   }
 
   .activity-table__participants > span {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .activity-table-section .data-table-toolbar__controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 40px;
+    flex-wrap: initial;
+    justify-content: initial;
+  }
+
+  .activity-table-section .data-table-toolbar__query {
+    width: 100%;
     min-width: 0;
   }
 }

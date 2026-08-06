@@ -49,7 +49,19 @@ export function PetitionsPage() {
   const pageSize = 20;
   const totalPages = Math.ceil(filtered.length / pageSize);
   const safePage = Math.min(page, Math.max(totalPages, 1));
+  const [mobileVisibleState, setMobileVisibleState] = useState<{ key: string; count: number }>({
+    key: '',
+    count: pageSize,
+  });
   const visiblePetitions = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const mobileVisibleKey = `${filter}|${query}|${searchField}|${safePage}`;
+  const mobileVisibleCount =
+    mobileVisibleState.key === mobileVisibleKey ? mobileVisibleState.count : pageSize;
+  const mobileAdditionalPetitions =
+    safePage === 1 && mobileVisibleState.key === mobileVisibleKey
+      ? filtered.slice(pageSize, mobileVisibleCount)
+      : [];
+  const displayedPetitions = [...visiblePetitions, ...mobileAdditionalPetitions];
 
   const filterOptions: Array<{ value: PetitionFilter; label: string; count: number }> = [
     { value: 'all', label: '전체', count: petitions.length },
@@ -100,6 +112,7 @@ export function PetitionsPage() {
               />
               <ToolbarSelect
                 ariaLabel="검색 기준"
+                label="검색"
                 value={searchField}
                 options={[
                   { value: 'title_content', label: '제목+내용' },
@@ -180,7 +193,7 @@ export function PetitionsPage() {
 
         {filtered.length ? (
           <div className="petition-card-list">
-            {visiblePetitions.map((petition) => {
+            {displayedPetitions.map((petition) => {
               const progress = getPetitionProgress(petition);
               return (
                 <article className="petition-card" key={petition.id}>
@@ -235,7 +248,18 @@ export function PetitionsPage() {
           </div>
         ) : null}
         {filtered.length ? (
-          <DataTablePagination page={safePage} totalPages={totalPages} onChange={setPage} />
+          <DataTablePagination
+            page={safePage}
+            totalPages={totalPages}
+            hasMore={safePage === 1 && mobileVisibleCount < filtered.length}
+            onLoadMore={() =>
+              setMobileVisibleState({
+                key: mobileVisibleKey,
+                count: mobileVisibleCount + pageSize,
+              })
+            }
+            onChange={setPage}
+          />
         ) : null}
       </section>
     </PageScaffold>

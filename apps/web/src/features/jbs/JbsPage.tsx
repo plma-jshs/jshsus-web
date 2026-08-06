@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { Eye, MessageCircle, Plus } from 'lucide-react';
@@ -11,7 +12,7 @@ import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { formatKoreanRelativeTime } from '../../shared/lib/date';
 import { getSession } from '../auth/api';
-import { getJbsPosts } from './api';
+import { getJbsPosts, type JbsPost } from './api';
 import './jbs.css';
 
 export function JbsPage() {
@@ -34,6 +35,35 @@ export function JbsPage() {
     session?.isLogined &&
     (session.roles?.includes('system_admin') || session.permissions.includes('jbs.publish'));
   const result = postsQuery.data;
+  const mobileSearchKey = `${search.field}|${search.page}|${search.pageSize}|${search.q}`;
+  const [mobileAccumulation, setMobileAccumulation] = useState<{
+    key: string;
+    items: JbsPost[];
+    page: number;
+  }>({ key: '', items: [], page: search.page });
+  const [loadingMore, setLoadingMore] = useState(false);
+  const mobileAdditionalPosts =
+    mobileAccumulation.key === mobileSearchKey ? mobileAccumulation.items : [];
+  const mobileLoadedPage =
+    mobileAccumulation.key === mobileSearchKey ? mobileAccumulation.page : search.page;
+  const visiblePosts = [...(result?.items ?? []), ...mobileAdditionalPosts];
+  const loadMoreMobilePosts = async () => {
+    if (!result || loadingMore || mobileLoadedPage >= result.totalPages) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = await getJbsPosts({
+        ...search,
+        page: mobileLoadedPage + 1,
+      });
+      setMobileAccumulation((current) => ({
+        key: mobileSearchKey,
+        items: [...(current.key === mobileSearchKey ? current.items : []), ...nextPage.items],
+        page: nextPage.page,
+      }));
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const updateSearch = (
     next: Partial<{
@@ -87,17 +117,17 @@ export function JbsPage() {
             }
           />
         ) : null}
-        {postsQuery.isSuccess && result?.items.length === 0 ? (
+        {postsQuery.isSuccess && visiblePosts.length === 0 ? (
           <PageState
             kind="empty"
             title={search.q ? '검색 결과가 없습니다.' : '등록된 JBS 영상이 없습니다.'}
           />
         ) : null}
 
-        {result?.items.length ? (
+        {result && visiblePosts.length ? (
           <>
             <div className="jbs-card-grid">
-              {result.items.map((post) => (
+              {visiblePosts.map((post) => (
                 <article className="jbs-card" key={post.id}>
                   <Link
                     className="jbs-card__thumbnail"
@@ -136,6 +166,9 @@ export function JbsPage() {
             <DataTablePagination
               page={result.page}
               totalPages={result.totalPages}
+              hasMore={mobileLoadedPage < result.totalPages}
+              loadingMore={loadingMore}
+              onLoadMore={loadMoreMobilePosts}
               onChange={(page) => updateSearch({ page })}
             />
           </>

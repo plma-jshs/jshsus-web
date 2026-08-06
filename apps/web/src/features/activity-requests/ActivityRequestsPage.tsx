@@ -1,14 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearch } from '@tanstack/react-router';
-import { CalendarDays, FilePlus2, MapPin, UserRound, Users } from 'lucide-react';
+import { CalendarDays, MapPin, UserRound, Users } from 'lucide-react';
 import {
   DataTablePagination,
   type DataTablePageSize,
   DataTableToolbar,
-  ToolbarSelect,
 } from '../../components/page/DataTableControls';
-import { PageScaffold, PageState } from '../../components/page/PageScaffold';
+import { FilterChips, PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { getMyActivityRequests } from './api';
@@ -47,6 +46,10 @@ export function ActivityRequestsPage() {
   const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<DataTablePageSize>(20);
+  const [mobileVisibleState, setMobileVisibleState] = useState<{ key: string; count: number }>({
+    key: '',
+    count: pageSize,
+  });
   const requests = useMemo(() => requestsQuery.data ?? [], [requestsQuery.data]);
   const filtered = useMemo(
     () =>
@@ -62,6 +65,10 @@ export function ActivityRequestsPage() {
   const totalPages = Math.ceil(filtered.length / pageSize);
   const safePage = Math.min(page, Math.max(totalPages, 1));
   const visibleRequests = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const mobileVisibleKey = `${endDate}|${filter}|${pageSize}|${query}|${searchField}|${startDate}`;
+  const mobileVisibleCount =
+    mobileVisibleState.key === mobileVisibleKey ? mobileVisibleState.count : pageSize;
+  const mobileVisibleRequests = filtered.slice(0, mobileVisibleCount);
 
   return (
     <PageScaffold
@@ -70,7 +77,7 @@ export function ActivityRequestsPage() {
       width="wide"
       action={
         <Link className="detail-primary-button" to="/activity-requests/new">
-          <FilePlus2 size={16} aria-hidden="true" /> 신규 신청
+          신청하기
         </Link>
       }
     >
@@ -104,8 +111,7 @@ export function ActivityRequestsPage() {
           }}
           extraControls={
             <>
-              <ToolbarSelect
-                ariaLabel="신청 상태"
+              <FilterChips
                 value={filter}
                 options={[
                   { value: 'all', label: '전체' },
@@ -113,48 +119,51 @@ export function ActivityRequestsPage() {
                   { value: 'approved', label: '승인' },
                   { value: 'completed', label: '완료' },
                 ]}
+                label="신청 상태"
                 onChange={(nextFilter) => {
                   setFilter(nextFilter as ActivityRequestFilter);
                   setPage(1);
                 }}
               />
-              <label
-                className={`activity-date-control${startDate ? ' has-value' : ''}`}
-                data-placeholder="시작일"
-                title="활동 시작일"
-              >
-                <span className="sr-only">시작일</span>
-                <input
-                  aria-label="활동 시작일"
-                  type="date"
-                  value={startDate}
-                  max={endDate || undefined}
-                  onChange={(event) => {
-                    setStartDate(event.target.value);
-                    setPage(1);
-                  }}
-                />
-              </label>
-              <span className="activity-date-separator" aria-hidden="true">
-                〜
-              </span>
-              <label
-                className={`activity-date-control${endDate ? ' has-value' : ''}`}
-                data-placeholder="종료일"
-                title="활동 종료일"
-              >
-                <span className="sr-only">종료일</span>
-                <input
-                  aria-label="활동 종료일"
-                  type="date"
-                  value={endDate}
-                  min={startDate || undefined}
-                  onChange={(event) => {
-                    setEndDate(event.target.value);
-                    setPage(1);
-                  }}
-                />
-              </label>
+              <div className="activity-date-range" aria-label="활동 기간">
+                <label
+                  className={`activity-date-control${startDate ? ' has-value' : ''}`}
+                  data-placeholder="시작일"
+                  title="활동 시작일"
+                >
+                  <span className="sr-only">시작일</span>
+                  <input
+                    aria-label="활동 시작일"
+                    type="date"
+                    value={startDate}
+                    max={endDate || undefined}
+                    onChange={(event) => {
+                      setStartDate(event.target.value);
+                      setPage(1);
+                    }}
+                  />
+                </label>
+                <span className="activity-date-separator" aria-hidden="true">
+                  〜
+                </span>
+                <label
+                  className={`activity-date-control${endDate ? ' has-value' : ''}`}
+                  data-placeholder="종료일"
+                  title="활동 종료일"
+                >
+                  <span className="sr-only">종료일</span>
+                  <input
+                    aria-label="활동 종료일"
+                    type="date"
+                    value={endDate}
+                    min={startDate || undefined}
+                    onChange={(event) => {
+                      setEndDate(event.target.value);
+                      setPage(1);
+                    }}
+                  />
+                </label>
+              </div>
             </>
           }
         />
@@ -291,7 +300,7 @@ export function ActivityRequestsPage() {
         ) : null}
         {filtered.length ? (
           <div className="activity-card-list" aria-label="탐구활동서 신청 카드 목록">
-            {visibleRequests.map((request) => {
+            {mobileVisibleRequests.map((request) => {
               const date = activityDayFormatter.format(new Date(request.startsAt));
               const period = formatActivityPeriodLabel(
                 koreaDateInput(new Date(request.startsAt)),
@@ -349,7 +358,18 @@ export function ActivityRequestsPage() {
           </div>
         ) : null}
         {filtered.length ? (
-          <DataTablePagination page={safePage} totalPages={totalPages} onChange={setPage} />
+          <DataTablePagination
+            page={safePage}
+            totalPages={totalPages}
+            hasMore={mobileVisibleCount < filtered.length}
+            onLoadMore={() =>
+              setMobileVisibleState({
+                key: mobileVisibleKey,
+                count: mobileVisibleCount + pageSize,
+              })
+            }
+            onChange={setPage}
+          />
         ) : null}
       </section>
     </PageScaffold>

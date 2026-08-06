@@ -240,6 +240,18 @@ export function WakeSongsPage() {
     () => requests.slice((safePage - 1) * pageSize, safePage * pageSize),
     [requests, safePage],
   );
+  const mobileVisibleKey = String(safePage);
+  const [mobileVisibleState, setMobileVisibleState] = useState<{ key: string; count: number }>({
+    key: '',
+    count: pageSize,
+  });
+  const mobileVisibleCount =
+    mobileVisibleState.key === mobileVisibleKey ? mobileVisibleState.count : pageSize;
+  const mobileAdditionalRequests =
+    safePage === 1 && mobileVisibleState.key === mobileVisibleKey
+      ? requests.slice(pageSize, mobileVisibleCount)
+      : [];
+  const displayedRequests = [...visibleRequests, ...mobileAdditionalRequests];
 
   const requestPreview = useCallback(
     (url: string) => {
@@ -559,7 +571,6 @@ export function WakeSongsPage() {
                       type="submit"
                       disabled={submitDisabled}
                     >
-                      <Music2 size={16} aria-hidden="true" />
                       {saveMutation.isPending
                         ? '저장 중'
                         : editingId
@@ -638,7 +649,7 @@ export function WakeSongsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleRequests.map((request) => {
+                  {displayedRequests.map((request) => {
                     const displayStatus = wakeSongStatusPresentation(request.status);
                     return (
                       <tr key={request.id}>
@@ -707,7 +718,7 @@ export function WakeSongsPage() {
             </div>
 
             <div className="wake-song-history-card-list">
-              {visibleRequests.map((request) => {
+              {displayedRequests.map((request) => {
                 const displayStatus = wakeSongStatusPresentation(request.status);
                 return (
                   <article className="wake-song-history-card" key={request.id}>
@@ -784,7 +795,18 @@ export function WakeSongsPage() {
           </>
         ) : null}
         {requests.length > pageSize ? (
-          <DataTablePagination page={safePage} totalPages={totalPages} onChange={setPage} />
+          <DataTablePagination
+            page={safePage}
+            totalPages={totalPages}
+            hasMore={safePage === 1 && mobileVisibleCount < requests.length}
+            onLoadMore={() =>
+              setMobileVisibleState({
+                key: mobileVisibleKey,
+                count: mobileVisibleCount + pageSize,
+              })
+            }
+            onChange={setPage}
+          />
         ) : null}
       </section>
     </PageScaffold>

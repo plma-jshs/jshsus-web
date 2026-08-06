@@ -66,11 +66,13 @@ export type ToolbarSelectOption<TValue extends string | number> = {
 
 export function ToolbarSelect<TValue extends string | number>({
   ariaLabel,
+  label,
   value,
   options,
   onChange,
 }: {
   ariaLabel: string;
+  label?: string;
   value: TValue;
   options: readonly ToolbarSelectOption<TValue>[];
   onChange: (value: TValue) => void;
@@ -82,21 +84,26 @@ export function ToolbarSelect<TValue extends string | number>({
 
   if (isCompactViewport) {
     return (
-      <select
-        aria-label={ariaLabel}
-        className="data-table-toolbar-select__native"
-        value={String(value)}
-        onChange={(event) => {
-          const nextOption = options.find((option) => String(option.value) === event.target.value);
-          if (nextOption) onChange(nextOption.value);
-        }}
-      >
-        {options.map((option) => (
-          <option key={String(option.value)} value={String(option.value)}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <label className="data-table-toolbar-select__native-wrap">
+        {label ? <span>{label}</span> : null}
+        <select
+          aria-label={ariaLabel}
+          className="data-table-toolbar-select__native"
+          value={String(value)}
+          onChange={(event) => {
+            const nextOption = options.find(
+              (option) => String(option.value) === event.target.value,
+            );
+            if (nextOption) onChange(nextOption.value);
+          }}
+        >
+          {options.map((option) => (
+            <option key={String(option.value)} value={String(option.value)}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
     );
   }
 
@@ -113,6 +120,7 @@ export function ToolbarSelect<TValue extends string | number>({
         if (event.key === 'Escape') setOpen(false);
       }}
     >
+      {label ? <span className="data-table-toolbar-select__label">{label}</span> : null}
       <button
         aria-controls={listboxId}
         aria-expanded={open}
@@ -257,6 +265,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
           </div>
           <ToolbarSelect
             ariaLabel="페이지당 표시 건수"
+            label="보기"
             value={pageSize}
             options={([20, 50, 100] as const).map((size) => ({ value: size, label: `${size}건` }))}
             onChange={onPageSizeChange}
@@ -265,6 +274,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
           {showSearchField ? (
             <ToolbarSelect
               ariaLabel="검색 범위"
+              label="검색"
               value={draftField}
               options={effectiveSearchFieldOptions}
               onChange={setDraftField}
@@ -344,10 +354,16 @@ export function DataTablePagination({
   page,
   totalPages,
   onChange,
+  onLoadMore,
+  loadingMore = false,
+  hasMore = true,
 }: {
   page: number;
   totalPages: number;
   onChange: (page: number) => void;
+  onLoadMore?: () => void;
+  loadingMore?: boolean;
+  hasMore?: boolean;
 }) {
   if (totalPages <= 1) return null;
 
@@ -407,11 +423,18 @@ export function DataTablePagination({
         </button>
       </div>
       <div className="data-table-pagination__compact">
-        {safePage < totalPages ? (
+        {safePage < totalPages && hasMore ? (
           <button
             className="data-table-pagination__load-more"
             type="button"
-            onClick={() => onChange(safePage + 1)}
+            disabled={loadingMore}
+            onClick={() => {
+              if (onLoadMore) {
+                onLoadMore();
+              } else {
+                onChange(safePage + 1);
+              }
+            }}
           >
             더보기
             <ChevronDown size={17} aria-hidden="true" />

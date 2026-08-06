@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { BookOpen, Eye, PenLine, X } from 'lucide-react';
+import type { BoardPostListItem } from '@jshsus/types';
 import {
   DataTablePagination,
   type DataTablePageSize,
@@ -42,6 +43,35 @@ export function BoardPage() {
   });
   const result = postsQuery.data;
   const posts = result?.items ?? [];
+  const mobileSearchKey = `${search.field}|${search.page}|${search.pageSize}|${search.q}`;
+  const [mobileAccumulation, setMobileAccumulation] = useState<{
+    key: string;
+    items: BoardPostListItem[];
+    page: number;
+  }>({ key: '', items: [], page: search.page });
+  const [loadingMore, setLoadingMore] = useState(false);
+  const mobileAdditionalPosts =
+    mobileAccumulation.key === mobileSearchKey ? mobileAccumulation.items : [];
+  const mobileLoadedPage =
+    mobileAccumulation.key === mobileSearchKey ? mobileAccumulation.page : search.page;
+  const visiblePosts = [...posts, ...mobileAdditionalPosts];
+  const loadMoreMobilePosts = async () => {
+    if (!result || loadingMore || mobileLoadedPage >= result.totalPages) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = await getBoardPosts('free', {
+        ...search,
+        page: mobileLoadedPage + 1,
+      });
+      setMobileAccumulation((current) => ({
+        key: mobileSearchKey,
+        items: [...(current.key === mobileSearchKey ? current.items : []), ...nextPage.items],
+        page: nextPage.page,
+      }));
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const updateSearch = (
     next: Partial<{
@@ -123,7 +153,7 @@ export function BoardPage() {
           />
         ) : null}
 
-        {result && posts.length > 0 ? (
+        {result && visiblePosts.length > 0 ? (
           <>
             <div className="data-table-viewport">
               <table className="data-table">
@@ -150,7 +180,7 @@ export function BoardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {posts.map((post) => (
+                  {visiblePosts.map((post) => (
                     <tr key={post.id}>
                       <td className="data-table__number">{post.publicNumber}</td>
                       <td className="data-table__title-cell">
@@ -190,6 +220,9 @@ export function BoardPage() {
             <DataTablePagination
               page={result.page}
               totalPages={result.totalPages}
+              hasMore={mobileLoadedPage < result.totalPages}
+              loadingMore={loadingMore}
+              onLoadMore={loadMoreMobilePosts}
               onChange={(page) => updateSearch({ page })}
             />
           </>

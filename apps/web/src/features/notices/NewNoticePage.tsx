@@ -181,7 +181,7 @@ export function NewNoticePage() {
             value={department}
             onChange={(event) => setDepartment(event.target.value)}
             maxLength={80}
-            placeholder="작성자명을 입력해주세요 (예: 학생생활부, 방송부)"
+            placeholder="작성자명 (예: 학생생활부)"
             required
           />
         </div>

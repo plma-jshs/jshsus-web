@@ -153,9 +153,17 @@
 }
 
 @media (max-width: 600px) {
+  .byte-calculator {
+    border-inline: 0;
+    border-radius: 0;
+  }
+
   .byte-calculator__toolbar {
+    padding-inline: 0;
     align-items: stretch;
     flex-direction: column;
+    border-bottom: 0;
+    background: #fff;
   }
 
   .byte-calculator__toolbar > label,
@@ -172,6 +180,15 @@
   }
 
   .byte-calculator__field textarea {
+    width: 100%;
     min-height: 280px;
+    padding-inline: 0;
+    border: 0;
+    outline: 0;
+    box-shadow: none;
+  }
+
+  .byte-calculator__field {
+    padding-inline: 0;
   }
 }
