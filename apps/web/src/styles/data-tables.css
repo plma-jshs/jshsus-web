@@ -682,9 +682,16 @@
   }
 
   .data-table-toolbar {
-    padding: var(--j-space-3);
+    margin-inline: calc(var(--j-space-3) * -1);
+    padding: var(--j-space-3) 0;
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .data-table-section > .data-table-viewport,
+  .activity-table-section > .data-table-viewport,
+  .workflow-table-section > .workflow-table-viewport {
+    margin-inline: calc((var(--j-space-3) + 1rem) * -1);
   }
 
   .data-table-toolbar__summary {
@@ -858,6 +865,7 @@
     column-gap: 4px;
     row-gap: 4px;
     border-bottom: 0;
+    background: transparent;
   }
 
   .data-table tbody tr::after {
@@ -876,7 +884,27 @@
   .data-table tbody tr:has(.data-table__title-link:active) td,
   .data-table tbody tr:active td,
   .data-table tbody tr:focus-within td {
+    background: transparent;
+  }
+
+  .data-table tbody tr:has(.data-table__title-link:hover),
+  .data-table tbody tr:has(.data-table__title-link:focus-visible),
+  .data-table tbody tr:has(.data-table__title-link:active),
+  .data-table tbody tr:active,
+  .data-table tbody tr:focus-within {
     background: var(--j-color-surface-hover);
+  }
+
+  .data-table tbody tr.is-pinned {
+    background: #f3fbff;
+  }
+
+  .data-table tbody tr.is-pinned:has(.data-table__title-link:hover),
+  .data-table tbody tr.is-pinned:has(.data-table__title-link:focus-visible),
+  .data-table tbody tr.is-pinned:has(.data-table__title-link:active),
+  .data-table tbody tr.is-pinned:active,
+  .data-table tbody tr.is-pinned:focus-within {
+    background: #eaf7ff;
   }
 
   .data-table td {
@@ -968,6 +996,10 @@
   }
 
   .data-table-pagination__load-more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
     width: 100%;
     min-height: 44px;
     border: 0;
@@ -981,5 +1013,15 @@
     border-color: var(--j-color-brand);
     color: var(--j-color-brand-strong);
     background: var(--j-color-surface-selected);
+  }
+
+  .data-table-pagination__spinner {
+    animation: data-table-pagination-spin 800ms linear infinite;
+  }
+}
+
+@keyframes data-table-pagination-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

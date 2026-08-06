@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import type { BoardCommentSummary, BoardPostDetail } from '@jshsus/types';
-import { ArrowLeft, Eye, Flag, MessageCircle, Paperclip, Send } from 'lucide-react';
+import { ArrowLeft, Eye, Flag, Paperclip, Send, Siren } from 'lucide-react';
 import { getRichTextImageSources, RichTextContent } from '../../components/editor/RichTextEditor';
 import { useToast } from '../../components/feedback/Toast';
 import { ContentDetailHeader } from '../../components/page/ContentDetailHeader';
@@ -270,11 +270,6 @@ export function BoardPostDetailPage() {
             <span className="sr-only">조회 </span>
             {post.viewCount}
           </span>
-          <span className="content-detail-header__comment-meta">
-            <MessageCircle size={14} aria-hidden="true" />
-            <span className="sr-only">댓글 </span>
-            {post.commentCount}
-          </span>
         </ContentDetailHeader>
         <div className="reading-body">
           <RichTextContent
@@ -317,7 +312,13 @@ export function BoardPostDetailPage() {
               to="/login"
               search={{ returnTo: `/boards/free/${postId}` }}
             >
-              <Flag size={14} aria-hidden="true" /> 신고
+              <span className="content-report-icon content-report-icon--desktop" aria-hidden="true">
+                <Flag size={14} />
+              </span>
+              <span className="content-report-icon content-report-icon--mobile" aria-hidden="true">
+                <Siren size={14} />
+              </span>
+              신고
             </Link>
           ) : (
             <button
@@ -332,13 +333,22 @@ export function BoardPostDetailPage() {
                 })
               }
             >
-              <Flag
-                className={
-                  reportedTargets.has(reportTargetKey('post', post.id)) ? 'is-filled' : undefined
-                }
-                size={14}
-                aria-hidden="true"
-              />
+              <span className="content-report-icon content-report-icon--desktop" aria-hidden="true">
+                <Flag
+                  className={
+                    reportedTargets.has(reportTargetKey('post', post.id)) ? 'is-filled' : undefined
+                  }
+                  size={14}
+                />
+              </span>
+              <span className="content-report-icon content-report-icon--mobile" aria-hidden="true">
+                <Siren
+                  className={
+                    reportedTargets.has(reportTargetKey('post', post.id)) ? 'is-filled' : undefined
+                  }
+                  size={14}
+                />
+              </span>
               신고
             </button>
           )}
@@ -406,7 +416,19 @@ export function BoardPostDetailPage() {
                       to="/login"
                       search={{ returnTo: `/boards/free/${postId}` }}
                     >
-                      <Flag size={14} aria-hidden="true" /> 신고
+                      <span
+                        className="content-report-icon content-report-icon--desktop"
+                        aria-hidden="true"
+                      >
+                        <Flag size={14} />
+                      </span>
+                      <span
+                        className="content-report-icon content-report-icon--mobile"
+                        aria-hidden="true"
+                      >
+                        <Siren size={14} />
+                      </span>
+                      신고
                     </Link>
                   ) : (
                     <button
@@ -421,15 +443,32 @@ export function BoardPostDetailPage() {
                         })
                       }
                     >
-                      <Flag
-                        className={
-                          reportedTargets.has(reportTargetKey('comment', item.id))
-                            ? 'is-filled'
-                            : undefined
-                        }
-                        size={14}
+                      <span
+                        className="content-report-icon content-report-icon--desktop"
                         aria-hidden="true"
-                      />
+                      >
+                        <Flag
+                          className={
+                            reportedTargets.has(reportTargetKey('comment', item.id))
+                              ? 'is-filled'
+                              : undefined
+                          }
+                          size={14}
+                        />
+                      </span>
+                      <span
+                        className="content-report-icon content-report-icon--mobile"
+                        aria-hidden="true"
+                      >
+                        <Siren
+                          className={
+                            reportedTargets.has(reportTargetKey('comment', item.id))
+                              ? 'is-filled'
+                              : undefined
+                          }
+                          size={14}
+                        />
+                      </span>
                       신고
                     </button>
                   )}

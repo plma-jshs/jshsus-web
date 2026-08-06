@@ -16,9 +16,9 @@ import { PageScaffold } from '../../components/page/PageScaffold';
 import { taskBreadcrumbs } from '../../components/page/pageHierarchy';
 import { uploadFile } from '../../shared/api/files';
 import {
-  ALLOWED_ATTACHMENT_TYPES,
   ATTACHMENT_FORMAT_DESCRIPTION,
   ATTACHMENT_INPUT_ACCEPT,
+  isAllowedAttachmentFile,
 } from '../../shared/lib/attachments';
 import {
   createBoardPostDraft,
@@ -258,7 +258,7 @@ export function NewBoardPostPage() {
 
     const accepted: File[] = [];
     for (const file of [...files]) {
-      if (!ALLOWED_ATTACHMENT_TYPES.has(file.type)) {
+      if (!isAllowedAttachmentFile(file)) {
         setAttachmentError(`${ATTACHMENT_FORMAT_DESCRIPTION} 파일만 첨부할 수 있습니다.`);
         continue;
       }

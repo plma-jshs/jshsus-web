@@ -374,13 +374,14 @@ function getFloatingMenuPosition(
   estimatedHeight: number,
 ): FloatingMenuPosition {
   const rect = trigger.getBoundingClientRect();
-  const viewportHeight = Math.max(window.innerHeight, 240);
+  const viewportHeight = Math.max(window.visualViewport?.height ?? window.innerHeight, 240);
+  const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
   const menuHeight = Math.min(estimatedHeight, viewportHeight - 24);
   const top =
     rect.bottom + 8 + menuHeight <= viewportHeight
       ? rect.bottom + 8
       : Math.max(12, rect.top - menuHeight - 8);
-  const maxLeft = Math.max(12, window.innerWidth - width - 12);
+  const maxLeft = Math.max(12, viewportWidth - width - 12);
   const left = Math.min(Math.max(12, rect.left), maxLeft);
   return { top, left };
 }
@@ -535,7 +536,7 @@ function ToolbarPalette({
     const updatePosition = () => {
       const trigger = triggerRef.current;
       if (!trigger) return;
-      setMenuPosition(getFloatingMenuPosition(trigger, 238, 180));
+      setMenuPosition(getFloatingMenuPosition(trigger, 238, 230));
     };
     const closeOnOutsidePointer = (event: PointerEvent) => {
       const target = event.target as Node;
@@ -990,7 +991,18 @@ export function RichTextEditor({
     chain.setMark(mark, { [attribute]: value }).run();
   };
 
-  const moreActions = [
+  type ToolbarMoreAction = {
+    active?: boolean;
+    icon: ReactNode;
+    label: string;
+    onClick: () => void;
+  };
+  const clearFormattingAction: ToolbarMoreAction = {
+    icon: <Eraser size={16} />,
+    label: '서식 지우기',
+    onClick: () => editor.chain().focus().unsetAllMarks().clearNodes().run(),
+  };
+  const moreActions: ToolbarMoreAction[] = [
     {
       active: toolbar.blockquote,
       icon: <Quote size={16} />,
@@ -1021,15 +1033,11 @@ export function RichTextEditor({
       label: '아래첨자',
       onClick: () => editor.chain().focus().toggleMark('subscript').run(),
     },
-    {
-      icon: <Eraser size={16} />,
-      label: '서식 지우기',
-      onClick: () => editor.chain().focus().unsetAllMarks().clearNodes().run(),
-    },
+    clearFormattingAction,
   ];
   const moreActive = moreActions.some((action) => action.active);
-  const mobileMoreActions = [
-    ...moreActions,
+  const mobileMoreActions: ToolbarMoreAction[] = [
+    ...moreActions.slice(0, -1),
     {
       active: toolbar.bulletList,
       icon: <List size={16} />,
@@ -1051,6 +1059,7 @@ export function RichTextEditor({
           },
         ]
       : []),
+    clearFormattingAction,
   ];
   const mobileMoreActive = mobileMoreActions.some(
     (action) => 'active' in action && Boolean(action.active),

@@ -12,7 +12,19 @@
 }
 
 .notice-editor-author {
-  max-width: 360px;
+  max-width: none;
+}
+
+.notice-editor-author__row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.notice-editor-author__row > input {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .notice-editor-pin {
@@ -328,6 +340,10 @@
   top: auto;
   left: auto;
   z-index: var(--j-layer-popover);
+  width: min(238px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .rich-text-toolbar-palette__grid {
@@ -1123,8 +1139,6 @@
   .rich-text-toolbar__style-controls,
   .rich-text-toolbar__list-controls,
   .rich-text-toolbar-more--desktop,
-  .rich-text-toolbar button[aria-label='기울임'],
-  .rich-text-toolbar button[aria-label='밑줄'],
   .rich-text-toolbar__group > button[aria-label='투표'] {
     display: none;
   }
@@ -1167,8 +1181,15 @@
     background: transparent;
     box-shadow: none;
     font-size: 17px;
-    font-weight: var(--j-weight-semibold);
+    font-weight: var(--j-weight-bold);
     padding-inline: 0;
+  }
+
+  .editor-title-input::placeholder,
+  .notice-editor-author input::placeholder {
+    color: var(--j-color-text-muted);
+    font-weight: var(--j-weight-regular);
+    opacity: 1;
   }
 
   .editor-title-input:focus,
@@ -1209,7 +1230,7 @@
     border-top: 1px solid var(--j-color-border);
     border-bottom: 1px solid var(--j-color-border);
     border-radius: 0;
-    background: #fff;
+    background: transparent;
   }
 
   .rich-text-toolbar__group {
@@ -1231,6 +1252,20 @@
     justify-content: flex-start;
   }
 
+  .editor-attachments {
+    padding-top: var(--j-space-3);
+    border-top: 1px solid var(--j-color-border);
+  }
+
+  .notice-editor-author__row {
+    gap: 8px;
+  }
+
+  .notice-editor-pin {
+    flex: 0 0 auto;
+    gap: 2px;
+  }
+
   .editor-file-button,
   .editor-check {
     justify-content: center;
@@ -1248,12 +1283,12 @@
 .rich-text-editor__content.ProseMirror {
   font-family: var(--j-font-family, inherit);
   font-size: 15px;
-  line-height: 1.75;
+  line-height: 1.6;
 }
 
 @media (max-width: 767px) {
   .rich-text-editor__content.ProseMirror {
     font-size: 17px;
-    line-height: 1.7;
+    line-height: 1.6;
   }
 }

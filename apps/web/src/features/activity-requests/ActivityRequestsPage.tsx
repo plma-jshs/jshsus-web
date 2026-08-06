@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearch } from '@tanstack/react-router';
-import { CalendarDays, MapPin, UserRound, Users } from 'lucide-react';
+import { CalendarDays, MapPin, PenLine, UserRound, Users } from 'lucide-react';
 import {
   DataTablePagination,
   type DataTablePageSize,
@@ -76,8 +76,13 @@ export function ActivityRequestsPage() {
       title="탐구활동서"
       width="wide"
       action={
-        <Link className="detail-primary-button" to="/activity-requests/new">
-          신청하기
+        <Link
+          aria-label="신청하기"
+          className="detail-primary-button content-compose-fab"
+          title="신청하기"
+          to="/activity-requests/new"
+        >
+          <PenLine size={20} aria-hidden="true" />
         </Link>
       }
     >

@@ -972,9 +972,89 @@
 }
 
 @media (max-width: 767px) {
+  .activity-table-section .data-table-toolbar__filters-heading {
+    order: -2;
+  }
+
+  .activity-table-section .data-table-toolbar__filters > .filter-chips {
+    order: -1;
+  }
+
   .activity-document,
   .activity-form {
     padding: var(--j-space-4);
+  }
+
+  .activity-form-section {
+    padding-bottom: 24px;
+  }
+
+  .activity-form-section + .activity-form-section {
+    padding-top: 24px;
+  }
+
+  .activity-form-section__heading {
+    margin-bottom: 12px;
+  }
+
+  .activity-form-section__heading h2 {
+    font-size: 14px;
+  }
+
+  .activity-form-field {
+    gap: 5px;
+  }
+
+  .activity-form-field + .activity-form-field {
+    margin-top: 14px;
+  }
+
+  .activity-form-field label,
+  .activity-slot-selector legend {
+    font-size: 12px;
+    font-weight: var(--j-weight-medium);
+  }
+
+  .activity-form-field input,
+  .activity-form-field select {
+    height: 36px;
+    min-height: 36px;
+    padding-inline: 10px;
+    font-size: 13px;
+  }
+
+  .activity-form-field input[type='date'] {
+    line-height: 34px;
+  }
+
+  .activity-form-field textarea {
+    min-height: 120px;
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .activity-form-field textarea#activity-purpose,
+  .activity-form-field textarea#activity-edit-purpose {
+    min-height: 74px;
+  }
+
+  .activity-form-time-grid {
+    margin-top: 14px;
+  }
+
+  .activity-slot-options label {
+    min-height: 36px;
+    padding: 5px 7px;
+    gap: 5px;
+    font-size: 12px;
+  }
+
+  .activity-slot-options label small {
+    font-size: 10px;
+  }
+
+  .activity-form-actions {
+    display: none;
   }
 
   .activity-table-section .page-toolbar {
@@ -1129,12 +1209,16 @@
 
   .activity-form-actions {
     align-items: stretch;
-    display: grid;
+    display: none;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .activity-form-actions > * {
     justify-content: center;
+  }
+
+  .activity-bottom-actions {
+    display: none;
   }
 }
 

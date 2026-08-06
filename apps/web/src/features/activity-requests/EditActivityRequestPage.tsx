@@ -166,7 +166,7 @@ function EditForm({
   };
 
   return (
-    <form className="activity-form" onSubmit={submit} noValidate>
+    <form className="activity-form" id="editor-form" onSubmit={submit} noValidate>
       <section className="activity-form-section" aria-labelledby="activity-edit-purpose-title">
         <div className="activity-form-section__heading">
           <span>1</span>
@@ -309,7 +309,7 @@ function EditForm({
         <div className="activity-form-section__heading">
           <span>3</span>
           <div>
-            <h2 id="activity-edit-schedule-title">시간과 장소</h2>
+            <h2 id="activity-edit-schedule-title">활동 정보</h2>
           </div>
         </div>
         <div className="activity-form-field">

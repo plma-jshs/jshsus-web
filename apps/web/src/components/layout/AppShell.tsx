@@ -114,7 +114,9 @@ function isMobileEditorRoute(pathname: string) {
     normalizedPathname === '/boards/free/new' ||
     /^\/boards\/free\/[^/]+\/edit$/.test(normalizedPathname) ||
     normalizedPathname === '/jbs/new' ||
-    /^\/jbs\/[^/]+\/edit$/.test(normalizedPathname)
+    /^\/jbs\/[^/]+\/edit$/.test(normalizedPathname) ||
+    normalizedPathname === '/activity-requests/new' ||
+    /^\/activity-requests\/[^/]+\/edit$/.test(normalizedPathname)
   );
 }
 
@@ -442,8 +444,10 @@ function UserMenu({
 
 function PortalShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const normalizedPathname = pathname.replace(/\/+$/, '') || '/';
   const mobilePortalHeaderTitle = getMobilePortalHeaderTitle(pathname);
   const mobileEditorRoute = isMobileEditorRoute(pathname);
+  const mobileFooterVisible = normalizedPathname === '/' || normalizedPathname === '/my-status';
   const [routeLabel, setRouteLabel] = useState('페이지를 이동했습니다.');
   const [isBusinessInfoOpen, setIsBusinessInfoOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -520,7 +524,11 @@ function PortalShell() {
   }, [pathname]);
 
   return (
-    <div className="app-shell">
+    <div
+      className={`app-shell${mobileEditorRoute ? ' app-shell--editor' : ''}${
+        mobileFooterVisible ? ' app-shell--mobile-footer-visible' : ''
+      }`}
+    >
       <p className="sr-only" aria-live="polite">
         {routeLabel}
       </p>
@@ -626,7 +634,7 @@ function PortalShell() {
           activeProps={{ className: 'mobile-tab is-active' }}
         >
           <ClipboardCheck aria-hidden="true" fill="none" size={18} strokeWidth={1.8} />
-          <span>탐활서</span>
+          <span>탐구활동서</span>
         </Link>
         <Link
           to="/my-status"

@@ -5,6 +5,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  LoaderCircle,
   Search,
   SlidersHorizontal,
   X,
@@ -425,6 +426,7 @@ export function DataTablePagination({
       <div className="data-table-pagination__compact">
         {safePage < totalPages && hasMore ? (
           <button
+            aria-busy={loadingMore}
             className="data-table-pagination__load-more"
             type="button"
             disabled={loadingMore}
@@ -436,8 +438,15 @@ export function DataTablePagination({
               }
             }}
           >
-            더보기
-            <ChevronDown size={17} aria-hidden="true" />
+            {loadingMore ? (
+              <LoaderCircle
+                className="data-table-pagination__spinner"
+                size={17}
+                aria-hidden="true"
+              />
+            ) : null}
+            <span>더보기</span>
+            {!loadingMore ? <ChevronDown size={17} aria-hidden="true" /> : null}
           </button>
         ) : null}
       </div>

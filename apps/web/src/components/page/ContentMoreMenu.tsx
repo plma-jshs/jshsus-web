@@ -20,12 +20,12 @@ export function ContentMoreMenu({
   useEffect(() => {
     if (!open) return undefined;
 
-    const close = (event: MouseEvent) => {
+    const close = (event: PointerEvent) => {
       if (menuRef.current?.contains(event.target as Node)) return;
       setOpen(false);
     };
-    window.addEventListener('mousedown', close);
-    return () => window.removeEventListener('mousedown', close);
+    window.addEventListener('pointerdown', close);
+    return () => window.removeEventListener('pointerdown', close);
   }, [open]);
 
   return (

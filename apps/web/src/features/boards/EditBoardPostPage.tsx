@@ -18,9 +18,9 @@ import { detailBreadcrumbs, taskBreadcrumbs } from '../../components/page/pageHi
 import { uploadFile } from '../../shared/api/files';
 import { ApiError } from '../../shared/api/http';
 import {
-  ALLOWED_ATTACHMENT_TYPES,
   ATTACHMENT_FORMAT_DESCRIPTION,
   ATTACHMENT_INPUT_ACCEPT,
+  isAllowedAttachmentFile,
 } from '../../shared/lib/attachments';
 import { getBoardPost, updateBoardPost } from './api';
 
@@ -109,7 +109,7 @@ function BoardPostEditForm({ post }: { post: BoardPostDetail }) {
 
     const accepted: File[] = [];
     for (const file of [...files]) {
-      if (!ALLOWED_ATTACHMENT_TYPES.has(file.type)) {
+      if (!isAllowedAttachmentFile(file)) {
         setAttachmentError(`${ATTACHMENT_FORMAT_DESCRIPTION} 파일만 첨부할 수 있습니다.`);
         continue;
       }

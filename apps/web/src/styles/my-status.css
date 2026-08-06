@@ -1275,6 +1275,16 @@
     box-shadow: none;
   }
 
+  .my-page .status-section-heading,
+  .my-page .status-activity > header {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .my-page .status-records__table-wrap {
+    margin-inline: -20px;
+  }
+
   .status-crop-backdrop {
     padding: 0;
     place-items: end;

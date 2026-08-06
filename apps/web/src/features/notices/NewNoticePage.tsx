@@ -16,9 +16,9 @@ import { PageScaffold } from '../../components/page/PageScaffold';
 import { taskBreadcrumbs } from '../../components/page/pageHierarchy';
 import { uploadFile } from '../../shared/api/files';
 import {
-  ALLOWED_ATTACHMENT_TYPES,
   ATTACHMENT_FORMAT_DESCRIPTION,
   ATTACHMENT_INPUT_ACCEPT,
+  isAllowedAttachmentFile,
 } from '../../shared/lib/attachments';
 import { createNotice, deleteNotice, updateNotice } from './api';
 import { serializeRichNoticeContent } from './richNoticeContent';
@@ -118,7 +118,7 @@ export function NewNoticePage() {
 
     const accepted: File[] = [];
     for (const file of files) {
-      if (!ALLOWED_ATTACHMENT_TYPES.has(file.type)) {
+      if (!isAllowedAttachmentFile(file)) {
         setAttachmentError(`${ATTACHMENT_FORMAT_DESCRIPTION} 파일만 첨부할 수 있습니다.`);
         continue;
       }
@@ -176,14 +176,26 @@ export function NewNoticePage() {
         </div>
         <div className="editor-field notice-editor-author">
           <label htmlFor="notice-department">작성자</label>
-          <input
-            id="notice-department"
-            value={department}
-            onChange={(event) => setDepartment(event.target.value)}
-            maxLength={80}
-            placeholder="작성자명 (예: 학생생활부)"
-            required
-          />
+          <div className="notice-editor-author__row">
+            <input
+              id="notice-department"
+              value={department}
+              onChange={(event) => setDepartment(event.target.value)}
+              maxLength={80}
+              placeholder="작성자명 (예: 학생생활부)"
+              required
+            />
+            <label className="notice-editor-pin">
+              <input
+                type="checkbox"
+                checked={pinned}
+                onChange={(event) => setPinned(event.target.checked)}
+              />
+              <span>
+                <strong>고정</strong>
+              </span>
+            </label>
+          </div>
         </div>
         <div className="editor-field">
           <label className="sr-only" htmlFor="notice-content">
@@ -207,16 +219,6 @@ export function NewNoticePage() {
             >
               <Paperclip size={18} aria-hidden="true" />
             </button>
-            <label className="notice-editor-pin">
-              <input
-                type="checkbox"
-                checked={pinned}
-                onChange={(event) => setPinned(event.target.checked)}
-              />
-              <span>
-                <strong>고정</strong>
-              </span>
-            </label>
             <input
               ref={attachmentInputRef}
               className="sr-only"
