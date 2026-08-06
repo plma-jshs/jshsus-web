@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import type { BoardCommentSummary, BoardPostDetail } from '@jshsus/types';
-import { ArrowLeft, Eye, Flag, Paperclip, Send, Siren } from 'lucide-react';
+import { ArrowLeft, ArrowUp, Eye, Flag, Paperclip } from 'lucide-react';
 import { getRichTextImageSources, RichTextContent } from '../../components/editor/RichTextEditor';
 import { useToast } from '../../components/feedback/Toast';
 import { ContentDetailHeader } from '../../components/page/ContentDetailHeader';
@@ -316,7 +316,7 @@ export function BoardPostDetailPage() {
                 <Flag size={14} />
               </span>
               <span className="content-report-icon content-report-icon--mobile" aria-hidden="true">
-                <Siren size={14} />
+                <Flag size={14} />
               </span>
               신고
             </Link>
@@ -342,7 +342,7 @@ export function BoardPostDetailPage() {
                 />
               </span>
               <span className="content-report-icon content-report-icon--mobile" aria-hidden="true">
-                <Siren
+                <Flag
                   className={
                     reportedTargets.has(reportTargetKey('post', post.id)) ? 'is-filled' : undefined
                   }
@@ -426,7 +426,7 @@ export function BoardPostDetailPage() {
                         className="content-report-icon content-report-icon--mobile"
                         aria-hidden="true"
                       >
-                        <Siren size={14} />
+                        <Flag size={14} />
                       </span>
                       신고
                     </Link>
@@ -460,7 +460,7 @@ export function BoardPostDetailPage() {
                         className="content-report-icon content-report-icon--mobile"
                         aria-hidden="true"
                       >
-                        <Siren
+                        <Flag
                           className={
                             reportedTargets.has(reportTargetKey('comment', item.id))
                               ? 'is-filled'
@@ -501,7 +501,7 @@ export function BoardPostDetailPage() {
                 disabled={!comment.trim() || commentMutation.isPending}
                 title="댓글 등록"
               >
-                <Send size={16} aria-hidden="true" fill="currentColor" />
+                <ArrowUp size={15} aria-hidden="true" />
               </button>
             </form>
           </>

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import type { BoardCommentSummary } from '@jshsus/types';
-import { ArrowLeft, Eye, Flag, Send, Siren } from 'lucide-react';
+import { ArrowLeft, ArrowUp, Eye, Flag } from 'lucide-react';
 import { useToast } from '../../components/feedback/Toast';
 import { ContentDetailHeader } from '../../components/page/ContentDetailHeader';
 import { ContentLikeButton } from '../../components/page/ContentLikeButton';
@@ -238,7 +238,7 @@ export function JbsPostDetailPage() {
                 <Flag size={14} />
               </span>
               <span className="content-report-icon content-report-icon--mobile" aria-hidden="true">
-                <Siren size={14} />
+                <Flag size={14} />
               </span>
               신고
             </Link>
@@ -264,7 +264,7 @@ export function JbsPostDetailPage() {
                 />
               </span>
               <span className="content-report-icon content-report-icon--mobile" aria-hidden="true">
-                <Siren
+                <Flag
                   className={
                     reportedTargets.has(reportTargetKey('post', post.id)) ? 'is-filled' : undefined
                   }
@@ -348,7 +348,7 @@ export function JbsPostDetailPage() {
                         className="content-report-icon content-report-icon--mobile"
                         aria-hidden="true"
                       >
-                        <Siren size={14} />
+                        <Flag size={14} />
                       </span>
                       신고
                     </Link>
@@ -382,7 +382,7 @@ export function JbsPostDetailPage() {
                         className="content-report-icon content-report-icon--mobile"
                         aria-hidden="true"
                       >
-                        <Siren
+                        <Flag
                           className={
                             reportedTargets.has(reportTargetKey('comment', item.id))
                               ? 'is-filled'
@@ -423,7 +423,7 @@ export function JbsPostDetailPage() {
                 disabled={!comment.trim() || commentMutation.isPending}
                 title="댓글 등록"
               >
-                <Send size={16} aria-hidden="true" fill="currentColor" />
+                <ArrowUp size={15} aria-hidden="true" />
               </button>
             </form>
             {commentMutation.isError ? (
