@@ -37,6 +37,7 @@
   border: 0;
   background: transparent;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .notice-editor-pin span,
@@ -952,6 +953,10 @@
   margin-top: 0;
 }
 
+.editor-file-button__label {
+  display: inline;
+}
+
 .editor-file-button:hover,
 .editor-check:hover {
   color: var(--j-color-brand-strong);
@@ -1034,6 +1039,22 @@
 }
 
 @media (min-width: 768px) {
+  .editor-attachments__heading {
+    justify-content: flex-start;
+  }
+
+  .editor-file-button {
+    width: auto;
+    min-width: 0;
+    padding-inline: 10px;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  .notice-editor-pin {
+    min-width: max-content;
+  }
+
   .editor-actions__publish button svg,
   .editor-actions > .detail-primary-button svg {
     display: none;
@@ -1094,6 +1115,9 @@
 }
 
 @media (max-width: 767px) {
+  .editor-file-button__label {
+    display: none;
+  }
   .rich-text-link-modal,
   .editor-resume-modal {
     padding: 0;

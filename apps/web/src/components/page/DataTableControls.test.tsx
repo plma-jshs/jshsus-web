@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DataTableToolbar } from './DataTableControls';
+import { DataTablePagination, DataTableToolbar } from './DataTableControls';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -101,5 +101,24 @@ describe('DataTableToolbar', () => {
 
     const primaryActions = view.container.querySelector('.data-table-toolbar__primary-actions');
     expect(primaryActions).toContainElement(screen.getByRole('button', { name: '작성' }));
+  });
+});
+
+describe('DataTablePagination', () => {
+  it('shows only the loading spinner while more rows are loading', () => {
+    const view = render(
+      <DataTablePagination
+        page={1}
+        totalPages={2}
+        hasMore
+        loadingMore
+        onChange={vi.fn()}
+        onLoadMore={vi.fn()}
+      />,
+    );
+
+    const button = screen.getByRole('button', { name: '다음 게시글을 불러오는 중' });
+    expect(button).not.toHaveTextContent('더보기');
+    expect(view.container.querySelector('.data-table-pagination__spinner')).toBeInTheDocument();
   });
 });

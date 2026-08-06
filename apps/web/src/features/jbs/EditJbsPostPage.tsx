@@ -2,7 +2,12 @@ import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { ArrowLeft, ExternalLink, LoaderCircle, Save, Search } from 'lucide-react';
+import { ArrowLeft, ExternalLink, LoaderCircle, Search } from 'lucide-react';
+import {
+  plainTextToRichTextDocument,
+  RichTextEditor,
+  type RichTextEditorValue,
+} from '../../components/editor/RichTextEditor';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { detailBreadcrumbs, taskBreadcrumbs } from '../../components/page/pageHierarchy';
 import { ApiError } from '../../shared/api/http';
@@ -76,7 +81,11 @@ function JbsEditForm({ post }: { post: JbsPost }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [title, setTitle] = useState(post.title);
-  const [description, setDescription] = useState(post.description);
+  const [editorValue, setEditorValue] = useState<RichTextEditorValue>({
+    contentDoc: plainTextToRichTextDocument(post.description),
+    plainText: post.description,
+    pendingImages: [],
+  });
   const [youtubeUrl, setYoutubeUrl] = useState(post.canonicalUrl);
   const [previewFor, setPreviewFor] = useState('');
   const previewMutation = useMutation({ mutationFn: previewJbsVideo });
@@ -84,7 +93,7 @@ function JbsEditForm({ post }: { post: JbsPost }) {
     mutationFn: () =>
       updateJbsPost(post.id, {
         title: title.trim(),
-        description: description.trim(),
+        description: editorValue.plainText.trim(),
         youtubeUrl: youtubeUrl.trim(),
       }),
     onSuccess: async () => {
@@ -110,7 +119,7 @@ function JbsEditForm({ post }: { post: JbsPost }) {
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!title.trim() || !description.trim() || !normalizedUrl) return;
+    if (!title.trim() || !editorValue.plainText.trim() || !normalizedUrl) return;
     updateMutation.mutate();
   };
 
@@ -128,7 +137,7 @@ function JbsEditForm({ post }: { post: JbsPost }) {
       </label>
 
       <label>
-        <span className="sr-only">YouTube URL</span>
+        <span>YouTube URL</span>
         <div className="jbs-form__url-row">
           <input
             value={youtubeUrl}
@@ -174,18 +183,15 @@ function JbsEditForm({ post }: { post: JbsPost }) {
         <JbsVideoPreviewBox embedUrl={post.embedUrl} title={post.title} url={post.canonicalUrl} />
       )}
 
-      <label>
-        <span className="sr-only">설명</span>
-        <textarea
-          value={description}
-          maxLength={5000}
-          rows={8}
-          onChange={(event) => setDescription(event.target.value)}
+      <div className="jbs-form__editor">
+        <RichTextEditor
+          id="jbs-post-content"
+          initialValue={plainTextToRichTextDocument(post.description)}
+          allowImages={false}
+          onChange={setEditorValue}
           placeholder="영상 내용을 간단히 소개해 주세요"
-          required
         />
-        <small>{description.length.toLocaleString('ko-KR')} / 5,000자</small>
-      </label>
+      </div>
 
       <div className="jbs-form__actions">
         <Link
@@ -199,10 +205,14 @@ function JbsEditForm({ post }: { post: JbsPost }) {
           className="detail-primary-button"
           type="submit"
           disabled={
-            updateMutation.isPending || !title.trim() || !description.trim() || !normalizedUrl
+            updateMutation.isPending ||
+            !title.trim() ||
+            !editorValue.plainText.trim() ||
+            editorValue.plainText.length > 5000 ||
+            !normalizedUrl
           }
         >
-          <Save size={16} aria-hidden="true" /> {updateMutation.isPending ? '저장 중' : '저장'}
+          {updateMutation.isPending ? '등록 중' : '등록'}
         </button>
       </div>
       <p className="mutation-feedback" role="status" aria-live="polite">
@@ -282,7 +292,7 @@ export function EditJbsPostPage() {
   return (
     <PageScaffold
       breadcrumbs={taskBreadcrumbs('jbs', '수정')}
-      title="JBS 영상 수정"
+      title="게시글 수정"
       width="reading"
       variant="form"
     >

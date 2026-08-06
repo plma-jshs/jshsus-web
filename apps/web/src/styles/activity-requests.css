@@ -622,6 +622,12 @@
   box-shadow: var(--j-shadow-card);
 }
 
+@media (min-width: 768px) {
+  .activity-form {
+    padding-top: 0;
+  }
+}
+
 .activity-form-section {
   padding: 4px 0 30px;
   border-bottom: 1px solid var(--j-color-border);

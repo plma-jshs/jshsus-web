@@ -2,7 +2,7 @@ import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { ArrowLeft, ChevronDown, Save, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, X } from 'lucide-react';
 import { useToast } from '../../components/feedback/Toast';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { taskBreadcrumbs } from '../../components/page/pageHierarchy';
@@ -422,7 +422,6 @@ function EditForm({
           <ArrowLeft size={16} aria-hidden="true" /> 취소
         </Link>
         <button className="detail-primary-button" type="submit" disabled={mutation.isPending}>
-          <Save size={16} aria-hidden="true" />
           {mutation.isPending ? '저장 중' : '수정 내용 저장'}
         </button>
       </div>

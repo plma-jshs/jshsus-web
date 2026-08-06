@@ -2,7 +2,7 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, FileText, Paperclip, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft, FileText, Paperclip, Trash2 } from 'lucide-react';
 import {
   hasTemporaryImageSources,
   plainTextToRichTextDocument,
@@ -218,6 +218,7 @@ export function NewNoticePage() {
               onClick={() => attachmentInputRef.current?.click()}
             >
               <Paperclip size={18} aria-hidden="true" />
+              <span className="editor-file-button__label">파일 첨부</span>
             </button>
             <input
               ref={attachmentInputRef}
@@ -268,8 +269,7 @@ export function NewNoticePage() {
               (!editorValue.plainText && !editorValue.pendingImages.length)
             }
           >
-            <Send size={16} aria-hidden="true" />
-            {mutation.isPending ? '게시 중' : '게시'}
+            {mutation.isPending ? '등록 중' : '등록'}
           </button>
         </div>
       </form>

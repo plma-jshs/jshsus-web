@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import type { BoardPostDetail } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { ArrowLeft, FileText, Paperclip, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, FileText, Paperclip, Trash2 } from 'lucide-react';
 import {
   hasTemporaryImageSources,
   plainTextToRichTextDocument,
@@ -179,6 +179,7 @@ function BoardPostEditForm({ post }: { post: BoardPostDetail }) {
             type="button"
           >
             <Paperclip size={18} />
+            <span className="editor-file-button__label">파일 첨부</span>
           </button>
           <input
             ref={attachmentInputRef}
@@ -231,7 +232,7 @@ function BoardPostEditForm({ post }: { post: BoardPostDetail }) {
           disabled={mutation.isPending || !title.trim() || !hasContent}
           type="submit"
         >
-          <Save size={16} /> {mutation.isPending ? '저장 중' : '저장'}
+          {mutation.isPending ? '등록 중' : '등록'}
         </button>
       </div>
     </form>

@@ -446,6 +446,7 @@ export function DataTablePagination({
         {safePage < totalPages && hasMore ? (
           <button
             aria-busy={loadingMore}
+            aria-label={loadingMore ? '다음 게시글을 불러오는 중' : undefined}
             className="data-table-pagination__load-more"
             type="button"
             disabled={loadingMore}
@@ -463,9 +464,12 @@ export function DataTablePagination({
                 size={17}
                 aria-hidden="true"
               />
-            ) : null}
-            <span>더보기</span>
-            {!loadingMore ? <ChevronDown size={17} aria-hidden="true" /> : null}
+            ) : (
+              <>
+                <span>더보기</span>
+                <ChevronDown size={17} aria-hidden="true" />
+              </>
+            )}
           </button>
         ) : null}
       </div>

@@ -2,7 +2,12 @@ import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, ExternalLink, LoaderCircle, Search, Send } from 'lucide-react';
+import { ArrowLeft, ExternalLink, LoaderCircle, Search } from 'lucide-react';
+import {
+  plainTextToRichTextDocument,
+  RichTextEditor,
+  type RichTextEditorValue,
+} from '../../components/editor/RichTextEditor';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { taskBreadcrumbs } from '../../components/page/pageHierarchy';
 import { ApiError } from '../../shared/api/http';
@@ -31,7 +36,11 @@ export function NewJbsPostPage() {
   const navigate = useNavigate({ from: '/jbs/new' });
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [editorValue, setEditorValue] = useState<RichTextEditorValue>({
+    contentDoc: plainTextToRichTextDocument(''),
+    plainText: '',
+    pendingImages: [],
+  });
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [previewFor, setPreviewFor] = useState('');
   const previewMutation = useMutation({ mutationFn: previewJbsVideo });
@@ -55,7 +64,7 @@ export function NewJbsPostPage() {
   if (!canPublish) {
     return (
       <PageScaffold
-        breadcrumbs={taskBreadcrumbs('jbs', '영상 등록')}
+        breadcrumbs={taskBreadcrumbs('jbs', '글쓰기')}
         title="영상 등록 권한이 없습니다"
         width="reading"
         variant="document"
@@ -84,18 +93,18 @@ export function NewJbsPostPage() {
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!title.trim() || !description.trim() || !preview) return;
+    if (!title.trim() || !editorValue.plainText.trim() || !preview) return;
     createMutation.mutate({
       title: title.trim(),
-      description: description.trim(),
+      description: editorValue.plainText.trim(),
       youtubeUrl: preview.canonicalUrl,
     });
   };
 
   return (
     <PageScaffold
-      breadcrumbs={taskBreadcrumbs('jbs', '영상 등록')}
-      title="JBS 영상 등록"
+      breadcrumbs={taskBreadcrumbs('jbs', '글쓰기')}
+      title="게시글 작성"
       width="reading"
       variant="form"
     >
@@ -112,7 +121,7 @@ export function NewJbsPostPage() {
         </label>
 
         <label>
-          <span className="sr-only">YouTube URL</span>
+          <span>YouTube URL</span>
           <div className="jbs-form__url-row">
             <input
               value={youtubeUrl}
@@ -173,18 +182,14 @@ export function NewJbsPostPage() {
           </div>
         ) : null}
 
-        <label>
-          <span className="sr-only">설명</span>
-          <textarea
-            value={description}
-            maxLength={5000}
-            rows={8}
-            onChange={(event) => setDescription(event.target.value)}
+        <div className="jbs-form__editor">
+          <RichTextEditor
+            id="jbs-post-content"
+            allowImages={false}
+            onChange={setEditorValue}
             placeholder="영상 내용을 간단히 소개해 주세요"
-            required
           />
-          <small>{description.length.toLocaleString('ko-KR')} / 5,000자</small>
-        </label>
+        </div>
 
         <div className="jbs-form__actions">
           <Link className="detail-secondary-button" to="/jbs">
@@ -193,9 +198,15 @@ export function NewJbsPostPage() {
           <button
             className="detail-primary-button"
             type="submit"
-            disabled={createMutation.isPending || !title.trim() || !description.trim() || !preview}
+            disabled={
+              createMutation.isPending ||
+              !title.trim() ||
+              !editorValue.plainText.trim() ||
+              editorValue.plainText.length > 5000 ||
+              !preview
+            }
           >
-            <Send size={16} aria-hidden="true" /> 등록
+            {createMutation.isPending ? '등록 중' : '등록'}
           </button>
         </div>
         <p className="mutation-feedback" role="status" aria-live="polite">

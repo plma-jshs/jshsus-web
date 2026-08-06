@@ -2,7 +2,7 @@ import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, FileText, Paperclip, Plus, Save, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft, FileText, Paperclip, Plus, Save, Trash2 } from 'lucide-react';
 import {
   hasTemporaryImageSources,
   plainTextToRichTextDocument,
@@ -331,6 +331,7 @@ export function NewBoardPostPage() {
               type="button"
             >
               <Paperclip size={18} />
+              <span className="editor-file-button__label">파일 첨부</span>
             </button>
             <input
               ref={attachmentInputRef}
@@ -389,7 +390,7 @@ export function NewBoardPostPage() {
               disabled={mutation.isPending || !title.trim() || !hasContent}
               type="submit"
             >
-              <Send size={16} /> {mutation.isPending ? '게시 중' : '게시'}
+              {mutation.isPending ? '등록 중' : '등록'}
             </button>
           </div>
         </div>

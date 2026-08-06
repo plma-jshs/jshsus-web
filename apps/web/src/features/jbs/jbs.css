@@ -186,6 +186,14 @@
   width: 100%;
 }
 
+.jbs-form__editor {
+  min-width: 0;
+}
+
+.jbs-form__editor .rich-text-editor__footer {
+  display: none;
+}
+
 .jbs-form__url-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

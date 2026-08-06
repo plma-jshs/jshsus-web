@@ -95,8 +95,8 @@ function getMobilePortalHeaderTitle(pathname: string) {
   if (normalizedPathname === '/petitions/new') return '청원·제안 등록';
   if (/^\/petitions\/[^/]+\/edit$/.test(normalizedPathname)) return '청원·제안 수정';
   if (/^\/petitions\/[^/]+$/.test(normalizedPathname)) return '청원·제안';
-  if (normalizedPathname === '/jbs/new') return 'JBS 영상 등록';
-  if (/^\/jbs\/[^/]+\/edit$/.test(normalizedPathname)) return 'JBS 영상 수정';
+  if (normalizedPathname === '/jbs/new') return '게시글 작성';
+  if (/^\/jbs\/[^/]+\/edit$/.test(normalizedPathname)) return '게시글 수정';
   if (/^\/jbs\/[^/]+$/.test(normalizedPathname)) return 'JBS';
   if (normalizedPathname === '/activity-requests/new') return '탐구활동서 작성';
   if (/^\/activity-requests\/[^/]+\/edit$/.test(normalizedPathname)) return '탐구활동서 수정';

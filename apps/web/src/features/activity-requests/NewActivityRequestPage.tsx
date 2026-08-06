@@ -2,7 +2,7 @@ import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, ChevronDown, Send, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, X } from 'lucide-react';
 import { useToast } from '../../components/feedback/Toast';
 import { PageScaffold } from '../../components/page/PageScaffold';
 import { taskBreadcrumbs } from '../../components/page/pageHierarchy';
@@ -450,7 +450,6 @@ export function NewActivityRequestPage() {
             <ArrowLeft size={16} aria-hidden="true" /> 취소
           </Link>
           <button className="detail-primary-button" type="submit" disabled={mutation.isPending}>
-            <Send size={16} aria-hidden="true" />
             {mutation.isPending ? '제출 중' : '제출'}
           </button>
         </div>

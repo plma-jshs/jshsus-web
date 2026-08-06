@@ -756,12 +756,12 @@
     padding: 0;
     border: 0;
     border-radius: 8px;
-    background: #fbfcfc;
+    background: #fefefe;
   }
 
   .full-calendar__week-days > button.is-selected {
     box-shadow: inset 0 0 0 0.75px #4b5563;
-    background: #fbfcfc;
+    background: #fefefe;
   }
 
   .full-calendar__week-days > button.is-selected .full-calendar__date {
@@ -779,7 +779,7 @@
     border: 0;
     color: #111827;
     font-size: 10px;
-    font-weight: 500;
+    font-weight: 600;
   }
 
   .full-calendar__weekdays span:first-child {
@@ -806,16 +806,19 @@
     height: 22px;
     transform: translateX(-50%);
     font-size: 10px;
+    font-weight: 600;
   }
 
   .full-calendar__week-days > button.is-today .full-calendar__date {
-    width: 18px;
-    min-width: 18px;
-    height: 16px;
+    width: auto;
+    min-width: 0;
+    height: auto;
+    padding: 1px 4px;
     border-radius: 3px;
     color: #fff;
     background: #111827;
-    font-weight: 500;
+    font-weight: 600;
+    line-height: 14px;
   }
 
   .full-calendar__week-days > button.is-selected .full-calendar__date {
@@ -867,10 +870,15 @@
 
   .full-calendar__week-days > button.is-today .full-calendar__date,
   .full-calendar__week-days > button.is-today.is-selected .full-calendar__date {
-    width: 18px;
-    min-width: 18px;
+    width: auto;
+    min-width: 0;
+    height: auto;
     color: #fff;
     background: #111827;
+  }
+
+  .full-calendar__week-days > button.is-holiday-date:not(.is-today) .full-calendar__date {
+    color: #df3f3f;
   }
 
   .full-calendar__event-bar.starts-before {
@@ -920,6 +928,21 @@
 
   .full-calendar__bars {
     display: grid;
+  }
+}
+
+@media (max-width: 767px) {
+  .full-calendar__week {
+    min-height: 95px;
+  }
+
+  .full-calendar__week-days {
+    height: 93px;
+    min-height: 93px;
+  }
+
+  .full-calendar__week-days > button {
+    min-height: 93px;
   }
 }
 
