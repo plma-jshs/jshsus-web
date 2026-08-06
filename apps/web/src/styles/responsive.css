@@ -143,7 +143,7 @@
   .mobile-menu__user {
     display: flex;
     min-width: 0;
-    padding: var(--j-space-3) var(--j-space-3) var(--j-space-3) calc(var(--j-space-3) + 12px);
+    padding: var(--j-space-3) var(--j-space-3) var(--j-space-3) calc(var(--j-space-3) + 16px);
     margin-bottom: var(--j-space-2);
     align-items: center;
     gap: var(--j-space-3);

@@ -119,10 +119,13 @@
 
 .activity-card-list {
   display: none;
+  width: 100%;
 }
 
 .activity-request-card {
+  width: 100%;
   min-width: 0;
+  box-sizing: border-box;
   padding: 16px;
   border: 1px solid var(--j-color-border);
   border-radius: var(--j-radius-md);
@@ -1119,7 +1122,9 @@
 
   .activity-card-list {
     display: grid;
+    width: calc(100% + 2px);
     margin-top: var(--j-space-3);
+    margin-inline: -1px;
     gap: 10px;
   }
 

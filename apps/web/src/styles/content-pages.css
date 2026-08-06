@@ -163,8 +163,9 @@
 .comment-item-actions button,
 .comment-item-actions .comment-report-login-link {
   display: inline-flex;
-  min-height: 32px;
-  padding: 0 8px;
+  min-height: 30px;
+  height: 30px;
+  padding: 0 7px;
   align-items: center;
   gap: 4px;
   border: 0;
@@ -176,7 +177,6 @@
 }
 
 .content-like-button {
-  border-radius: var(--j-radius-sm);
   cursor: pointer;
   font-variant-numeric: tabular-nums;
   transition: color 150ms ease;
@@ -444,11 +444,11 @@
 
 .comment-item-actions button,
 .comment-item-actions .comment-report-login-link {
-  min-height: 36px;
+  min-height: 30px;
+  height: 30px;
 }
 
 .comment-item-actions .content-like-button {
-  min-width: 40px;
   justify-content: center;
 }
 
@@ -638,6 +638,10 @@
     animation: content-more-sheet-in 160ms ease-out both;
   }
 
+  .content-more-menu:has(.content-more-menu__dropdown) {
+    z-index: calc(var(--j-layer-modal) + 1);
+  }
+
   .content-more-menu__dropdown button {
     min-height: 46px;
     padding-inline: 12px;
@@ -649,8 +653,9 @@
   .comment-item-actions .content-like-button,
   .comment-item-actions .content-report-action,
   .comment-item-actions .comment-report-login-link {
-    min-height: 29px;
-    padding: 0 7px;
+    min-height: 28px;
+    height: 28px;
+    padding: 0 6px;
     gap: 3px;
     border-radius: var(--j-radius-pill);
     background: var(--j-color-surface-subtle);

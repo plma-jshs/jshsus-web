@@ -1216,7 +1216,7 @@
     min-height: 320px;
     padding: var(--j-space-3) 0;
     font-size: 17px;
-    line-height: 1.7;
+    line-height: 1.5;
   }
 
   .rich-text-editor__footer {
@@ -1283,12 +1283,12 @@
 .rich-text-editor__content.ProseMirror {
   font-family: var(--j-font-family, inherit);
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 @media (max-width: 767px) {
   .rich-text-editor__content.ProseMirror {
     font-size: 17px;
-    line-height: 1.6;
+    line-height: 1.5;
   }
 }

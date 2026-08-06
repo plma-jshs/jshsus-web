@@ -12,21 +12,16 @@ describe('ContentLikeButton', () => {
 
     const button = screen.getByRole('button', { name: '좋아요 취소, 현재 7개' });
     expect(button).toHaveAttribute('aria-pressed', 'true');
-    expect(button).toHaveTextContent('좋아요');
     expect(button).toHaveTextContent('7');
   });
 
-  it('keeps the heart wrapper in compact mode while hiding only the text label', () => {
+  it('keeps the heart wrapper and count in compact mode', () => {
     const { container } = render(
       <ContentLikeButton compact liked={false} likeCount={2} onClick={() => undefined} />,
     );
 
     expect(container.querySelector('.content-like-button__heart')).toBeInTheDocument();
-    expect(
-      container.querySelector(
-        '.content-like-button.is-compact > span:not(.content-like-button__heart)',
-      ),
-    ).toHaveTextContent('좋아요');
+    expect(container.querySelector('.content-like-button strong')).toHaveTextContent('2');
   });
 
   it('runs the supplied toggle action', async () => {

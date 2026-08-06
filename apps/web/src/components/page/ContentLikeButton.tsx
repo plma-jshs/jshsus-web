@@ -34,7 +34,6 @@ export function ContentLikeButton({
       >
         <Heart size={15} fill={liked ? 'currentColor' : 'none'} aria-hidden="true" />
       </span>
-      <span>좋아요</span>
       <strong>{likeCount}</strong>
     </button>
   );
