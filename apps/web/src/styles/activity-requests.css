@@ -1122,9 +1122,9 @@
 
   .activity-card-list {
     display: grid;
-    width: calc(100% + 2px);
+    width: calc(100% + var(--j-space-3) + var(--j-space-3));
     margin-top: var(--j-space-3);
-    margin-inline: -1px;
+    margin-inline: calc(var(--j-space-3) * -1);
     gap: 10px;
   }
 

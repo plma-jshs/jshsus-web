@@ -791,7 +791,6 @@
   .wake-song-history > .wake-song-section-title {
     min-height: 52px;
     padding: 10px var(--j-space-4);
-    border-bottom: 1px solid var(--j-color-border);
   }
 
   .wake-song-preview-empty {
