@@ -841,7 +841,7 @@
 .my-page .status-activity > header {
   min-height: 0;
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--j-color-border);
+  border-bottom: 0;
 }
 
 .my-page .status-section-heading h2,

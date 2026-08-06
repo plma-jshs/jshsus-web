@@ -97,6 +97,14 @@ export function ActivityRequestsPage() {
           pageSize={pageSize}
           field={searchField}
           query={query}
+          action={
+            <Link
+              className="detail-primary-button data-table-toolbar__create"
+              to="/activity-requests/new"
+            >
+              작성
+            </Link>
+          }
           searchPlaceholder="검색어를 입력하세요"
           searchFieldOptions={[
             { value: 'all', label: '전체' },

@@ -72,6 +72,8 @@
 }
 
 .user-avatar .user-avatar__image--default {
+  box-sizing: border-box;
+  padding-left: 4px;
   transform: scale(1.045);
   background: #d8d8d8;
 }
@@ -171,7 +173,7 @@
   border: 0;
   border-radius: var(--j-radius-pill);
   color: var(--j-color-text-muted);
-  background: var(--j-color-surface-subtle);
+  background: transparent;
   font-size: var(--j-text-xs);
   line-height: 1;
 }
@@ -205,7 +207,7 @@
 }
 
 .content-report-action {
-  color: var(--j-color-text) !important;
+  color: var(--j-color-text-muted) !important;
 }
 
 .content-report-action svg {
@@ -354,8 +356,9 @@
 }
 
 .content-like-button strong {
-  font-size: inherit;
+  font-size: 12px;
   font-weight: var(--j-weight-semibold);
+  line-height: 1;
 }
 
 .content-like-button:disabled {
@@ -532,7 +535,7 @@
   border: 0;
   border-radius: 50%;
   right: 4px;
-  bottom: 4px;
+  bottom: 6px;
   place-items: center;
   color: var(--j-color-text-inverse, #fff);
   background: var(--j-color-brand);
@@ -581,6 +584,8 @@
 
 .detail-bottom-actions {
   display: flex;
+  width: 100%;
+  box-sizing: border-box;
   justify-content: flex-start;
 }
 
@@ -658,7 +663,7 @@
     padding: 0 6px;
     gap: 3px;
     border-radius: var(--j-radius-pill);
-    background: var(--j-color-surface-subtle);
+    background: transparent;
   }
 
   .post-detail-actions .content-like-button:hover,
@@ -689,7 +694,7 @@
     height: 30px;
     min-height: 30px;
     right: 4px;
-    bottom: 4px;
+    bottom: 7px;
     place-items: center;
     line-height: 0;
   }

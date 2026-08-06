@@ -112,6 +112,14 @@ export function NoticesPage() {
           pageSize={search.pageSize}
           field={search.field}
           query={search.q}
+          action={
+            sessionQuery.data?.isLogined &&
+            sessionQuery.data.permissions.includes('notices.manage') ? (
+              <Link className="detail-primary-button data-table-toolbar__create" to="/notices/new">
+                작성
+              </Link>
+            ) : undefined
+          }
           onPageSizeChange={(pageSize) => updateSearch({ page: 1, pageSize })}
           onSearch={(field, q) => updateSearch({ page: 1, field, q })}
         />

@@ -61,7 +61,15 @@ body
 body .my-page > :is(.status-profile-card, .status-overview, .status-activity),
 body .points-card > .status-records,
 body .thanks-page :is(.thanks-summary, .thanks-messages) {
-  border-block-color: var(--j-color-border);
+  border-block: 0;
+}
+
+body .detail-page > .cannon-workspace {
+  background-color: #4dc8f2;
+  background-image: url('/images/cannon-scene.png');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 @media (max-width: 767px) {

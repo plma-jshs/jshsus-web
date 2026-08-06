@@ -117,6 +117,55 @@
   min-width: 260px;
 }
 
+@media (min-width: 1024px) {
+  .activity-table-section .data-table-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(260px, 320px);
+    grid-template-rows: 40px 40px;
+    gap: 10px 6px;
+  }
+
+  .activity-table-section .data-table-toolbar__summary {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .activity-table-section .data-table-toolbar__controls,
+  .activity-table-section .data-table-toolbar__filters {
+    display: contents;
+  }
+
+  .activity-table-section .data-table-toolbar__page-size {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .activity-table-section .data-table-toolbar__action {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .activity-table-section .data-table-toolbar__extra {
+    grid-column: 1;
+    grid-row: 2;
+    align-items: center;
+    justify-self: start;
+  }
+
+  .activity-table-section .data-table-toolbar__search-field {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .activity-table-section .data-table-toolbar__query {
+    width: 100%;
+    min-width: 0;
+    grid-column: 3;
+    grid-row: 2;
+  }
+}
+
 .activity-card-list {
   display: none;
   width: 100%;
@@ -979,7 +1028,7 @@
     order: -2;
   }
 
-  .activity-table-section .data-table-toolbar__filters > .filter-chips {
+  .activity-table-section .data-table-toolbar__extra {
     order: -1;
   }
 

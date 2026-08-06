@@ -159,6 +159,15 @@
   align-items: flex-start;
 }
 
+@media (min-width: 768px) {
+  .detail-page-header,
+  .detail-page > :is(section, article, .detail-bottom-actions) {
+    width: 100%;
+    box-sizing: border-box;
+    margin-inline: 0;
+  }
+}
+
 .page-toolbar {
   display: flex;
   min-height: 52px;

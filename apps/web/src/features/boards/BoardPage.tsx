@@ -121,6 +121,11 @@ export function BoardPage() {
           pageSize={search.pageSize}
           field={search.field}
           query={search.q}
+          action={
+            <Link className="detail-primary-button data-table-toolbar__create" to="/boards/free/new">
+              작성
+            </Link>
+          }
           onPageSizeChange={(pageSize) => updateSearch({ page: 1, pageSize })}
           onSearch={(field, q) => updateSearch({ page: 1, field, q })}
         />

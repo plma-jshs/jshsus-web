@@ -48,7 +48,7 @@ export function CannonPage() {
 
     const excludedValues = excludedNumbers(excluded);
     if (excludedValues.some((value) => value < start || value > end)) {
-      showToast({ title: '예외 번호는 설정한 범위 안에서 입력해 주세요.', tone: 'danger' });
+      showToast({ title: '제외 번호는 설정한 범위 안에서 입력해 주세요.', tone: 'danger' });
       return;
     }
     const excludedSet = new Set(excludedValues);
@@ -168,7 +168,7 @@ export function CannonPage() {
             </div>
 
             <label className="cannon-exclusions">
-              <span>예외 번호</span>
+              <span>제외 번호</span>
               <input
                 type="text"
                 inputMode="numeric"

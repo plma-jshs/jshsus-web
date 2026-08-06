@@ -28,6 +28,7 @@ type DataTableToolbarProps<TField extends string = DataTableSearchField> = {
   field: TField;
   query: string;
   extraControls?: ReactNode;
+  action?: ReactNode;
   showSearchField?: boolean;
   searchPlaceholder?: string;
   onPageSizeChange: (pageSize: DataTablePageSize) => void;
@@ -174,6 +175,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
   field,
   query,
   extraControls,
+  action,
   showSearchField = true,
   searchPlaceholder = '검색어를 입력하세요',
   onPageSizeChange,
@@ -264,22 +266,26 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
               <X size={17} aria-hidden="true" />
             </button>
           </div>
-          <ToolbarSelect
-            ariaLabel="페이지당 표시 건수"
-            label="보기"
-            value={pageSize}
-            options={([20, 50, 100] as const).map((size) => ({ value: size, label: `${size}건` }))}
-            onChange={onPageSizeChange}
-          />
-          {extraControls}
-          {showSearchField ? (
+          <div className="data-table-toolbar__page-size">
             <ToolbarSelect
-              ariaLabel="검색 범위"
-              label="검색"
-              value={draftField}
-              options={effectiveSearchFieldOptions}
-              onChange={setDraftField}
+              ariaLabel="페이지당 표시 건수"
+              label="보기"
+              value={pageSize}
+              options={([20, 50, 100] as const).map((size) => ({ value: size, label: `${size}건` }))}
+              onChange={onPageSizeChange}
             />
+          </div>
+          {extraControls ? <div className="data-table-toolbar__extra">{extraControls}</div> : null}
+          {showSearchField ? (
+            <div className="data-table-toolbar__search-field">
+              <ToolbarSelect
+                ariaLabel="검색 범위"
+                label="검색"
+                value={draftField}
+                options={effectiveSearchFieldOptions}
+                onChange={setDraftField}
+              />
+            </div>
           ) : null}
         </div>
         <div className="data-table-toolbar__query">
@@ -312,6 +318,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
         >
           <SlidersHorizontal size={17} aria-hidden="true" />
         </button>
+        {action ? <div className="data-table-toolbar__action">{action}</div> : null}
         <button className="sr-only" type="submit">
           검색
         </button>

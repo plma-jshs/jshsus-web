@@ -56,15 +56,15 @@ function formatDraftTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '이전에';
   const parts = new Intl.DateTimeFormat('ko-KR', {
-    month: 'numeric',
-    day: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
   }).formatToParts(date);
   const get = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((part) => part.type === type)?.value ?? '';
-  return `${get('month')}. ${get('day')}. ${get('hour')}:${get('minute')}`;
+  return `${get('month')}.${get('day')}. ${get('hour')}:${get('minute')}`;
 }
 
 export function NewBoardPostPage() {

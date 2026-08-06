@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
-import { Eye, MessageCircle, Plus } from 'lucide-react';
+import { Eye, MessageCircle, PenLine } from 'lucide-react';
 import {
   DataTablePagination,
   type DataTablePageSize,
@@ -81,8 +81,13 @@ export function JbsPage() {
       width="wide"
       action={
         canPublish ? (
-          <Link className="detail-primary-button" to="/jbs/new">
-            <Plus size={16} aria-hidden="true" /> 영상 등록
+          <Link
+            aria-label="작성"
+            className="detail-primary-button content-compose-fab"
+            title="작성"
+            to="/jbs/new"
+          >
+            <PenLine size={20} aria-hidden="true" />
           </Link>
         ) : undefined
       }
@@ -95,6 +100,13 @@ export function JbsPage() {
           pageSize={search.pageSize}
           field={search.field}
           query={search.q}
+          action={
+            canPublish ? (
+              <Link className="detail-primary-button data-table-toolbar__create" to="/jbs/new">
+                작성
+              </Link>
+            ) : undefined
+          }
           onPageSizeChange={(pageSize) => updateSearch({ page: 1, pageSize })}
           onSearch={(field, q) => updateSearch({ page: 1, field, q })}
         />
