@@ -806,6 +806,10 @@
     border-radius: 6px;
   }
 
+  .full-calendar__week-days > button.is-selected .full-calendar__date {
+    font-weight: var(--j-weight-regular);
+  }
+
   .full-calendar__bars {
     top: 35px;
     grid-template-rows: repeat(3, 20px);

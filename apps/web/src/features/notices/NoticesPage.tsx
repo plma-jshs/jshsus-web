@@ -62,8 +62,13 @@ export function NoticesPage() {
       title="공지사항"
       action={
         sessionQuery.data?.isLogined && sessionQuery.data.permissions.includes('notices.manage') ? (
-          <Link className="detail-primary-button" to="/notices/new">
-            <PenLine size={16} aria-hidden="true" /> 공지 작성
+          <Link
+            aria-label="공지 작성"
+            className="detail-primary-button content-compose-fab"
+            title="공지 작성"
+            to="/notices/new"
+          >
+            <PenLine size={20} aria-hidden="true" />
           </Link>
         ) : undefined
       }

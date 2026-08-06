@@ -75,8 +75,13 @@ export function PetitionsPage() {
       breadcrumbs={listBreadcrumbs('petitions')}
       title="청원·제안"
       action={
-        <Link className="detail-primary-button" to="/petitions/new">
-          <PenLine size={16} aria-hidden="true" /> 제안하기
+        <Link
+          aria-label="제안하기"
+          className="detail-primary-button content-compose-fab"
+          title="제안하기"
+          to="/petitions/new"
+        >
+          <PenLine size={20} aria-hidden="true" />
         </Link>
       }
     >

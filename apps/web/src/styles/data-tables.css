@@ -20,7 +20,7 @@
   padding-inline: 0;
 }
 
-.board-compose-fab {
+.content-compose-fab {
   position: fixed;
   z-index: calc(var(--j-layer-header) + 1);
   right: clamp(20px, 4vw, 48px);
@@ -626,7 +626,7 @@
 }
 
 @media (max-width: 767px) {
-  .board-compose-fab {
+  .content-compose-fab {
     right: 16px;
     bottom: calc(78px + env(safe-area-inset-bottom));
   }
@@ -815,7 +815,9 @@
 
   .data-table tbody tr:has(.data-table__title-link:hover) td,
   .data-table tbody tr:has(.data-table__title-link:focus-visible) td,
-  .data-table tbody tr:has(.data-table__title-link:active) td {
+  .data-table tbody tr:has(.data-table__title-link:active) td,
+  .data-table tbody tr:active td,
+  .data-table tbody tr:focus-within td {
     background: var(--j-color-surface-hover);
   }
 

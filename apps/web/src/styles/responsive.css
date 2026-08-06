@@ -674,6 +674,29 @@
     text-align: center;
   }
 
+  .meal-column.is-active ul > li:last-child {
+    position: relative;
+    padding-inline: 52px;
+  }
+
+  .meal-column.is-active ul > li:last-child > span {
+    display: block;
+  }
+
+  .meal-column.is-active .meal-column__calories-inline {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    display: block;
+    margin: 0;
+    color: var(--j-color-text-muted);
+    font-size: 11px;
+    font-weight: var(--j-weight-regular);
+    line-height: 1;
+    white-space: nowrap;
+    transform: translateY(-50%);
+  }
+
   .meal-column.is-active .meal-column__menu {
     position: relative;
     display: block;
@@ -683,14 +706,7 @@
   }
 
   .meal-column.is-active .meal-column__calories {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: auto;
-    min-height: 0;
-    padding: 0;
-    margin: 0;
-    text-align: right;
+    display: none;
   }
 
   .meals-card {
@@ -749,6 +765,12 @@
     text-align: center;
   }
 
+  .portal-footer__copyright {
+    display: inline;
+  }
+}
+
+@media (max-width: 599px) {
   .portal-footer__copyright {
     display: none;
   }

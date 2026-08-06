@@ -51,7 +51,9 @@ export function AuthLayout({
           <span className="auth-page-footer__separator" aria-hidden="true">
             ·
           </span>
-          <span>Copyright © 2026 전남과학고등학교 IT부</span>
+          <span className="auth-page-footer__copyright">
+            Copyright © 2026 전남과학고등학교 IT부
+          </span>
         </nav>
       </footer>
     </section>

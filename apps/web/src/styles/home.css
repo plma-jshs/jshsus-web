@@ -241,7 +241,7 @@
 }
 
 .meal-date-control .home-card__meta {
-  min-width: 116px;
+  min-width: 100px;
   padding-inline: 4px;
   text-align: center;
   white-space: nowrap;
@@ -442,6 +442,10 @@
   font-weight: 400;
   line-height: 16px;
   text-align: center;
+}
+
+.meal-column__calories-inline {
+  display: none;
 }
 .meal-column__empty {
   margin-top: 5px;

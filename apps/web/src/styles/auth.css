@@ -670,6 +670,13 @@
   }
 }
 
+@media (max-width: 767px) {
+  .auth-page-footer__copyright,
+  .auth-page-footer__separator:nth-last-child(2) {
+    display: none;
+  }
+}
+
 @media (max-width: 479px) {
   .auth-intro {
     height: 250px;

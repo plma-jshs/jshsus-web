@@ -74,7 +74,7 @@ export function BoardPage() {
           </button>
           <Link
             aria-label="글쓰기"
-            className="detail-primary-button board-compose-fab"
+            className="detail-primary-button content-compose-fab"
             title="글쓰기"
             to="/boards/free/new"
           >
