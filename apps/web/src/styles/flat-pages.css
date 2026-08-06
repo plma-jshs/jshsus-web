@@ -72,6 +72,32 @@ body .detail-page > .cannon-workspace {
   background-size: cover;
 }
 
+@media (min-width: 768px) {
+  body
+    .detail-page
+    > :is(
+      .data-table-section,
+      .workflow-table-section,
+      .reading-surface,
+      .comment-surface,
+      .editor-surface,
+      .jbs-form,
+      .jbs-detail,
+      .calendar-workspace,
+      .lost-items-view,
+      .lost-item-detail,
+      .lost-item-form,
+      .static-document,
+      .wake-song-builder,
+      .activity-document,
+      .activity-form,
+      .byte-calculator,
+      .page-state--page
+    ) {
+    padding-inline: 0;
+  }
+}
+
 @media (max-width: 767px) {
   body
     .detail-page

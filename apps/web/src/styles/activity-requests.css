@@ -120,7 +120,7 @@
 @media (min-width: 1024px) {
   .activity-table-section .data-table-toolbar {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(260px, 320px);
+    grid-template-columns: minmax(0, 1fr) auto auto minmax(260px, 320px);
     grid-template-rows: 40px 40px;
     gap: 10px 6px;
   }
@@ -135,33 +135,37 @@
     display: contents;
   }
 
-  .activity-table-section .data-table-toolbar__page-size {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .activity-table-section .data-table-toolbar__action {
-    grid-column: 3;
+  .activity-table-section .data-table-toolbar__primary-actions {
+    grid-column: 4;
     grid-row: 1;
     justify-self: end;
   }
 
   .activity-table-section .data-table-toolbar__extra {
+    display: contents;
+  }
+
+  .activity-table-section .data-table-toolbar__extra > .filter-chips {
     grid-column: 1;
     grid-row: 2;
-    align-items: center;
     justify-self: start;
   }
 
-  .activity-table-section .data-table-toolbar__search-field {
+  .activity-table-section .data-table-toolbar__extra > .activity-date-range {
     grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .activity-table-section .data-table-toolbar__search-field {
+    grid-column: 3;
     grid-row: 2;
   }
 
   .activity-table-section .data-table-toolbar__query {
     width: 100%;
     min-width: 0;
-    grid-column: 3;
+    grid-column: 4;
     grid-row: 2;
   }
 }

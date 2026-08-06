@@ -105,6 +105,7 @@ export function ActivityRequestsPage() {
               작성
             </Link>
           }
+          groupActionWithPageSize
           searchPlaceholder="검색어를 입력하세요"
           searchFieldOptions={[
             { value: 'all', label: '전체' },

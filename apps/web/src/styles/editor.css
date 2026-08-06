@@ -1033,6 +1033,13 @@
   gap: var(--j-space-2);
 }
 
+@media (min-width: 768px) {
+  .editor-actions__publish button svg,
+  .editor-actions > .detail-primary-button svg {
+    display: none;
+  }
+}
+
 .rich-text-toolbar-more--mobile {
   display: none;
 }

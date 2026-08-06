@@ -82,4 +82,24 @@ describe('DataTableToolbar', () => {
     expect(input).toHaveFocus();
     await waitFor(() => expect(input).toHaveValue('검색 결과'));
   });
+
+  it('groups a requested action directly with the page-size control', () => {
+    const view = render(
+      <DataTableToolbar
+        total={1}
+        page={1}
+        totalPages={1}
+        pageSize={20}
+        field="title_content"
+        query=""
+        action={<button type="button">작성</button>}
+        groupActionWithPageSize
+        onPageSizeChange={vi.fn()}
+        onSearch={vi.fn()}
+      />,
+    );
+
+    const primaryActions = view.container.querySelector('.data-table-toolbar__primary-actions');
+    expect(primaryActions).toContainElement(screen.getByRole('button', { name: '작성' }));
+  });
 });
