@@ -258,6 +258,16 @@ export function PointRecordsPage() {
             recordsQuery.data ? (
               <div className="point-record-summary">
                 <span>총 {recordsQuery.data.total}건</span>
+                {selectedCount > 0 ? (
+                  <button
+                    className="point-record-mobile-delete"
+                    type="button"
+                    onClick={deleteSelectedRecords}
+                    disabled={cancelSelectedMutation.isPending}
+                  >
+                    선택 {selectedCount}건 삭제
+                  </button>
+                ) : null}
               </div>
             ) : undefined
           }
@@ -334,6 +344,43 @@ export function PointRecordsPage() {
         }}
         alwaysShowPagination
         getRowId={(row) => String(row.id)}
+        renderMobileRow={(record) => (
+          <article className="point-record-card">
+            <header>
+              <TableSelectionCheckbox
+                label={`${record.studentName} 상벌점 기록 선택`}
+                checked={selectedRecordIds.has(record.id)}
+                disabled={cancelSelectedMutation.isPending}
+                onChange={(checked) => toggleRecord(record.id, checked)}
+              />
+              <strong>
+                {record.studentNo} {record.studentName}
+              </strong>
+              <span className={record.point < 0 ? 'point-value--danger' : 'point-value--positive'}>
+                {record.point > 0 ? '+' : ''}
+                {record.point}
+              </span>
+            </header>
+            <div className="point-record-card__reason">
+              <span>{reasonTypeLabel[record.reasonType]}</span>
+              <p>{record.reason}</p>
+            </div>
+            <dl>
+              <div>
+                <dt>기준일</dt>
+                <dd>{record.baseDate}</dd>
+              </div>
+              <div>
+                <dt>생성일시</dt>
+                <dd>{formatCreatedAt(record.createdAt)}</dd>
+              </div>
+              <div>
+                <dt>처리자</dt>
+                <dd>{record.teacherName}</dd>
+              </div>
+            </dl>
+          </article>
+        )}
       />
     </AdminListPanel>
   );

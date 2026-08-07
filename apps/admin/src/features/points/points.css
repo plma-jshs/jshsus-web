@@ -42,6 +42,10 @@
   gap: 10px;
 }
 
+.point-record-mobile-delete {
+  display: none;
+}
+
 .point-table-link {
   display: inline-flex;
   padding: 0;
@@ -410,10 +414,187 @@
 }
 
 @media (max-width: 620px) {
-  .point-direct-picker,
   .point-award-fields,
   .point-semester-form {
     grid-template-columns: 1fr;
+  }
+
+  .point-direct-picker {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .point-direct-picker > .ui-button {
+    width: 100%;
+    grid-column: 1 / -1;
+  }
+
+  .point-award-date {
+    order: 1;
+  }
+
+  .point-award-rule {
+    order: 2;
+  }
+
+  .point-award-score {
+    order: 3;
+  }
+
+  .point-award-reason {
+    order: 4;
+  }
+
+  .point-award-fields > .ui-button {
+    width: 100%;
+    order: 5;
+  }
+
+  .point-import-toolbar .admin-table-toolbar__controls {
+    display: none;
+  }
+
+  .point-record-mobile-delete {
+    display: inline-flex;
+    min-height: 30px;
+    padding: 0 9px;
+    align-items: center;
+    border: 0;
+    border-radius: 7px;
+    background: #fff0ef;
+    color: var(--danger);
+    font-size: 11px;
+    font-weight: var(--j-weight-semibold);
+  }
+
+  .point-record-card {
+    display: grid;
+    gap: 11px;
+  }
+
+  .point-record-card header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .point-record-card header strong {
+    overflow: hidden;
+    font-size: 15px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .point-record-card header > span:last-child {
+    font-size: 16px;
+    font-weight: var(--j-weight-bold);
+  }
+
+  .point-record-card__reason {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .point-record-card__reason > span {
+    min-height: 23px;
+    padding: 3px 7px;
+    flex: none;
+    border-radius: 999px;
+    background: var(--sidebar-soft);
+    color: var(--primary-dark);
+    font-size: 11px;
+    font-weight: var(--j-weight-semibold);
+  }
+
+  .point-record-card__reason p {
+    margin: 1px 0 0;
+    overflow-wrap: anywhere;
+    color: var(--j-color-text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .point-record-card dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0;
+    gap: 8px 14px;
+  }
+
+  .point-record-card dl > div {
+    min-width: 0;
+  }
+
+  .point-record-card dt,
+  .point-record-card dd {
+    margin: 0;
+  }
+
+  .point-record-card dt {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: var(--j-weight-semibold);
+  }
+
+  .point-record-card dd {
+    margin-top: 2px;
+    overflow: hidden;
+    color: var(--j-color-text-secondary);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .point-award-page .admin-mobile-card-list {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 7px !important;
+  }
+
+  .point-award-page .admin-mobile-data-card {
+    width: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+  }
+
+  .point-award-queue-chip {
+    display: inline-flex;
+    min-height: 34px;
+    align-items: center;
+    border: 1px solid #cfe1dd;
+    border-radius: 999px;
+    background: #f7fbfa;
+  }
+
+  .point-award-queue-chip__content {
+    display: inline-flex;
+    min-height: 32px;
+    padding: 0 3px 0 11px;
+    align-items: center;
+    gap: 4px;
+    border: 0;
+    background: transparent;
+    color: var(--j-color-text-secondary);
+    font-size: 12px;
+  }
+
+  .point-award-queue-chip__content strong {
+    font-weight: var(--j-weight-semibold);
+  }
+
+  .point-award-queue-chip__remove {
+    display: grid;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--muted);
   }
 
   .point-selected-student,

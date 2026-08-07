@@ -749,9 +749,10 @@ export function PointAwardPage() {
           </div>
 
           <div className="point-award-fields">
-            <FormField label="기준 규정" required>
+            <FormField label="기준 규정" className="point-award-rule" required>
               <AdminSelect
                 className="point-reason-select"
+                nativeOnMobile
                 value={form.reasonId}
                 onChange={(event) => {
                   const reason = activeReasons.find(
@@ -779,7 +780,7 @@ export function PointAwardPage() {
                 ))}
               </AdminSelect>
             </FormField>
-            <FormField label="점수" required>
+            <FormField label="점수" className="point-award-score" required>
               <input
                 type="number"
                 min={-100}
@@ -791,7 +792,7 @@ export function PointAwardPage() {
                 required
               />
             </FormField>
-            <FormField label="기준일" required>
+            <FormField label="기준일" className="point-award-date" required>
               <input
                 type="date"
                 value={form.baseDate}
@@ -829,6 +830,8 @@ export function PointAwardPage() {
 
       <section className="admin-panel point-panel">
         <TableToolbar
+          className="point-import-toolbar"
+          mobileSheet={false}
           summary={
             <div className="point-record-summary">
               <span>{queue.length}건</span>
@@ -866,6 +869,58 @@ export function PointAwardPage() {
           emptyText="추가된 기록이 없습니다."
           pageSize={20}
           getRowId={(row) => row.key}
+          renderMobileRow={(record) => (
+            <div className="point-award-queue-chip">
+              <button
+                className="point-award-queue-chip__content"
+                type="button"
+                onClick={() => {
+                  const student = {
+                    id: record.studentId,
+                    studentNo: record.studentNo,
+                    name: record.studentName,
+                    grade: Math.floor(record.studentNo / 1000),
+                    classNo: Math.floor((record.studentNo % 1000) / 100),
+                    number: record.studentNo % 100,
+                    currentPoint: 0,
+                    meritPoint: 0,
+                    penaltyPoint: 0,
+                    isDepartureCandidate: false,
+                    riskStatus: 'normal',
+                  } satisfies PointStudentRow;
+                  setSelectedStudents([student]);
+                  setSearch(`${record.studentNo} ${record.studentName}`);
+                  setDirect(directSelectionFromStudent(student));
+                  setForm({
+                    reasonId: String(record.reasonId),
+                    point: String(record.point),
+                    reasonText: record.reasonText,
+                    baseDate: record.baseDate,
+                  });
+                  setEditKey(record.key);
+                }}
+              >
+                <strong>
+                  {record.studentNo} {record.studentName}
+                </strong>
+                <span className={record.point < 0 ? 'point-value--danger' : ''}>
+                  ({record.point > 0 ? '+' : ''}
+                  {record.point})
+                </span>
+              </button>
+              <button
+                className="point-award-queue-chip__remove"
+                type="button"
+                aria-label={`${record.studentNo} ${record.studentName} 삭제`}
+                onClick={() => {
+                  setQueue((items) => items.filter((item) => item.key !== record.key));
+                  if (editKey === record.key) cancelEdit();
+                }}
+              >
+                <X size={15} aria-hidden="true" />
+              </button>
+            </div>
+          )}
         />
         <div className="point-panel-actions">
           <div>

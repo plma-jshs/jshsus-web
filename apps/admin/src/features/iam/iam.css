@@ -332,3 +332,113 @@
     min-width: 180px;
   }
 }
+
+@media (max-width: 640px) {
+  .iam-panel {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .iam-panel-header,
+  .iam-matrix-title,
+  .iam-matrix-actions {
+    padding-inline: 16px;
+  }
+
+  .iam-panel-header,
+  .iam-matrix-title {
+    align-items: flex-start;
+  }
+
+  .iam-panel-header > div,
+  .iam-matrix-title > div {
+    min-width: 0;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .iam-role-list button {
+    min-width: 148px;
+  }
+
+  .iam-matrix-table-wrap,
+  .iam-catalog-wrap {
+    padding: 0 16px 16px;
+    overflow: visible;
+  }
+
+  .iam-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .iam-table tbody {
+    display: grid;
+    gap: 8px;
+  }
+
+  .iam-table tbody tr {
+    display: grid;
+    padding: 10px 12px;
+    border: 1px solid #e4ebe9;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .iam-table tbody td {
+    display: grid;
+    min-width: 0;
+    min-height: 0;
+    grid-template-columns: 72px minmax(0, 1fr);
+    padding: 4px 0;
+    border: 0;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .iam-table tbody td::before {
+    color: #7a8884;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .iam-matrix-table-wrap .iam-table td:nth-child(1)::before {
+    content: '권한';
+  }
+
+  .iam-matrix-table-wrap .iam-table td:nth-child(2)::before {
+    content: '코드';
+  }
+
+  .iam-matrix-table-wrap .iam-table td:nth-child(3)::before {
+    content: '부여';
+  }
+
+  .iam-catalog-wrap .iam-table td:nth-child(1)::before {
+    content: '코드';
+  }
+
+  .iam-catalog-wrap .iam-table td:nth-child(2)::before {
+    content: '표시명';
+  }
+
+  .iam-catalog-wrap .iam-table td:nth-child(3)::before {
+    content: '설명';
+  }
+
+  .iam-table .iam-empty {
+    display: block;
+    text-align: center;
+  }
+
+  .iam-table .iam-empty::before {
+    content: none;
+  }
+}

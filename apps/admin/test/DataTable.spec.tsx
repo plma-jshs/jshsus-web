@@ -110,6 +110,41 @@ describe('admin page-size policy', () => {
   });
 });
 
+describe('mobile table presentation', () => {
+  it('renders an optional card list from the same paginated rows', () => {
+    const html = renderToStaticMarkup(
+      <DataTable
+        columns={columns}
+        data={rows.slice(0, 1)}
+        renderMobileRow={(row) => <strong>{row.name}</strong>}
+      />,
+    );
+
+    expect(html).toContain('has-mobile-cards');
+    expect(html).toContain('admin-mobile-data-card');
+    expect(html).toContain(rows[0]!.name);
+  });
+
+  it('includes a compact current-page status for mobile pagination', () => {
+    const html = renderToStaticMarkup(
+      <DataTable
+        columns={columns}
+        data={rows.slice(0, 1)}
+        pagination={{
+          pageIndex: 2,
+          pageSize: 20,
+          pageCount: 766,
+          onPageChange: () => undefined,
+        }}
+        alwaysShowPagination
+      />,
+    );
+
+    expect(html).toContain('admin-table-pagination__mobile-status');
+    expect(html).toContain('3 / 766');
+  });
+});
+
 describe('admin table alignment policy', () => {
   it('maps semantic data roles to the documented alignment', () => {
     expect(DATA_TABLE_COLUMN_ALIGNMENTS).toEqual({

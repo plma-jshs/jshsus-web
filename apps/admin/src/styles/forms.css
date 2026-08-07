@@ -85,6 +85,26 @@ select.ui-control:not([multiple]) {
   white-space: nowrap;
 }
 
+@media (max-width: 640px) {
+  .admin-select--native-mobile .admin-select__native {
+    position: static !important;
+    width: 100% !important;
+    height: var(--control-height) !important;
+    min-height: var(--control-height) !important;
+    padding: 0 34px 0 11px !important;
+    overflow: visible;
+    clip: auto;
+    clip-path: none;
+    border: 1px solid var(--line-strong) !important;
+    opacity: 1;
+    white-space: normal;
+  }
+
+  .admin-select--native-mobile .admin-select__trigger {
+    display: none;
+  }
+}
+
 .admin-select__trigger {
   display: inline-flex;
   width: 100%;

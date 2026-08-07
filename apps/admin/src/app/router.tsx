@@ -385,6 +385,24 @@ function AdminShell() {
             </section>
           ))}
         </nav>
+
+        <div className="admin-sidebar-account">
+          <span className="admin-sidebar-account__icon" aria-hidden="true">
+            <UserRound size={18} />
+          </span>
+          <div>
+            <strong>{accountIdentity || sessionQuery.data.name || '관리자'}</strong>
+            <span>현재 로그인한 계정</span>
+          </div>
+          <button
+            type="button"
+            aria-label="로그아웃"
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
+          >
+            <LogOut size={18} aria-hidden="true" />
+          </button>
+        </div>
       </aside>
 
       {mobileNavigationOpen ? (

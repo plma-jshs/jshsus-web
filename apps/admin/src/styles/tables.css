@@ -231,6 +231,13 @@
   font-size: 13px;
 }
 
+.admin-table-pagination__mobile-label,
+.admin-table-pagination__mobile-status,
+.admin-mobile-card-list,
+.admin-mobile-filter-button {
+  display: none;
+}
+
 .admin-table-pagination button,
 .admin-table-pagination__ellipsis {
   display: grid;
@@ -385,8 +392,186 @@
 }
 
 @media (max-width: 640px) {
+  .admin-table-toolbar {
+    min-height: 44px;
+    margin-bottom: 8px;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .admin-table-toolbar__summary {
+    flex: 1 1 auto;
+  }
+
   .admin-table-toolbar__controls > :where(input, .admin-select) {
     width: 100%;
     max-width: none;
+  }
+
+  .admin-mobile-filter-button {
+    display: inline-flex;
+    min-height: 38px;
+    padding: 0 13px;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--surface);
+    color: var(--j-color-text-secondary);
+    font-size: 13px;
+    font-weight: var(--j-weight-semibold);
+  }
+
+  .admin-data-table.has-mobile-cards > .table-wrap {
+    display: none;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) > .table-wrap {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) > .table-wrap > table,
+  .admin-data-table:not(.has-mobile-cards) > .table-wrap > table > tbody {
+    display: grid;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) > .table-wrap > table > thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) > .table-wrap > table > tbody > tr {
+    display: grid;
+    min-width: 0;
+    padding: 11px 13px;
+    gap: 7px;
+    border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) > .table-wrap > table > tbody > tr > td {
+    display: grid;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 24px;
+    padding: 0;
+    grid-template-columns: minmax(68px, 28%) minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    border: 0;
+    background: transparent;
+    font-size: 13px;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-data-table:not(.has-mobile-cards)
+    > .table-wrap
+    > table
+    > tbody
+    > tr
+    > td[data-label]::before {
+    color: var(--muted);
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: var(--j-weight-semibold);
+  }
+
+  .admin-data-table:not(.has-mobile-cards) > .table-wrap > table > tbody > tr > td[data-label=''] {
+    display: block;
+  }
+
+  .admin-data-table:not(.has-mobile-cards)
+    > .table-wrap
+    > table
+    > tbody
+    > tr
+    > td[data-label='']::before {
+    display: none;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) td[data-mobile-hidden='true'] {
+    display: none !important;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) .admin-data-table__empty-cell,
+  .admin-data-table:not(.has-mobile-cards) .admin-data-table__loading-cell {
+    display: grid !important;
+    min-height: 92px;
+    place-items: center;
+  }
+
+  .admin-data-table.has-mobile-cards .admin-mobile-card-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .admin-mobile-data-card {
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .admin-mobile-card-list__status {
+    min-height: 108px;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .admin-table-pagination {
+    min-height: 46px;
+    margin-top: 10px;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .admin-table-pagination__first,
+  .admin-table-pagination__last,
+  .admin-table-pagination__page,
+  .admin-table-pagination__ellipsis {
+    display: none !important;
+  }
+
+  .admin-table-pagination__previous,
+  .admin-table-pagination__next {
+    display: inline-flex !important;
+    width: auto;
+    min-width: 82px !important;
+    height: 36px !important;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border-color: var(--line) !important;
+    background: var(--surface) !important;
+  }
+
+  .admin-table-pagination__mobile-label,
+  .admin-table-pagination__mobile-status {
+    display: inline;
+  }
+
+  .admin-table-pagination__mobile-status {
+    color: var(--j-color-text-secondary);
+    font-size: 12px;
+    font-weight: var(--j-weight-medium);
+    white-space: nowrap;
   }
 }

@@ -27,6 +27,7 @@ type SelectOption = {
 
 type AdminSelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, 'multiple' | 'size'> & {
   children: ReactNode;
+  nativeOnMobile?: boolean;
 };
 
 function toOptions(children: ReactNode): SelectOption[] {
@@ -61,6 +62,7 @@ export function AdminSelect({
   disabled,
   onChange,
   onInvalid,
+  nativeOnMobile = false,
   'aria-label': ariaLabel = '선택',
   ...selectProps
 }: AdminSelectProps) {
@@ -142,16 +144,16 @@ export function AdminSelect({
 
   return (
     <div
-      className={`admin-select${open ? ' is-open' : ''}${className ? ` ${className}` : ''}`}
+      className={`admin-select${open ? ' is-open' : ''}${nativeOnMobile ? ' admin-select--native-mobile' : ''}${className ? ` ${className}` : ''}`}
       ref={rootRef}
     >
       <select
         {...selectProps}
-        aria-hidden="true"
+        aria-hidden={nativeOnMobile ? undefined : true}
         className="admin-select__native"
         disabled={disabled}
         ref={selectRef}
-        tabIndex={-1}
+        tabIndex={nativeOnMobile ? undefined : -1}
         value={value}
         defaultValue={value === undefined ? defaultValue : undefined}
         onChange={onChange}

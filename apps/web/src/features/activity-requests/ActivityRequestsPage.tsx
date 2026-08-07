@@ -110,7 +110,7 @@ export function ActivityRequestsPage() {
           searchFieldOptions={[
             { value: 'all', label: '전체' },
             { value: 'activity', label: '내용' },
-            { value: 'participants', label: '인원' },
+            { value: 'participants', label: '참여자' },
             { value: 'location', label: '장소' },
             { value: 'advisor', label: '지도교사' },
           ]}

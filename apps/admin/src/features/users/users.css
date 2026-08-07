@@ -466,4 +466,8 @@
   .identity-roster-toolbox > button {
     width: 100%;
   }
+
+  .identity-roster-toolbox {
+    display: none;
+  }
 }

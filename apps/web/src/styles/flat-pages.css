@@ -73,6 +73,10 @@ body .detail-page > .cannon-workspace {
 }
 
 @media (min-width: 768px) {
+  body .detail-page > .reading-surface {
+    padding-block: 0;
+  }
+
   body
     .detail-page
     > :is(

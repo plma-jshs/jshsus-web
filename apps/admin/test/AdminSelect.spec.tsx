@@ -91,4 +91,18 @@ describe('AdminSelect', () => {
     expect(dialog.querySelector('.admin-select__menu')).not.toBeNull();
     expect(document.body.querySelector(':scope > .admin-select__menu')).toBeNull();
   });
+
+  it('exposes the native select for mobile picker styling when requested', () => {
+    act(() =>
+      root.render(
+        <AdminSelect aria-label="기준 규정" nativeOnMobile defaultValue="1">
+          <option value="1">규정 1</option>
+        </AdminSelect>,
+      ),
+    );
+
+    expect(container.querySelector('.admin-select')).toHaveClass('admin-select--native-mobile');
+    expect(container.querySelector('select')).not.toHaveAttribute('aria-hidden');
+    expect(container.querySelector('select')).not.toHaveAttribute('tabindex', '-1');
+  });
 });

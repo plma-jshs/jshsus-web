@@ -11,6 +11,7 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   ADMIN_DEFAULT_PAGE_SIZE,
   DATA_TABLE_COLUMN_ALIGNMENTS,
@@ -35,6 +36,10 @@ declare module '@tanstack/react-table' {
     kind?: DataTableColumnKind;
     /** Applies a consistent narrow width and centers short values by default. */
     widthPreset?: DataTableWidthPreset;
+    /** Overrides the field label shown by the generic mobile card layout. */
+    mobileLabel?: string;
+    /** Hides low-value columns from the generic mobile card layout. */
+    hideOnMobile?: boolean;
   }
 }
 
@@ -60,6 +65,7 @@ export type DataTableProps<T> = {
   sorting?: SortingState;
   onSortingChange?: OnChangeFn<SortingState>;
   manualSorting?: boolean;
+  renderMobileRow?: (row: T, index: number) => ReactNode;
 };
 
 type PaginationItem = number | 'ellipsis-left' | 'ellipsis-right';
@@ -147,6 +153,7 @@ export function DataTable<T>({
   sorting,
   onSortingChange,
   manualSorting = false,
+  renderMobileRow,
 }: DataTableProps<T>) {
   const [uncontrolledSorting, setUncontrolledSorting] = useState<SortingState>([]);
   const isSortingControlled = sorting !== undefined;
@@ -212,7 +219,7 @@ export function DataTable<T>({
   };
 
   return (
-    <div className="admin-data-table">
+    <div className={`admin-data-table${renderMobileRow ? ' has-mobile-cards' : ''}`}>
       <div className="table-wrap">
         <table>
           {caption ? <caption className="sr-only">{caption}</caption> : null}
@@ -304,6 +311,11 @@ export function DataTable<T>({
                     const meta = cell.column.columnDef.meta;
                     const presetWidth = widthForPreset(meta?.widthPreset);
                     const alignment = alignmentForMeta(meta, meta?.widthPreset ? 'center' : 'left');
+                    const mobileLabel =
+                      meta?.mobileLabel ??
+                      (typeof cell.column.columnDef.header === 'string'
+                        ? cell.column.columnDef.header
+                        : '');
                     return (
                       <td
                         key={cell.id}
@@ -311,6 +323,9 @@ export function DataTable<T>({
                           truncate: meta?.truncate,
                           widthPreset: meta?.widthPreset,
                         })}
+                        data-column-id={cell.column.id}
+                        data-label={mobileLabel}
+                        data-mobile-hidden={meta?.hideOnMobile ? 'true' : undefined}
                         style={{
                           width: meta?.width ?? presetWidth,
                           minWidth: meta?.minWidth ?? presetWidth,
@@ -328,9 +343,26 @@ export function DataTable<T>({
         </table>
       </div>
 
+      {renderMobileRow ? (
+        <div className="admin-mobile-card-list">
+          {loading ? (
+            <div className="admin-mobile-card-list__status">{loadingText}</div>
+          ) : visibleRows.length === 0 ? (
+            <div className="admin-mobile-card-list__status">{emptyText}</div>
+          ) : (
+            visibleRows.map((row, index) => (
+              <div className="admin-mobile-data-card" key={row.id}>
+                {renderMobileRow(row.original, index)}
+              </div>
+            ))
+          )}
+        </div>
+      ) : null}
+
       {alwaysShowPagination || resolvedPageCount > 1 ? (
         <nav className="admin-table-pagination" aria-label="페이지 이동">
           <button
+            className="admin-table-pagination__first"
             type="button"
             aria-label="첫 페이지"
             onClick={() => moveToPage(0)}
@@ -339,16 +371,19 @@ export function DataTable<T>({
             <ChevronsLeft size={16} aria-hidden="true" />
           </button>
           <button
+            className="admin-table-pagination__previous"
             type="button"
             aria-label="이전 페이지"
             onClick={() => moveToPage(currentPageIndex - 1)}
             disabled={currentPage <= 1}
           >
             <ChevronLeft size={16} aria-hidden="true" />
+            <span className="admin-table-pagination__mobile-label">이전</span>
           </button>
           {paginationItems(currentPage, resolvedPageCount).map((item) =>
             typeof item === 'number' ? (
               <button
+                className="admin-table-pagination__page"
                 key={item}
                 type="button"
                 aria-label={`${item}페이지`}
@@ -363,15 +398,21 @@ export function DataTable<T>({
               </span>
             ),
           )}
+          <span className="admin-table-pagination__mobile-status">
+            {currentPage} / {resolvedPageCount} 페이지
+          </span>
           <button
+            className="admin-table-pagination__next"
             type="button"
             aria-label="다음 페이지"
             onClick={() => moveToPage(currentPageIndex + 1)}
             disabled={currentPage >= resolvedPageCount}
           >
+            <span className="admin-table-pagination__mobile-label">다음</span>
             <ChevronRight size={16} aria-hidden="true" />
           </button>
           <button
+            className="admin-table-pagination__last"
             type="button"
             aria-label="마지막 페이지"
             onClick={() => moveToPage(resolvedPageCount - 1)}

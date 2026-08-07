@@ -304,6 +304,10 @@
     align-items: stretch;
   }
 
+  .wake-song-admin-toolbar {
+    overflow: visible;
+  }
+
   .wake-song-admin-search {
     width: 100%;
   }

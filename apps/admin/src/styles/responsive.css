@@ -58,10 +58,31 @@
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 640px) {
+  html,
+  body,
+  #root,
+  .admin-shell,
+  .admin-main {
+    background: #fff;
+  }
+
   .admin-topbar {
     min-height: 66px;
     padding: 10px 16px;
+  }
+
+  .admin-topbar-title {
+    width: 100%;
+  }
+
+  .admin-topbar-title > div {
+    flex: 1 1 auto;
+  }
+
+  .admin-mobile-menu {
+    order: 2;
+    margin-left: auto;
   }
 
   .admin-content {
@@ -87,22 +108,33 @@
     white-space: nowrap;
   }
 
-  .admin-user-identity {
-    max-width: 132px;
-  }
-
-  .admin-user-identity span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .admin-logout-button span {
+  .admin-topbar-actions {
     display: none;
   }
 
-  .admin-topbar-actions {
-    flex-wrap: nowrap;
+  .admin-sidebar-account {
+    display: flex;
+  }
+
+  .admin-content {
+    padding: 12px 0 30px;
+  }
+
+  .admin-content > :where(.admin-panel, .admin-stack),
+  .admin-stack > .admin-panel {
+    width: 100%;
+  }
+
+  .metric-card,
+  .admin-panel {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .admin-panel {
+    padding: 16px;
   }
 
   .metric-grid,

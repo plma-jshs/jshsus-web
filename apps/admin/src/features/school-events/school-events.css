@@ -942,11 +942,64 @@
   }
 
   .school-calendar-grid {
-    min-width: 760px;
+    min-width: 0;
+    gap: 2px;
   }
 
   .school-calendar-panel {
-    overflow-x: auto;
+    overflow: visible;
+  }
+
+  .school-calendar-toolbar {
+    padding-inline: 8px;
+    gap: 8px;
+  }
+
+  .school-calendar-navigation,
+  .school-calendar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .school-calendar-weekday {
+    min-height: 26px;
+    border: 0;
+    background: transparent;
+    font-size: 11px;
+  }
+
+  .school-calendar-day {
+    min-height: 68px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 6px;
+    background: #fbfcfc;
+  }
+
+  .school-calendar-day.outside {
+    background: #fdfefe;
+  }
+
+  .school-calendar-date {
+    margin: 3px auto 0;
+    font-size: 11px;
+  }
+
+  .school-calendar-events {
+    top: 24px;
+    right: 2px;
+    left: 2px;
+    gap: 1px;
+  }
+
+  .school-calendar-event,
+  .school-calendar-event.is-inline {
+    height: 16px;
+    min-height: 16px;
+    padding-inline: 2px;
+    border-radius: 3px;
+    font-size: 8px;
   }
 
   .selected-day-list > button {

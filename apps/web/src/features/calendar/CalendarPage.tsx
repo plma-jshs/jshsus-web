@@ -827,6 +827,22 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                                             y: event.clientY,
                                           });
                                         }}
+                                        onMouseMove={(event) => {
+                                          if (
+                                            calendarEventInteractionMode(window.innerWidth) !==
+                                            'hover-popover'
+                                          )
+                                            return;
+                                          setPopover((current) =>
+                                            current
+                                              ? {
+                                                  ...current,
+                                                  x: event.clientX,
+                                                  y: event.clientY,
+                                                }
+                                              : current,
+                                          );
+                                        }}
                                         onMouseLeave={() => {
                                           if (
                                             calendarEventInteractionMode(window.innerWidth) ===

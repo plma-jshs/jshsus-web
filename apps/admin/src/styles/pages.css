@@ -130,13 +130,38 @@
 }
 
 .admin-sidebar-account {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 9px;
   margin-top: 18px;
   padding: 11px 10px;
   border-top: 1px solid var(--line);
   color: #465552;
+}
+
+.admin-sidebar-account__icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--sidebar-soft);
+  color: var(--primary-dark);
+}
+
+.admin-sidebar-account > button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  margin-left: auto;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--danger);
+  cursor: pointer;
 }
 
 .admin-sidebar-account div {
