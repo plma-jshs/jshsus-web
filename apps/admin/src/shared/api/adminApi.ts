@@ -187,6 +187,12 @@ async function uploadRequest<T>(path: string, formData: FormData): Promise<T> {
 
 export const api = {
   session: () => request<SessionUser>('/api/auth/session'),
+  devSession: () =>
+    request<{ status: 'AUTHENTICATED'; session: SessionUser }>('/api/auth/dev-session', {
+      method: 'POST',
+      body: {},
+      csrf: false,
+    }),
   ssoConfig: () => request<{ authOrigin: string }>('/api/auth/sso/config'),
   startSso: (returnTo = '/') =>
     request<{ authorizationUrl: string }>('/api/auth/sso/start', {

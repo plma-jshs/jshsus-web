@@ -2,7 +2,7 @@ import type { PointReason } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { Pencil, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
@@ -120,61 +120,58 @@ export function PointReasonsPage() {
     setEditor({ mode: 'edit', reason });
   };
 
-  const columns = useMemo<ColumnDef<PointReasonRow>[]>(
-    () => [
-      {
-        accessorKey: 'id',
-        header: '사유코드',
-        cell: ({ row }) => row.original.id,
-        meta: { align: 'center', width: 120 },
-      },
-      {
-        accessorKey: 'type',
-        header: '종류',
-        enableSorting: false,
-        cell: ({ row }) => typeLabel[row.original.type],
-        meta: { align: 'center', width: 120 },
-      },
-      {
-        accessorKey: 'comment',
-        header: '사유',
-        enableSorting: false,
-        meta: { minWidth: 260 },
-      },
-      {
-        accessorKey: 'point',
-        header: '점수',
-        cell: ({ row }) => `${row.original.point > 0 ? '+' : ''}${row.original.point}`,
-        meta: { align: 'right', width: 120 },
-      },
-      {
-        id: 'actions',
-        header: '작업',
-        enableSorting: false,
-        cell: ({ row }) =>
-          row.original.isSystem ? (
-            <span className="point-system-label">시스템 기본값</span>
-          ) : (
-            <RowActions>
-              <RowActionButton
-                icon={<Pencil size={15} aria-hidden="true" />}
-                label={`${row.original.comment} 수정`}
-                variant="secondary"
-                onClick={() => openEdit(row.original)}
-              />
-              <RowActionButton
-                icon={<Trash2 size={15} aria-hidden="true" />}
-                label={`${row.original.comment} 삭제`}
-                variant="danger"
-                onClick={() => setDeleteTarget(row.original)}
-              />
-            </RowActions>
-          ),
-        meta: { align: 'center', width: 92 },
-      },
-    ],
-    [],
-  );
+  const renderReasonActions = (reason: PointReasonRow) =>
+    reason.isSystem ? null : (
+      <RowActions>
+        <RowActionButton
+          icon={<Pencil size={15} aria-hidden="true" />}
+          label={`${reason.comment} 수정`}
+          variant="secondary"
+          onClick={() => openEdit(reason)}
+        />
+        <RowActionButton
+          icon={<Trash2 size={15} aria-hidden="true" />}
+          label={`${reason.comment} 삭제`}
+          variant="danger"
+          onClick={() => setDeleteTarget(reason)}
+        />
+      </RowActions>
+    );
+
+  const columns: ColumnDef<PointReasonRow>[] = [
+    {
+      accessorKey: 'id',
+      header: '사유코드',
+      cell: ({ row }) => row.original.id,
+      meta: { align: 'center', width: 120 },
+    },
+    {
+      accessorKey: 'type',
+      header: '종류',
+      enableSorting: false,
+      cell: ({ row }) => typeLabel[row.original.type],
+      meta: { align: 'center', width: 120 },
+    },
+    {
+      accessorKey: 'comment',
+      header: '사유',
+      enableSorting: false,
+      meta: { minWidth: 260 },
+    },
+    {
+      accessorKey: 'point',
+      header: '점수',
+      cell: ({ row }) => `${row.original.point > 0 ? '+' : ''}${row.original.point}`,
+      meta: { align: 'right', width: 120 },
+    },
+    {
+      id: 'actions',
+      header: '작업',
+      enableSorting: false,
+      cell: ({ row }) => renderReasonActions(row.original),
+      meta: { align: 'center', width: 92 },
+    },
+  ];
 
   const resetPage = () => setPage(1);
 
@@ -243,6 +240,26 @@ export function PointReasonsPage() {
           }}
           alwaysShowPagination
           getRowId={(row) => String(row.id)}
+          renderMobileRow={(reason) => (
+            <article className="point-reason-mobile-card">
+              <header>
+                <div>
+                  <span className={`point-reason-type is-${reason.type.toLowerCase()}`}>
+                    {typeLabel[reason.type]}
+                  </span>
+                  <strong>{reason.comment}</strong>
+                </div>
+                {renderReasonActions(reason)}
+              </header>
+              <footer>
+                <strong className={reason.point < 0 ? 'point-value--danger' : undefined}>
+                  {reason.point > 0 ? '+' : ''}
+                  {reason.point}점
+                </strong>
+                {reason.isSystem ? <span>기본 규정</span> : null}
+              </footer>
+            </article>
+          )}
         />
       </AdminListPanel>
 

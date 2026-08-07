@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { AlertCircle } from 'lucide-react';
+import { TableToolbar } from '../../../components/ui';
 import { AdminApiError } from '../../../shared/api/adminApi';
 import { formatKoreanDate } from '../../../shared/lib/date';
 import '../content.css';
@@ -9,6 +10,7 @@ type ContentAdminPanelProps = {
   description?: string;
   count?: number;
   actions?: ReactNode;
+  mobileAction?: ReactNode;
   children: ReactNode;
   className?: string;
 };
@@ -18,6 +20,7 @@ export function ContentAdminPanel({
   description,
   count,
   actions,
+  mobileAction,
   children,
   className,
 }: ContentAdminPanelProps) {
@@ -33,7 +36,14 @@ export function ContentAdminPanel({
           </div>
           {description ? <p>{description}</p> : null}
         </div>
-        {actions ? <div className="content-panel-actions">{actions}</div> : null}
+        {actions ? (
+          <div className="content-panel-actions">
+            {mobileAction ? (
+              <div className="content-panel-mobile-action">{mobileAction}</div>
+            ) : null}
+            <TableToolbar mobileSheetTitle="필터">{actions}</TableToolbar>
+          </div>
+        ) : null}
       </header>
       {children}
     </section>

@@ -131,7 +131,7 @@ export function WakeSongsPage() {
           <small>{row.original.requesterStudentNo}</small>
         </div>
       ),
-      meta: { kind: 'person', width: 150 },
+      meta: { kind: 'person', width: 150, mobileRole: 'subtitle' },
     },
     {
       id: 'candidateWeek',
@@ -153,7 +153,7 @@ export function WakeSongsPage() {
         </div>
       ),
       enableSorting: false,
-      meta: { minWidth: 260, maxWidth: 420 },
+      meta: { minWidth: 260, maxWidth: 420, mobileRole: 'title' },
     },
     {
       id: 'segment',
@@ -182,7 +182,7 @@ export function WakeSongsPage() {
         </span>
       ),
       enableSorting: false,
-      meta: { kind: 'category', width: 110 },
+      meta: { kind: 'category', width: 110, mobileRole: 'badge' },
     },
     {
       id: 'actions',
@@ -212,7 +212,7 @@ export function WakeSongsPage() {
           </RowActions>
         );
       },
-      meta: { align: 'center', width: 92 },
+      meta: { align: 'center', width: 92, mobileRole: 'actions' },
     },
   ];
 
@@ -221,7 +221,11 @@ export function WakeSongsPage() {
 
   return (
     <div className="admin-stack wake-song-admin">
-      <section className="admin-panel wake-song-admin-toolbar">
+      <TableToolbar
+        className="wake-song-admin-toolbar"
+        summary={`총 ${pageData?.total ?? 0}건`}
+        mobileSheetTitle="기상곡 필터"
+      >
         <SegmentedTabs
           value={status}
           options={statusOptions}
@@ -250,7 +254,7 @@ export function WakeSongsPage() {
             setPageSize(nextPageSize);
           }}
         />
-      </section>
+      </TableToolbar>
 
       <section className="admin-panel wake-song-admin-list">
         {requestsQuery.isError ? (
@@ -258,7 +262,6 @@ export function WakeSongsPage() {
             목록을 불러오지 못했습니다. API 연결과 권한을 확인해 주세요.
           </div>
         ) : null}
-        <TableToolbar summary={`총 ${pageData?.total ?? 0}건`} />
         <DataTable
           columns={columns}
           data={pageData?.items ?? []}

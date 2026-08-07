@@ -508,13 +508,13 @@ export function UsersPage() {
       id: 'identifier',
       accessorKey: 'studentNo',
       header: '학번',
-      meta: { align: 'center', width: 120 },
+      meta: { align: 'center', width: 120, mobileRole: 'subtitle' },
     },
     {
       id: 'name',
       accessorKey: 'name',
       header: '이름',
-      meta: { align: 'left', width: 150 },
+      meta: { align: 'left', width: 150, mobileRole: 'title' },
     },
     {
       id: 'gender',
@@ -525,7 +525,7 @@ export function UsersPage() {
           {row.original.gender ? GENDER_LABELS[row.original.gender] : '미입력'}
         </span>
       ),
-      meta: { align: 'center', width: 80 },
+      meta: { align: 'center', width: 80, hideOnMobile: true },
     },
     {
       id: 'contact',
@@ -539,14 +539,14 @@ export function UsersPage() {
       accessorKey: 'status',
       header: '상태',
       cell: ({ row }) => (row.original.status === 'graduated' ? '졸업·학적종료' : '재학'),
-      meta: { align: 'center', width: 112 },
+      meta: { align: 'center', width: 112, mobileRole: 'badge' },
     },
     {
       id: 'lastLoginAt',
       accessorKey: 'lastLoginAt',
       header: '최근 로그인',
       cell: ({ row }) => formatDate(row.original.lastLoginAt),
-      meta: { align: 'center', width: 140 },
+      meta: { align: 'center', width: 140, hideOnMobile: true },
     },
     {
       id: 'actions',
@@ -570,7 +570,7 @@ export function UsersPage() {
           }}
         />
       ),
-      meta: { align: 'center', width: 152 },
+      meta: { align: 'center', width: 152, mobileRole: 'actions' },
     },
   ];
   const staffColumns: ColumnDef<AdminStaffSummary>[] = [
@@ -578,13 +578,13 @@ export function UsersPage() {
       id: 'identifier',
       accessorKey: 'staffNo',
       header: '교사번호',
-      meta: { align: 'center', width: 120 },
+      meta: { align: 'center', width: 120, mobileRole: 'subtitle' },
     },
     {
       id: 'name',
       accessorKey: 'name',
       header: '이름',
-      meta: { align: 'left', width: 140 },
+      meta: { align: 'left', width: 140, mobileRole: 'title' },
     },
     {
       id: 'managedClasses',
@@ -607,7 +607,7 @@ export function UsersPage() {
           {row.original.gender ? GENDER_LABELS[row.original.gender] : '미입력'}
         </span>
       ),
-      meta: { align: 'center', width: 80 },
+      meta: { align: 'center', width: 80, hideOnMobile: true },
     },
     {
       id: 'contact',
@@ -621,14 +621,14 @@ export function UsersPage() {
       accessorKey: 'status',
       header: '상태',
       cell: ({ row }) => (row.original.status === 'deleted' ? '전근·퇴직' : '재직'),
-      meta: { align: 'center', width: 112 },
+      meta: { align: 'center', width: 112, mobileRole: 'badge' },
     },
     {
       id: 'lastLoginAt',
       accessorKey: 'lastLoginAt',
       header: '최근 로그인',
       cell: ({ row }) => formatDate(row.original.lastLoginAt),
-      meta: { align: 'center', width: 140 },
+      meta: { align: 'center', width: 140, hideOnMobile: true },
     },
     {
       id: 'actions',
@@ -652,7 +652,7 @@ export function UsersPage() {
           }}
         />
       ),
-      meta: { align: 'center', width: 132 },
+      meta: { align: 'center', width: 132, mobileRole: 'actions' },
     },
   ];
   const changeTab = (next: Tab) => {

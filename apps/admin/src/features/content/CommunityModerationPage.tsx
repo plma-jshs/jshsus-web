@@ -203,7 +203,7 @@ export function CommunityModerationPage({
         accessorKey: 'id',
         header: '번호',
         cell: ({ row }) => row.original.publicNumber,
-        meta: { align: 'center', width: 72 },
+        meta: { align: 'center', width: 72, hideOnMobile: true },
       },
       {
         accessorKey: 'title',
@@ -219,6 +219,7 @@ export function CommunityModerationPage({
           </div>
         ),
         enableSorting: false,
+        meta: { mobileRole: 'title' },
       },
       {
         accessorKey: 'authorName',
@@ -226,7 +227,7 @@ export function CommunityModerationPage({
         cell: ({ row }) =>
           row.original.isAnonymous ? '익명' : row.original.authorName || '알 수 없음',
         enableSorting: false,
-        meta: { align: 'left', width: 120 },
+        meta: { align: 'left', width: 120, mobileRole: 'subtitle' },
       },
       {
         accessorKey: 'createdAt',
@@ -255,7 +256,7 @@ export function CommunityModerationPage({
           return <span className={`status-chip ${tone}`}>{label}</span>;
         },
         enableSorting: false,
-        meta: { align: 'center', width: 96 },
+        meta: { align: 'center', width: 96, mobileRole: 'badge' },
       },
       {
         id: 'actions',
@@ -270,7 +271,7 @@ export function CommunityModerationPage({
           </RowActions>
         ),
         enableSorting: false,
-        meta: { align: 'center', width: 64 },
+        meta: { align: 'center', width: 64, mobileRole: 'actions' },
       },
     ],
     [activeSource.slug],
@@ -298,7 +299,7 @@ export function CommunityModerationPage({
           />
         ),
         enableSorting: false,
-        meta: { align: 'center', width: 64 },
+        meta: { align: 'center', width: 64, hideOnMobile: true },
       },
       {
         accessorKey: 'targetType',
@@ -316,13 +317,14 @@ export function CommunityModerationPage({
         cell: ({ row }) =>
           `${reportTargetLabel[row.original.targetType]} #${row.original.targetId}`,
         enableSorting: selectedReportCount === 0,
-        meta: { align: 'center', width: 112 },
+        meta: { align: 'center', width: 112, mobileRole: 'subtitle' },
       },
       {
         accessorKey: 'reason',
         header: '신고 사유',
         cell: ({ row }) => <strong className="content-table-primary">{row.original.reason}</strong>,
         enableSorting: false,
+        meta: { mobileRole: 'title' },
       },
       {
         accessorKey: 'reporterName',
@@ -348,7 +350,7 @@ export function CommunityModerationPage({
           </span>
         ),
         enableSorting: false,
-        meta: { align: 'center', width: 104 },
+        meta: { align: 'center', width: 104, mobileRole: 'badge' },
       },
       {
         id: 'actions',
@@ -363,7 +365,7 @@ export function CommunityModerationPage({
           </RowActions>
         ),
         enableSorting: false,
-        meta: { align: 'center', width: 64 },
+        meta: { align: 'center', width: 64, mobileRole: 'actions' },
       },
     ],
     [

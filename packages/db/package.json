@@ -13,6 +13,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:bootstrap-core": "node scripts/bootstrap-core-data.cjs",
+    "db:seed-local-test-user": "node scripts/seed-local-test-user.cjs",
     "db:prepare-baseline": "node scripts/prepare-baseline-database.cjs",
     "db:deploy": "pnpm db:prepare-baseline && pnpm db:migrate && pnpm db:bootstrap-core",
     "db:backup": "node scripts/backup-database.cjs",

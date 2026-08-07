@@ -100,7 +100,7 @@ export function DormRoommateBlocksPanel({
         accessorKey: 'studentName',
         header: '학생',
         enableSorting: false,
-        meta: { width: 120, kind: 'person' },
+        meta: { width: 120, kind: 'person', mobileRole: 'title' },
       },
       {
         accessorKey: 'blockedStudentNo',
@@ -112,7 +112,7 @@ export function DormRoommateBlocksPanel({
         accessorKey: 'blockedStudentName',
         header: '함께 배정 금지 학생',
         enableSorting: false,
-        meta: { width: 180, kind: 'person' },
+        meta: { width: 180, kind: 'person', mobileRole: 'subtitle' },
       },
       {
         id: 'actions',
@@ -133,7 +133,7 @@ export function DormRoommateBlocksPanel({
           </RowActions>
         ),
         enableSorting: false,
-        meta: { width: 64, align: 'center' },
+        meta: { width: 64, align: 'center', mobileRole: 'actions' },
       },
     ],
     [deleteMutation],

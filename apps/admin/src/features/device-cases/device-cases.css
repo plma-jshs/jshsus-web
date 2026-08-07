@@ -46,4 +46,39 @@
   .device-control-actions {
     justify-content: flex-start;
   }
+
+  .device-mobile-card > header {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .device-mobile-card > header strong {
+    overflow: hidden;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .device-mobile-card > header .device-status {
+    min-height: 22px;
+    padding-inline: 7px;
+  }
+
+  .device-mobile-card > header .admin-row-actions {
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
+
+  .device-mobile-card p {
+    display: flex;
+    margin: 7px 0 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--j-color-text-muted);
+    font-size: 11px;
+    white-space: nowrap;
+  }
 }

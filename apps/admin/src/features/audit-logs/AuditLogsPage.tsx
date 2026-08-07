@@ -32,14 +32,14 @@ const columns: ColumnDef<AdminAuditLog>[] = [
     id: 'actorName',
     accessorKey: 'actorName',
     header: '수행자',
-    meta: { kind: 'person', width: 150 },
+    meta: { kind: 'person', width: 150, mobileRole: 'subtitle' },
   },
   {
     id: 'action',
     accessorKey: 'action',
     header: '작업 내용',
     enableSorting: false,
-    meta: { kind: 'description', minWidth: 220 },
+    meta: { kind: 'description', minWidth: 220, mobileRole: 'title' },
   },
   {
     id: 'targetType',
@@ -54,7 +54,7 @@ const columns: ColumnDef<AdminAuditLog>[] = [
     header: '대상 ID',
     enableSorting: false,
     cell: ({ getValue }) => getValue<string>() || '-',
-    meta: { align: 'center', width: 130 },
+    meta: { align: 'center', width: 130, hideOnMobile: true },
   },
 ];
 

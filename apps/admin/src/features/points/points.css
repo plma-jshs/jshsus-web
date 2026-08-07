@@ -105,10 +105,62 @@
   color: #b42318;
 }
 
-.point-system-label {
+.point-reason-mobile-card {
+  display: grid;
+  gap: 12px;
+}
+
+.point-reason-mobile-card > header,
+.point-reason-mobile-card > footer {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.point-reason-mobile-card > header > div {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+}
+
+.point-reason-mobile-card > header strong {
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.point-reason-type {
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #edf5ff;
+  color: #2563a9;
+  font-size: 11px;
+  font-weight: var(--j-weight-semibold);
+}
+
+.point-reason-type.is-minus {
+  background: #fff0ef;
+  color: #c53f38;
+}
+
+.point-reason-type.is-etc {
+  background: #f2f3f5;
+  color: #59636e;
+}
+
+.point-reason-mobile-card > footer {
+  padding-top: 10px;
+  align-items: center;
+  border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
   color: var(--j-color-text-muted);
-  font-size: 12px;
-  white-space: nowrap;
+  font-size: 11px;
+}
+
+.point-reason-mobile-card > footer strong {
+  color: var(--primary-dark);
+  font-size: 14px;
 }
 
 .point-action {

@@ -40,6 +40,8 @@ declare module '@tanstack/react-table' {
     mobileLabel?: string;
     /** Hides low-value columns from the generic mobile card layout. */
     hideOnMobile?: boolean;
+    /** Gives the generic mobile card a semantic hierarchy instead of repeating labels. */
+    mobileRole?: 'title' | 'subtitle' | 'badge' | 'meta' | 'actions';
   }
 }
 
@@ -326,6 +328,7 @@ export function DataTable<T>({
                         data-column-id={cell.column.id}
                         data-label={mobileLabel}
                         data-mobile-hidden={meta?.hideOnMobile ? 'true' : undefined}
+                        data-mobile-role={meta?.mobileRole}
                         style={{
                           width: meta?.width ?? presetWidth,
                           minWidth: meta?.minWidth ?? presetWidth,

@@ -409,11 +409,12 @@
   }
 
   .admin-mobile-filter-button {
-    display: inline-flex;
-    min-height: 38px;
-    padding: 0 13px;
-    align-items: center;
-    gap: 6px;
+    display: grid;
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    padding: 0;
+    place-items: center;
     border: 1px solid var(--line);
     border-radius: 9px;
     background: var(--surface);
@@ -452,6 +453,7 @@
   }
 
   .admin-data-table:not(.has-mobile-cards) > .table-wrap > table > tbody > tr {
+    position: relative;
     display: grid;
     min-width: 0;
     padding: 11px 13px;
@@ -508,11 +510,135 @@
     display: none !important;
   }
 
+  .admin-data-table:not(.has-mobile-cards) td[data-mobile-role='title'] {
+    display: block !important;
+    padding-right: 52px !important;
+    font-size: 15px !important;
+    font-weight: var(--j-weight-semibold);
+    line-height: 1.45;
+    order: -10;
+  }
+
+  .admin-data-table:not(.has-mobile-cards)
+    td:is(
+      [data-column-id='title'],
+      [data-column-id='name'],
+      [data-column-id='purpose'],
+      [data-column-id='reason'],
+      [data-column-id='videoTitle'],
+      [data-column-id='deviceName']
+    ) {
+    display: block !important;
+    padding-right: 52px !important;
+    font-size: 15px !important;
+    font-weight: var(--j-weight-semibold);
+    line-height: 1.45;
+    order: -10;
+  }
+
+  .admin-data-table:not(.has-mobile-cards)
+    td:is(
+      [data-column-id='title'],
+      [data-column-id='name'],
+      [data-column-id='purpose'],
+      [data-column-id='reason'],
+      [data-column-id='videoTitle'],
+      [data-column-id='deviceName'],
+      [data-column-id='actions'],
+      [data-column-id='status']
+    )::before {
+    display: none;
+  }
+
+  .admin-data-table:not(.has-mobile-cards)
+    td:is([data-column-id='id'], [data-column-id='selection']) {
+    display: none !important;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) td[data-column-id='status'] {
+    display: flex !important;
+    width: fit-content !important;
+    min-height: 24px;
+    align-items: center;
+    order: -8;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) td[data-column-id='status'] > * {
+    width: fit-content;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) td[data-column-id='actions'] {
+    position: absolute;
+    inset: 9px 9px auto auto;
+    left: auto !important;
+    right: 9px !important;
+    top: 9px;
+    display: block !important;
+    width: 34px !important;
+    min-width: 34px !important;
+    max-width: 34px !important;
+    min-height: 34px;
+    padding: 0 !important;
+    justify-self: end;
+    text-align: right !important;
+    z-index: 1;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) td[data-mobile-role='title']::before,
+  .admin-data-table:not(.has-mobile-cards) td[data-mobile-role='subtitle']::before,
+  .admin-data-table:not(.has-mobile-cards) td[data-mobile-role='badge']::before,
+  .admin-data-table:not(.has-mobile-cards) td[data-mobile-role='actions']::before {
+    display: none;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) td[data-mobile-role='subtitle'] {
+    display: block !important;
+    margin-top: -4px;
+    color: var(--j-color-text-muted);
+    font-size: 12px !important;
+    order: -9;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) td[data-mobile-role='badge'] {
+    display: flex !important;
+    width: fit-content !important;
+    min-height: 24px;
+    align-items: center;
+    order: -8;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) td[data-mobile-role='actions'] {
+    position: absolute;
+    inset: 9px 9px auto auto;
+    left: auto !important;
+    right: 9px !important;
+    top: 9px;
+    display: block !important;
+    width: 34px !important;
+    min-width: 34px !important;
+    max-width: 34px !important;
+    min-height: 34px;
+    padding: 0 !important;
+    justify-self: end;
+    text-align: right !important;
+    z-index: 1;
+  }
+
   .admin-data-table:not(.has-mobile-cards) .admin-data-table__empty-cell,
   .admin-data-table:not(.has-mobile-cards) .admin-data-table__loading-cell {
     display: grid !important;
-    min-height: 92px;
+    min-height: 72px;
     place-items: center;
+  }
+
+  .admin-data-table:not(.has-mobile-cards)
+    > .table-wrap
+    > table
+    > tbody
+    > tr:has(.admin-data-table__empty-cell) {
+    padding: 8px 0;
+    border: 0;
+    background: transparent;
   }
 
   .admin-data-table.has-mobile-cards .admin-mobile-card-list {
@@ -529,7 +655,7 @@
   }
 
   .admin-mobile-card-list__status {
-    min-height: 108px;
+    min-height: 72px;
     display: grid;
     place-items: center;
     color: var(--muted);
@@ -554,8 +680,9 @@
   .admin-table-pagination__next {
     display: inline-flex !important;
     width: auto;
-    min-width: 82px !important;
-    height: 36px !important;
+    min-width: 64px !important;
+    height: 34px !important;
+    padding-inline: 8px !important;
     align-items: center;
     justify-content: center;
     gap: 3px;

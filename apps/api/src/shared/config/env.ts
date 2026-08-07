@@ -50,6 +50,8 @@ const envSchema = z
     SESSION_COOKIE_SECURE: booleanFromString.default(false),
     CSRF_SECRET: z.string().min(12).default('change-this-csrf-secret'),
     CSRF_COOKIE_NAME: z.string().default('jshsus.csrf'),
+    DEV_AUTH_BYPASS: booleanFromString.default(false),
+    DEV_AUTH_STUDENT_NO: z.coerce.number().int().positive().default(9999),
     AUTH_MODE: z
       .enum(['local', 'hybrid', 'cognito'])
       .default('cognito')
@@ -163,6 +165,14 @@ const envSchema = z
     };
   })
   .superRefine((value, context) => {
+    if (value.DEV_AUTH_BYPASS && value.NODE_ENV !== 'development') {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['DEV_AUTH_BYPASS'],
+        message: 'DEV_AUTH_BYPASS is only allowed when NODE_ENV=development.',
+      });
+    }
+
     if (value.NODE_ENV === 'production') {
       const ssoOrigin = new URL(value.SSO_PUBLIC_ORIGIN).origin;
       if (!ssoOrigin.startsWith('https://')) {

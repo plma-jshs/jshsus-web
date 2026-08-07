@@ -139,6 +139,35 @@ export function DeviceCasesPage() {
     [bulkCommandMutation, hasSelectedCases, selectedCaseIdsInList],
   );
 
+  const renderCaseActions = useCallback(
+    (deviceCase: DeviceCase) => (
+      <RowActions>
+        <RowActionButton
+          icon={
+            deviceCase.isOpen ? (
+              <Lock size={14} aria-hidden="true" />
+            ) : (
+              <LockOpen size={14} aria-hidden="true" />
+            )
+          }
+          label={`${deviceCaseLabel(deviceCase.id)} ${deviceCase.isOpen ? '잠금' : '해제'}`}
+          mobileLabel={deviceCase.isOpen ? '잠금' : '해제'}
+          variant="primary"
+          onClick={() => runCaseCommand(deviceCase, deviceCase.isOpen ? 'close' : 'open')}
+          disabled={isCommandPending}
+        />
+        <RowActionButton
+          icon={<History size={14} aria-hidden="true" />}
+          label={`${deviceCaseLabel(deviceCase.id)} 기록 보기`}
+          mobileLabel="기록 보기"
+          variant="secondary"
+          onClick={() => setLogCaseId(deviceCase.id)}
+        />
+      </RowActions>
+    ),
+    [isCommandPending, runCaseCommand],
+  );
+
   const caseColumns = useMemo<ColumnDef<DeviceCase>[]>(
     () => [
       {
@@ -161,21 +190,21 @@ export function DeviceCasesPage() {
             onChange={(checked) => toggleCaseSelection(row.original.id, checked)}
           />
         ),
-        meta: { align: 'center', widthPreset: 'selection' },
+        meta: { align: 'center', widthPreset: 'selection', hideOnMobile: true },
       },
       {
         accessorKey: 'id',
         header: 'ID',
         enableSorting: false,
         cell: ({ getValue }) => getValue<number>(),
-        meta: { align: 'center', width: 64 },
+        meta: { align: 'center', width: 64, hideOnMobile: true },
       },
       {
         id: 'deviceName',
         header: '디바이스명',
         enableSorting: false,
         cell: ({ row }) => deviceCaseLabel(row.original.id),
-        meta: { align: 'center', width: 110 },
+        meta: { align: 'center', width: 110, mobileRole: 'title' },
       },
       {
         accessorKey: 'isConnected',
@@ -186,7 +215,7 @@ export function DeviceCasesPage() {
             {getValue<boolean>() ? '정상' : '끊김'}
           </span>
         ),
-        meta: { align: 'center', width: 90 },
+        meta: { align: 'center', width: 90, mobileRole: 'badge' },
       },
       {
         accessorKey: 'isOpen',
@@ -206,40 +235,11 @@ export function DeviceCasesPage() {
         id: 'actions',
         header: '작업',
         enableSorting: false,
-        cell: ({ row }) => (
-          <RowActions>
-            <RowActionButton
-              icon={
-                row.original.isOpen ? (
-                  <Lock size={14} aria-hidden="true" />
-                ) : (
-                  <LockOpen size={14} aria-hidden="true" />
-                )
-              }
-              label={`${deviceCaseLabel(row.original.id)} ${row.original.isOpen ? '잠금' : '해제'}`}
-              variant="primary"
-              onClick={() => runCaseCommand(row.original, row.original.isOpen ? 'close' : 'open')}
-              disabled={isCommandPending}
-            />
-            <RowActionButton
-              icon={<History size={14} aria-hidden="true" />}
-              label={`${deviceCaseLabel(row.original.id)} 기록 보기`}
-              variant="secondary"
-              onClick={() => setLogCaseId(row.original.id)}
-            />
-          </RowActions>
-        ),
-        meta: { align: 'center', width: 92 },
+        cell: ({ row }) => renderCaseActions(row.original),
+        meta: { align: 'center', width: 92, mobileRole: 'actions' },
       },
     ],
-    [
-      cases,
-      isCommandPending,
-      runCaseCommand,
-      selectedCaseIdsInList,
-      toggleAllCases,
-      toggleCaseSelection,
-    ],
+    [cases, renderCaseActions, selectedCaseIdsInList, toggleAllCases, toggleCaseSelection],
   );
 
   const commandColumns: ColumnDef<DeviceCaseCommand>[] = [
@@ -320,6 +320,21 @@ export function DeviceCasesPage() {
           pageSize={casePageSize}
           alwaysShowPagination
           caption="휴대폰 보관함 상태 목록"
+          renderMobileRow={(deviceCase) => (
+            <article className="device-mobile-card">
+              <header>
+                <strong>{deviceCaseLabel(deviceCase.id)}</strong>
+                <span className={`device-status ${deviceCase.isConnected ? 'success' : 'danger'}`}>
+                  {deviceCase.isConnected ? '정상' : '끊김'}
+                </span>
+                {renderCaseActions(deviceCase)}
+              </header>
+              <p>
+                <span>{deviceCase.isOpen ? '열림' : '잠김'}</span>
+                <span>{formatDateTime(deviceCase.lastSeenAt)}</span>
+              </p>
+            </article>
+          )}
         />
       </section>
 

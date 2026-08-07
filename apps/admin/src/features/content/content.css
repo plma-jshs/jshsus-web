@@ -46,6 +46,10 @@
   flex-wrap: nowrap;
 }
 
+.content-panel-mobile-action {
+  display: none;
+}
+
 .content-panel-actions > *,
 .content-toolbar > * {
   flex: 0 0 auto;
@@ -359,6 +363,44 @@ a.content-table-primary:focus-visible {
     padding: 16px;
   }
 
+  .content-panel-header {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .content-panel-heading h2 {
+    display: none;
+  }
+
+  .content-panel-heading span {
+    color: var(--j-color-text-muted);
+    font-size: 12px;
+    font-weight: var(--j-weight-medium);
+  }
+
+  .content-panel-actions {
+    display: flex;
+    width: auto;
+    margin-left: auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .content-panel-mobile-action {
+    display: block;
+  }
+
+  .notice-mobile-create {
+    min-height: 36px;
+    padding-inline: 13px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .content-panel-actions .admin-table-toolbar {
+    width: auto;
+  }
+
   .content-panel-actions,
   .content-toolbar {
     align-items: stretch;
@@ -367,6 +409,72 @@ a.content-table-primary:focus-visible {
 
   .content-search-field {
     width: 100%;
+  }
+
+  .admin-filter-sheet__controls .content-toolbar {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .admin-filter-sheet__controls .content-search-field {
+    grid-column: 1 / -1;
+  }
+
+  .admin-filter-sheet__controls .ui-page-size-select {
+    width: 100% !important;
+    grid-column: 1 / -1;
+  }
+
+  .admin-filter-sheet__controls .notice-desktop-create {
+    display: none;
+  }
+
+  .notice-mobile-card {
+    min-width: 0;
+  }
+
+  .notice-mobile-card > header {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .notice-mobile-card > header .content-title-cell {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .notice-mobile-card > header .admin-row-actions {
+    flex: 0 0 auto;
+  }
+
+  .notice-mobile-card__meta {
+    display: flex;
+    min-width: 0;
+    margin-top: 7px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--j-color-text-muted);
+    font-size: 11px;
+  }
+
+  .notice-mobile-card__stats,
+  .notice-mobile-card__stats > span {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .notice-mobile-card__stats {
+    flex: 0 0 auto;
+    gap: 10px;
+  }
+
+  .notice-mobile-card__stats > span {
+    gap: 3px;
   }
 
   .content-detail-list {

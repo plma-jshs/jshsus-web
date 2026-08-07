@@ -28,6 +28,7 @@ type SelectOption = {
 type AdminSelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, 'multiple' | 'size'> & {
   children: ReactNode;
   nativeOnMobile?: boolean;
+  mobileLabel?: string;
 };
 
 function toOptions(children: ReactNode): SelectOption[] {
@@ -62,7 +63,8 @@ export function AdminSelect({
   disabled,
   onChange,
   onInvalid,
-  nativeOnMobile = false,
+  nativeOnMobile = true,
+  mobileLabel,
   'aria-label': ariaLabel = '선택',
   ...selectProps
 }: AdminSelectProps) {
@@ -75,6 +77,11 @@ export function AdminSelect({
   const [activeIndex, setActiveIndex] = useState(0);
   const [menuStyle, setMenuStyle] = useState<CSSProperties>();
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
+  const [mobile, setMobile] = useState(() =>
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(max-width: 640px)').matches
+      : nativeOnMobile,
+  );
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const selectRef = useRef<HTMLSelectElement>(null);
@@ -82,6 +89,15 @@ export function AdminSelect({
   const listboxId = useId();
   const selectedValue = value === undefined ? uncontrolledValue : String(value);
   const selected = options.find((option) => option.value === selectedValue) ?? options[0];
+  const useNativeSelect = nativeOnMobile && mobile;
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return undefined;
+    const query = window.matchMedia('(max-width: 640px)');
+    const handleChange = (event: MediaQueryListEvent) => setMobile(event.matches);
+    query.addEventListener('change', handleChange);
+    return () => query.removeEventListener('change', handleChange);
+  }, []);
 
   const positionMenu = useCallback(() => {
     const trigger = triggerRef.current;
@@ -147,13 +163,14 @@ export function AdminSelect({
       className={`admin-select${open ? ' is-open' : ''}${nativeOnMobile ? ' admin-select--native-mobile' : ''}${className ? ` ${className}` : ''}`}
       ref={rootRef}
     >
+      {mobileLabel ? <span className="admin-select__mobile-label">{mobileLabel}</span> : null}
       <select
         {...selectProps}
-        aria-hidden={nativeOnMobile ? undefined : true}
+        aria-hidden={useNativeSelect ? undefined : true}
         className="admin-select__native"
         disabled={disabled}
         ref={selectRef}
-        tabIndex={nativeOnMobile ? undefined : -1}
+        tabIndex={useNativeSelect ? undefined : -1}
         value={value}
         defaultValue={value === undefined ? defaultValue : undefined}
         onChange={onChange}

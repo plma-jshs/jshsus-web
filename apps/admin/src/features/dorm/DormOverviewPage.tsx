@@ -42,13 +42,13 @@ export function DormOverviewPage() {
         accessorKey: 'dormName',
         header: '생활관',
         enableSorting: false,
-        meta: { width: 100, align: 'center' },
+        meta: { width: 100, align: 'center', mobileRole: 'subtitle' },
       },
       {
         accessorKey: 'name',
         header: '호실',
         enableSorting: true,
-        meta: { width: 90, align: 'center' },
+        meta: { width: 90, align: 'center', mobileRole: 'title' },
       },
       {
         accessorKey: 'grade',
@@ -95,7 +95,7 @@ export function DormOverviewPage() {
           </RowActions>
         ),
         enableSorting: false,
-        meta: { width: 64, align: 'center' },
+        meta: { width: 64, align: 'center', mobileRole: 'actions' },
       },
     ],
     [],

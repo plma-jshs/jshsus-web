@@ -350,7 +350,7 @@ export function ActivityReviewPage() {
       accessorFn: (request) => `${request.studentNo} ${request.studentName}`,
       header: '대표 학생',
       cell: ({ row }) => `${row.original.studentNo} ${row.original.studentName}`,
-      meta: { minWidth: 120, maxWidth: 150 },
+      meta: { minWidth: 120, maxWidth: 150, mobileRole: 'subtitle' },
     },
     {
       id: 'participantCount',
@@ -364,7 +364,7 @@ export function ActivityReviewPage() {
       accessorKey: 'purpose',
       header: '활동 목적',
       enableSorting: false,
-      meta: { minWidth: 320, maxWidth: 560, truncate: true },
+      meta: { minWidth: 320, maxWidth: 560, truncate: true, mobileRole: 'title' },
     },
     {
       accessorKey: 'location',
@@ -406,7 +406,7 @@ export function ActivityReviewPage() {
           />
         </RowActions>
       ),
-      meta: { width: 92, align: 'center' },
+      meta: { width: 92, align: 'center', mobileRole: 'actions' },
     },
   ];
 

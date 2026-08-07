@@ -50,12 +50,12 @@ export function PointsOverviewPage() {
             {row.original.studentNo}
           </a>
         ),
-        meta: { kind: 'studentNo', width: 110 },
+        meta: { kind: 'studentNo', width: 110, mobileRole: 'subtitle' },
       },
       {
         accessorKey: 'name',
         header: '이름',
-        meta: { kind: 'person', width: 150 },
+        meta: { kind: 'person', width: 150, mobileRole: 'title' },
       },
       {
         accessorKey: 'meritPoint',

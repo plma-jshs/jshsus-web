@@ -441,16 +441,22 @@
   .identity-page-toolbar {
     align-items: stretch;
     flex-direction: column;
+    gap: 10px;
   }
   .identity-toolbar-actions,
   .identity-page-toolbar > button {
     width: 100%;
   }
   .identity-toolbar-actions {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
   }
   .identity-toolbar-actions > button {
     width: 100%;
+    min-height: 42px;
+    padding-inline: 6px;
+    font-size: 11px;
   }
   .identity-filter-bar.is-students,
   .identity-filter-bar.is-staff,
@@ -469,5 +475,16 @@
 
   .identity-roster-toolbox {
     display: none;
+  }
+
+  .admin-filter-sheet .identity-filter-bar.is-students,
+  .admin-filter-sheet .identity-filter-bar.is-staff {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .admin-filter-sheet .identity-filter-bar > :first-child {
+    grid-column: 1 / -1;
   }
 }

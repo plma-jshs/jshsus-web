@@ -146,7 +146,7 @@ export function LostItemsManagementPage() {
           />
         ),
         enableSorting: false,
-        meta: { align: 'center', width: 64 },
+        meta: { align: 'center', width: 64, hideOnMobile: true },
       },
       {
         accessorKey: 'id',
@@ -163,7 +163,7 @@ export function LostItemsManagementPage() {
         ),
         enableSorting: selectedCount === 0,
         cell: ({ row }) => row.original.id,
-        meta: { align: 'center', width: 72 },
+        meta: { align: 'center', width: 72, hideOnMobile: true },
       },
       {
         accessorKey: 'type',
@@ -174,7 +174,7 @@ export function LostItemsManagementPage() {
           </span>
         ),
         enableSorting: false,
-        meta: { align: 'center', width: 88 },
+        meta: { align: 'center', width: 88, mobileRole: 'badge' },
       },
       {
         accessorKey: 'itemName',
@@ -188,6 +188,7 @@ export function LostItemsManagementPage() {
           </a>
         ),
         enableSorting: false,
+        meta: { mobileRole: 'title' },
       },
       {
         accessorKey: 'location',
@@ -229,7 +230,7 @@ export function LostItemsManagementPage() {
           </span>
         ),
         enableSorting: false,
-        meta: { align: 'center', width: 108 },
+        meta: { align: 'center', width: 108, mobileRole: 'badge' },
       },
       {
         id: 'actions',
@@ -247,7 +248,7 @@ export function LostItemsManagementPage() {
           </RowActions>
         ),
         enableSorting: false,
-        meta: { align: 'center', width: 64 },
+        meta: { align: 'center', width: 64, mobileRole: 'actions' },
       },
     ],
     [

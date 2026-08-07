@@ -50,7 +50,7 @@ const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
     accessorKey: 'id',
     header: '번호',
     cell: ({ row }) => `#${row.original.id}`,
-    meta: { widthPreset: 'index' },
+    meta: { widthPreset: 'index', hideOnMobile: true },
   },
   {
     id: 'date',
@@ -102,7 +102,7 @@ const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
     accessorKey: 'purpose',
     header: '내용',
     enableSorting: false,
-    meta: { minWidth: 220, maxWidth: 380, truncate: true },
+    meta: { minWidth: 220, maxWidth: 380, truncate: true, mobileRole: 'title' },
   },
   {
     id: 'participants',
@@ -126,7 +126,7 @@ const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
     header: '상태',
     enableSorting: false,
     cell: ({ getValue }) => <ActivityStatusBadge status={getValue<ActivityRequestAdminStatus>()} />,
-    meta: { width: 88, align: 'center' },
+    meta: { width: 88, align: 'center', mobileRole: 'badge' },
   },
 ];
 

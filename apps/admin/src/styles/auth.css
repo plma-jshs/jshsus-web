@@ -14,6 +14,62 @@
   padding: 8px 0 0;
 }
 
+.dev-auth-panel {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.dev-auth-panel__icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 18px;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--primary-dark);
+  background: #eaf6f3;
+}
+
+.dev-auth-panel h1 {
+  margin: 0;
+  color: #172120;
+  font-size: 22px;
+  letter-spacing: -0.04em;
+}
+
+.dev-auth-panel p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.dev-auth-panel__button {
+  display: inline-flex;
+  width: 100%;
+  margin-top: 22px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.dev-auth-panel .form-error {
+  margin-top: 16px;
+}
+
+.spin {
+  animation: admin-spin 0.9s linear infinite;
+}
+
+@keyframes admin-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .login-brand {
   display: inline-flex;
   align-items: center;

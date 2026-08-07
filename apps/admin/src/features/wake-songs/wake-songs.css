@@ -1,11 +1,13 @@
 .wake-song-admin-toolbar {
-  display: flex;
   min-height: 62px;
   padding: 10px 14px;
+}
+
+.wake-song-admin-toolbar .admin-table-toolbar__controls {
+  display: flex;
+  min-width: 0;
   align-items: center;
-  justify-content: flex-start;
   gap: 14px;
-  overflow-x: auto;
 }
 
 .wake-song-admin-toolbar .ui-segmented-tabs {
@@ -17,7 +19,7 @@
   padding-inline: 12px;
 }
 
-.wake-song-admin-toolbar > .ui-page-size-select {
+.wake-song-admin-toolbar .ui-page-size-select {
   width: 86px;
   flex: 0 0 86px;
 }
@@ -69,14 +71,34 @@
   margin: 0;
 }
 
-.wake-song-admin-list > .admin-table-toolbar {
-  min-height: 48px;
-  margin: 0 18px 10px;
-  padding-top: 12px;
-}
-
 .wake-song-admin-list > .admin-data-table {
   padding: 0 18px 18px;
+}
+
+@media (max-width: 640px) {
+  .wake-song-admin-toolbar {
+    min-height: 48px;
+    padding: 8px 0;
+  }
+
+  .admin-filter-sheet .wake-song-admin-search {
+    width: 100%;
+    grid-column: 1 / -1;
+  }
+
+  .admin-filter-sheet .wake-song-admin-search input {
+    min-height: 48px;
+  }
+
+  .admin-filter-sheet .wake-song-admin-toolbar .ui-segmented-tabs,
+  .admin-filter-sheet .ui-segmented-tabs {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .wake-song-admin-list > .admin-data-table {
+    padding-inline: 0;
+  }
 }
 
 .wake-song-admin-list .table-action-row {

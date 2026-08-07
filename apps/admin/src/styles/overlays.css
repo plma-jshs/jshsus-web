@@ -183,8 +183,9 @@
 .admin-filter-sheet {
   position: fixed;
   inset: auto 0 0;
-  width: 100%;
-  max-width: none;
+  box-sizing: border-box;
+  width: 100dvw;
+  max-width: 100dvw;
   max-height: min(82dvh, 680px);
   margin: 0;
   padding: 0;
@@ -235,6 +236,7 @@
 
 .admin-filter-sheet__controls {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   padding: 18px;
   overflow-y: auto;
   align-items: stretch;
@@ -244,6 +246,80 @@
 .admin-filter-sheet__controls > * {
   width: 100% !important;
   max-width: none !important;
+}
+
+.admin-filter-sheet__controls > :where(.point-filter--search, .operation-search-field),
+.admin-filter-sheet__controls > label:has(input[type='search']),
+.admin-filter-sheet__controls > label:has(input[type='text']),
+.admin-filter-sheet__controls > input[type='search'],
+.admin-filter-sheet__controls > input[type='text'],
+.admin-filter-sheet__controls > .ui-segmented-tabs,
+.admin-filter-sheet__controls > button {
+  grid-column: 1 / -1;
+}
+
+.admin-filter-sheet__controls > form,
+.admin-filter-sheet__controls > div {
+  min-width: 0;
+  grid-column: 1 / -1;
+}
+
+.admin-filter-sheet__controls > form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-filter-sheet__controls > form > :where(label:has(input[type='search']), .ui-date-range),
+.admin-filter-sheet__controls > form > button {
+  grid-column: 1 / -1;
+}
+
+.admin-filter-sheet__controls label:not(.checkbox-row):has(> span:not(.sr-only)) {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.admin-filter-sheet__controls
+  label:not(.checkbox-row):has(> span:not(.sr-only))
+  > span:not(.sr-only) {
+  position: absolute;
+  z-index: 1;
+  top: 7px;
+  left: 12px;
+  margin: 0;
+  color: var(--j-color-text-muted);
+  font-size: 10px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.admin-filter-sheet__controls
+  label:not(.checkbox-row):has(> span:not(.sr-only))
+  :where(input, select, .admin-select__trigger) {
+  min-height: 48px;
+  padding-top: 13px;
+}
+
+.admin-filter-sheet__controls > .ui-date-range {
+  min-width: 0;
+  grid-column: 1 / -1;
+}
+
+.admin-filter-sheet__controls .ui-date-range__controls {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+.admin-filter-sheet__controls .ui-date-range__controls input,
+.admin-filter-sheet__controls .ui-date-input {
+  width: 100% !important;
+}
+
+.admin-filter-sheet__controls .admin-select--native-mobile .admin-select__native {
+  height: 48px !important;
+  min-height: 48px !important;
+  padding: 13px 34px 0 11px !important;
 }
 
 .admin-filter-sheet footer {
@@ -416,7 +492,8 @@
     right: 0;
     bottom: 0;
     left: 0;
-    width: 100%;
+    box-sizing: border-box;
+    width: 100dvw;
     height: min(88dvh, 760px);
     max-width: none;
     max-height: 88dvh;
@@ -427,7 +504,8 @@
   .ui-dialog:not(.ui-confirm-dialog) {
     position: fixed;
     inset: auto 0 0;
-    width: 100%;
+    box-sizing: border-box;
+    width: 100dvw;
     max-width: none;
     max-height: 88dvh;
     margin: 0;

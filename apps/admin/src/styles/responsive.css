@@ -4,19 +4,39 @@
   }
 
   .admin-sidebar {
+    display: none;
     position: fixed;
     top: 0;
     bottom: 0;
-    left: 0;
+    right: 0;
+    left: auto;
     width: min(286px, calc(100vw - 52px));
     height: 100vh;
-    transform: translateX(-104%);
-    box-shadow: 20px 0 50px rgba(18, 42, 38, 0.16);
+    transform: translateX(104%);
+    box-shadow: none;
+    border-right: 0;
+    border-left: 1px solid var(--line);
+    overflow: hidden;
     transition: transform 180ms ease;
   }
 
+  .admin-nav {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .admin-sidebar-account {
+    flex: 0 0 auto;
+    margin-top: 10px;
+    padding-bottom: max(11px, env(safe-area-inset-bottom));
+    background: var(--sidebar);
+  }
+
   .admin-sidebar.open {
+    display: flex;
     transform: translateX(0);
+    box-shadow: -20px 0 50px rgba(18, 42, 38, 0.16);
   }
 
   .admin-mobile-close,
@@ -64,7 +84,14 @@
   #root,
   .admin-shell,
   .admin-main {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
     background: #fff;
+  }
+
+  body {
+    overflow-x: hidden;
   }
 
   .admin-topbar {
@@ -118,6 +145,7 @@
 
   .admin-content {
     padding: 12px 0 30px;
+    overflow-x: clip;
   }
 
   .admin-content > :where(.admin-panel, .admin-stack),
@@ -127,7 +155,9 @@
 
   .metric-card,
   .admin-panel {
+    border-top: 0;
     border-right: 0;
+    border-bottom: 0;
     border-left: 0;
     border-radius: 0;
     box-shadow: none;

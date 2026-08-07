@@ -327,13 +327,23 @@
     overflow-x: auto;
     border-right: 0;
     border-bottom: 1px solid #e4ebe9;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+  .iam-role-list::-webkit-scrollbar {
+    display: none;
   }
   .iam-role-list button {
     min-width: 180px;
+    scroll-snap-align: start;
   }
 }
 
 @media (max-width: 640px) {
+  .iam-page {
+    gap: 10px;
+  }
+
   .iam-panel {
     border-right: 0;
     border-left: 0;
@@ -343,7 +353,17 @@
   .iam-panel-header,
   .iam-matrix-title,
   .iam-matrix-actions {
-    padding-inline: 16px;
+    padding-inline: 12px;
+  }
+
+  .iam-panel-header {
+    min-height: 54px;
+    padding-block: 9px;
+  }
+
+  .iam-panel-header h2,
+  .iam-matrix-title h3 {
+    font-size: 16px;
   }
 
   .iam-panel-header,
@@ -360,12 +380,35 @@
   }
 
   .iam-role-list button {
-    min-width: 148px;
+    min-width: 108px;
+    padding: 8px 9px;
+  }
+
+  .iam-role-list {
+    padding: 6px;
+  }
+
+  .iam-role-list strong {
+    font-size: 12px;
+  }
+
+  .iam-role-list small,
+  .iam-role-list em {
+    font-size: 10px;
+  }
+
+  .iam-policy-layout {
+    min-height: 0;
+  }
+
+  .iam-matrix-title {
+    min-height: 48px;
+    padding-block: 8px;
   }
 
   .iam-matrix-table-wrap,
   .iam-catalog-wrap {
-    padding: 0 16px 16px;
+    padding: 0 10px 10px;
     overflow: visible;
   }
 
@@ -381,12 +424,12 @@
 
   .iam-table tbody {
     display: grid;
-    gap: 8px;
+    gap: 6px;
   }
 
   .iam-table tbody tr {
     display: grid;
-    padding: 10px 12px;
+    padding: 8px 10px;
     border: 1px solid #e4ebe9;
     border-radius: 10px;
     background: #fff;
@@ -397,10 +440,45 @@
     min-width: 0;
     min-height: 0;
     grid-template-columns: 72px minmax(0, 1fr);
-    padding: 4px 0;
+    padding: 2px 0;
     border: 0;
     text-align: left;
     overflow-wrap: anywhere;
+  }
+
+  .iam-matrix-table-wrap .iam-table tbody td:nth-child(1),
+  .iam-catalog-wrap .iam-table tbody td:nth-child(2) {
+    display: block;
+    padding-right: 42px;
+    font-size: 13px;
+    font-weight: var(--j-weight-semibold);
+  }
+
+  .iam-matrix-table-wrap .iam-table tbody td:nth-child(2),
+  .iam-catalog-wrap .iam-table tbody td:nth-child(1) {
+    display: block;
+    padding-top: 1px;
+    color: var(--j-color-text-muted);
+    font-size: 10px;
+  }
+
+  .iam-matrix-table-wrap .iam-table tbody td:nth-child(1)::before,
+  .iam-matrix-table-wrap .iam-table tbody td:nth-child(2)::before,
+  .iam-catalog-wrap .iam-table tbody td:nth-child(1)::before,
+  .iam-catalog-wrap .iam-table tbody td:nth-child(2)::before {
+    content: none;
+  }
+
+  .iam-matrix-table-wrap .iam-table tbody td:nth-child(3) {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    display: block;
+    width: auto;
+  }
+
+  .iam-matrix-table-wrap .iam-table tbody tr {
+    position: relative;
   }
 
   .iam-table tbody td::before {

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { NoticeSummary } from '@jshsus/types';
-import { ExternalLink, Paperclip, Pin, PinOff, Search, Trash2 } from 'lucide-react';
+import { ExternalLink, Eye, Paperclip, Pin, PinOff, Search, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   ConfirmDialog,
@@ -75,7 +75,7 @@ export function NoticeManagementPage() {
         accessorKey: 'id',
         header: '번호',
         cell: ({ row }) => row.original.publicNumber,
-        meta: { align: 'center', width: 72 },
+        meta: { align: 'center', width: 72, hideOnMobile: true },
       },
       {
         accessorKey: 'title',
@@ -94,7 +94,7 @@ export function NoticeManagementPage() {
           </div>
         ),
         enableSorting: false,
-        meta: { minWidth: 260, truncate: true },
+        meta: { minWidth: 260, truncate: true, mobileRole: 'title' },
       },
       {
         accessorKey: 'department',
@@ -127,7 +127,7 @@ export function NoticeManagementPage() {
             '-'
           ),
         enableSorting: false,
-        meta: { align: 'center', width: 72 },
+        meta: { align: 'center', width: 72, hideOnMobile: true },
       },
       {
         id: 'actions',
@@ -139,6 +139,7 @@ export function NoticeManagementPage() {
                 row.original.pinned ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />
               }
               label={row.original.pinned ? '공지 고정 해제' : '공지 고정'}
+              mobileLabel={row.original.pinned ? '고정 해제' : '고정'}
               disabled={updateNoticeMutation.isPending}
               onClick={() =>
                 updateNoticeMutation.mutate({
@@ -150,6 +151,7 @@ export function NoticeManagementPage() {
             <RowActionButton
               icon={<Trash2 aria-hidden="true" />}
               label="공지 삭제"
+              mobileLabel="삭제"
               variant="danger"
               disabled={deleteNoticeMutation.isPending}
               onClick={() => setDeleteTarget(row.original)}
@@ -157,7 +159,7 @@ export function NoticeManagementPage() {
           </RowActions>
         ),
         enableSorting: false,
-        meta: { align: 'center', width: 92 },
+        meta: { align: 'center', width: 92, mobileRole: 'actions' },
       },
     ],
     [deleteNoticeMutation, updateNoticeMutation],
@@ -168,6 +170,11 @@ export function NoticeManagementPage() {
       <ContentAdminPanel
         title="공지 관리"
         count={noticesQuery.data?.length ?? 0}
+        mobileAction={
+          <a className="primary-button notice-mobile-create" href={publicSiteHref('/notices/new')}>
+            새 공지
+          </a>
+        }
         actions={
           <div className="content-toolbar">
             <label className="content-search-field">
@@ -181,7 +188,7 @@ export function NoticeManagementPage() {
             </label>
             <PageSizeSelect value={pageSize} onChange={setPageSize} />
             <a
-              className="primary-button"
+              className="primary-button notice-desktop-create"
               href={publicSiteHref('/notices/new')}
               target="_blank"
               rel="noreferrer"
@@ -210,6 +217,54 @@ export function NoticeManagementPage() {
             onSortingChange={setSorting}
             alwaysShowPagination
             caption="공지 관리 목록"
+            renderMobileRow={(notice) => (
+              <article className="notice-mobile-card">
+                <header>
+                  <div className="content-title-cell">
+                    <a
+                      className="content-table-primary"
+                      href={publicSiteHref(`/notices/${notice.id}`)}
+                    >
+                      {notice.title}
+                    </a>
+                    {notice.pinned ? (
+                      <Pin className="content-pinned-icon" size={13} aria-label="공지 고정" />
+                    ) : null}
+                  </div>
+                  <RowActions>
+                    <RowActionButton
+                      icon={
+                        notice.pinned ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />
+                      }
+                      label={notice.pinned ? '공지 고정 해제' : '공지 고정'}
+                      mobileLabel={notice.pinned ? '고정 해제' : '고정'}
+                      disabled={updateNoticeMutation.isPending}
+                      onClick={() =>
+                        updateNoticeMutation.mutate({ id: notice.id, pinned: !notice.pinned })
+                      }
+                    />
+                    <RowActionButton
+                      icon={<Trash2 aria-hidden="true" />}
+                      label="공지 삭제"
+                      mobileLabel="삭제"
+                      variant="danger"
+                      disabled={deleteNoticeMutation.isPending}
+                      onClick={() => setDeleteTarget(notice)}
+                    />
+                  </RowActions>
+                </header>
+                <div className="notice-mobile-card__meta">
+                  <span>{notice.department || '-'}</span>
+                  <span className="notice-mobile-card__stats">
+                    <time>{formatAdminDate(notice.publishedAt)}</time>
+                    <span>
+                      <Eye size={13} aria-hidden="true" />
+                      {notice.viewCount.toLocaleString('ko-KR')}
+                    </span>
+                  </span>
+                </div>
+              </article>
+            )}
           />
         </ContentQueryState>
         <MutationMessage

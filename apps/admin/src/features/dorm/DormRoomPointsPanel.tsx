@@ -107,7 +107,7 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
         header: '번호',
         cell: ({ row }) => row.index + 1,
         enableSorting: false,
-        meta: { width: 70, align: 'center' },
+        meta: { width: 70, align: 'center', hideOnMobile: true },
       },
       {
         accessorKey: 'studentNo',
@@ -119,7 +119,7 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
         accessorKey: 'studentName',
         header: '이름',
         enableSorting: false,
-        meta: { width: 120, align: 'left' },
+        meta: { width: 120, align: 'left', mobileRole: 'title' },
       },
       {
         id: 'point',
@@ -177,7 +177,7 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
           </RowActions>
         ),
         enableSorting: false,
-        meta: { width: 64, align: 'center' },
+        meta: { width: 64, align: 'center', mobileRole: 'actions' },
       },
     ],
     [],

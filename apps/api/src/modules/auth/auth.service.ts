@@ -214,6 +214,48 @@ export class AuthService {
     return this.loginWithCognito(input);
   }
 
+  async issueDevelopmentSession(): Promise<Extract<AuthLoginResult, { status: 'AUTHENTICATED' }>> {
+    if (env.NODE_ENV !== 'development' || !env.DEV_AUTH_BYPASS) {
+      throw new UnauthorizedException('Development authentication is disabled.');
+    }
+
+    const [account] = await this.database.db
+      .select({
+        userId: schema.users.id,
+        studentProfileNo: schema.students.studentNo,
+        name: schema.users.name,
+        status: schema.users.status,
+      })
+      .from(schema.students)
+      .innerJoin(schema.users, eq(schema.students.userId, schema.users.id))
+      .where(eq(schema.students.studentNo, env.DEV_AUTH_STUDENT_NO))
+      .limit(1);
+
+    if (!account || account.status !== 'active') {
+      throw new UnauthorizedException('The configured development user is unavailable.');
+    }
+
+    const issued = await this.issueSession(
+      {
+        userId: account.userId,
+        authAccountId: 0,
+        providerAccountId: null,
+        studentProfileNo: account.studentProfileNo,
+        staffNo: null,
+        name: account.name,
+        status: account.status,
+      },
+      env.IAM_TOKEN_TTL_SECONDS,
+      String(account.studentProfileNo),
+    );
+
+    return {
+      status: 'AUTHENTICATED',
+      persistent: false,
+      ...issued,
+    };
+  }
+
   private async issueSession(
     account: SessionAccountRecord,
     ttlSeconds: number,

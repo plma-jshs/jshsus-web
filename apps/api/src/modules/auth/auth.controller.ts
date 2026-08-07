@@ -4,6 +4,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  NotFoundException,
   Param,
   Post,
   Query,
@@ -133,6 +134,21 @@ export function assertTrustedCredentialRequest(request: Request): void {
       message: '허용되지 않은 사이트에서 보낸 요청입니다.',
     });
   }
+}
+
+function assertDevelopmentSessionRequest(request: Request): void {
+  if (env.NODE_ENV !== 'development' || !env.DEV_AUTH_BYPASS) {
+    throw new NotFoundException();
+  }
+
+  if (!['localhost', '127.0.0.1'].includes(request.hostname)) {
+    throw new ForbiddenException({
+      code: 'DEV_AUTH_LOCALHOST_REQUIRED',
+      message: 'Development authentication is only available on localhost.',
+    });
+  }
+
+  assertTrustedCredentialRequest(request);
 }
 
 export function inferCognitoSurface(
@@ -382,6 +398,18 @@ export class AuthController {
   async session(@Req() request: Request) {
     const session = await this.authService.getSessionFromRequest(request);
     return session ?? { isLogined: false };
+  }
+
+  @Post('dev-session')
+  @RateLimit({ max: 20, windowSeconds: 60 })
+  async developmentSession(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    assertDevelopmentSessionRequest(request);
+    const result = await this.authService.issueDevelopmentSession();
+    this.setSessionCookies(request, response, result);
+    return { status: 'AUTHENTICATED' as const, session: result.session };
   }
 
   @Get('csrf')

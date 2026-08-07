@@ -1,4 +1,4 @@
-import { Filter, X } from 'lucide-react';
+import { SlidersHorizontal, X } from 'lucide-react';
 import { useEffect, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
 
 export type TableToolbarProps = HTMLAttributes<HTMLDivElement> & {
@@ -63,8 +63,8 @@ export function TableToolbar({
             type="button"
             onClick={() => setSheetOpen(true)}
           >
-            <Filter size={17} aria-hidden="true" />
-            <span>{mobileSheetTitle}</span>
+            <SlidersHorizontal size={18} aria-hidden="true" />
+            <span className="sr-only">{mobileSheetTitle}</span>
           </button>
           <dialog
             className="admin-filter-sheet"

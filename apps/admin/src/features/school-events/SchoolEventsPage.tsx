@@ -144,6 +144,10 @@ function monthLabel(month: string) {
   return `${year}년 ${monthNumber}월`;
 }
 
+function monthOnlyLabel(month: string) {
+  return `${Number(month.split('-')[1])}월`;
+}
+
 function blankForm(date = koreanDate()): EventForm {
   return {
     title: '',
@@ -559,7 +563,10 @@ export function SchoolEventsPage() {
             >
               <ChevronLeft size={18} />
             </button>
-            <h2>{monthLabel(month)}</h2>
+            <h2>
+              <span className="school-calendar-month-full">{monthLabel(month)}</span>
+              <span className="school-calendar-month-mobile">{monthOnlyLabel(month)}</span>
+            </h2>
             <button
               className="quiet-button icon-button"
               type="button"

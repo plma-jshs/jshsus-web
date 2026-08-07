@@ -23,6 +23,7 @@ export function PageSizeSelect({
   return (
     <AdminSelect
       className="ui-page-size-select"
+      mobileLabel="보기"
       value={normalizedValue}
       aria-label={ariaLabel}
       onChange={(event) => onChange(Number(event.target.value) as AdminPageSize)}

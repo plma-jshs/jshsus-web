@@ -53,6 +53,10 @@
   font-size: 17px;
 }
 
+.school-calendar-month-mobile {
+  display: none;
+}
+
 .school-calendar-actions .admin-select {
   width: auto;
   min-width: 128px;
@@ -953,6 +957,34 @@
   .school-calendar-toolbar {
     padding-inline: 8px;
     gap: 8px;
+  }
+
+  .school-calendar-month-full,
+  .school-calendar-actions > label:first-child,
+  .school-calendar-upload-button,
+  .school-calendar-legend {
+    display: none;
+  }
+
+  .school-calendar-month-mobile {
+    display: inline;
+  }
+
+  .school-calendar-navigation h2 {
+    min-width: 64px;
+    font-size: 19px;
+    font-weight: var(--j-weight-semibold);
+  }
+
+  .school-calendar-actions {
+    width: auto;
+    align-self: flex-end;
+  }
+
+  .school-calendar-actions .primary-button {
+    min-height: 36px;
+    padding-inline: 12px;
+    font-size: 12px;
   }
 
   .school-calendar-navigation,

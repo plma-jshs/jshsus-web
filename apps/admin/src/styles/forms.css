@@ -85,7 +85,23 @@ select.ui-control:not([multiple]) {
   white-space: nowrap;
 }
 
+.admin-select__mobile-label {
+  display: none;
+}
+
 @media (max-width: 640px) {
+  .admin-filter-sheet .admin-select__mobile-label {
+    position: absolute;
+    z-index: 1;
+    top: 7px;
+    left: 12px;
+    display: block;
+    color: var(--j-color-text-muted);
+    font-size: 10px;
+    line-height: 1;
+    pointer-events: none;
+  }
+
   .admin-select--native-mobile .admin-select__native {
     position: static !important;
     width: 100% !important;

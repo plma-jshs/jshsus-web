@@ -87,20 +87,20 @@ export function DormReportsPanel({
         accessorKey: 'studentName',
         header: '신고 학생',
         enableSorting: false,
-        meta: { width: 120, align: 'left' },
+        meta: { width: 120, align: 'left', mobileRole: 'subtitle' },
       },
       {
         accessorKey: 'description',
         header: '내용',
         enableSorting: false,
-        meta: { truncate: true },
+        meta: { truncate: true, mobileRole: 'title' },
       },
       {
         accessorKey: 'status',
         header: '상태',
         cell: ({ row }) => <DormReportStatusBadge status={row.original.status} />,
         enableSorting: false,
-        meta: { width: 100, align: 'center' },
+        meta: { width: 100, align: 'center', mobileRole: 'badge' },
       },
       {
         accessorKey: 'createdAt',
@@ -128,7 +128,7 @@ export function DormReportsPanel({
           </RowActions>
         ),
         enableSorting: false,
-        meta: { width: 64, align: 'center' },
+        meta: { width: 64, align: 'center', mobileRole: 'actions' },
       },
     ],
     [],
