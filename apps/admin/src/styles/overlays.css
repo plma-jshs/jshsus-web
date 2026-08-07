@@ -248,6 +248,10 @@
   max-width: none !important;
 }
 
+.admin-filter-sheet__controls .ui-page-size-select {
+  display: none !important;
+}
+
 .admin-filter-sheet__controls > :where(.point-filter--search, .operation-search-field),
 .admin-filter-sheet__controls > label:has(input[type='search']),
 .admin-filter-sheet__controls > label:has(input[type='text']),

@@ -112,14 +112,18 @@ export function DormOverviewPage() {
       ) : null}
 
       <section className="admin-panel dorm-list-panel">
-        <TableToolbar summary={`총 ${rooms.length}실`}>
-          <input
-            className="dorm-search-control"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="호실 검색"
-            aria-label="호실 검색"
-          />
+        <TableToolbar
+          summary={`총 ${rooms.length}실`}
+          mobileSearch={
+            <input
+              className="dorm-search-control"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="호실 검색"
+              aria-label="호실 검색"
+            />
+          }
+        >
           <AdminSelect
             value={year}
             onChange={(event) => setYear(Number(event.target.value))}

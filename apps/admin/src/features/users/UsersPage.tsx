@@ -874,8 +874,9 @@ export function UsersPage() {
       ) : null}
 
       <section className="identity-panel">
-        <TableToolbar summary={`총 ${data?.total ?? 0}명`}>
-          <div className={`identity-filter-bar is-${tab}`}>
+        <TableToolbar
+          summary={`총 ${data?.total ?? 0}명`}
+          mobileSearch={
             <Field label="검색">
               <input
                 name="q"
@@ -884,6 +885,9 @@ export function UsersPage() {
                 placeholder="학번·교사번호 또는 이름"
               />
             </Field>
+          }
+        >
+          <div className={`identity-filter-bar is-${tab}`}>
             {tab === 'students' ? (
               <>
                 <Field label="학년도">

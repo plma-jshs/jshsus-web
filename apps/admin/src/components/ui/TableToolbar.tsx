@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type HTMLAttributes, type ReactNode } from
 
 export type TableToolbarProps = HTMLAttributes<HTMLDivElement> & {
   summary?: ReactNode;
+  mobileSearch?: ReactNode;
   children?: ReactNode;
   mobileSheet?: boolean;
   mobileSheetTitle?: string;
@@ -25,6 +26,7 @@ function useMobileToolbar() {
 
 export function TableToolbar({
   summary,
+  mobileSearch,
   children,
   className,
   mobileSheet = true,
@@ -58,14 +60,19 @@ export function TableToolbar({
       <div className="admin-table-toolbar__summary">{summary}</div>
       {useSheet ? (
         <>
-          <button
-            className="admin-mobile-filter-button"
-            type="button"
-            onClick={() => setSheetOpen(true)}
-          >
-            <SlidersHorizontal size={18} aria-hidden="true" />
-            <span className="sr-only">{mobileSheetTitle}</span>
-          </button>
+          <div className="admin-table-toolbar__mobile-row">
+            {mobileSearch ? (
+              <div className="admin-table-toolbar__mobile-search">{mobileSearch}</div>
+            ) : null}
+            <button
+              className="admin-mobile-filter-button"
+              type="button"
+              onClick={() => setSheetOpen(true)}
+            >
+              <SlidersHorizontal size={18} aria-hidden="true" />
+              <span className="sr-only">{mobileSheetTitle}</span>
+            </button>
+          </div>
           <dialog
             className="admin-filter-sheet"
             ref={dialogRef}
@@ -100,7 +107,10 @@ export function TableToolbar({
           </dialog>
         </>
       ) : (
-        <div className="admin-table-toolbar__controls">{children}</div>
+        <div className="admin-table-toolbar__controls">
+          {mobileSearch}
+          {children}
+        </div>
       )}
     </div>
   );

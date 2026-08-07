@@ -180,18 +180,22 @@ export function PointReasonsPage() {
       <AdminListPanel
         className="point-panel"
         toolbar={
-          <TableToolbar summary={reasonsQuery.data ? `총 ${reasonsQuery.data.total}건` : undefined}>
-            <label className="point-filter point-filter--search">
-              <span>검색</span>
-              <input
-                value={search}
-                placeholder="사유 또는 사유코드"
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  resetPage();
-                }}
-              />
-            </label>
+          <TableToolbar
+            summary={reasonsQuery.data ? `총 ${reasonsQuery.data.total}건` : undefined}
+            mobileSearch={
+              <label className="point-filter point-filter--search">
+                <span>검색</span>
+                <input
+                  value={search}
+                  placeholder="사유 또는 사유코드"
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    resetPage();
+                  }}
+                />
+              </label>
+            }
+          >
             <label className="point-filter">
               <span>종류</span>
               <AdminSelect

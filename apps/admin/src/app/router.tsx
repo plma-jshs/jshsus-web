@@ -387,12 +387,8 @@ function AdminShell() {
         </nav>
 
         <div className="admin-sidebar-account">
-          <span className="admin-sidebar-account__icon" aria-hidden="true">
-            <UserRound size={18} />
-          </span>
           <div>
             <strong>{accountIdentity || sessionQuery.data.name || '관리자'}</strong>
-            <span>현재 로그인한 계정</span>
           </div>
           <button
             type="button"

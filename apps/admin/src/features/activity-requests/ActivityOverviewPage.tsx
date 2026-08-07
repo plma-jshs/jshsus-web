@@ -158,20 +158,22 @@ export function ActivityOverviewPage() {
           <TableToolbar
             summary={requestsQuery.data ? `총 ${requestsQuery.data.total}건` : undefined}
             className="operation-list-toolbar"
+            mobileSearch={
+              <label className="operation-search-field">
+                <span className="sr-only">탐구활동서 검색</span>
+                <Search size={15} aria-hidden="true" />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    resetPage();
+                  }}
+                  placeholder="내용, 참여자, 장소, 지도교사 검색"
+                />
+              </label>
+            }
           >
-            <label className="operation-search-field">
-              <span className="sr-only">탐구활동서 검색</span>
-              <Search size={15} aria-hidden="true" />
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  resetPage();
-                }}
-                placeholder="내용, 인원, 장소, 지도교사 검색"
-              />
-            </label>
             <DateRangeField
               label="활동일"
               from={startDate}

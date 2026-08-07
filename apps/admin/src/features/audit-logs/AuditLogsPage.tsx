@@ -90,18 +90,27 @@ export function AuditLogsPage() {
       <div className="panel-title audit-log-heading">
         <h2>감사 로그</h2>
       </div>
-      <TableToolbar summary={`총 ${logsQuery.data?.total ?? 0}건`}>
-        <form className="audit-log-filters" onSubmit={submitFilters}>
+      <TableToolbar
+        summary={`총 ${logsQuery.data?.total ?? 0}건`}
+        mobileSearch={
           <label className="audit-log-search">
             <Search size={16} aria-hidden="true" />
             <span className="sr-only">감사 로그 검색</span>
             <input
               type="search"
               value={draft.q}
-              onChange={(event) => setDraft((current) => ({ ...current, q: event.target.value }))}
+              onChange={(event) => {
+                const q = event.target.value;
+                setDraft((current) => ({ ...current, q }));
+                setFilters((current) => ({ ...current, q }));
+                setPage(1);
+              }}
               placeholder="수행자, 작업, 대상 검색"
             />
           </label>
+        }
+      >
+        <form className="audit-log-filters" onSubmit={submitFilters}>
           <DateRangeField
             label="생성일"
             from={draft.from}

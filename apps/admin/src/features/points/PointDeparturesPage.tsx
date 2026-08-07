@@ -364,18 +364,20 @@ export function PointDeparturesPage() {
             toolbar={
               <TableToolbar
                 summary={candidatesQuery.data ? `총 ${candidatesQuery.data.total}명` : undefined}
+                mobileSearch={
+                  <label className="point-filter point-filter--search">
+                    <span>검색</span>
+                    <input
+                      value={search}
+                      placeholder="학번 또는 이름"
+                      onChange={(event) => {
+                        setSearch(event.target.value);
+                        resetPages();
+                      }}
+                    />
+                  </label>
+                }
               >
-                <label className="point-filter point-filter--search">
-                  <span>검색</span>
-                  <input
-                    value={search}
-                    placeholder="학번 또는 이름"
-                    onChange={(event) => {
-                      setSearch(event.target.value);
-                      resetPages();
-                    }}
-                  />
-                </label>
                 <label className="point-filter">
                   <span>학년</span>
                   <AdminSelect

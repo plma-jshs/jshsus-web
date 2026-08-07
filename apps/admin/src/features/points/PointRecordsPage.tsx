@@ -271,18 +271,20 @@ export function PointRecordsPage() {
               </div>
             ) : undefined
           }
+          mobileSearch={
+            <label className="point-filter point-filter--search">
+              <span>검색</span>
+              <input
+                value={search}
+                placeholder="학번, 이름, 사유 또는 처리자"
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  resetPage();
+                }}
+              />
+            </label>
+          }
         >
-          <label className="point-filter point-filter--search">
-            <span>검색</span>
-            <input
-              value={search}
-              placeholder="학번, 이름, 사유 또는 처리자"
-              onChange={(event) => {
-                setSearch(event.target.value);
-                resetPage();
-              }}
-            />
-          </label>
           <label className="point-filter">
             <span>종류</span>
             <AdminSelect
@@ -356,29 +358,18 @@ export function PointRecordsPage() {
               <strong>
                 {record.studentNo} {record.studentName}
               </strong>
-              <span className={record.point < 0 ? 'point-value--danger' : 'point-value--positive'}>
-                {record.point > 0 ? '+' : ''}
-                {record.point}
-              </span>
+              <div className={`point-record-card__score is-${record.reasonType.toLowerCase()}`}>
+                <span>{reasonTypeLabel[record.reasonType]}</span>
+                <strong>
+                  {record.point > 0 ? '+' : ''}
+                  {record.point}점
+                </strong>
+              </div>
             </header>
-            <div className="point-record-card__reason">
-              <span>{reasonTypeLabel[record.reasonType]}</span>
-              <p>{record.reason}</p>
-            </div>
-            <dl>
-              <div>
-                <dt>기준일</dt>
-                <dd>{record.baseDate}</dd>
-              </div>
-              <div>
-                <dt>생성일시</dt>
-                <dd>{formatCreatedAt(record.createdAt)}</dd>
-              </div>
-              <div>
-                <dt>처리자</dt>
-                <dd>{record.teacherName}</dd>
-              </div>
-            </dl>
+            <p className="point-record-card__reason">{record.reason}</p>
+            <footer>
+              {record.baseDate} · 처리자: {record.teacherName || '-'}
+            </footer>
           </article>
         )}
       />

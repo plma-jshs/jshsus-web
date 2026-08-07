@@ -446,6 +446,17 @@ export function CommunityModerationPage({
       <ContentAdminPanel
         title="자유게시판 관리"
         count={postsQuery.data?.length ?? 0}
+        mobileSearch={
+          <label className="content-search-field">
+            <Search size={16} aria-hidden="true" />
+            <span className="sr-only">게시글 검색</span>
+            <input
+              value={postSearch}
+              onChange={(event) => setPostSearch(event.target.value)}
+              placeholder="제목, 작성자 검색"
+            />
+          </label>
+        }
         actions={
           <div className="content-toolbar">
             {sources.length > 1 ? (
@@ -466,15 +477,6 @@ export function CommunityModerationPage({
                 </AdminSelect>
               </label>
             ) : null}
-            <label className="content-search-field">
-              <Search size={16} aria-hidden="true" />
-              <span className="sr-only">게시글 검색</span>
-              <input
-                value={postSearch}
-                onChange={(event) => setPostSearch(event.target.value)}
-                placeholder="제목, 작성자 검색"
-              />
-            </label>
             <label className="content-select-field">
               <span className="sr-only">게시글 공개 상태</span>
               <AdminSelect

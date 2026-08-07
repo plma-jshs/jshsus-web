@@ -10,6 +10,7 @@ type ContentAdminPanelProps = {
   description?: string;
   count?: number;
   actions?: ReactNode;
+  mobileSearch?: ReactNode;
   mobileAction?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -20,6 +21,7 @@ export function ContentAdminPanel({
   description,
   count,
   actions,
+  mobileSearch,
   mobileAction,
   children,
   className,
@@ -32,7 +34,7 @@ export function ContentAdminPanel({
         <div>
           <div className="content-panel-heading">
             <h2>{title}</h2>
-            {typeof count === 'number' ? <span>{count.toLocaleString('ko-KR')}건</span> : null}
+            {typeof count === 'number' ? <span>총 {count.toLocaleString('ko-KR')}건</span> : null}
           </div>
           {description ? <p>{description}</p> : null}
         </div>
@@ -41,7 +43,9 @@ export function ContentAdminPanel({
             {mobileAction ? (
               <div className="content-panel-mobile-action">{mobileAction}</div>
             ) : null}
-            <TableToolbar mobileSheetTitle="필터">{actions}</TableToolbar>
+            <TableToolbar mobileSheetTitle="필터" mobileSearch={mobileSearch}>
+              {actions}
+            </TableToolbar>
           </div>
         ) : null}
       </header>

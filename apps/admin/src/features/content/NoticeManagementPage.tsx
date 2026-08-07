@@ -175,17 +175,19 @@ export function NoticeManagementPage() {
             새 공지
           </a>
         }
+        mobileSearch={
+          <label className="content-search-field">
+            <Search size={16} aria-hidden="true" />
+            <span className="sr-only">공지 검색</span>
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="제목, 작성자 검색"
+            />
+          </label>
+        }
         actions={
           <div className="content-toolbar">
-            <label className="content-search-field">
-              <Search size={16} aria-hidden="true" />
-              <span className="sr-only">공지 검색</span>
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="제목, 작성자 검색"
-              />
-            </label>
             <PageSizeSelect value={pageSize} onChange={setPageSize} />
             <a
               className="primary-button notice-desktop-create"

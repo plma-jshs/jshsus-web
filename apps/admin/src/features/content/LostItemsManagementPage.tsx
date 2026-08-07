@@ -269,17 +269,19 @@ export function LostItemsManagementPage() {
       <ContentAdminPanel
         title="분실물 관리"
         count={lostItemsQuery.data?.length ?? 0}
+        mobileSearch={
+          <label className="content-search-field">
+            <Search size={16} aria-hidden="true" />
+            <span className="sr-only">분실물 검색</span>
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="물품, 장소, 등록자 검색"
+            />
+          </label>
+        }
         actions={
           <div className="content-toolbar">
-            <label className="content-search-field">
-              <Search size={16} aria-hidden="true" />
-              <span className="sr-only">분실물 검색</span>
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="물품, 장소, 등록자 검색"
-              />
-            </label>
             <label className="content-select-field">
               <span className="sr-only">등록 구분</span>
               <AdminSelect

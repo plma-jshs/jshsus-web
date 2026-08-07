@@ -364,8 +364,9 @@ a.content-table-primary:focus-visible {
   }
 
   .content-panel-header {
-    align-items: center;
-    flex-direction: row;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .content-panel-heading h2 {
@@ -380,14 +381,15 @@ a.content-table-primary:focus-visible {
 
   .content-panel-actions {
     display: flex;
-    width: auto;
-    margin-left: auto;
+    width: 100%;
+    margin-left: 0;
     align-items: center;
     gap: 8px;
   }
 
   .content-panel-mobile-action {
     display: block;
+    margin-left: auto;
   }
 
   .notice-mobile-create {
@@ -398,7 +400,8 @@ a.content-table-primary:focus-visible {
   }
 
   .content-panel-actions .admin-table-toolbar {
-    width: auto;
+    width: 100%;
+    flex: 1 0 100%;
   }
 
   .content-panel-actions,

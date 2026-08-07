@@ -1051,3 +1051,124 @@
     grid-column: 1;
   }
 }
+
+@media (max-width: 768px) {
+  .school-calendar-panel {
+    border-inline: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .school-calendar-toolbar {
+    display: grid;
+    padding: 10px 14px 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .school-calendar-navigation {
+    display: grid;
+    width: 100%;
+    grid-column: 1 / -1;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    align-items: center;
+  }
+
+  .school-calendar-navigation h2 {
+    min-width: 0;
+    font-size: 20px;
+  }
+
+  .school-calendar-navigation .icon-button {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .school-calendar-actions {
+    width: auto;
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .school-calendar-actions > label:first-child,
+  .school-calendar-upload-button,
+  .school-calendar-import-panel,
+  .school-calendar-legend {
+    display: none !important;
+  }
+
+  .school-calendar-actions .primary-button {
+    min-height: 40px;
+    padding-inline: 15px;
+    font-size: 13px;
+  }
+
+  .school-calendar-workspace {
+    min-height: 0;
+    display: block;
+    border-top: 0;
+  }
+
+  .school-calendar-side,
+  .school-calendar-event-popover {
+    display: none !important;
+  }
+
+  .school-calendar-grid {
+    padding: 0 6px 10px;
+  }
+
+  .school-calendar-mobile-day-dialog {
+    width: min(calc(100dvw - 20px), 520px);
+    max-width: none;
+    margin: auto auto 10px;
+    border-radius: 18px;
+  }
+
+  .school-calendar-mobile-day-dialog .ui-dialog__layout {
+    max-height: min(62dvh, 520px);
+  }
+
+  .school-calendar-mobile-day-dialog .ui-dialog__body {
+    padding: 8px 14px max(18px, env(safe-area-inset-bottom));
+  }
+
+  .school-calendar-mobile-day-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .school-calendar-mobile-day-list article {
+    display: grid;
+    min-height: 58px;
+    padding: 10px 12px;
+    grid-template-columns: 8px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    border-radius: 11px;
+    background: #f7faf9;
+  }
+
+  .school-calendar-mobile-day-list article > div {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+  }
+
+  .school-calendar-mobile-day-list strong {
+    overflow: hidden;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .school-calendar-mobile-day-list span,
+  .school-calendar-mobile-day-list em {
+    color: var(--j-color-text-muted);
+    font-size: 11px;
+    font-style: normal;
+  }
+}

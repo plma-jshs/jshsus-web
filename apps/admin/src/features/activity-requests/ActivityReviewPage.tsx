@@ -426,17 +426,19 @@ export function ActivityReviewPage() {
               requestsQuery.data ? `대기 ${requestsQuery.data.total}건` : '승인 대기 탐구활동서'
             }
             className="operation-list-toolbar operation-review-toolbar"
+            mobileSearch={
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(1);
+                }}
+                placeholder="학생, 담당 교사, 장소, 활동 목적 검색"
+                aria-label="승인 대기 탐구활동서 검색"
+              />
+            }
           >
-            <input
-              type="search"
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setPage(1);
-              }}
-              placeholder="학생, 담당 교사, 장소, 활동 목적 검색"
-              aria-label="승인 대기 탐구활동서 검색"
-            />
             <PageSizeSelect
               value={pageSize}
               onChange={(value) => {

@@ -10,7 +10,6 @@ import {
   Eye,
   EyeOff,
   Pencil,
-  Plus,
   Trash2,
   Upload,
 } from 'lucide-react';
@@ -388,6 +387,10 @@ function weekdayOf(date: string) {
   return new Date(`${date}T00:00:00Z`).getUTCDay();
 }
 
+function isMobileCalendar() {
+  return window.matchMedia('(max-width: 768px)').matches;
+}
+
 export function SchoolEventsPage() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -396,6 +399,7 @@ export function SchoolEventsPage() {
   const [selectedDate, setSelectedDate] = useState(today);
   const [visibility, setVisibility] = useState<'all' | 'public' | 'private'>('all');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [mobileDayOpen, setMobileDayOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<EventForm>(() => blankForm(today));
@@ -496,6 +500,7 @@ export function SchoolEventsPage() {
     setMonth(next);
     setSelectedDate(`${next}-01`);
     setSelectedEventId(null);
+    setMobileDayOpen(false);
   };
   const openCreate = (date = selectedDate) => {
     setEditingId(null);
@@ -589,7 +594,7 @@ export function SchoolEventsPage() {
               </AdminSelect>
             </label>
             <button className="primary-button" type="button" onClick={() => openCreate()}>
-              <Plus size={16} /> 새 일정
+              새 일정
             </button>
             <label className="quiet-button school-calendar-upload-button">
               <Upload size={16} />
@@ -691,6 +696,7 @@ export function SchoolEventsPage() {
                               onClick={() => {
                                 setSelectedDate(date);
                                 setSelectedEventId(null);
+                                if (isMobileCalendar()) setMobileDayOpen(true);
                               }}
                               aria-label={`${date} 선택`}
                             >
@@ -740,15 +746,19 @@ export function SchoolEventsPage() {
                                   gridRow: segment.lane + 1,
                                 }}
                                 onClick={(event) => {
-                                  setSelectedDate(
-                                    clickedSegmentDate(
-                                      event,
-                                      week,
-                                      segment.startColumn,
-                                      segment.endColumn,
-                                    ),
+                                  const clickedDate = clickedSegmentDate(
+                                    event,
+                                    week,
+                                    segment.startColumn,
+                                    segment.endColumn,
                                   );
-                                  setSelectedEventId(segment.event.id);
+                                  setSelectedDate(clickedDate);
+                                  if (isMobileCalendar()) {
+                                    setSelectedEventId(null);
+                                    setMobileDayOpen(true);
+                                  } else {
+                                    setSelectedEventId(segment.event.id);
+                                  }
                                 }}
                                 onMouseEnter={(event) =>
                                   setPopover({
@@ -830,6 +840,30 @@ export function SchoolEventsPage() {
           </aside>
         </div>
       </section>
+
+      <Dialog
+        className="school-calendar-mobile-day-dialog"
+        open={mobileDayOpen}
+        onClose={() => setMobileDayOpen(false)}
+        title={formatCalendarDate(selectedDate, false)}
+      >
+        {selectedDateEvents.length ? (
+          <div className="school-calendar-mobile-day-list">
+            {selectedDateEvents.map((event) => (
+              <article key={event.id} className={eventTone(event)}>
+                <i className={`source-dot ${eventTone(event)}`} aria-hidden="true" />
+                <div>
+                  <strong>{event.title}</strong>
+                  <span>{formatPeriod(event)}</span>
+                </div>
+                {!event.isPublic ? <em>비공개</em> : null}
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-text compact-empty">등록된 일정이 없습니다.</p>
+        )}
+      </Dialog>
 
       <Drawer
         open={Boolean(selectedEvent)}

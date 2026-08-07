@@ -11,6 +11,10 @@
   font-weight: var(--j-weight-semibold);
 }
 
+.point-overview-mobile-table-wrap {
+  display: none;
+}
+
 .point-filter {
   display: grid;
   min-width: 112px;
@@ -466,6 +470,71 @@
 }
 
 @media (max-width: 620px) {
+  .admin-table-toolbar__mobile-search .point-filter {
+    width: 100%;
+  }
+
+  .admin-table-toolbar__mobile-search .point-filter > span {
+    display: none;
+  }
+
+  .point-overview-mobile-table-wrap {
+    display: block;
+    margin-inline: -1px;
+    overflow: hidden;
+    border-block: 1px solid var(--line);
+  }
+
+  .point-overview-mobile-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 12px;
+  }
+
+  .point-overview-mobile-table th,
+  .point-overview-mobile-table td {
+    min-width: 0;
+    padding: 10px 5px;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+    text-align: center;
+  }
+
+  .point-overview-mobile-table th {
+    background: #fafcfb;
+    color: var(--j-color-text-secondary);
+    font-size: 11px;
+    font-weight: var(--j-weight-semibold);
+  }
+
+  .point-overview-mobile-table th:first-child,
+  .point-overview-mobile-table td:first-child {
+    width: 42%;
+    padding-left: 14px;
+    text-align: left;
+  }
+
+  .point-overview-mobile-table td:first-child strong,
+  .point-overview-mobile-table td:first-child a {
+    display: block;
+  }
+
+  .point-overview-mobile-table td:first-child strong {
+    color: var(--j-color-text);
+    font-size: 13px;
+  }
+
+  .point-overview-mobile-table td:first-child a {
+    margin-top: 2px;
+    color: var(--primary-dark);
+    font-size: 11px;
+    text-decoration: none;
+  }
+
+  .point-overview-panel .admin-data-table > .table-wrap {
+    display: none;
+  }
+
   .point-award-fields,
   .point-semester-form {
     grid-template-columns: 1fr;
@@ -520,7 +589,7 @@
 
   .point-record-card {
     display: grid;
-    gap: 11px;
+    gap: 12px;
   }
 
   .point-record-card header {
@@ -537,65 +606,53 @@
     white-space: nowrap;
   }
 
-  .point-record-card header > span:last-child {
-    font-size: 16px;
-    font-weight: var(--j-weight-bold);
+  .point-record-card__score {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    white-space: nowrap;
   }
 
-  .point-record-card__reason {
-    display: flex;
-    min-width: 0;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .point-record-card__reason > span {
-    min-height: 23px;
+  .point-record-card__score span {
     padding: 3px 7px;
-    flex: none;
     border-radius: 999px;
-    background: var(--sidebar-soft);
+    background: #edf7f4;
     color: var(--primary-dark);
-    font-size: 11px;
-    font-weight: var(--j-weight-semibold);
-  }
-
-  .point-record-card__reason p {
-    margin: 1px 0 0;
-    overflow-wrap: anywhere;
-    color: var(--j-color-text-secondary);
-    font-size: 13px;
-    line-height: 1.5;
-  }
-
-  .point-record-card dl {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin: 0;
-    gap: 8px 14px;
-  }
-
-  .point-record-card dl > div {
-    min-width: 0;
-  }
-
-  .point-record-card dt,
-  .point-record-card dd {
-    margin: 0;
-  }
-
-  .point-record-card dt {
-    color: var(--muted);
     font-size: 10px;
     font-weight: var(--j-weight-semibold);
   }
 
-  .point-record-card dd {
-    margin-top: 2px;
-    overflow: hidden;
-    color: var(--j-color-text-secondary);
-    font-size: 12px;
-    text-overflow: ellipsis;
+  .point-record-card__score strong {
+    color: var(--primary-dark);
+    font-size: 13px;
+  }
+
+  .point-record-card__score.is-minus span {
+    background: #fff0ef;
+    color: #c53f38;
+  }
+
+  .point-record-card__score.is-minus strong {
+    color: var(--danger);
+  }
+
+  .point-record-card__score.is-etc span {
+    background: #f2f3f5;
+    color: #59636e;
+  }
+
+  .point-record-card__reason {
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: var(--j-color-text);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .point-record-card footer {
+    color: var(--muted);
+    font-size: 11px;
     white-space: nowrap;
   }
 

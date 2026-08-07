@@ -100,18 +100,22 @@ export function PointsOverviewPage() {
     <AdminListPanel
       className="point-panel point-overview-panel"
       toolbar={
-        <TableToolbar summary={query.data ? `총 ${query.data.total}명` : undefined}>
-          <label className="point-filter point-filter--search">
-            <span>검색</span>
-            <input
-              value={search}
-              placeholder="학번 또는 이름"
-              onChange={(event) => {
-                setSearch(event.target.value);
-                resetPage();
-              }}
-            />
-          </label>
+        <TableToolbar
+          summary={query.data ? `총 ${query.data.total}명` : undefined}
+          mobileSearch={
+            <label className="point-filter point-filter--search">
+              <span>검색</span>
+              <input
+                value={search}
+                placeholder="학번 또는 이름"
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  resetPage();
+                }}
+              />
+            </label>
+          }
+        >
           <label className="point-filter">
             <span>학년</span>
             <AdminSelect
@@ -156,6 +160,47 @@ export function PointsOverviewPage() {
         </TableToolbar>
       }
     >
+      <div className="point-overview-mobile-table-wrap">
+        <table className="point-overview-mobile-table">
+          <thead>
+            <tr>
+              <th>학생 정보</th>
+              <th>상점</th>
+              <th>벌점</th>
+              <th>총계</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(query.data?.items ?? []).map((student) => (
+              <tr key={student.id}>
+                <td>
+                  <strong>{student.name}</strong>
+                  <a
+                    href={`/points/records?search=${encodeURIComponent(String(student.studentNo))}`}
+                  >
+                    {student.studentNo}
+                  </a>
+                </td>
+                <td>{student.meritPoint}</td>
+                <td className={student.penaltyPoint > 0 ? 'point-value--danger' : undefined}>
+                  {student.penaltyPoint}
+                </td>
+                <td
+                  className={
+                    student.currentPoint < 0
+                      ? 'point-value--danger'
+                      : student.currentPoint > 0
+                        ? 'point-value--positive'
+                        : undefined
+                  }
+                >
+                  <strong>{formatSignedPoint(student.currentPoint)}</strong>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <DataTable
         columns={columns}
         data={query.data?.items ?? []}

@@ -225,6 +225,20 @@ export function WakeSongsPage() {
         className="wake-song-admin-toolbar"
         summary={`총 ${pageData?.total ?? 0}건`}
         mobileSheetTitle="기상곡 필터"
+        mobileSearch={
+          <div className="wake-song-admin-search">
+            <label>
+              <span className="sr-only">신청 검색</span>
+              <Search size={15} aria-hidden="true" />
+              <input
+                type="text"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="영상, 신청자, 메모 검색"
+              />
+            </label>
+          </div>
+        }
       >
         <SegmentedTabs
           value={status}
@@ -235,18 +249,6 @@ export function WakeSongsPage() {
             setPage(1);
           }}
         />
-        <div className="wake-song-admin-search">
-          <label>
-            <span className="sr-only">신청 검색</span>
-            <Search size={15} aria-hidden="true" />
-            <input
-              type="text"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="영상, 신청자, 메모 검색"
-            />
-          </label>
-        </div>
         <PageSizeSelect
           value={pageSize}
           onChange={(nextPageSize) => {

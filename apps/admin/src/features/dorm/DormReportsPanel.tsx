@@ -136,14 +136,18 @@ export function DormReportsPanel({
 
   return (
     <section className="admin-panel">
-      <TableToolbar summary={`총 ${filtered.length}건`}>
-        <input
-          className="dorm-search-control"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="호실, 학생, 내용 검색"
-          aria-label="민원 검색"
-        />
+      <TableToolbar
+        summary={`총 ${filtered.length}건`}
+        mobileSearch={
+          <input
+            className="dorm-search-control"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="호실, 학생, 내용 검색"
+            aria-label="민원 검색"
+          />
+        }
+      >
         <AdminSelect
           value={status}
           onChange={(event) => setStatus(event.target.value as '' | DormReportStatus)}
