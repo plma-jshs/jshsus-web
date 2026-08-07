@@ -41,6 +41,7 @@ type AdminNavEntry = {
   icon: LucideIcon;
   permissions?: string[];
   roles?: string[];
+  desktopOnly?: boolean;
 };
 
 type AdminNavGroup = {
@@ -92,6 +93,7 @@ const adminNavigation: AdminNavGroup[] = [
         to: '/points/departures',
         icon: School,
         permissions: ['points.manage'],
+        desktopOnly: true,
       },
     ],
   },
@@ -143,6 +145,7 @@ const adminNavigation: AdminNavGroup[] = [
         to: '/wake-songs',
         icon: Music2,
         permissions: ['wake_songs.review'],
+        desktopOnly: true,
       },
     ],
   },
@@ -154,12 +157,14 @@ const adminNavigation: AdminNavGroup[] = [
         to: '/users',
         icon: School,
         permissions: ['users.manage'],
+        desktopOnly: true,
       },
       {
         label: 'IAM 권한',
         to: '/iam',
         icon: KeyRound,
         permissions: ['iam.manage'],
+        desktopOnly: true,
       },
     ],
   },
@@ -240,6 +245,9 @@ function AdminShell() {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
   const activeRoute =
     routeTitles.find((route) => pathname.startsWith(route.prefix)) ?? routeTitles.at(-1)!;
+  const isMobileDesktopOnlyRoute = ['/points/departures', '/wake-songs', '/users', '/iam'].some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
   const sessionQuery = useQuery({
     queryKey: ['admin-session'],
     queryFn: api.session,
@@ -302,12 +310,16 @@ function AdminShell() {
     identifier?: string | number;
     teacherNo?: string | number;
   };
-  const accountIdentity = [
-    identitySession.identifier ?? identitySession.teacherNo ?? sessionQuery.data.stuid,
-    sessionQuery.data.name,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const isLocalTestSession =
+    import.meta.env.DEV && String(sessionQuery.data.stuid ?? '') === '9999';
+  const accountIdentity = isLocalTestSession
+    ? sessionQuery.data.name
+    : [
+        identitySession.identifier ?? identitySession.teacherNo ?? sessionQuery.data.stuid,
+        sessionQuery.data.name,
+      ]
+        .filter(Boolean)
+        .join(' ');
 
   if (!canUseAdmin) {
     return (
@@ -365,7 +377,10 @@ function AdminShell() {
 
         <nav className="admin-nav" aria-label="관리자 메뉴">
           {visibleNavigation.map((group) => (
-            <section className="admin-nav-group" key={group.label}>
+            <section
+              className={`admin-nav-group${group.entries.every((entry) => entry.desktopOnly) ? ' desktop-only-group' : ''}`}
+              key={group.label}
+            >
               <span className="admin-nav-heading">{group.label}</span>
               {group.entries.map((entry) => {
                 const Icon = entry.icon;
@@ -373,7 +388,7 @@ function AdminShell() {
                   <Link
                     key={entry.to}
                     to={entry.to as never}
-                    className={`admin-nav-item${activeNavigationTarget === entry.to ? ' active' : ''}`}
+                    className={`admin-nav-item${entry.desktopOnly ? ' desktop-only' : ''}${activeNavigationTarget === entry.to ? ' active' : ''}`}
                     activeOptions={{ exact: true }}
                     onClick={() => setMobileNavigationOpen(false)}
                   >
@@ -442,8 +457,15 @@ function AdminShell() {
             </button>
           </div>
         </header>
-        <div className="admin-content">
-          <Outlet />
+        <div className={`admin-content${isMobileDesktopOnlyRoute ? ' is-desktop-only-route' : ''}`}>
+          {isMobileDesktopOnlyRoute ? (
+            <section className="admin-mobile-pc-only-route">
+              <strong>PC에서 접속해 주세요.</strong>
+            </section>
+          ) : null}
+          <div className="admin-route-outlet">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>

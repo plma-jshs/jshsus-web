@@ -195,6 +195,11 @@ export function PointReasonsPage() {
                 />
               </label>
             }
+            mobileActions={
+              <Button variant="primary" onClick={openCreate}>
+                사유 추가
+              </Button>
+            }
           >
             <label className="point-filter">
               <span>종류</span>
@@ -218,9 +223,6 @@ export function PointReasonsPage() {
                 resetPage();
               }}
             />
-            <Button variant="primary" onClick={openCreate}>
-              사유 추가
-            </Button>
           </TableToolbar>
         }
       >

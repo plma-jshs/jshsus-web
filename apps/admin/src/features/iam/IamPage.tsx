@@ -121,10 +121,6 @@ export function IamPage() {
 
   return (
     <div className="iam-page">
-      <section className="iam-mobile-pc-only" aria-label="PC 접속 안내">
-        <strong>PC에서 접속해 주세요.</strong>
-        <p>IAM 권한 관리는 안전한 권한 변경을 위해 PC 환경에서만 제공됩니다.</p>
-      </section>
       <section className="iam-panel">
         <header className="iam-panel-header">
           <div>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type HTMLAttributes, type ReactNode } from
 export type TableToolbarProps = HTMLAttributes<HTMLDivElement> & {
   summary?: ReactNode;
   mobileSearch?: ReactNode;
+  mobileActions?: ReactNode;
   children?: ReactNode;
   mobileSheet?: boolean;
   mobileSheetTitle?: string;
@@ -27,6 +28,7 @@ function useMobileToolbar() {
 export function TableToolbar({
   summary,
   mobileSearch,
+  mobileActions,
   children,
   className,
   mobileSheet = true,
@@ -58,58 +60,66 @@ export function TableToolbar({
   return (
     <div {...props} className={classes}>
       <div className="admin-table-toolbar__summary">{summary}</div>
-      {useSheet ? (
+      {mobile ? (
         <>
           <div className="admin-table-toolbar__mobile-row">
             {mobileSearch ? (
               <div className="admin-table-toolbar__mobile-search">{mobileSearch}</div>
             ) : null}
-            <button
-              className="admin-mobile-filter-button"
-              type="button"
-              onClick={() => setSheetOpen(true)}
-            >
-              <SlidersHorizontal size={18} aria-hidden="true" />
-              <span className="sr-only">{mobileSheetTitle}</span>
-            </button>
+            {useSheet ? (
+              <button
+                className="admin-mobile-filter-button"
+                type="button"
+                onClick={() => setSheetOpen(true)}
+              >
+                <SlidersHorizontal size={18} aria-hidden="true" />
+                <span className="sr-only">{mobileSheetTitle}</span>
+              </button>
+            ) : null}
+            {mobileActions ? (
+              <div className="admin-table-toolbar__mobile-actions">{mobileActions}</div>
+            ) : null}
           </div>
-          <dialog
-            className="admin-filter-sheet"
-            ref={dialogRef}
-            onCancel={(event) => {
-              event.preventDefault();
-              setSheetOpen(false);
-            }}
-            onClick={(event) => {
-              if (event.target === event.currentTarget) setSheetOpen(false);
-            }}
-          >
-            <div className="admin-filter-sheet__layout">
-              <header>
-                <h2>{mobileSheetTitle}</h2>
-                <button
-                  type="button"
-                  aria-label={`${mobileSheetTitle} 닫기`}
-                  onClick={() => setSheetOpen(false)}
-                >
-                  <X size={20} aria-hidden="true" />
-                </button>
-              </header>
-              <div className="admin-table-toolbar__controls admin-filter-sheet__controls">
-                {children}
+          {useSheet ? (
+            <dialog
+              className="admin-filter-sheet"
+              ref={dialogRef}
+              onCancel={(event) => {
+                event.preventDefault();
+                setSheetOpen(false);
+              }}
+              onClick={(event) => {
+                if (event.target === event.currentTarget) setSheetOpen(false);
+              }}
+            >
+              <div className="admin-filter-sheet__layout">
+                <header>
+                  <h2>{mobileSheetTitle}</h2>
+                  <button
+                    type="button"
+                    aria-label={`${mobileSheetTitle} 닫기`}
+                    onClick={() => setSheetOpen(false)}
+                  >
+                    <X size={20} aria-hidden="true" />
+                  </button>
+                </header>
+                <div className="admin-table-toolbar__controls admin-filter-sheet__controls">
+                  {children}
+                </div>
+                <footer>
+                  <button type="button" onClick={() => setSheetOpen(false)}>
+                    적용
+                  </button>
+                </footer>
               </div>
-              <footer>
-                <button type="button" onClick={() => setSheetOpen(false)}>
-                  적용
-                </button>
-              </footer>
-            </div>
-          </dialog>
+            </dialog>
+          ) : null}
         </>
       ) : (
         <div className="admin-table-toolbar__controls">
           {mobileSearch}
           {children}
+          {mobileActions}
         </div>
       )}
     </div>

@@ -79,6 +79,24 @@
 }
 
 @media (max-width: 640px) {
+  .admin-nav-item.desktop-only,
+  .admin-nav-group.desktop-only-group {
+    display: none;
+  }
+
+  .admin-mobile-pc-only-route {
+    display: grid;
+    min-height: calc(100dvh - 110px);
+    padding: 24px;
+    place-items: center;
+    color: var(--j-color-text-secondary);
+    text-align: center;
+  }
+
+  .admin-content.is-desktop-only-route .admin-route-outlet {
+    display: none;
+  }
+
   html,
   body,
   #root,

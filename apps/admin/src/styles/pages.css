@@ -302,6 +302,10 @@
   padding: 26px 30px 48px;
 }
 
+.admin-mobile-pc-only-route {
+  display: none;
+}
+
 .access-denied-panel {
   display: flex;
   align-items: flex-start;

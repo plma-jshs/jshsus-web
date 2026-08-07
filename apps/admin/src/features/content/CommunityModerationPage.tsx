@@ -461,8 +461,9 @@ export function CommunityModerationPage({
           <div className="content-toolbar">
             {sources.length > 1 ? (
               <label className="content-select-field">
-                <span className="sr-only">게시판 선택</span>
                 <AdminSelect
+                  mobileLabel="게시판"
+                  aria-label="게시판 선택"
                   value={activeSource.slug}
                   onChange={(event) => {
                     setActiveBoardSlug(event.target.value);
@@ -478,8 +479,9 @@ export function CommunityModerationPage({
               </label>
             ) : null}
             <label className="content-select-field">
-              <span className="sr-only">게시글 공개 상태</span>
               <AdminSelect
+                mobileLabel="상태"
+                aria-label="게시글 공개 상태"
                 value={postVisibility}
                 onChange={(event) => setPostVisibility(event.target.value as typeof postVisibility)}
               >
@@ -531,8 +533,9 @@ export function CommunityModerationPage({
           <>
             <label className="content-select-field">
               <ShieldAlert size={16} aria-hidden="true" />
-              <span className="sr-only">신고 상태 필터</span>
               <AdminSelect
+                mobileLabel="상태"
+                aria-label="신고 상태 필터"
                 value={reportStatus}
                 onChange={(event) => setReportStatus(event.target.value)}
               >

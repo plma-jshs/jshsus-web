@@ -1,5 +1,5 @@
-import type { ChangeEvent, FormEvent, MouseEvent } from 'react';
-import { useMemo, useState } from 'react';
+import type { ChangeEvent, FormEvent, MouseEvent, TouchEvent } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -18,6 +18,7 @@ import {
   ConfirmDialog,
   Dialog,
   Drawer,
+  EmptyState,
   RowActionButton,
   RowActions,
   useToast,
@@ -408,6 +409,8 @@ export function SchoolEventsPage() {
   const [jsonImport, setJsonImport] = useState<JsonImportPreview | null>(null);
   const [jsonImportError, setJsonImportError] = useState<string | null>(null);
   const [popover, setPopover] = useState<CalendarPopover | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const [slideDirection, setSlideDirection] = useState<'previous' | 'next' | null>(null);
 
   const days = useMemo(() => calendarDays(month), [month]);
   const weeks = useMemo(() => calendarWeeks(days), [days]);
@@ -496,11 +499,26 @@ export function SchoolEventsPage() {
   });
 
   const moveMonth = (offset: number) => {
+    setSlideDirection(offset < 0 ? 'previous' : 'next');
     const next = shiftMonth(month, offset);
     setMonth(next);
     setSelectedDate(`${next}-01`);
     setSelectedEventId(null);
     setMobileDayOpen(false);
+  };
+  const handleCalendarTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    touchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
+  };
+  const handleCalendarTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = touchStartRef.current;
+    const touch = event.changedTouches[0];
+    touchStartRef.current = null;
+    if (!start || !touch) return;
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+    moveMonth(deltaX < 0 ? 1 : -1);
   };
   const openCreate = (date = selectedDate) => {
     setEditingId(null);
@@ -667,7 +685,13 @@ export function SchoolEventsPage() {
 
         <div className="school-calendar-workspace">
           <div className="school-calendar-main">
-            <div className="school-calendar-grid" aria-label={`${monthLabel(month)} 달력`}>
+            <div
+              className={`school-calendar-grid${slideDirection ? ` is-${slideDirection}` : ''}`}
+              aria-label={`${monthLabel(month)} 달력`}
+              onAnimationEnd={() => setSlideDirection(null)}
+              onTouchStart={handleCalendarTouchStart}
+              onTouchEnd={handleCalendarTouchEnd}
+            >
               {WEEKDAYS.map((weekday, index) => (
                 <div className={`school-calendar-weekday weekday-${index}`} key={weekday}>
                   {weekday}
@@ -696,7 +720,7 @@ export function SchoolEventsPage() {
                               onClick={() => {
                                 setSelectedDate(date);
                                 setSelectedEventId(null);
-                                if (isMobileCalendar()) setMobileDayOpen(true);
+                                if (isMobileCalendar()) setMobileDayOpen(dateEvents.length > 0);
                               }}
                               aria-label={`${date} 선택`}
                             >
@@ -834,7 +858,7 @@ export function SchoolEventsPage() {
                   ))}
                 </div>
               ) : (
-                <p className="empty-text compact-empty">등록된 일정이 없습니다.</p>
+                <EmptyState compact title="등록된 일정이 없습니다." />
               )}
             </section>
           </aside>
@@ -861,7 +885,7 @@ export function SchoolEventsPage() {
             ))}
           </div>
         ) : (
-          <p className="empty-text compact-empty">등록된 일정이 없습니다.</p>
+          <EmptyState compact title="등록된 일정이 없습니다." />
         )}
       </Dialog>
 

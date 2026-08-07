@@ -42,4 +42,34 @@
   .audit-log-search {
     width: 100%;
   }
+
+  .audit-log-mobile-card {
+    display: grid;
+    gap: 6px;
+  }
+
+  .audit-log-mobile-card header {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .audit-log-mobile-card header strong {
+    overflow: hidden;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .audit-log-mobile-card header span,
+  .audit-log-mobile-card p {
+    color: var(--j-color-text-muted);
+    font-size: 11px;
+  }
+
+  .audit-log-mobile-card p {
+    margin: 0;
+  }
 }

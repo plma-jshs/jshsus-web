@@ -290,25 +290,28 @@ export function DeviceCasesPage() {
           summary={`총 ${cases.length.toLocaleString('ko-KR')}대${
             hasSelectedCases ? ` · 선택 ${selectedCount.toLocaleString('ko-KR')}대` : ''
           }`}
+          mobileSheet={false}
+          mobileActions={
+            <div className="device-control-actions">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => runBulkCommand('open')}
+                disabled={isCommandPending || cases.length === 0}
+              >
+                {hasSelectedCases ? '선택 해제' : '전체 해제'}
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => runBulkCommand('close')}
+                disabled={isCommandPending || cases.length === 0}
+              >
+                {hasSelectedCases ? '선택 잠금' : '전체 잠금'}
+              </Button>
+            </div>
+          }
         >
-          <div className="device-control-actions">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => runBulkCommand('open')}
-              disabled={isCommandPending || cases.length === 0}
-            >
-              {hasSelectedCases ? '선택 해제' : '전체 해제'}
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => runBulkCommand('close')}
-              disabled={isCommandPending || cases.length === 0}
-            >
-              {hasSelectedCases ? '선택 잠금' : '전체 잠금'}
-            </Button>
-          </div>
           <PageSizeSelect value={casePageSize} onChange={setCasePageSize} />
         </TableToolbar>
         <DataTable
@@ -331,7 +334,6 @@ export function DeviceCasesPage() {
               </header>
               <p>
                 <span>{deviceCase.isOpen ? '열림' : '잠김'}</span>
-                <span>{formatDateTime(deviceCase.lastSeenAt)}</span>
               </p>
             </article>
           )}

@@ -248,6 +248,10 @@
   max-width: none !important;
 }
 
+.admin-filter-sheet__controls > .point-filter {
+  grid-column: 1 / -1;
+}
+
 .admin-filter-sheet__controls .ui-page-size-select {
   display: none !important;
 }
@@ -328,7 +332,6 @@
 
 .admin-filter-sheet footer {
   padding: 12px 18px max(12px, env(safe-area-inset-bottom));
-  border-top: 1px solid var(--line);
 }
 
 .admin-filter-sheet footer button {

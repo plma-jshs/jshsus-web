@@ -15,6 +15,7 @@ import {
   AdminListPanel,
   Button,
   Drawer,
+  EmptyState,
   PageSizeSelect,
   RowActionButton,
   RowActions,
@@ -582,7 +583,7 @@ export function ActivityReviewPage() {
                 <p className="form-error">학생을 불러오지 못했습니다.</p>
               ) : null}
               {!studentsQuery.isPending && filteredStudents.length === 0 ? (
-                <p>검색 결과가 없습니다.</p>
+                <EmptyState compact title="검색 결과가 없습니다." />
               ) : null}
               {filteredStudents.map((student) => (
                 <div key={student.studentId} role="listitem">

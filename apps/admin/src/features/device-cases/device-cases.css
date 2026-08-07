@@ -44,7 +44,15 @@
 
 @media (max-width: 720px) {
   .device-control-actions {
-    justify-content: flex-start;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+
+  .device-control-actions .ui-button--sm {
+    min-height: 44px;
+    padding-inline: 10px;
+    font-size: 12px;
   }
 
   .device-mobile-card > header {
@@ -75,7 +83,7 @@
     display: flex;
     margin: 7px 0 0;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 10px;
     color: var(--j-color-text-muted);
     font-size: 11px;

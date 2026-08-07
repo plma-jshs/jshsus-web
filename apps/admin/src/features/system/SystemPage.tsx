@@ -41,9 +41,6 @@ export function SystemPage() {
     <section className="admin-panel system-status-panel">
       <div className="panel-title system-status-heading">
         <div className="panel-title-copy">
-          <span className="system-status-icon" aria-hidden="true">
-            <Server size={18} />
-          </span>
           <div>
             <h2>시스템 상태</h2>
             <span className={`system-status-badge ${healthy ? 'healthy' : 'unhealthy'}`}>

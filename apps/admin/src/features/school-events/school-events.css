@@ -1070,21 +1070,18 @@
     display: grid;
     width: 100%;
     grid-column: 1 / -1;
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    grid-template-columns: minmax(0, 1fr);
     align-items: center;
   }
 
   .school-calendar-navigation h2 {
     min-width: 0;
     font-size: 20px;
+    text-align: center;
   }
 
   .school-calendar-navigation .icon-button {
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    border: 0;
-    background: transparent;
+    display: none;
   }
 
   .school-calendar-actions {
@@ -1118,14 +1115,143 @@
   }
 
   .school-calendar-grid {
-    padding: 0 6px 10px;
+    padding: 0 0 18px;
+    gap: 0;
+    touch-action: pan-y;
+    animation-duration: 180ms;
+    animation-timing-function: ease-out;
+  }
+
+  .school-calendar-grid.is-next {
+    animation-name: admin-calendar-slide-next;
+  }
+
+  .school-calendar-grid.is-previous {
+    animation-name: admin-calendar-slide-previous;
+  }
+
+  .school-calendar-weekday {
+    min-height: 26px;
+    padding: 4px 2px;
+    border: 0;
+    background: transparent;
+    color: #111827;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .school-calendar-weekday.weekday-0 {
+    color: #df3f3f;
+  }
+
+  .school-calendar-weekday.weekday-6 {
+    color: #3974af;
+  }
+
+  .school-calendar-week,
+  .school-calendar-week-days,
+  .school-calendar-day {
+    min-height: 93px;
+  }
+
+  .school-calendar-week-days {
+    height: 93px;
+    gap: 3px;
+    padding-inline: 2px;
+  }
+
+  .school-calendar-day {
+    min-height: 93px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 8px;
+    background: #fefefe;
+  }
+
+  .school-calendar-day.outside {
+    background: #fdfefe;
+  }
+
+  .school-calendar-day.selected {
+    background: #fefefe;
+    box-shadow: inset 0 0 0 0.75px #4b5563;
+  }
+
+  .school-calendar-day.selected .school-calendar-date:not(.today) {
+    color: var(--j-color-text);
+    background: transparent;
+    font-weight: 500;
+  }
+
+  .school-calendar-date {
+    top: 1px;
+    left: 50%;
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
+    margin: 0;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .outside .school-calendar-date {
+    color: #e4eaed;
+  }
+
+  .school-calendar-date.today,
+  .school-calendar-day.selected .school-calendar-date.today {
+    width: auto;
+    min-width: 0;
+    height: auto;
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: #fff;
+    background: #111827;
+    font-weight: 600;
+    line-height: 14px;
+  }
+
+  .school-calendar-events {
+    top: 25px;
+    right: 2px;
+    left: 2px;
+    grid-template-rows: repeat(3, 18px);
+    column-gap: 3px;
+    row-gap: 1px;
+  }
+
+  .school-calendar-event,
+  .school-calendar-event.is-inline {
+    height: 17px;
+    min-height: 17px;
+    max-height: 17px;
+    margin-inline: 2px;
+    padding: 0 2px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 12px;
+  }
+
+  .school-calendar-event.is-inline,
+  .school-calendar-event.schedule {
+    color: #9ba4aa;
+    background: #f0f2f3;
+  }
+
+  .school-calendar-day.outside + .school-calendar-event,
+  .school-calendar-event.is-outside-month {
+    opacity: 0.08;
   }
 
   .school-calendar-mobile-day-dialog {
-    width: min(calc(100dvw - 20px), 520px);
+    width: 100dvw;
     max-width: none;
-    margin: auto auto 10px;
-    border-radius: 18px;
+    margin: auto 0 0;
+    border-width: 1px 0 0;
+    border-radius: 20px 20px 0 0;
   }
 
   .school-calendar-mobile-day-dialog .ui-dialog__layout {
@@ -1170,5 +1296,27 @@
     color: var(--j-color-text-muted);
     font-size: 11px;
     font-style: normal;
+  }
+}
+
+@keyframes admin-calendar-slide-next {
+  from {
+    transform: translateX(18px);
+    opacity: 0.72;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes admin-calendar-slide-previous {
+  from {
+    transform: translateX(-18px);
+    opacity: 0.72;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }

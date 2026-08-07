@@ -184,13 +184,13 @@
 
   .admin-row-actions__mobile-trigger {
     display: grid;
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     padding: 0;
     place-items: center;
     border: 0;
     border-radius: 50%;
-    background: var(--j-color-surface-subtle);
+    background: transparent;
     color: var(--j-color-text-secondary);
   }
 
@@ -257,8 +257,9 @@
     padding: 0 14px;
     justify-content: flex-start;
     gap: 0;
-    border: 0;
-    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--j-color-surface-subtle);
     color: var(--j-color-text);
     font-size: 15px;
     font-weight: var(--j-weight-semibold);
@@ -269,6 +270,8 @@
   }
 
   .admin-row-action-sheet__actions .admin-row-action-button.ui-button--danger {
+    border-color: color-mix(in srgb, var(--danger) 18%, var(--line));
+    background: color-mix(in srgb, var(--danger) 6%, white);
     color: var(--danger);
   }
 

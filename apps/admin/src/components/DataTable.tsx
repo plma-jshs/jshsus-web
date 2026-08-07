@@ -19,6 +19,7 @@ import {
   type DataTableColumnKind,
   type DataTableWidthPreset,
 } from './dataTableConfig';
+import { EmptyState } from './ui/EmptyState';
 
 export type DataTableAlignment = 'left' | 'center' | 'right';
 
@@ -303,7 +304,7 @@ export function DataTable<T>({
             ) : visibleRows.length === 0 ? (
               <tr>
                 <td className="admin-data-table__empty-cell" colSpan={visibleColumnCount}>
-                  {emptyText}
+                  <EmptyState compact title={emptyText} />
                 </td>
               </tr>
             ) : (
@@ -351,7 +352,7 @@ export function DataTable<T>({
           {loading ? (
             <div className="admin-mobile-card-list__status">{loadingText}</div>
           ) : visibleRows.length === 0 ? (
-            <div className="admin-mobile-card-list__status">{emptyText}</div>
+            <EmptyState compact title={emptyText} />
           ) : (
             visibleRows.map((row, index) => (
               <div className="admin-mobile-data-card" key={row.id}>

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { AdminAuditLog, AdminAuditLogListQuery } from '@jshsus/types';
@@ -62,8 +62,7 @@ export function AuditLogsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [sorting, setSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
-  const [draft, setDraft] = useState({ q: '', from: '', to: '' });
-  const [filters, setFilters] = useState(draft);
+  const [filters, setFilters] = useState({ q: '', from: '', to: '' });
   const query: AdminAuditLogListQuery = {
     page,
     pageSize,
@@ -79,12 +78,6 @@ export function AuditLogsPage() {
     placeholderData: keepPreviousData,
   });
 
-  const submitFilters = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setPage(1);
-    setFilters(draft);
-  };
-
   return (
     <section className="admin-panel audit-log-panel">
       <div className="panel-title audit-log-heading">
@@ -98,10 +91,9 @@ export function AuditLogsPage() {
             <span className="sr-only">감사 로그 검색</span>
             <input
               type="search"
-              value={draft.q}
+              value={filters.q}
               onChange={(event) => {
                 const q = event.target.value;
-                setDraft((current) => ({ ...current, q }));
                 setFilters((current) => ({ ...current, q }));
                 setPage(1);
               }}
@@ -110,13 +102,19 @@ export function AuditLogsPage() {
           </label>
         }
       >
-        <form className="audit-log-filters" onSubmit={submitFilters}>
+        <div className="audit-log-filters">
           <DateRangeField
             label="생성일"
-            from={draft.from}
-            to={draft.to}
-            onFromChange={(from) => setDraft((current) => ({ ...current, from }))}
-            onToChange={(to) => setDraft((current) => ({ ...current, to }))}
+            from={filters.from}
+            to={filters.to}
+            onFromChange={(from) => {
+              setFilters((current) => ({ ...current, from }));
+              setPage(1);
+            }}
+            onToChange={(to) => {
+              setFilters((current) => ({ ...current, to }));
+              setPage(1);
+            }}
           />
           <PageSizeSelect
             value={pageSize}
@@ -125,10 +123,7 @@ export function AuditLogsPage() {
               setPageSize(nextPageSize);
             }}
           />
-          <button className="quiet-button" type="submit">
-            조회
-          </button>
-        </form>
+        </div>
       </TableToolbar>
       {logsQuery.isError ? (
         <p className="form-error">{describeAdminApiError(logsQuery.error, '감사 로그')}</p>
@@ -154,6 +149,18 @@ export function AuditLogsPage() {
           onPageChange: (pageIndex) => setPage(pageIndex + 1),
         }}
         caption="감사 로그 목록"
+        renderMobileRow={(log) => (
+          <article className="audit-log-mobile-card">
+            <header>
+              <strong>{log.action}</strong>
+              <span>{log.actorName || '시스템'}</span>
+            </header>
+            <p>
+              {formatAuditDate(log.createdAt)} · {log.targetType}
+              {log.targetId ? ` ${log.targetId}` : ''}
+            </p>
+          </article>
+        )}
       />
     </section>
   );

@@ -25,7 +25,7 @@ async function seedLocalTestUser(environment = process.env) {
     9999,
     'DEV_AUTH_STUDENT_NO',
   );
-  const name = String(environment.TEST_USER_NAME ?? '9999 테스트').trim() || '9999 테스트';
+  const name = String(environment.TEST_USER_NAME ?? '테스트').trim() || '테스트';
   const grade = positiveInteger(environment.TEST_USER_GRADE, 3, 'TEST_USER_GRADE');
   const classNo = positiveInteger(environment.TEST_USER_CLASS_NO, 9, 'TEST_USER_CLASS_NO');
   const number = positiveInteger(environment.TEST_USER_NUMBER, 99, 'TEST_USER_NUMBER');

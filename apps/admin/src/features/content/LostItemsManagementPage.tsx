@@ -283,8 +283,8 @@ export function LostItemsManagementPage() {
         actions={
           <div className="content-toolbar">
             <label className="content-select-field">
-              <span className="sr-only">등록 구분</span>
               <AdminSelect
+                mobileLabel="등록 구분"
                 value={typeFilter}
                 onChange={(event) => setTypeFilter(event.target.value)}
                 aria-label="등록 구분"
@@ -295,9 +295,10 @@ export function LostItemsManagementPage() {
               </AdminSelect>
             </label>
             <label className="content-select-field">
-              <span className="sr-only">처리 상태</span>
               <AdminSelect
+                mobileLabel="처리 상태"
                 value={statusFilter}
+                aria-label="처리 상태"
                 onChange={(event) => setStatusFilter(event.target.value)}
               >
                 <option value="all">전체</option>
