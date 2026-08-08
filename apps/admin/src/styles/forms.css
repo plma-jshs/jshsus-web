@@ -91,15 +91,22 @@ select.ui-control:not([multiple]) {
 
 @media (max-width: 640px) {
   .admin-filter-sheet .admin-select__mobile-label {
-    position: absolute;
-    z-index: 1;
-    top: 7px;
-    left: 12px;
     display: block;
     color: var(--j-color-text-muted);
-    font-size: 10px;
-    line-height: 1;
+    font-size: 12px;
+    font-weight: var(--j-weight-semibold);
+    line-height: 1.2;
     pointer-events: none;
+  }
+
+  .admin-filter-sheet .admin-select:has(> .admin-select__mobile-label) {
+    display: grid;
+    height: auto;
+    gap: 6px;
+  }
+
+  .admin-filter-sheet label:has(> span:not(.sr-only)) .admin-select > .admin-select__mobile-label {
+    display: none;
   }
 
   .admin-select--native-mobile .admin-select__native {

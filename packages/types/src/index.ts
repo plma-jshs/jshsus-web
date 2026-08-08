@@ -803,6 +803,7 @@ export type ActivityRequestAdminListQuery = {
   page?: number;
   pageSize?: 20 | 50 | 100;
   search?: string;
+  searchBy?: 'all' | 'student' | 'advisor' | 'location' | 'purpose';
   date?: string;
   startDate?: string;
   endDate?: string;

@@ -18,7 +18,7 @@ import { formatKoreanDate } from '../../shared/lib/date';
 import './device-cases.css';
 
 const commandLabels: Record<DeviceCaseCommand['command'], string> = {
-  open: '해제',
+  open: '잠금 해제',
   close: '잠금',
   sync: '동기화',
 };
@@ -141,7 +141,7 @@ export function DeviceCasesPage() {
 
   const renderCaseActions = useCallback(
     (deviceCase: DeviceCase) => (
-      <RowActions>
+      <RowActions mobileTitle={`${deviceCaseLabel(deviceCase.id)} 보관함`}>
         <RowActionButton
           icon={
             deviceCase.isOpen ? (
@@ -150,8 +150,8 @@ export function DeviceCasesPage() {
               <LockOpen size={14} aria-hidden="true" />
             )
           }
-          label={`${deviceCaseLabel(deviceCase.id)} ${deviceCase.isOpen ? '잠금' : '해제'}`}
-          mobileLabel={deviceCase.isOpen ? '잠금' : '해제'}
+          label={`${deviceCaseLabel(deviceCase.id)} ${deviceCase.isOpen ? '잠금' : '잠금 해제'}`}
+          mobileLabel={deviceCase.isOpen ? '잠금' : '잠금 해제'}
           variant="primary"
           onClick={() => runCaseCommand(deviceCase, deviceCase.isOpen ? 'close' : 'open')}
           disabled={isCommandPending}
@@ -290,6 +290,7 @@ export function DeviceCasesPage() {
           summary={`총 ${cases.length.toLocaleString('ko-KR')}대${
             hasSelectedCases ? ` · 선택 ${selectedCount.toLocaleString('ko-KR')}대` : ''
           }`}
+          className="device-cases-toolbar"
           mobileSheet={false}
           mobileActions={
             <div className="device-control-actions">
@@ -299,7 +300,7 @@ export function DeviceCasesPage() {
                 onClick={() => runBulkCommand('open')}
                 disabled={isCommandPending || cases.length === 0}
               >
-                {hasSelectedCases ? '선택 해제' : '전체 해제'}
+                {hasSelectedCases ? '선택 잠금 해제' : '전체 잠금 해제'}
               </Button>
               <Button
                 variant="primary"
@@ -327,14 +328,15 @@ export function DeviceCasesPage() {
             <article className="device-mobile-card">
               <header>
                 <strong>{deviceCaseLabel(deviceCase.id)}</strong>
-                <span className={`device-status ${deviceCase.isConnected ? 'success' : 'danger'}`}>
-                  {deviceCase.isConnected ? '정상' : '끊김'}
+                <span
+                  className={`device-status ${
+                    !deviceCase.isConnected || !deviceCase.isOpen ? 'danger' : 'success'
+                  }`}
+                >
+                  {!deviceCase.isConnected ? '연결 해제' : deviceCase.isOpen ? '열림' : '잠금'}
                 </span>
                 {renderCaseActions(deviceCase)}
               </header>
-              <p>
-                <span>{deviceCase.isOpen ? '열림' : '잠김'}</span>
-              </p>
             </article>
           )}
         />

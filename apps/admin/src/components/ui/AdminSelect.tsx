@@ -65,7 +65,7 @@ export function AdminSelect({
   onInvalid,
   nativeOnMobile = true,
   mobileLabel,
-  'aria-label': ariaLabel = '선택',
+  'aria-label': ariaLabel,
   ...selectProps
 }: AdminSelectProps) {
   const options = useMemo(() => toOptions(children), [children]);
@@ -90,6 +90,8 @@ export function AdminSelect({
   const selectedValue = value === undefined ? uncontrolledValue : String(value);
   const selected = options.find((option) => option.value === selectedValue) ?? options[0];
   const useNativeSelect = nativeOnMobile && mobile;
+  const resolvedAriaLabel = ariaLabel ?? '선택';
+  const resolvedMobileLabel = mobileLabel ?? ariaLabel;
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return undefined;
@@ -163,7 +165,9 @@ export function AdminSelect({
       className={`admin-select${open ? ' is-open' : ''}${nativeOnMobile ? ' admin-select--native-mobile' : ''}${className ? ` ${className}` : ''}`}
       ref={rootRef}
     >
-      {mobileLabel ? <span className="admin-select__mobile-label">{mobileLabel}</span> : null}
+      {resolvedMobileLabel ? (
+        <span className="admin-select__mobile-label">{resolvedMobileLabel}</span>
+      ) : null}
       <select
         {...selectProps}
         aria-hidden={useNativeSelect ? undefined : true}
@@ -185,7 +189,9 @@ export function AdminSelect({
         aria-controls={listboxId}
         aria-expanded={open}
         aria-haspopup="listbox"
-        aria-label={`${ariaLabel}: ${typeof selected?.label === 'string' ? selected.label : selectedValue}`}
+        aria-label={`${resolvedAriaLabel}: ${
+          typeof selected?.label === 'string' ? selected.label : selectedValue
+        }`}
         className="admin-select__trigger"
         disabled={disabled}
         ref={triggerRef}

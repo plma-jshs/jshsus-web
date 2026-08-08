@@ -214,7 +214,6 @@
   padding: 12px 18px;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--line);
 }
 
 .admin-filter-sheet h2 {
@@ -246,6 +245,16 @@
 .admin-filter-sheet__controls > * {
   width: 100% !important;
   max-width: none !important;
+}
+
+.admin-filter-sheet__controls
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+    select,
+    button:not(.admin-select__trigger)
+  ) {
+  min-height: 48px;
+  font-size: 16px;
 }
 
 .admin-filter-sheet__controls > .point-filter {
@@ -283,31 +292,27 @@
   grid-column: 1 / -1;
 }
 
-.admin-filter-sheet__controls label:not(.checkbox-row):has(> span:not(.sr-only)) {
-  position: relative;
-  display: block;
+.admin-filter-sheet__controls
+  label:not(.checkbox-row):not(.ui-date-input):has(> span:not(.sr-only)) {
+  display: grid;
   min-width: 0;
+  gap: 6px;
 }
 
 .admin-filter-sheet__controls
-  label:not(.checkbox-row):has(> span:not(.sr-only))
+  label:not(.checkbox-row):not(.ui-date-input):has(> span:not(.sr-only))
   > span:not(.sr-only) {
-  position: absolute;
-  z-index: 1;
-  top: 7px;
-  left: 12px;
   margin: 0;
   color: var(--j-color-text-muted);
-  font-size: 10px;
-  line-height: 1;
-  pointer-events: none;
+  font-size: 12px;
+  font-weight: var(--j-weight-semibold);
+  line-height: 1.2;
 }
 
 .admin-filter-sheet__controls
-  label:not(.checkbox-row):has(> span:not(.sr-only))
+  label:not(.checkbox-row):not(.ui-date-input):has(> span:not(.sr-only))
   :where(input, select, .admin-select__trigger) {
   min-height: 48px;
-  padding-top: 13px;
 }
 
 .admin-filter-sheet__controls > .ui-date-range {
@@ -324,10 +329,16 @@
   width: 100% !important;
 }
 
+.admin-filter-sheet__controls .ui-date-input > span {
+  left: 16px;
+  font-size: 15px;
+}
+
 .admin-filter-sheet__controls .admin-select--native-mobile .admin-select__native {
   height: 48px !important;
   min-height: 48px !important;
-  padding: 13px 34px 0 11px !important;
+  padding: 0 34px 0 11px !important;
+  font-size: 16px;
 }
 
 .admin-filter-sheet footer {

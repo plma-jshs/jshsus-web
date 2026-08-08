@@ -9,10 +9,11 @@ import type {
 } from '@jshsus/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Check, FilePlus2, Printer, X } from 'lucide-react';
+import { Check, Printer, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
+  AdminSelect,
   Button,
   Drawer,
   EmptyState,
@@ -45,6 +46,16 @@ type CreateActivityForm = {
   activitySlotIds: ActivityTimeSlotId[];
   purpose: string;
 };
+
+type ActivityReviewSearchBy = NonNullable<ActivityRequestAdminListQuery['searchBy']>;
+
+const activityReviewSearchOptions: Array<{ value: ActivityReviewSearchBy; label: string }> = [
+  { value: 'all', label: '전체' },
+  { value: 'student', label: '학생' },
+  { value: 'advisor', label: '담당 교사' },
+  { value: 'location', label: '장소' },
+  { value: 'purpose', label: '활동 목적' },
+];
 
 function createInitialActivityForm(): CreateActivityForm {
   const activityDate = koreaDateInput();
@@ -196,12 +207,14 @@ export function ActivityReviewPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
+  const [searchBy, setSearchBy] = useState<ActivityReviewSearchBy>('all');
   const [sorting, setSorting] = useState<SortingState>([{ id: 'startsAt', desc: true }]);
   const sort = sorting[0];
   const requestsQuery = useActivityRequests({
     page,
     pageSize: pageSize as 20 | 50 | 100,
     search: search || undefined,
+    searchBy,
     status: 'pending',
     assignedToMe: true,
     sortBy: (sort?.id as ActivityRequestAdminListQuery['sortBy']) ?? 'startsAt',
@@ -435,11 +448,39 @@ export function ActivityReviewPage() {
                   setSearch(event.target.value);
                   setPage(1);
                 }}
-                placeholder="학생, 담당 교사, 장소, 활동 목적 검색"
+                placeholder={`${
+                  activityReviewSearchOptions.find((option) => option.value === searchBy)?.label ??
+                  '전체'
+                } 검색`}
                 aria-label="승인 대기 탐구활동서 검색"
               />
             }
+            mobileActions={
+              <Button
+                className="operation-review-create"
+                type="button"
+                variant="primary"
+                onClick={() => setCreateOpen(true)}
+              >
+                신규 작성
+              </Button>
+            }
           >
+            <AdminSelect
+              mobileLabel="검색 기준"
+              aria-label="검색 기준"
+              value={searchBy}
+              onChange={(event) => {
+                setSearchBy(event.target.value as ActivityReviewSearchBy);
+                setPage(1);
+              }}
+            >
+              {activityReviewSearchOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </AdminSelect>
             <PageSizeSelect
               value={pageSize}
               onChange={(value) => {
@@ -447,11 +488,8 @@ export function ActivityReviewPage() {
                 setPage(1);
               }}
             />
-            <Button type="button" variant="primary" onClick={() => setCreateOpen(true)}>
-              <FilePlus2 size={16} aria-hidden="true" />
-              신규 작성
-            </Button>
             <Button
+              className="operation-review-print"
               type="button"
               onClick={() => printMutation.mutate()}
               disabled={printMutation.isPending}

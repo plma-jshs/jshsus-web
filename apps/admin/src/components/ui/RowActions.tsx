@@ -2,7 +2,15 @@ import { MoreVertical, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button, type ButtonProps } from './Button';
 
-export function RowActions({ children, className }: { children: ReactNode; className?: string }) {
+export function RowActions({
+  children,
+  className,
+  mobileTitle = '작업',
+}: {
+  children: ReactNode;
+  className?: string;
+  mobileTitle?: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -46,7 +54,7 @@ export function RowActions({ children, className }: { children: ReactNode; class
       >
         <div className="admin-row-action-sheet__layout">
           <header>
-            <h2>작업</h2>
+            <h2>{mobileTitle}</h2>
             <button type="button" aria-label="작업 메뉴 닫기" onClick={() => setOpen(false)}>
               <X size={20} aria-hidden="true" />
             </button>

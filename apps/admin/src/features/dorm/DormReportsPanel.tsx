@@ -152,6 +152,7 @@ export function DormReportsPanel({
           value={status}
           onChange={(event) => setStatus(event.target.value as '' | DormReportStatus)}
           aria-label="민원 상태"
+          mobileLabel="상태"
         >
           <option value="">전체 상태</option>
           {dormReportStatusOptions.map((option) => (

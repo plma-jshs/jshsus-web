@@ -5,12 +5,13 @@ import type {
   ActivityRequestAdminSummary,
 } from '@jshsus/types';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Search } from 'lucide-react';
+import { ChevronRight, Search, Users } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
   AdminSelect,
   DateRangeField,
+  Drawer,
   PageSizeSelect,
   TableToolbar,
 } from '../../components/ui';
@@ -40,9 +41,85 @@ function formatParticipants(request: ActivityRequestAdminSummary) {
   return participants
     .map(
       (student) =>
-        `${student.studentNo}${student.studentName}${student.isRepresentative ? '(대표)' : ''}`,
+        `${student.studentNo} ${student.studentName}${student.isRepresentative ? '(대표)' : ''}`,
     )
     .join(', ');
+}
+
+function activityParticipants(request: ActivityRequestAdminSummary) {
+  return request.participants.length
+    ? request.participants
+    : [
+        {
+          studentNo: request.studentNo,
+          studentName: request.studentName,
+          isRepresentative: true,
+        },
+      ];
+}
+
+function formatActivityMobileDate(request: ActivityRequestAdminSummary) {
+  const date = formatKoreanDate(request.startsAt, {
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const weekday = formatKoreanDate(request.startsAt, { weekday: 'short' });
+  return `${date}(${weekday})`;
+}
+
+function ActivityMobileCard({
+  request,
+  onOpen,
+}: {
+  request: ActivityRequestAdminSummary;
+  onOpen: () => void;
+}) {
+  const participants = activityParticipants(request);
+  const representative =
+    participants.find((participant) => participant.isRepresentative) ?? participants[0];
+  const date = koreaDateInput(new Date(request.startsAt));
+
+  return (
+    <button className="operation-activity-mobile-card" type="button" onClick={onOpen}>
+      <span className="operation-activity-mobile-card__heading">
+        <ActivityStatusBadge status={request.status} />
+        <strong>{request.purpose}</strong>
+        <ChevronRight size={17} aria-hidden="true" />
+      </span>
+      <span className="operation-activity-mobile-card__meta">
+        <span>{request.location}</span>
+        <i aria-hidden="true">·</i>
+        <span>지도교사 {request.advisorTeacherName ?? '-'}</span>
+      </span>
+      <span className="operation-activity-mobile-card__meta">
+        <span>{formatActivityMobileDate(request)}</span>
+        <i aria-hidden="true">·</i>
+        <span>
+          {formatActivityPeriodLabel(
+            date,
+            request.startsAt,
+            request.endsAt,
+            request.activitySlotIds,
+          )}
+        </span>
+        <span className="operation-activity-mobile-card__time">
+          {formatActivityTimeRanges(
+            date,
+            request.startsAt,
+            request.endsAt,
+            request.activitySlotIds,
+          )}
+        </span>
+      </span>
+      <span className="operation-activity-mobile-card__people">
+        <Users size={14} aria-hidden="true" />
+        <span>
+          {representative ? `${representative.studentNo} ${representative.studentName}(대표)` : '-'}
+          {participants.length > 1 ? ` 외 ${participants.length - 1}명` : ''}
+        </span>
+      </span>
+    </button>
+  );
 }
 
 const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
@@ -138,6 +215,7 @@ export function ActivityOverviewPage() {
   const [status, setStatus] = useState<'all' | ActivityRequestAdminStatus>('all');
   const [pageSize, setPageSize] = useState(20);
   const [sorting, setSorting] = useState<SortingState>([{ id: 'id', desc: true }]);
+  const [selectedRequest, setSelectedRequest] = useState<ActivityRequestAdminSummary | null>(null);
   const sort = sorting[0];
   const requestsQuery = useActivityRequests({
     page,
@@ -188,6 +266,7 @@ export function ActivityOverviewPage() {
               }}
             />
             <AdminSelect
+              mobileLabel="상태"
               value={status}
               onChange={(event) => {
                 setStatus(event.target.value as typeof status);
@@ -237,9 +316,40 @@ export function ActivityOverviewPage() {
             alwaysShowPagination
             caption="탐구활동서 현황"
             getRowId={(request) => String(request.id)}
+            renderMobileRow={(request) => (
+              <ActivityMobileCard request={request} onOpen={() => setSelectedRequest(request)} />
+            )}
           />
         )}
       </AdminListPanel>
+      <Drawer
+        open={Boolean(selectedRequest)}
+        onClose={() => setSelectedRequest(null)}
+        title={selectedRequest?.purpose ?? '탐구활동서 상세'}
+        description={selectedRequest ? formatParticipants(selectedRequest) : undefined}
+      >
+        {selectedRequest ? (
+          <dl className="operation-activity-mobile-detail">
+            <div>
+              <dt>상태</dt>
+              <dd>
+                <ActivityStatusBadge status={selectedRequest.status} />
+              </dd>
+            </div>
+            <div>
+              <dt>활동 정보</dt>
+              <dd>
+                {formatActivityMobileDate(selectedRequest)} · {selectedRequest.location} · 지도교사{' '}
+                {selectedRequest.advisorTeacherName ?? '-'}
+              </dd>
+            </div>
+            <div>
+              <dt>참여 학생</dt>
+              <dd>{formatParticipants(selectedRequest)}</dd>
+            </div>
+          </dl>
+        ) : null}
+      </Drawer>
     </div>
   );
 }

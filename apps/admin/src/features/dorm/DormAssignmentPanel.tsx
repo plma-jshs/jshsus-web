@@ -710,7 +710,7 @@ export function DormAssignmentPanel({
       ) : null}
 
       <section className="admin-panel">
-        <TableToolbar summary={`총 ${assignments.length}명`}>
+        <TableToolbar summary={`총 ${assignments.length}명`} mobileSheet={false}>
           <PageSizeSelect value={pageSize} onChange={setPageSize} />
           <Button
             disabled={selectedAssignments.length !== 2}

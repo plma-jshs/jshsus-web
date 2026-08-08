@@ -105,6 +105,7 @@ const adminListSchema = z.object({
     .optional()
     .default(20),
   search: z.string().trim().max(100).optional().default(''),
+  searchBy: z.enum(['all', 'student', 'advisor', 'location', 'purpose']).optional().default('all'),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -321,6 +322,7 @@ export class ActivityRequestsService {
       page,
       pageSize,
       search,
+      searchBy,
       date,
       startDate,
       endDate,
@@ -342,32 +344,48 @@ export class ActivityRequestsService {
       ];
       if (search) {
         const pattern = `%${search}%`;
-        conditions.push(
-          or(
-            like(schema.students.name, pattern),
-            sql`cast(${schema.students.studentNo} as char) like ${pattern}`,
-            like(schema.activityRequests.location, pattern),
-            like(schema.activityRequests.purpose, pattern),
-            like(schema.activityRequests.issuedNumber, pattern),
-            like(schema.activityRequests.advisorTeacherNameSnapshot, pattern),
-            sql`exists (
-              select 1
-              from users advisor_search
-              where advisor_search.id = ${schema.activityRequests.advisorTeacherId}
-                and advisor_search.name like ${pattern}
-            )`,
-            sql`exists (
-              select 1
-              from activity_request_participants arp
-              inner join students participant_student on participant_student.id = arp.student_id
-              where arp.activity_request_id = ${schema.activityRequests.id}
-                and (
-                  participant_student.name like ${pattern}
-                  or cast(participant_student.student_no as char) like ${pattern}
-                )
-            )`,
-          )!,
+        const studentSearch = or(
+          like(schema.students.name, pattern),
+          sql`cast(${schema.students.studentNo} as char) like ${pattern}`,
+          sql`exists (
+            select 1
+            from activity_request_participants arp
+            inner join students participant_student on participant_student.id = arp.student_id
+            where arp.activity_request_id = ${schema.activityRequests.id}
+              and (
+                participant_student.name like ${pattern}
+                or cast(participant_student.student_no as char) like ${pattern}
+              )
+          )`,
         );
+        const advisorSearch = or(
+          like(schema.activityRequests.advisorTeacherNameSnapshot, pattern),
+          sql`exists (
+            select 1
+            from users advisor_search
+            where advisor_search.id = ${schema.activityRequests.advisorTeacherId}
+              and advisor_search.name like ${pattern}
+          )`,
+        );
+        const searchCondition =
+          searchBy === 'student'
+            ? studentSearch
+            : searchBy === 'advisor'
+              ? advisorSearch
+              : searchBy === 'location'
+                ? like(schema.activityRequests.location, pattern)
+                : searchBy === 'purpose'
+                  ? like(schema.activityRequests.purpose, pattern)
+                  : or(
+                      studentSearch,
+                      advisorSearch,
+                      like(schema.activityRequests.location, pattern),
+                      like(schema.activityRequests.purpose, pattern),
+                      like(schema.activityRequests.issuedNumber, pattern),
+                    );
+        if (searchCondition) {
+          conditions.push(searchCondition);
+        }
       }
       if (date) {
         const range = activityDateRange(date);

@@ -105,6 +105,11 @@
   white-space: normal;
 }
 
+.operation-activity-mobile-card,
+.operation-activity-mobile-detail {
+  display: none;
+}
+
 .operation-list-toolbar .admin-table-toolbar__controls {
   flex-wrap: nowrap;
 }
@@ -133,6 +138,131 @@
 
 .operation-list-toolbar .admin-select:not(.ui-page-size-select) {
   width: 120px;
+}
+
+@media (max-width: 640px) {
+  .operation-review-print {
+    display: none !important;
+  }
+
+  .operation-review-create {
+    min-height: 44px;
+    padding-inline: 13px;
+    white-space: nowrap;
+  }
+
+  .operation-page .admin-mobile-data-card {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .operation-activity-mobile-card {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    padding: 12px 13px;
+    border: 0;
+    background: #fff;
+    color: var(--j-color-text);
+    font: inherit;
+    gap: 6px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .operation-activity-mobile-card:active {
+    background: var(--j-color-surface-subtle);
+  }
+
+  .operation-activity-mobile-card__heading {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .operation-activity-mobile-card__heading strong {
+    overflow: hidden;
+    flex: 1 1 auto;
+    font-size: 14px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .operation-activity-mobile-card__heading > svg {
+    flex: 0 0 auto;
+    color: var(--j-color-text-muted);
+  }
+
+  .operation-activity-mobile-card__meta,
+  .operation-activity-mobile-card__people {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 5px;
+    color: var(--j-color-text-secondary);
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .operation-activity-mobile-card__meta i {
+    color: var(--j-color-text-muted);
+    font-style: normal;
+  }
+
+  .operation-activity-mobile-card__time {
+    overflow: hidden;
+    color: var(--j-color-text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .operation-activity-mobile-card__people svg {
+    flex: 0 0 auto;
+    color: var(--j-color-text-muted);
+  }
+
+  .operation-activity-mobile-card__people span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .operation-activity-mobile-card .operation-status {
+    min-height: 22px;
+    padding-inline: 7px;
+    font-size: 10px;
+  }
+
+  .operation-activity-mobile-detail {
+    display: grid;
+    margin: 0;
+    gap: 0;
+  }
+
+  .operation-activity-mobile-detail > div {
+    display: grid;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--line);
+    gap: 5px;
+  }
+
+  .operation-activity-mobile-detail > div:last-child {
+    border-bottom: 0;
+  }
+
+  .operation-activity-mobile-detail dt {
+    color: var(--j-color-text-muted);
+    font-size: 11px;
+    font-weight: 650;
+  }
+
+  .operation-activity-mobile-detail dd {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+  }
 }
 
 .operation-review-toolbar .admin-table-toolbar__controls {

@@ -286,6 +286,11 @@
     max-width: 100%;
   }
 
+  .dorm-management-header {
+    box-sizing: border-box;
+    padding-inline: 16px;
+  }
+
   .dorm-page .ui-segmented-tabs {
     display: grid;
     box-sizing: border-box;
@@ -310,12 +315,26 @@
     width: 100% !important;
   }
 
-  .dorm-draw-controls,
   .dorm-block-form,
   .dorm-room-point-form,
   .dorm-dialog-form {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .dorm-draw-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dorm-draw-controls > .ui-button {
+    width: 100%;
+    grid-column: 1 / -1;
+  }
+
+  .dorm-block-form > .ui-button,
+  .dorm-room-point-form > .ui-button {
+    width: 100%;
   }
 
   .dorm-term-controls {

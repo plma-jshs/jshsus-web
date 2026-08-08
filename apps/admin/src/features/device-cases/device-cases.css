@@ -43,6 +43,20 @@
 }
 
 @media (max-width: 720px) {
+  .device-cases-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .device-cases-toolbar .admin-table-toolbar__summary {
+    width: auto;
+  }
+
+  .device-cases-toolbar .admin-table-toolbar__mobile-row {
+    width: auto;
+    padding: 0;
+    border: 0;
+  }
+
   .device-control-actions {
     flex-wrap: nowrap;
     justify-content: flex-end;
@@ -51,7 +65,7 @@
 
   .device-control-actions .ui-button--sm {
     min-height: 44px;
-    padding-inline: 10px;
+    padding-inline: 11px;
     font-size: 12px;
   }
 
@@ -79,14 +93,16 @@
     flex: 0 0 auto;
   }
 
-  .device-mobile-card p {
-    display: flex;
-    margin: 7px 0 0;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 10px;
-    color: var(--j-color-text-muted);
+  .device-mobile-card {
+    min-height: 30px;
+  }
+}
+
+@media (max-width: 430px) {
+  .device-control-actions .ui-button--sm {
+    min-width: 0;
+    min-height: 38px;
+    padding-inline: 8px;
     font-size: 11px;
-    white-space: nowrap;
   }
 }

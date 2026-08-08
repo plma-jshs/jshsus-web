@@ -279,6 +279,10 @@
     color: var(--danger);
   }
 
+  .admin-row-action-sheet__actions .admin-row-action-button.ui-button:active {
+    background: var(--j-color-surface-subtle);
+  }
+
   .admin-row-action-sheet__actions .admin-row-action-button__label {
     position: static;
     width: auto;
