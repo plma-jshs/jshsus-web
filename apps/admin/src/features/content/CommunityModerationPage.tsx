@@ -517,6 +517,39 @@ export function CommunityModerationPage({
             sorting={postSorting}
             onSortingChange={setPostSorting}
             caption={`${activeSource.label} 게시글 관리 목록`}
+            renderMobileRow={(post) => (
+              <article className="notice-mobile-card">
+                <header>
+                  <div className="content-title-cell">
+                    <a
+                      className="content-table-primary"
+                      href={publicSiteHref(`/boards/${activeSource.slug}/${post.id}`)}
+                    >
+                      {post.title}
+                    </a>
+                    {post.isHidden ? <span className="status-chip danger">숨김</span> : null}
+                  </div>
+                  <RowActions>
+                    <RowActionButton
+                      icon={<Settings2 aria-hidden="true" />}
+                      label={`${post.title} 관리`}
+                      mobileLabel="관리"
+                      onClick={() => setSelectedPostId(post.id)}
+                    />
+                  </RowActions>
+                </header>
+                <div className="notice-mobile-card__meta">
+                  <span>{post.isAnonymous ? '익명' : post.authorName || '알 수 없음'}</span>
+                  <span className="notice-mobile-card__stats">
+                    <time>{formatAdminDate(post.createdAt)}</time>
+                    <span>
+                      <Eye size={13} aria-hidden="true" />
+                      {post.viewCount.toLocaleString('ko-KR')}
+                    </span>
+                  </span>
+                </div>
+              </article>
+            )}
           />
         </ContentQueryState>
         <MutationMessage

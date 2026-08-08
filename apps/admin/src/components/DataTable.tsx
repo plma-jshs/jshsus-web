@@ -363,7 +363,9 @@ export function DataTable<T>({
         </div>
       ) : null}
 
-      {alwaysShowPagination || resolvedPageCount > 1 ? (
+      {!loading &&
+      (pagination?.totalCount ?? visibleRows.length) > 0 &&
+      (alwaysShowPagination || resolvedPageCount > 1) ? (
         <nav className="admin-table-pagination" aria-label="페이지 이동">
           <button
             className="admin-table-pagination__first"

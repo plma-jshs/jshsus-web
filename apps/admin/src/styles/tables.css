@@ -670,8 +670,17 @@
   .admin-data-table:not(.has-mobile-cards) .admin-data-table__empty-cell,
   .admin-data-table:not(.has-mobile-cards) .admin-data-table__loading-cell {
     display: grid !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
     min-height: 72px;
+    grid-template-columns: minmax(0, 1fr) !important;
     place-items: center;
+  }
+
+  .admin-data-table:not(.has-mobile-cards) .admin-data-table__empty-cell > .ui-empty-state {
+    box-sizing: border-box;
+    width: 100%;
   }
 
   .admin-data-table:not(.has-mobile-cards)

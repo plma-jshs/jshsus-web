@@ -2,6 +2,7 @@ import type { PointReason } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
+import { Search } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
@@ -273,7 +274,8 @@ export function PointRecordsPage() {
           }
           mobileSearch={
             <label className="point-filter point-filter--search">
-              <span>검색</span>
+              <Search size={17} aria-hidden="true" />
+              <span className="sr-only">검색</span>
               <input
                 value={search}
                 placeholder="학번, 이름, 사유 또는 처리자"

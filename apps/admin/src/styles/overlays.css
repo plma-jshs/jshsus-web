@@ -348,7 +348,8 @@
   display: grid;
   min-height: 132px;
   padding: 24px;
-  place-items: center;
+  align-content: center;
+  justify-items: stretch;
   gap: 8px;
   color: var(--muted);
   text-align: center;
@@ -358,6 +359,7 @@
   display: grid;
   width: 38px;
   height: 38px;
+  justify-self: center;
   place-items: center;
   border-radius: 50%;
   background: var(--j-color-surface-subtle);
@@ -366,12 +368,16 @@
 
 .ui-empty-state strong,
 .ui-empty-state p {
+  width: 100%;
   margin: 0;
+  text-align: center;
 }
 
 .ui-empty-state strong {
   color: var(--j-color-text-secondary);
   font-size: 14px;
+  line-height: 1.45;
+  word-break: keep-all;
 }
 
 .ui-empty-state p {

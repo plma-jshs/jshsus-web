@@ -947,6 +947,7 @@
 
   .school-calendar-grid {
     min-width: 0;
+    padding-inline: 6px;
     gap: 2px;
   }
 
@@ -1050,6 +1051,20 @@
   .calendar-event-form .full {
     grid-column: 1;
   }
+
+  .school-event-editor-dialog .ui-dialog__footer {
+    border-top: 0;
+    background: transparent;
+  }
+
+  .school-event-editor-dialog .ui-dialog__footer .button-row {
+    width: 100%;
+  }
+
+  .school-event-editor-dialog .ui-dialog__footer .button-row > button {
+    min-width: 0;
+    flex: 1 1 0;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1115,7 +1130,7 @@
   }
 
   .school-calendar-grid {
-    padding: 0 0 18px;
+    padding: 0 6px 18px;
     gap: 0;
     touch-action: pan-y;
     animation-duration: 180ms;

@@ -417,8 +417,17 @@ a.content-table-primary:focus-visible {
   .admin-filter-sheet__controls .content-toolbar {
     display: grid;
     width: 100%;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: 12px;
+  }
+
+  .admin-filter-sheet__controls .content-toolbar > *,
+  .admin-filter-sheet__controls .content-toolbar .content-select-field,
+  .admin-filter-sheet__controls .content-toolbar .admin-select,
+  .admin-filter-sheet__controls .content-toolbar .admin-select__native {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
   }
 
   .admin-filter-sheet__controls .content-search-field {
