@@ -3,6 +3,7 @@ import { ChevronRight, Inbox, Search, SlidersHorizontal, TriangleAlert, X } from
 import type { ReactNode } from 'react';
 import { useEffect, useId, useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 import type { BreadcrumbItem } from './pageHierarchy';
 
 export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
@@ -72,6 +73,9 @@ export function PageToolbar({
   search?: ReactNode;
 }) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { isClosing, requestClose, resetClosing } = useBottomSheetClose(() =>
+    setIsFilterOpen(false),
+  );
   const filterPanelId = useId();
   const hasSplitControls = filters !== undefined || search !== undefined;
 
@@ -90,11 +94,15 @@ export function PageToolbar({
   if (!hasSplitControls) return <div className="page-toolbar">{children}</div>;
 
   return (
-    <div className={`page-toolbar page-toolbar--split${isFilterOpen ? ' is-filter-open' : ''}`}>
+    <div
+      className={`page-toolbar page-toolbar--split${isFilterOpen ? ' is-filter-open' : ''}${
+        isClosing ? ' is-closing' : ''
+      }`}
+    >
       <div className="page-toolbar__filters-content" id={filterPanelId}>
         <div className="page-toolbar__filters-heading">
           <strong>필터</strong>
-          <button type="button" aria-label="필터 닫기" onClick={() => setIsFilterOpen(false)}>
+          <button type="button" aria-label="필터 닫기" onClick={() => requestClose()}>
             <X size={17} aria-hidden="true" />
           </button>
         </div>
@@ -107,7 +115,13 @@ export function PageToolbar({
         aria-controls={filterPanelId}
         aria-label={isFilterOpen ? '필터 닫기' : '필터 열기'}
         aria-expanded={isFilterOpen}
-        onClick={() => setIsFilterOpen((current) => !current)}
+        onClick={() => {
+          if (isFilterOpen) requestClose();
+          else {
+            resetClosing();
+            setIsFilterOpen(true);
+          }
+        }}
       >
         <SlidersHorizontal size={17} aria-hidden="true" />
       </button>
@@ -116,7 +130,7 @@ export function PageToolbar({
           className="page-toolbar__filter-scrim"
           type="button"
           aria-label="필터 닫기"
-          onClick={() => setIsFilterOpen(false)}
+          onClick={() => requestClose()}
         />
       ) : null}
     </div>

@@ -13,6 +13,7 @@ import { ContentBadges } from '../../components/page/ContentBadges';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { formatKoreanRelativeTime } from '../../shared/lib/date';
+import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 import { getBoardPosts } from './api';
 
 export function BoardPage() {
@@ -243,8 +244,14 @@ export function BoardPage() {
 }
 
 function BoardRulesModal({ onClose }: { onClose: () => void }) {
+  const { isClosing, requestClose } = useBottomSheetClose(onClose);
+
   return (
-    <div className="board-rules-modal" role="presentation" onMouseDown={onClose}>
+    <div
+      className={`board-rules-modal${isClosing ? ' is-closing' : ''}`}
+      role="presentation"
+      onMouseDown={() => requestClose()}
+    >
       <article
         aria-labelledby="board-rules-title"
         aria-modal="true"
@@ -256,7 +263,7 @@ function BoardRulesModal({ onClose }: { onClose: () => void }) {
           <div>
             <h2 id="board-rules-title">이용 규정</h2>
           </div>
-          <button type="button" aria-label="규정 닫기" onClick={onClose}>
+          <button type="button" aria-label="규정 닫기" onClick={() => requestClose()}>
             <X size={20} aria-hidden="true" />
           </button>
         </header>

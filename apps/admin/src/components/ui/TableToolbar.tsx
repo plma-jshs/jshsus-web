@@ -1,5 +1,6 @@
 import { SlidersHorizontal, X } from 'lucide-react';
-import { useEffect, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useState, type HTMLAttributes, type ReactNode } from 'react';
+import { useAnimatedDialog } from './useAnimatedDialog';
 
 export type TableToolbarProps = HTMLAttributes<HTMLDivElement> & {
   summary?: ReactNode;
@@ -40,15 +41,8 @@ export function TableToolbar({
   const classes = ['admin-table-toolbar', className ?? ''].filter(Boolean).join(' ');
   const mobile = useMobileToolbar();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const { ref: dialogRef, requestClose } = useAnimatedDialog(sheetOpen, () => setSheetOpen(false));
   const useSheet = Boolean(children) && mobileSheet && mobile;
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (sheetOpen && !dialog.open) dialog.showModal();
-    if (!sheetOpen && dialog.open) dialog.close();
-  }, [sheetOpen]);
 
   useEffect(() => {
     if (!sheetOpen) return;
@@ -88,10 +82,10 @@ export function TableToolbar({
               ref={dialogRef}
               onCancel={(event) => {
                 event.preventDefault();
-                setSheetOpen(false);
+                requestClose();
               }}
               onClick={(event) => {
-                if (event.target === event.currentTarget) setSheetOpen(false);
+                if (event.target === event.currentTarget) requestClose();
               }}
             >
               <div className="admin-filter-sheet__layout">
@@ -100,7 +94,7 @@ export function TableToolbar({
                   <button
                     type="button"
                     aria-label={`${mobileSheetTitle} 닫기`}
-                    onClick={() => setSheetOpen(false)}
+                    onClick={requestClose}
                   >
                     <X size={20} aria-hidden="true" />
                   </button>
@@ -110,7 +104,7 @@ export function TableToolbar({
                   {children}
                 </div>
                 <footer>
-                  <button type="button" onClick={() => setSheetOpen(false)}>
+                  <button type="button" onClick={requestClose}>
                     적용
                   </button>
                 </footer>

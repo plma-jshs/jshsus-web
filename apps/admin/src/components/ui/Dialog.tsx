@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
+import { useAnimatedDialog } from './useAnimatedDialog';
 
 export type DialogSize = 'sm' | 'md' | 'lg';
 
@@ -26,16 +27,9 @@ export function Dialog({
   closeLabel = '대화상자 닫기',
   className,
 }: DialogProps) {
-  const ref = useRef<HTMLDialogElement>(null);
+  const { ref, requestClose } = useAnimatedDialog(open, onClose);
   const titleId = useId();
   const descriptionId = useId();
-
-  useEffect(() => {
-    const dialog = ref.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-  }, [open]);
 
   const classes = ['ui-dialog', `ui-dialog--${size}`, className ?? ''].filter(Boolean).join(' ');
 
@@ -47,10 +41,10 @@ export function Dialog({
       aria-describedby={description ? descriptionId : undefined}
       onCancel={(event) => {
         event.preventDefault();
-        onClose();
+        requestClose();
       }}
       onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) requestClose();
       }}
     >
       <div className="ui-dialog__layout">
@@ -63,7 +57,7 @@ export function Dialog({
             className="ui-dialog__close"
             type="button"
             aria-label={closeLabel}
-            onClick={onClose}
+            onClick={requestClose}
           >
             <X size={19} aria-hidden="true" />
           </button>

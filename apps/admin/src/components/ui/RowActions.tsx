@@ -1,6 +1,7 @@
 import { MoreVertical, X } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Button, type ButtonProps } from './Button';
+import { useAnimatedDialog } from './useAnimatedDialog';
 
 export function RowActions({
   children,
@@ -14,14 +15,7 @@ export function RowActions({
   mobileTitle?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-  }, [open]);
+  const { ref: dialogRef, requestClose } = useAnimatedDialog(open, () => setOpen(false));
 
   useEffect(() => {
     if (!open) return;
@@ -48,23 +42,23 @@ export function RowActions({
         ref={dialogRef}
         onCancel={(event) => {
           event.preventDefault();
-          setOpen(false);
+          requestClose();
         }}
         onClick={(event) => {
-          if (event.target === event.currentTarget) setOpen(false);
+          if (event.target === event.currentTarget) requestClose();
         }}
       >
         <div className="admin-row-action-sheet__layout">
           <header>
             <h2>{mobileTitle}</h2>
-            <button type="button" aria-label="작업 메뉴 닫기" onClick={() => setOpen(false)}>
+            <button type="button" aria-label="작업 메뉴 닫기" onClick={requestClose}>
               <X size={20} aria-hidden="true" />
             </button>
           </header>
           <div
             className="admin-row-action-sheet__actions"
             onClick={(event) => {
-              if ((event.target as HTMLElement).closest('button')) setOpen(false);
+              if ((event.target as HTMLElement).closest('button')) requestClose();
             }}
           >
             {mobileChildren ?? children}

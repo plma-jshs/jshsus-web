@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
+import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 
 export type DataTableSearchField = 'title_content' | 'title' | 'author';
 export type DataTablePageSize = 20 | 50 | 100;
@@ -189,6 +190,9 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
   const [draftField, setDraftField] = useState(field);
   const [draftQuery, setDraftQuery] = useState(query);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { isClosing, requestClose, resetClosing } = useBottomSheetClose(() =>
+    setIsFilterOpen(false),
+  );
   const filterPanelId = useId();
   const onSearchRef = useRef(onSearch);
   const externalSearchRef = useRef({ field, query });
@@ -240,7 +244,9 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
 
   return (
     <form
-      className={`data-table-toolbar${isFilterOpen ? ' is-filter-open' : ''}`}
+      className={`data-table-toolbar${isFilterOpen ? ' is-filter-open' : ''}${
+        isClosing ? ' is-closing' : ''
+      }`}
       role="search"
       onSubmit={(event) => {
         event.preventDefault();
@@ -264,7 +270,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
         >
           <div className="data-table-toolbar__filters-heading">
             <strong>필터</strong>
-            <button type="button" aria-label="필터 닫기" onClick={() => setIsFilterOpen(false)}>
+            <button type="button" aria-label="필터 닫기" onClick={() => requestClose()}>
               <X size={17} aria-hidden="true" />
             </button>
           </div>
@@ -324,7 +330,13 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
           aria-controls={filterPanelId}
           aria-expanded={isFilterOpen}
           aria-label={isFilterOpen ? '필터 닫기' : '필터 열기'}
-          onClick={() => setIsFilterOpen((current) => !current)}
+          onClick={() => {
+            if (isFilterOpen) requestClose();
+            else {
+              resetClosing();
+              setIsFilterOpen(true);
+            }
+          }}
         >
           <SlidersHorizontal size={17} aria-hidden="true" />
         </button>
@@ -340,7 +352,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
           className="data-table-toolbar__filter-scrim"
           type="button"
           aria-label="필터 닫기"
-          onClick={() => setIsFilterOpen(false)}
+          onClick={() => requestClose()}
         />
       ) : null}
     </form>

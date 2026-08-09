@@ -1,5 +1,6 @@
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 
 export function ContentMoreMenu({
   deleteDisabled = false,
@@ -15,6 +16,7 @@ export function ContentMoreMenu({
   onEdit: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const { isClosing, requestClose, resetClosing } = useBottomSheetClose(() => setOpen(false));
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,11 +24,11 @@ export function ContentMoreMenu({
 
     const close = (event: PointerEvent) => {
       if (menuRef.current?.contains(event.target as Node)) return;
-      setOpen(false);
+      requestClose();
     };
     window.addEventListener('pointerdown', close);
     return () => window.removeEventListener('pointerdown', close);
-  }, [open]);
+  }, [open, requestClose]);
 
   return (
     <div className="content-more-menu" ref={menuRef}>
@@ -35,17 +37,22 @@ export function ContentMoreMenu({
         aria-haspopup="menu"
         aria-label="게시물 메뉴"
         className="content-more-menu__trigger"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          if (open) requestClose();
+          else {
+            resetClosing();
+            setOpen(true);
+          }
+        }}
         type="button"
       >
         <MoreVertical size={18} aria-hidden="true" />
       </button>
       {open ? (
-        <div className="content-more-menu__dropdown" role="menu">
+        <div className={`content-more-menu__dropdown${isClosing ? ' is-closing' : ''}`} role="menu">
           <button
             onClick={() => {
-              setOpen(false);
-              onEdit();
+              requestClose(onEdit);
             }}
             role="menuitem"
             type="button"
@@ -57,8 +64,7 @@ export function ContentMoreMenu({
             className="is-danger"
             disabled={deleteDisabled}
             onClick={() => {
-              setOpen(false);
-              onDelete();
+              requestClose(onDelete);
             }}
             role="menuitem"
             type="button"

@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import type {
   ActivityRequestAdminListQuery,
   ActivityRequestAdminSummary,
-  ActivityRequestParticipant,
   ActivityRequestPrintBatch,
   ActivityRequestStudentOption,
 } from '@jshsus/types';
@@ -26,7 +25,6 @@ import {
 } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 import {
-  formatActivityDate,
   formatActivityDateTime,
   useActivityRequests,
   useRefreshActivityRequests,
@@ -34,6 +32,7 @@ import {
 import {
   activitySlotsDateTimes,
   availableActivityTimeSlots,
+  formatActivityTimeRanges,
   koreaDateInput,
   type ActivityTimeSlotId,
 } from './activitySchedule';
@@ -71,27 +70,6 @@ function createInitialActivityForm(): CreateActivityForm {
   };
 }
 
-function participantPairs(participants: ActivityRequestParticipant[]) {
-  const midpoint = Math.ceil(participants.length / 2);
-  return Array.from(
-    { length: midpoint },
-    (_, index) => [participants[index], participants[index + midpoint]] as const,
-  );
-}
-
-function ParticipantCell({ participant }: { participant?: ActivityRequestParticipant }) {
-  if (!participant) return <td colSpan={2} />;
-  return (
-    <>
-      <td>{participant.studentNo}</td>
-      <td>
-        {participant.studentName}
-        {participant.isRepresentative ? <span className="print-representative">대표</span> : null}
-      </td>
-    </>
-  );
-}
-
 function ActivityPermitDocument({ request }: { request: ActivityRequestAdminSummary }) {
   const participants = request.participants.length
     ? request.participants
@@ -104,101 +82,58 @@ function ActivityPermitDocument({ request }: { request: ActivityRequestAdminSumm
         },
       ];
 
+  const activityDate = koreaDateInput(new Date(request.startsAt));
+  const participantText = participants
+    .map(
+      (participant) =>
+        `${participant.studentNo} ${participant.studentName}${
+          participant.isRepresentative ? '(대표)' : ''
+        }`,
+    )
+    .join(', ');
+
   return (
     <article className="activity-permit-document">
-      <header className="activity-permit-document__header">
-        <div>
-          <span>전남과학고등학교</span>
-          <h1>탐구활동서</h1>
-        </div>
-        <dl>
-          <div>
-            <dt>발급번호</dt>
-            <dd>{request.issuedNumber ?? '-'}</dd>
-          </div>
-          <div>
-            <dt>발급일</dt>
-            <dd>{request.issuedAt ? formatActivityDate(request.issuedAt) : '-'}</dd>
-          </div>
-        </dl>
-      </header>
-
-      <table className="activity-permit-document__summary">
+      <h1>탐구활동서</h1>
+      <table className="activity-permit-document__table">
         <tbody>
           <tr>
-            <th>대표 학생</th>
-            <td>
-              {request.studentNo} {request.studentName}
-            </td>
-            <th>참여 인원</th>
-            <td>{participants.length}명</td>
-          </tr>
-          <tr>
-            <th>활동 일시</th>
-            <td colSpan={3}>
-              {formatActivityDateTime(request.startsAt)} – {formatActivityDateTime(request.endsAt)}
-            </td>
-          </tr>
-          <tr>
-            <th>장소</th>
-            <td colSpan={3}>{request.location}</td>
-          </tr>
-          <tr>
             <th>활동 목적</th>
-            <td colSpan={3}>{request.purpose}</td>
+            <td>{request.purpose}</td>
+          </tr>
+          <tr>
+            <th>활동 시간</th>
+            <td>
+              {formatActivityTimeRanges(
+                activityDate,
+                request.startsAt,
+                request.endsAt,
+                request.activitySlotIds,
+              )}
+            </td>
+          </tr>
+          <tr>
+            <th>활동 장소</th>
+            <td>{request.location}</td>
+          </tr>
+          <tr>
+            <th>참여 학생</th>
+            <td>{participantText}</td>
+          </tr>
+          <tr>
+            <th>지도교사</th>
+            <td>{request.advisorTeacherName ?? '-'}</td>
+          </tr>
+          <tr>
+            <th>작성자</th>
+            <td>{request.creatorName ?? '-'}</td>
+          </tr>
+          <tr>
+            <th>승인자</th>
+            <td>{request.reviewerName ?? '-'}</td>
           </tr>
         </tbody>
       </table>
-
-      <section className="activity-permit-document__section">
-        <h2>참여 학생</h2>
-        <table className="activity-permit-document__participants">
-          <thead>
-            <tr>
-              <th>학번</th>
-              <th>이름</th>
-              <th>학번</th>
-              <th>이름</th>
-            </tr>
-          </thead>
-          <tbody>
-            {participantPairs(participants).map(([left, right], index) => (
-              <tr key={`${left?.studentId ?? 'empty'}-${right?.studentId ?? index}`}>
-                <ParticipantCell participant={left} />
-                <ParticipantCell participant={right} />
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-
-      <section className="activity-permit-document__section">
-        <h2>작성 및 승인</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>작성자</th>
-              <th>담당 교사</th>
-              <th>승인자</th>
-              <th>작성일</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{request.creatorName ?? '-'}</td>
-              <td>{request.advisorTeacherName ?? '-'}</td>
-              <td>{request.reviewerName ?? '-'}</td>
-              <td>{request.createdAt ? formatActivityDate(request.createdAt) : '-'}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-
-      <p className="activity-permit-document__confirmation">위 학생들의 탐구활동을 승인합니다.</p>
-      <footer>
-        <span>{request.issuedAt ? formatActivityDate(request.issuedAt) : ''}</span>
-        <strong>전남과학고등학교</strong>
-      </footer>
     </article>
   );
 }

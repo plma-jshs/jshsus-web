@@ -45,6 +45,7 @@ import {
 import type { MouseEvent, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 import {
   FontSizeMark,
   FontFamilyMark,
@@ -794,6 +795,8 @@ export function RichTextEditor({
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkValue, setLinkValue] = useState('');
   const [pollOpen, setPollOpen] = useState(false);
+  const linkSheet = useBottomSheetClose(() => setLinkOpen(false));
+  const pollSheet = useBottomSheetClose(() => setPollOpen(false));
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOptions, setPollOptions] = useState(['', '']);
 
@@ -913,6 +916,7 @@ export function RichTextEditor({
   };
 
   const openLinkEditor = () => {
+    linkSheet.resetClosing();
     setLinkError(null);
     setLinkValue((editor.getAttributes('link').href as string | undefined) ?? '');
     setLinkOpen(true);
@@ -934,6 +938,7 @@ export function RichTextEditor({
   };
 
   const openPollEditor = () => {
+    pollSheet.resetClosing();
     setPollQuestion('');
     setPollOptions(['', '']);
     setPollOpen(true);
@@ -1199,9 +1204,9 @@ export function RichTextEditor({
       </div>
       {linkOpen ? (
         <div
-          className="rich-text-link-modal"
+          className={`rich-text-link-modal${linkSheet.isClosing ? ' is-closing' : ''}`}
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setLinkOpen(false);
+            if (event.target === event.currentTarget) linkSheet.requestClose();
           }}
         >
           <div
@@ -1215,7 +1220,7 @@ export function RichTextEditor({
               <button
                 aria-label="닫기"
                 className="rich-text-modal__close"
-                onClick={() => setLinkOpen(false)}
+                onClick={() => linkSheet.requestClose()}
                 title="닫기"
                 type="button"
               >
@@ -1255,7 +1260,7 @@ export function RichTextEditor({
               ) : null}
               <button
                 className="rich-text-modal__secondary"
-                onClick={() => setLinkOpen(false)}
+                onClick={() => linkSheet.requestClose()}
                 type="button"
               >
                 취소
@@ -1269,9 +1274,9 @@ export function RichTextEditor({
       ) : null}
       {pollOpen ? (
         <div
-          className="rich-text-link-modal"
+          className={`rich-text-link-modal${pollSheet.isClosing ? ' is-closing' : ''}`}
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setPollOpen(false);
+            if (event.target === event.currentTarget) pollSheet.requestClose();
           }}
         >
           <div
@@ -1285,7 +1290,7 @@ export function RichTextEditor({
               <button
                 aria-label="닫기"
                 className="rich-text-modal__close"
-                onClick={() => setPollOpen(false)}
+                onClick={() => pollSheet.requestClose()}
                 title="닫기"
                 type="button"
               >
@@ -1350,7 +1355,7 @@ export function RichTextEditor({
             <div className="rich-text-link-modal__actions">
               <button
                 className="rich-text-modal__secondary"
-                onClick={() => setPollOpen(false)}
+                onClick={() => pollSheet.requestClose()}
                 type="button"
               >
                 취소

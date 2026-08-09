@@ -522,11 +522,15 @@
     gap: 6px;
     color: var(--j-color-text-secondary);
     font-size: 13px;
-    font-weight: var(--j-weight-semibold);
+    font-weight: var(--j-weight-regular);
   }
 
   .admin-mobile-sort-field .admin-select {
     width: 100%;
+  }
+
+  .admin-mobile-sort-field .admin-select__native {
+    font-weight: var(--j-weight-regular);
   }
 
   .admin-data-table.has-mobile-cards > .table-wrap {

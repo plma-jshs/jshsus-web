@@ -111,14 +111,15 @@
 }
 
 .operation-list-toolbar .admin-table-toolbar__controls {
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .operation-search-field {
   position: relative;
   display: block;
-  width: min(300px, 28vw);
+  width: auto;
   min-width: 220px;
+  flex: 1 1 280px;
 }
 
 .operation-search-field > svg {
@@ -266,7 +267,7 @@
 }
 
 .operation-review-toolbar .admin-table-toolbar__controls {
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .operation-review-toolbar .ui-button {
@@ -876,8 +877,7 @@
   .activity-permit-document {
     box-sizing: border-box;
     width: 100%;
-    min-height: 272mm;
-    padding: 3mm;
+    padding: 3mm 2mm;
     break-after: page;
     page-break-after: always;
   }
@@ -887,59 +887,25 @@
     page-break-after: auto;
   }
 
-  .activity-permit-document__header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    padding-bottom: 5mm;
-    border-bottom: 2px solid #111;
-  }
-
-  .activity-permit-document__header span {
-    font-size: 10pt;
-  }
-
-  .activity-permit-document__header h1 {
-    margin: 1.5mm 0 0;
-    font-size: 25pt;
-    letter-spacing: 0.12em;
-  }
-
-  .activity-permit-document__header dl {
-    display: grid;
-    gap: 1.5mm;
-    min-width: 64mm;
-    margin: 0;
-    font-size: 9.5pt;
-  }
-
-  .activity-permit-document__header dl > div {
-    display: grid;
-    grid-template-columns: 22mm 1fr;
-  }
-
-  .activity-permit-document__header dt,
-  .activity-permit-document__header dd {
-    margin: 0;
-  }
-
-  .activity-permit-document__header dt {
-    font-weight: 700;
+  .activity-permit-document > h1 {
+    margin: 0 0 6mm;
+    font-size: 18pt;
+    text-align: center;
   }
 
   .activity-permit-document table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
-    font-size: 9.5pt;
+    table-layout: auto;
+    font-size: 10pt;
   }
 
   .activity-permit-document th,
   .activity-permit-document td {
-    height: 8.5mm;
-    padding: 1.6mm 2.2mm;
+    min-height: 9mm;
+    padding: 2.2mm 2.8mm;
     border: 1px solid #555;
-    text-align: center;
+    text-align: left;
     vertical-align: middle;
   }
 
@@ -950,58 +916,7 @@
     print-color-adjust: exact;
   }
 
-  .activity-permit-document__summary {
-    margin-top: 6mm;
-  }
-
-  .activity-permit-document__summary th {
-    width: 22mm;
-  }
-
-  .activity-permit-document__summary td {
-    text-align: left;
-  }
-
-  .activity-permit-document__section {
-    margin-top: 5mm;
-  }
-
-  .activity-permit-document__section h2 {
-    margin: 0 0 2mm;
-    font-size: 12pt;
-  }
-
-  .activity-permit-document__participants th:nth-child(odd),
-  .activity-permit-document__participants td:nth-child(odd) {
-    width: 24mm;
-  }
-
-  .print-representative {
-    display: inline-block;
-    margin-left: 2mm;
-    padding: 0.4mm 1.4mm;
-    border: 1px solid #555;
-    border-radius: 999px;
-    font-size: 7.5pt;
-    font-weight: 700;
-  }
-
-  .activity-permit-document__confirmation {
-    margin: 10mm 0 0;
-    text-align: center;
-    font-size: 11pt;
-  }
-
-  .activity-permit-document footer {
-    display: grid;
-    gap: 4mm;
-    margin-top: 8mm;
-    text-align: center;
-    font-size: 12pt;
-  }
-
-  .activity-permit-document footer strong {
-    font-size: 15pt;
-    letter-spacing: 0.08em;
+  .activity-permit-document__table th {
+    width: 30mm;
   }
 }

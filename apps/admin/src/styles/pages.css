@@ -134,7 +134,7 @@
 .admin-sidebar-account {
   display: none;
   align-items: center;
-  gap: 9px;
+  gap: 6px;
   margin-top: 18px;
   padding: 11px 10px;
   border-top: 1px solid var(--line);
@@ -143,10 +143,11 @@
 
 .admin-sidebar-account--top {
   margin: 0 0 16px;
-  padding: 11px 10px;
+  min-height: 0;
+  padding: 8px 10px;
   border: 0;
   border-radius: 11px;
-  background: #f3f4f6;
+  background: #f8f9fa;
 }
 
 .admin-sidebar-profile-menu > summary,
@@ -200,8 +201,8 @@
 
 .admin-sidebar-account__icon {
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   flex: 0 0 auto;
   place-items: center;
   overflow: visible;
@@ -212,8 +213,8 @@
 
 .admin-sidebar-account__icon > svg {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 17px;
+  height: 17px;
   overflow: visible;
 }
 

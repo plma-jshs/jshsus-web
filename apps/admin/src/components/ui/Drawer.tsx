@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
+import { useAnimatedDialog } from './useAnimatedDialog';
 
 export type DrawerProps = {
   open: boolean;
@@ -24,16 +25,9 @@ export function Drawer({
   closeLabel = '상세 패널 닫기',
   className,
 }: DrawerProps) {
-  const ref = useRef<HTMLDialogElement>(null);
+  const { ref, requestClose } = useAnimatedDialog(open, onClose);
   const titleId = useId();
   const descriptionId = useId();
-
-  useEffect(() => {
-    const drawer = ref.current;
-    if (!drawer) return;
-    if (open && !drawer.open) drawer.showModal();
-    if (!open && drawer.open) drawer.close();
-  }, [open]);
 
   const classes = ['ui-drawer', `ui-drawer--${side}`, className ?? ''].filter(Boolean).join(' ');
 
@@ -45,10 +39,10 @@ export function Drawer({
       aria-describedby={description ? descriptionId : undefined}
       onCancel={(event) => {
         event.preventDefault();
-        onClose();
+        requestClose();
       }}
       onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) requestClose();
       }}
     >
       <div className="ui-drawer__layout">
@@ -61,7 +55,7 @@ export function Drawer({
             className="ui-drawer__close"
             type="button"
             aria-label={closeLabel}
-            onClick={onClose}
+            onClick={requestClose}
           >
             <X size={19} aria-hidden="true" />
           </button>

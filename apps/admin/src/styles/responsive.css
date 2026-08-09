@@ -39,7 +39,8 @@
   .admin-sidebar-account--top {
     align-items: center;
     flex-direction: row;
-    background: #f3f4f6;
+    padding: 8px 10px;
+    background: #f8f9fa;
   }
 
   .admin-sidebar.open {

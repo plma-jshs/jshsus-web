@@ -20,6 +20,7 @@ import { PageState } from '../../components/page/PageScaffold';
 import { ApiError } from '../../shared/api/http';
 import { getPasswordResetHref } from '../../shared/lib/authSiteHref';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
+import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 import {
   deleteProfileImage,
   getMyStatus,
@@ -285,12 +286,16 @@ export function MyStatusPage() {
     });
     cropDragRef.current = null;
   };
+  const cropSheet = useBottomSheetClose(closeProfileCrop);
+  const nicknameSheet = useBottomSheetClose(() => setNicknameModalOpen(false));
+  const contactSheet = useBottomSheetClose(() => setContactDraft(null));
 
   const updateCropDraft = (updater: (current: CropDraft) => CropDraft) => {
     setCropDraft((current) => (current ? clampCropDraft(updater(current)) : current));
   };
 
   const selectProfileImage = (file?: File) => {
+    cropSheet.resetClosing();
     setProfileError(null);
     if (!file) return;
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
@@ -527,6 +532,7 @@ export function MyStatusPage() {
               <button
                 type="button"
                 onClick={() => {
+                  nicknameSheet.resetClosing();
                   setNicknameDraft(status.student.nickname || status.student.name);
                   setNicknameModalOpen(true);
                 }}
@@ -539,14 +545,15 @@ export function MyStatusPage() {
               <span>{maskPhone(status.student.phone)}</span>
               <button
                 type="button"
-                onClick={() =>
+                onClick={() => {
+                  contactSheet.resetClosing();
                   setContactDraft({
                     field: 'phone',
                     value: '',
                     verificationCode: '',
                     verificationRequested: false,
-                  })
-                }
+                  });
+                }}
               >
                 수정
               </button>
@@ -556,14 +563,15 @@ export function MyStatusPage() {
               <span>{maskEmail(status.student.email)}</span>
               <button
                 type="button"
-                onClick={() =>
+                onClick={() => {
+                  contactSheet.resetClosing();
                   setContactDraft({
                     field: 'email',
                     value: '',
                     verificationCode: '',
                     verificationRequested: false,
-                  })
-                }
+                  });
+                }}
               >
                 수정
               </button>
@@ -685,7 +693,7 @@ export function MyStatusPage() {
       </section>
 
       {cropDraft && cropGeometry ? (
-        <div className="status-crop-backdrop">
+        <div className={`status-crop-backdrop${cropSheet.isClosing ? ' is-closing' : ''}`}>
           <section
             className="status-crop-modal"
             role="dialog"
@@ -697,7 +705,7 @@ export function MyStatusPage() {
               <button
                 type="button"
                 aria-label="닫기"
-                onClick={closeProfileCrop}
+                onClick={() => cropSheet.requestClose()}
                 disabled={imageMutation.isPending}
               >
                 <X size={18} aria-hidden="true" />
@@ -753,7 +761,7 @@ export function MyStatusPage() {
               <button
                 className="detail-secondary-button"
                 type="button"
-                onClick={closeProfileCrop}
+                onClick={() => cropSheet.requestClose()}
                 disabled={imageMutation.isPending}
               >
                 취소
@@ -772,7 +780,7 @@ export function MyStatusPage() {
       ) : null}
 
       {nicknameModalOpen ? (
-        <div className="status-crop-backdrop">
+        <div className={`status-crop-backdrop${nicknameSheet.isClosing ? ' is-closing' : ''}`}>
           <section
             className="status-contact-modal"
             role="dialog"
@@ -781,7 +789,7 @@ export function MyStatusPage() {
           >
             <header>
               <h2 id="status-nickname-title">닉네임 변경</h2>
-              <button type="button" aria-label="닫기" onClick={() => setNicknameModalOpen(false)}>
+              <button type="button" aria-label="닫기" onClick={() => nicknameSheet.requestClose()}>
                 <X size={19} aria-hidden="true" />
               </button>
             </header>
@@ -804,7 +812,7 @@ export function MyStatusPage() {
                 required
               />
               <div className="status-contact-modal__actions">
-                <button type="button" onClick={() => setNicknameModalOpen(false)}>
+                <button type="button" onClick={() => nicknameSheet.requestClose()}>
                   취소
                 </button>
                 <button type="submit" disabled={profileMutation.isPending || !nickname.trim()}>
@@ -817,7 +825,7 @@ export function MyStatusPage() {
       ) : null}
 
       {contactDraft ? (
-        <div className="status-crop-backdrop">
+        <div className={`status-crop-backdrop${contactSheet.isClosing ? ' is-closing' : ''}`}>
           <section
             className="status-contact-modal"
             role="dialog"
@@ -828,7 +836,7 @@ export function MyStatusPage() {
               <h2 id="status-contact-title">
                 {contactDraft.field === 'email' ? '이메일 변경' : '전화번호 변경'}
               </h2>
-              <button type="button" aria-label="닫기" onClick={() => setContactDraft(null)}>
+              <button type="button" aria-label="닫기" onClick={() => contactSheet.requestClose()}>
                 <X size={19} aria-hidden="true" />
               </button>
             </header>
@@ -933,7 +941,7 @@ export function MyStatusPage() {
                 </>
               ) : null}
               <div className="status-contact-modal__actions">
-                <button type="button" onClick={() => setContactDraft(null)}>
+                <button type="button" onClick={() => contactSheet.requestClose()}>
                   취소
                 </button>
                 <button type="submit" disabled={contactMutation.isPending}>

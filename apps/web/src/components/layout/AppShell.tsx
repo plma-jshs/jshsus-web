@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 import {
   ArrowLeft,
   BadgeCheck,
@@ -339,8 +340,14 @@ function MobileMenu({
 }
 
 function BusinessInfoModal({ onClose }: { onClose: () => void }) {
+  const { isClosing, requestClose } = useBottomSheetClose(onClose);
+
   return createPortal(
-    <div className="portal-footer__business-modal" role="presentation" onClick={onClose}>
+    <div
+      className={`portal-footer__business-modal${isClosing ? ' is-closing' : ''}`}
+      role="presentation"
+      onClick={() => requestClose()}
+    >
       <section
         className="portal-footer__business-dialog"
         role="dialog"
@@ -350,7 +357,7 @@ function BusinessInfoModal({ onClose }: { onClose: () => void }) {
       >
         <header>
           <strong id="business-info-title">사업자 정보</strong>
-          <button type="button" aria-label="사업자 정보 닫기" onClick={onClose}>
+          <button type="button" aria-label="사업자 정보 닫기" onClick={() => requestClose()}>
             <X aria-hidden="true" size={18} />
           </button>
         </header>

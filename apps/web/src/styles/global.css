@@ -24,9 +24,23 @@
   }
 }
 
+@keyframes mobile-bottom-sheet-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
 @media (max-width: 767px) {
   :where(
     .data-table-toolbar.is-filter-open .data-table-toolbar__filters,
+    .page-toolbar.is-filter-open .page-toolbar__filters-content,
+    .content-more-menu__dropdown,
     .board-rules-modal__dialog,
     .rich-text-link-modal__dialog,
     .editor-resume-modal__dialog,
@@ -37,11 +51,38 @@
   ) {
     animation: mobile-bottom-sheet-enter 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
+
+  :where(
+    .data-table-toolbar.is-closing .data-table-toolbar__filters,
+    .page-toolbar.is-closing .page-toolbar__filters-content,
+    .content-more-menu__dropdown.is-closing,
+    .board-rules-modal.is-closing .board-rules-modal__dialog,
+    .portal-footer__business-modal.is-closing .portal-footer__business-dialog,
+    .rich-text-link-modal.is-closing .rich-text-link-modal__dialog,
+    .status-crop-backdrop.is-closing > :where(.status-crop-modal, .status-contact-modal)
+  ) {
+    animation: mobile-bottom-sheet-exit 180ms cubic-bezier(0.4, 0, 1, 1) both;
+    pointer-events: none;
+  }
+
+  :where(
+    .data-table-toolbar.is-closing .data-table-toolbar__filter-scrim,
+    .page-toolbar.is-closing .page-toolbar__filter-scrim,
+    .board-rules-modal.is-closing,
+    .portal-footer__business-modal.is-closing,
+    .rich-text-link-modal.is-closing,
+    .status-crop-backdrop.is-closing
+  ) {
+    opacity: 0;
+    transition: opacity 180ms ease;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   :where(
     .data-table-toolbar__filters,
+    .page-toolbar__filters-content,
+    .content-more-menu__dropdown,
     .board-rules-modal__dialog,
     .rich-text-link-modal__dialog,
     .editor-resume-modal__dialog,
