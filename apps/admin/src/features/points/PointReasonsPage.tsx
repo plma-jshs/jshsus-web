@@ -10,6 +10,7 @@ import {
   Button,
   Dialog,
   FormField,
+  MobileSortSelect,
   PageSizeSelect,
   RowActionButton,
   RowActions,
@@ -199,6 +200,22 @@ export function PointReasonsPage() {
               <Button variant="primary" onClick={openCreate}>
                 사유 추가
               </Button>
+            }
+            mobileSort={
+              <MobileSortSelect
+                value={`${sort?.id ?? 'id'}:${sort?.desc ? 'desc' : 'asc'}`}
+                options={[
+                  { value: 'id:asc', label: '사유코드 오름차순' },
+                  { value: 'id:desc', label: '사유코드 내림차순' },
+                  { value: 'point:desc', label: '점수 높은순' },
+                  { value: 'point:asc', label: '점수 낮은순' },
+                ]}
+                onChange={(value) => {
+                  const [id, direction] = value.split(':');
+                  setSorting([{ id: id ?? 'id', desc: direction === 'desc' }]);
+                  resetPage();
+                }}
+              />
             }
           >
             <label className="point-filter">

@@ -1133,8 +1133,9 @@
     padding: 0 6px 18px;
     gap: 0;
     touch-action: pan-y;
-    animation-duration: 180ms;
-    animation-timing-function: ease-out;
+    will-change: transform, opacity;
+    animation-duration: 280ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .school-calendar-grid.is-next {
@@ -1316,8 +1317,8 @@
 
 @keyframes admin-calendar-slide-next {
   from {
-    transform: translateX(18px);
-    opacity: 0.72;
+    transform: translateX(36px);
+    opacity: 0.58;
   }
   to {
     transform: translateX(0);
@@ -1327,8 +1328,8 @@
 
 @keyframes admin-calendar-slide-previous {
   from {
-    transform: translateX(-18px);
-    opacity: 0.72;
+    transform: translateX(-36px);
+    opacity: 0.58;
   }
   to {
     transform: translateX(0);

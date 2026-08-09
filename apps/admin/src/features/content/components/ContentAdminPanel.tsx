@@ -12,6 +12,7 @@ type ContentAdminPanelProps = {
   actions?: ReactNode;
   mobileSearch?: ReactNode;
   mobileAction?: ReactNode;
+  mobileSort?: ReactNode;
   mobileSheet?: boolean;
   children: ReactNode;
   className?: string;
@@ -24,6 +25,7 @@ export function ContentAdminPanel({
   actions,
   mobileSearch,
   mobileAction,
+  mobileSort,
   mobileSheet = true,
   children,
   className,
@@ -49,6 +51,7 @@ export function ContentAdminPanel({
               mobileSheet={mobileSheet}
               mobileSheetTitle="필터"
               mobileSearch={mobileSearch}
+              mobileSort={mobileSort}
             >
               {actions}
             </TableToolbar>

@@ -8,6 +8,7 @@ import {
   AdminSelect,
   Button,
   Drawer,
+  MobileSortSelect,
   PageSizeSelect,
   RowActionButton,
   RowActions,
@@ -31,7 +32,7 @@ export function DormReportsPanel({
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<'' | DormReportStatus>('');
   const [pageSize, setPageSize] = useState(20);
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
   const [selected, setSelected] = useState<DormReport | null>(null);
   const [draftStatus, setDraftStatus] = useState<DormReportStatus>('PENDING');
   const [comment, setComment] = useState('');
@@ -145,6 +146,21 @@ export function DormReportsPanel({
             onChange={(event) => setSearch(event.target.value)}
             placeholder="호실, 학생, 내용 검색"
             aria-label="민원 검색"
+          />
+        }
+        mobileSort={
+          <MobileSortSelect
+            value={`${sorting[0]?.id ?? 'createdAt'}:${sorting[0]?.desc ? 'desc' : 'asc'}`}
+            options={[
+              { value: 'createdAt:desc', label: '접수 최신순' },
+              { value: 'createdAt:asc', label: '접수 오래된순' },
+              { value: 'roomName:asc', label: '호실 오름차순' },
+              { value: 'studentNo:asc', label: '학번 오름차순' },
+            ]}
+            onChange={(value) => {
+              const [id, direction] = value.split(':');
+              setSorting([{ id: id ?? 'createdAt', desc: direction === 'desc' }]);
+            }}
           />
         }
       >

@@ -29,10 +29,17 @@
   }
 
   .admin-sidebar-account {
+    display: flex;
     flex: 0 0 auto;
-    margin-top: 10px;
-    padding-bottom: max(11px, env(safe-area-inset-bottom));
+    margin: 0 0 14px;
+    padding-bottom: 11px;
     background: var(--sidebar);
+  }
+
+  .admin-sidebar-account--top {
+    align-items: center;
+    flex-direction: row;
+    background: var(--sidebar-soft);
   }
 
   .admin-sidebar.open {
@@ -180,8 +187,6 @@
 
   .admin-sidebar-account {
     display: flex;
-    align-items: stretch;
-    flex-direction: column;
   }
 
   .admin-content {

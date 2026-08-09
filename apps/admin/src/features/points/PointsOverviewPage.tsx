@@ -2,7 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
-import { AdminListPanel, AdminSelect, PageSizeSelect, TableToolbar } from '../../components/ui';
+import {
+  AdminListPanel,
+  AdminSelect,
+  MobileSortSelect,
+  PageSizeSelect,
+  TableToolbar,
+} from '../../components/ui';
 import { pointsApi, type PointStudentRow } from './pointsApi';
 import './points.css';
 
@@ -21,7 +27,15 @@ export function PointsOverviewPage() {
   );
   const [grade, setGrade] = useState('');
   const [classNo, setClassNo] = useState('');
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'studentNo', desc: false }]);
+  const initialSearch = new URLSearchParams(window.location.search);
+  const initialSortBy = initialSearch.get('sortBy');
+  const initialSortOrder = initialSearch.get('sortOrder');
+  const [sorting, setSorting] = useState<SortingState>([
+    {
+      id: initialSortBy === 'currentPoint' ? 'currentPoint' : 'studentNo',
+      desc: initialSortOrder === 'desc',
+    },
+  ]);
   const sort = sorting[0];
   const query = useQuery({
     queryKey: ['point-student-page', page, pageSize, search, grade, classNo, sort?.id, sort?.desc],
@@ -114,6 +128,22 @@ export function PointsOverviewPage() {
                 }}
               />
             </label>
+          }
+          mobileSort={
+            <MobileSortSelect
+              value={`${sort?.id ?? 'studentNo'}:${sort?.desc ? 'desc' : 'asc'}`}
+              options={[
+                { value: 'studentNo:asc', label: '학번 오름차순' },
+                { value: 'studentNo:desc', label: '학번 내림차순' },
+                { value: 'currentPoint:asc', label: '총계 낮은 순' },
+                { value: 'currentPoint:desc', label: '총계 높은 순' },
+              ]}
+              onChange={(value) => {
+                const [id, direction] = value.split(':');
+                setSorting([{ id: id ?? 'studentNo', desc: direction === 'desc' }]);
+                resetPage();
+              }}
+            />
           }
         >
           <label className="point-filter">

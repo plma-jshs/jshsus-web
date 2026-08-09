@@ -8,6 +8,7 @@ import {
   AdminSelect,
   ConfirmDialog,
   Drawer,
+  MobileSortSelect,
   PageSizeSelect,
   RowActionButton,
   RowActions,
@@ -279,6 +280,21 @@ export function LostItemsManagementPage() {
               placeholder="물품, 장소, 등록자 검색"
             />
           </label>
+        }
+        mobileSort={
+          <MobileSortSelect
+            value={`${itemSorting[0]?.id ?? 'id'}:${itemSorting[0]?.desc ? 'desc' : 'asc'}`}
+            options={[
+              { value: 'id:desc', label: '등록 최신순' },
+              { value: 'id:asc', label: '등록 오래된순' },
+              { value: 'occurredAt:desc', label: '발생일 최신순' },
+              { value: 'occurredAt:asc', label: '발생일 오래된순' },
+            ]}
+            onChange={(value) => {
+              const [id, direction] = value.split(':');
+              setItemSorting([{ id: id ?? 'id', desc: direction === 'desc' }]);
+            }}
+          />
         }
         actions={
           <div className="content-toolbar">

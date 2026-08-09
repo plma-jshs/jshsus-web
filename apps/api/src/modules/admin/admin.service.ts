@@ -302,7 +302,7 @@ export class AdminService {
         title: '상벌점 주의 학생',
         description: '현재 상벌점이 -15점 이하인 학생입니다.',
         count: pointSummary.watchListCount,
-        href: '/points',
+        href: '/points?sortBy=currentPoint&sortOrder=asc',
         tone: 'warning',
       });
     }

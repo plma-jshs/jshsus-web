@@ -7,6 +7,7 @@ import {
   AdminSelect,
   Drawer,
   EmptyState,
+  MobileSortSelect,
   PageSizeSelect,
   RowActionButton,
   RowActions,
@@ -121,6 +122,21 @@ export function DormOverviewPage() {
               onChange={(event) => setSearch(event.target.value)}
               placeholder="호실 검색"
               aria-label="호실 검색"
+            />
+          }
+          mobileSort={
+            <MobileSortSelect
+              value={`${sorting[0]?.id ?? 'name'}:${sorting[0]?.desc ? 'desc' : 'asc'}`}
+              options={[
+                { value: 'name:asc', label: '호실 오름차순' },
+                { value: 'name:desc', label: '호실 내림차순' },
+                { value: 'openReportCount:desc', label: '미처리 민원 많은순' },
+                { value: 'openReportCount:asc', label: '미처리 민원 적은순' },
+              ]}
+              onChange={(value) => {
+                const [id, direction] = value.split(':');
+                setSorting([{ id: id ?? 'name', desc: direction === 'desc' }]);
+              }}
             />
           }
         >

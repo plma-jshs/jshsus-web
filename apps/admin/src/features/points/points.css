@@ -706,6 +706,11 @@
     gap: 7px !important;
   }
 
+  .point-award-page .admin-mobile-card-list > .ui-empty-state {
+    width: 100%;
+    flex: 1 0 100%;
+  }
+
   .point-award-page .admin-mobile-data-card {
     width: auto;
     padding: 0;

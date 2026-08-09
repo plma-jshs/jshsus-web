@@ -17,6 +17,7 @@ import {
   Button,
   Drawer,
   EmptyState,
+  MobileSortSelect,
   PageSizeSelect,
   RowActionButton,
   RowActions,
@@ -464,6 +465,22 @@ export function ActivityReviewPage() {
               >
                 신규 작성
               </Button>
+            }
+            mobileSort={
+              <MobileSortSelect
+                value={`${sort?.id ?? 'startsAt'}:${sort?.desc ? 'desc' : 'asc'}`}
+                options={[
+                  { value: 'startsAt:desc', label: '활동일 최신순' },
+                  { value: 'startsAt:asc', label: '활동일 오래된순' },
+                  { value: 'representative:asc', label: '대표 학생 오름차순' },
+                  { value: 'representative:desc', label: '대표 학생 내림차순' },
+                ]}
+                onChange={(value) => {
+                  const [id, direction] = value.split(':');
+                  setSorting([{ id: id ?? 'startsAt', desc: direction === 'desc' }]);
+                  setPage(1);
+                }}
+              />
             }
           >
             <AdminSelect

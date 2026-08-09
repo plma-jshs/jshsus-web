@@ -12,6 +12,7 @@ import {
   AdminSelect,
   DateRangeField,
   Drawer,
+  MobileSortSelect,
   PageSizeSelect,
   TableToolbar,
 } from '../../components/ui';
@@ -250,6 +251,22 @@ export function ActivityOverviewPage() {
                   placeholder="내용, 참여자, 장소, 지도교사 검색"
                 />
               </label>
+            }
+            mobileSort={
+              <MobileSortSelect
+                value={`${sort?.id ?? 'id'}:${sort?.desc ? 'desc' : 'asc'}`}
+                options={[
+                  { value: 'id:desc', label: '신청 최신순' },
+                  { value: 'id:asc', label: '신청 오래된순' },
+                  { value: 'startsAt:desc', label: '활동일 최신순' },
+                  { value: 'startsAt:asc', label: '활동일 오래된순' },
+                ]}
+                onChange={(value) => {
+                  const [id, direction] = value.split(':');
+                  setSorting([{ id: id ?? 'id', desc: direction === 'desc' }]);
+                  resetPage();
+                }}
+              />
             }
           >
             <DateRangeField

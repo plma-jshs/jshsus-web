@@ -210,9 +210,11 @@ function DesktopNavigation() {
 function MobileMenu({
   displayName,
   profileImageUrl,
+  canUseAdmin,
 }: {
   displayName?: string;
   profileImageUrl?: string;
+  canUseAdmin?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -318,6 +320,12 @@ function MobileMenu({
                       {category.links.map((item) => (
                         <PortalNavigationLink item={item} onNavigate={closeMenu} key={item.label} />
                       ))}
+                      {canUseAdmin && category.label === '방송·도구' ? (
+                        <PortalNavigationLink
+                          item={{ label: '학생부 전산시스템', href: getAdminSiteHref() }}
+                          onNavigate={closeMenu}
+                        />
+                      ) : null}
                     </div>
                   ))}
                 </nav>
@@ -481,6 +489,18 @@ function PortalShell() {
   const sessionDisplayName = session?.isLogined
     ? [session.identifier ?? session.stuid, session.name ?? '사용자'].filter(Boolean).join(' ')
     : '';
+  const canUseAdmin = Boolean(
+    session?.isLogined &&
+    (session.roles?.includes('system_admin') ||
+      session.permissions?.some(
+        (permission) =>
+          permission.endsWith('.manage') ||
+          permission.endsWith('.review') ||
+          permission.endsWith('.issue') ||
+          permission === 'audit.read' ||
+          permission === 'system.read',
+      )),
+  );
 
   useEffect(() => {
     if (!isBusinessInfoOpen) return undefined;
@@ -583,6 +603,7 @@ function PortalShell() {
               <MobileMenu
                 displayName={session?.isLogined ? sessionDisplayName : undefined}
                 profileImageUrl={myStatusQuery.data?.student.profileImageUrl}
+                canUseAdmin={canUseAdmin}
               />
             </div>
             {mobileEditorRoute ? (

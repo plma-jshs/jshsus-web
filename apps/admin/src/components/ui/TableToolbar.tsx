@@ -5,6 +5,7 @@ export type TableToolbarProps = HTMLAttributes<HTMLDivElement> & {
   summary?: ReactNode;
   mobileSearch?: ReactNode;
   mobileActions?: ReactNode;
+  mobileSort?: ReactNode;
   children?: ReactNode;
   mobileSheet?: boolean;
   mobileSheetTitle?: string;
@@ -29,6 +30,7 @@ export function TableToolbar({
   summary,
   mobileSearch,
   mobileActions,
+  mobileSort,
   children,
   className,
   mobileSheet = true,
@@ -104,6 +106,7 @@ export function TableToolbar({
                   </button>
                 </header>
                 <div className="admin-table-toolbar__controls admin-filter-sheet__controls">
+                  {mobileSort}
                   {children}
                 </div>
                 <footer>

@@ -8,6 +8,7 @@ export * from './Drawer';
 export * from './EmptyState';
 export * from './FormField';
 export * from './IconButton';
+export * from './MobileSortSelect';
 export * from './PageSizeSelect';
 export * from './SegmentedTabs';
 export * from './RowActions';

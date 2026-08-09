@@ -206,7 +206,9 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
             <option key={room.id} value={roomLabel(room)} />
           ))}
         </datalist>
-        <Button onClick={addRoom}>추가</Button>
+        <Button variant="primary" onClick={addRoom}>
+          추가
+        </Button>
         <label>
           기준 규정
           <AdminSelect

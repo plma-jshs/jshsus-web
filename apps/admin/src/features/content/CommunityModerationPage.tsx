@@ -2,12 +2,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { BoardCommentSummary, BoardPostSummary, ContentReportSummary } from '@jshsus/types';
-import { Eye, EyeOff, Pin, PinOff, Search, Settings2, ShieldAlert, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, Pin, PinOff, Search, Settings2, ShieldAlert } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
   ConfirmDialog,
   Drawer,
+  MobileSortSelect,
   PageSizeSelect,
   RowActionButton,
   RowActions,
@@ -276,7 +277,7 @@ export function CommunityModerationPage({
         header: '작업',
         cell: ({ row }) => (
           <RowActions
-            mobileTitle={`${row.original.title} 작업`}
+            mobileTitle="작업"
             mobileChildren={
               <>
                 <RowActionButton
@@ -291,12 +292,24 @@ export function CommunityModerationPage({
                   }
                 />
                 <RowActionButton
-                  icon={<Trash2 aria-hidden="true" />}
-                  label="게시글 삭제"
-                  mobileLabel="삭제"
-                  variant="danger"
-                  disabled={togglePostMutation.isPending || row.original.isHidden}
-                  onClick={() => setDeleteTarget(row.original)}
+                  icon={
+                    row.original.isHidden ? (
+                      <Eye aria-hidden="true" />
+                    ) : (
+                      <EyeOff aria-hidden="true" />
+                    )
+                  }
+                  label={row.original.isHidden ? '게시글 공개' : '게시글 숨김'}
+                  mobileLabel={row.original.isHidden ? '공개' : '숨김'}
+                  variant={row.original.isHidden ? 'secondary' : 'danger'}
+                  disabled={togglePostMutation.isPending}
+                  onClick={() => {
+                    if (row.original.isHidden) {
+                      togglePostMutation.mutate({ id: row.original.id, isHidden: false });
+                    } else {
+                      setHideTarget(row.original);
+                    }
+                  }}
                 />
               </>
             }
@@ -312,7 +325,7 @@ export function CommunityModerationPage({
         meta: { align: 'center', width: 64, mobileRole: 'actions' },
       },
     ],
-    [activeSource.slug, pinPostMutation, togglePostMutation.isPending],
+    [activeSource.slug, pinPostMutation, togglePostMutation],
   );
 
   const reportColumns = useMemo<ColumnDef<ContentReportSummary>[]>(
@@ -495,6 +508,21 @@ export function CommunityModerationPage({
             />
           </label>
         }
+        mobileSort={
+          <MobileSortSelect
+            value={`${postSorting[0]?.id ?? 'id'}:${postSorting[0]?.desc ? 'desc' : 'asc'}`}
+            options={[
+              { value: 'id:desc', label: '등록 최신순' },
+              { value: 'id:asc', label: '등록 오래된순' },
+              { value: 'viewCount:desc', label: '조회수 높은순' },
+              { value: 'commentCount:desc', label: '댓글 많은순' },
+            ]}
+            onChange={(value) => {
+              const [id, direction] = value.split(':');
+              setPostSorting([{ id: id ?? 'id', desc: direction === 'desc' }]);
+            }}
+          />
+        }
         actions={
           <div className="content-toolbar">
             {sources.length > 1 ? (
@@ -568,7 +596,7 @@ export function CommunityModerationPage({
                     {post.isHidden ? <span className="status-chip danger">숨김</span> : null}
                   </div>
                   <RowActions
-                    mobileTitle={`${post.title} 작업`}
+                    mobileTitle="작업"
                     mobileChildren={
                       <>
                         <RowActionButton
@@ -583,12 +611,24 @@ export function CommunityModerationPage({
                           }
                         />
                         <RowActionButton
-                          icon={<Trash2 aria-hidden="true" />}
-                          label="게시글 삭제"
-                          mobileLabel="삭제"
-                          variant="danger"
-                          disabled={togglePostMutation.isPending || post.isHidden}
-                          onClick={() => setDeleteTarget(post)}
+                          icon={
+                            post.isHidden ? (
+                              <Eye aria-hidden="true" />
+                            ) : (
+                              <EyeOff aria-hidden="true" />
+                            )
+                          }
+                          label={post.isHidden ? '게시글 공개' : '게시글 숨김'}
+                          mobileLabel={post.isHidden ? '공개' : '숨김'}
+                          variant={post.isHidden ? 'secondary' : 'danger'}
+                          disabled={togglePostMutation.isPending}
+                          onClick={() => {
+                            if (post.isHidden) {
+                              togglePostMutation.mutate({ id: post.id, isHidden: false });
+                            } else {
+                              setHideTarget(post);
+                            }
+                          }}
                         />
                       </>
                     }

@@ -141,6 +141,14 @@
   color: #465552;
 }
 
+.admin-sidebar-account--top {
+  margin: 0 0 16px;
+  padding: 11px 10px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--sidebar-soft);
+}
+
 .admin-sidebar-profile-menu > summary,
 .admin-profile-menu > summary {
   list-style: none;
@@ -213,6 +221,30 @@
   background: transparent;
   color: var(--danger);
   cursor: pointer;
+}
+
+.admin-sidebar-account--top > button {
+  display: inline-flex;
+  width: auto;
+  height: 32px;
+  margin-left: auto;
+  padding: 0 7px;
+  align-items: center;
+  gap: 4px;
+  border-radius: 7px;
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.admin-sidebar-account--top > button:hover:not(:disabled) {
+  background: rgb(255 255 255 / 72%);
+}
+
+.admin-sidebar-account--top > button > span {
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
 }
 
 .admin-sidebar-account div {

@@ -467,8 +467,20 @@
   .admin-table-toolbar__mobile-search input {
     width: 100%;
     min-width: 0;
+    height: 44px;
     min-height: 44px;
     font-size: 16px;
+  }
+
+  .admin-table-toolbar__mobile-search
+    :where(.content-search-field, .point-filter, .admin-search-field) {
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .admin-table-toolbar__mobile-search :where(.admin-select, .admin-select__native) {
+    height: 44px;
+    min-height: 44px;
   }
 
   .admin-table-toolbar__mobile-actions {
@@ -501,6 +513,19 @@
     font-size: 13px;
     font-weight: var(--j-weight-semibold);
     margin-left: auto;
+  }
+
+  .admin-filter-sheet__controls > .admin-mobile-sort-field {
+    display: grid;
+    width: 100%;
+    gap: 6px;
+    color: var(--j-color-text-secondary);
+    font-size: 13px;
+    font-weight: var(--j-weight-semibold);
+  }
+
+  .admin-mobile-sort-field .admin-select {
+    width: 100%;
   }
 
   .admin-data-table.has-mobile-cards > .table-wrap {

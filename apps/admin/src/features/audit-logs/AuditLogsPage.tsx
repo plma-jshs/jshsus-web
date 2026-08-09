@@ -4,7 +4,13 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { AdminAuditLog, AdminAuditLogListQuery } from '@jshsus/types';
 import { MoreHorizontal, Search } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { DateRangeField, Drawer, PageSizeSelect, TableToolbar } from '../../components/ui';
+import {
+  DateRangeField,
+  Drawer,
+  MobileSortSelect,
+  PageSizeSelect,
+  TableToolbar,
+} from '../../components/ui';
 import { api, describeAdminApiError } from '../../shared/api/adminApi';
 import { formatKoreanDate } from '../../shared/lib/date';
 import './audit-logs.css';
@@ -109,6 +115,22 @@ export function AuditLogsPage() {
               placeholder="수행자, 작업, 대상, IP 검색"
             />
           </label>
+        }
+        mobileSort={
+          <MobileSortSelect
+            value={`${sorting[0]?.id ?? 'createdAt'}:${sorting[0]?.desc ? 'desc' : 'asc'}`}
+            options={[
+              { value: 'createdAt:desc', label: '최신순' },
+              { value: 'createdAt:asc', label: '오래된순' },
+              { value: 'actorName:asc', label: '수행자 이름순' },
+              { value: 'targetType:asc', label: '대상 이름순' },
+            ]}
+            onChange={(value) => {
+              const [id, direction] = value.split(':');
+              setSorting([{ id: id ?? 'createdAt', desc: direction === 'desc' }]);
+              setPage(1);
+            }}
+          />
         }
       >
         <div className="audit-log-filters">

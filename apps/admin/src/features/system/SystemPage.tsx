@@ -74,7 +74,7 @@ export function SystemPage() {
               className={`metric-card${systemStatus.traffic.serverErrors24h ? ' is-danger' : ''}`}
             >
               <AlertTriangle size={20} />
-              <span>24시간 5xx</span>
+              <span>24시간 500번대 오류</span>
               <strong>{systemStatus.traffic.serverErrors24h.toLocaleString()}건</strong>
             </article>
             <article className="metric-card">

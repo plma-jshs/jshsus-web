@@ -47,17 +47,11 @@ export function DashboardPage() {
   return (
     <div className="admin-dashboard">
       <section className="admin-dashboard__summary">
-        <span>오늘의 업무</span>
         <h2>
           {taskCount > 0
             ? `확인이 필요한 업무가 ${taskCount}건 있어요`
             : '지금 처리할 업무가 없어요'}
         </h2>
-        <p>
-          {taskCount > 0
-            ? '중요한 항목부터 확인해 주세요.'
-            : '새로운 요청이 생기면 이곳에 바로 표시됩니다.'}
-        </p>
       </section>
 
       {tasks.length > 0 ? (

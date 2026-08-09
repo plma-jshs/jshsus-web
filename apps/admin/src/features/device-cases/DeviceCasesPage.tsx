@@ -353,7 +353,7 @@ export function DeviceCasesPage() {
             {describeAdminApiError(commandsQuery.error, '보관함 명령 기록')}
           </p>
         ) : null}
-        <TableToolbar summary={`총 ${commandsQuery.data?.length ?? 0}건`}>
+        <TableToolbar summary={`총 ${commandsQuery.data?.length ?? 0}건`} mobileSheet={false}>
           <PageSizeSelect value={commandPageSize} onChange={setCommandPageSize} />
         </TableToolbar>
         <DataTable

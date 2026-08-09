@@ -6,6 +6,7 @@ import { ExternalLink, Eye, Paperclip, Pin, PinOff, Search, Trash2 } from 'lucid
 import { DataTable } from '../../components/DataTable';
 import {
   ConfirmDialog,
+  MobileSortSelect,
   PageSizeSelect,
   RowActionButton,
   RowActions,
@@ -170,7 +171,6 @@ export function NoticeManagementPage() {
       <ContentAdminPanel
         title="공지 관리"
         count={noticesQuery.data?.length ?? 0}
-        mobileSheet={false}
         mobileAction={
           <a className="primary-button notice-mobile-create" href={publicSiteHref('/notices/new')}>
             새 공지
@@ -186,6 +186,21 @@ export function NoticeManagementPage() {
               placeholder="제목, 작성자 검색"
             />
           </label>
+        }
+        mobileSort={
+          <MobileSortSelect
+            value={`${sorting[0]?.id ?? 'id'}:${sorting[0]?.desc ? 'desc' : 'asc'}`}
+            options={[
+              { value: 'id:desc', label: '등록 최신순' },
+              { value: 'id:asc', label: '등록 오래된순' },
+              { value: 'viewCount:desc', label: '조회수 높은순' },
+              { value: 'viewCount:asc', label: '조회수 낮은순' },
+            ]}
+            onChange={(value) => {
+              const [id, direction] = value.split(':');
+              setSorting([{ id: id ?? 'id', desc: direction === 'desc' }]);
+            }}
+          />
         }
         actions={
           <div className="content-toolbar">

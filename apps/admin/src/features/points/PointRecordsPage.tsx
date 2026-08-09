@@ -8,6 +8,7 @@ import {
   AdminSelect,
   AdminListPanel,
   DateRangeField,
+  MobileSortSelect,
   PageSizeSelect,
   SelectedRowsHeaderAction,
   TableSelectionCheckbox,
@@ -285,6 +286,24 @@ export function PointRecordsPage() {
                 }}
               />
             </label>
+          }
+          mobileSort={
+            <MobileSortSelect
+              value={`${sort?.id ?? 'baseDate'}:${sort?.desc ? 'desc' : 'asc'}`}
+              options={[
+                { value: 'baseDate:desc', label: '기준일 최신순' },
+                { value: 'baseDate:asc', label: '기준일 오래된순' },
+                { value: 'studentNo:asc', label: '학번 오름차순' },
+                { value: 'studentNo:desc', label: '학번 내림차순' },
+                { value: 'point:asc', label: '점수 낮은순' },
+                { value: 'point:desc', label: '점수 높은순' },
+              ]}
+              onChange={(value) => {
+                const [id, direction] = value.split(':');
+                setSorting([{ id: id ?? 'baseDate', desc: direction === 'desc' }]);
+                resetPage();
+              }}
+            />
           }
         >
           <label className="point-filter">

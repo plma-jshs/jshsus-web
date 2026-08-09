@@ -712,7 +712,7 @@ export function PointAwardPage() {
                 />
               </FormField>
               <Button
-                variant="secondary"
+                variant="primary"
                 disabled={isEditingQueueItem || !directReady}
                 loading={directMutation.isPending}
                 onClick={() => directMutation.mutate()}
