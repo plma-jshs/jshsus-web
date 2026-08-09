@@ -7,7 +7,7 @@
 
 .audit-log-search {
   display: flex;
-  width: min(360px, 100%);
+  width: min(400px, 100%);
   min-height: 40px;
   align-items: center;
   gap: 8px;
@@ -33,6 +33,61 @@
   font: inherit;
 }
 
+.audit-log-detail-trigger {
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--j-color-text-muted);
+  cursor: pointer;
+}
+
+.audit-log-detail-trigger:hover,
+.audit-log-detail-trigger:focus-visible {
+  background: var(--j-color-surface-hover);
+  color: var(--j-color-text-strong);
+}
+
+.audit-log-detail-list {
+  display: grid;
+  margin: 0;
+}
+
+.audit-log-detail-list > div {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--j-color-border);
+}
+
+.audit-log-detail-list dt {
+  color: var(--j-color-text-muted);
+  font-size: 13px;
+}
+
+.audit-log-detail-list dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--j-color-text-strong);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.audit-log-detail-list dd small {
+  display: block;
+  margin-top: 4px;
+  color: var(--j-color-text-muted);
+  font-size: 11px;
+}
+
+.audit-log-detail-list__agent {
+  line-height: 1.55;
+}
+
 @media (max-width: 680px) {
   .audit-log-filters {
     align-items: stretch;
@@ -43,33 +98,43 @@
     width: 100%;
   }
 
-  .audit-log-mobile-card {
+  .audit-log-mobile-card > button {
     display: grid;
-    gap: 6px;
+    width: 100%;
+    gap: 5px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
   }
 
-  .audit-log-mobile-card header {
+  .audit-log-mobile-card__heading {
     display: flex;
     min-width: 0;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 10px;
   }
 
-  .audit-log-mobile-card header strong {
+  .audit-log-mobile-card strong {
     overflow: hidden;
-    font-size: 14px;
+    font-size: 15px;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .audit-log-mobile-card header span,
-  .audit-log-mobile-card p {
+  .audit-log-mobile-card > button > span:not(.audit-log-mobile-card__heading) {
+    color: var(--j-color-text);
+    font-size: 13px;
+  }
+
+  .audit-log-mobile-card small {
     color: var(--j-color-text-muted);
     font-size: 11px;
   }
 
-  .audit-log-mobile-card p {
-    margin: 0;
+  .audit-log-detail-list > div {
+    grid-template-columns: 76px minmax(0, 1fr);
   }
 }

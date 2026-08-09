@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { BoardCommentSummary, BoardPostSummary, ContentReportSummary } from '@jshsus/types';
-import { Eye, EyeOff, Search, Settings2, ShieldAlert } from 'lucide-react';
+import { Eye, EyeOff, Pin, PinOff, Search, Settings2, ShieldAlert, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
@@ -88,6 +88,7 @@ export function CommunityModerationPage({
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [hideTarget, setHideTarget] = useState<BoardPostSummary | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BoardPostSummary | null>(null);
   const [postSearch, setPostSearch] = useState('');
   const [postVisibility, setPostVisibility] = useState<CommunityPostVisibility>('all');
   const [reportStatus, setReportStatus] = useState('all');
@@ -141,6 +142,18 @@ export function CommunityModerationPage({
       });
     },
     onError: () => showToast({ title: '게시글 상태를 변경하지 못했습니다.', tone: 'danger' }),
+  });
+  const pinPostMutation = useMutation({
+    mutationFn: ({ id, pinned }: { id: number; pinned: boolean }) =>
+      api.updatePostPinned(id, pinned),
+    onSuccess: async (_, variables) => {
+      await refreshPosts();
+      showToast({
+        title: variables.pinned ? '게시글을 고정했습니다.' : '게시글 고정을 해제했습니다.',
+        tone: 'success',
+      });
+    },
+    onError: () => showToast({ title: '게시글 고정 상태를 변경하지 못했습니다.', tone: 'danger' }),
   });
   const toggleCommentMutation = useMutation({
     mutationFn: ({ id, isHidden }: { id: number; isHidden: boolean }) =>
@@ -262,7 +275,32 @@ export function CommunityModerationPage({
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <RowActions>
+          <RowActions
+            mobileTitle={`${row.original.title} 작업`}
+            mobileChildren={
+              <>
+                <RowActionButton
+                  icon={
+                    row.original.pinned ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />
+                  }
+                  label={row.original.pinned ? '게시글 고정 해제' : '게시글 고정'}
+                  mobileLabel={row.original.pinned ? '고정 해제' : '고정'}
+                  disabled={pinPostMutation.isPending}
+                  onClick={() =>
+                    pinPostMutation.mutate({ id: row.original.id, pinned: !row.original.pinned })
+                  }
+                />
+                <RowActionButton
+                  icon={<Trash2 aria-hidden="true" />}
+                  label="게시글 삭제"
+                  mobileLabel="삭제"
+                  variant="danger"
+                  disabled={togglePostMutation.isPending || row.original.isHidden}
+                  onClick={() => setDeleteTarget(row.original)}
+                />
+              </>
+            }
+          >
             <RowActionButton
               icon={<Settings2 aria-hidden="true" />}
               label={`${row.original.title} 관리`}
@@ -274,7 +312,7 @@ export function CommunityModerationPage({
         meta: { align: 'center', width: 64, mobileRole: 'actions' },
       },
     ],
-    [activeSource.slug],
+    [activeSource.slug, pinPostMutation, togglePostMutation.isPending],
   );
 
   const reportColumns = useMemo<ColumnDef<ContentReportSummary>[]>(
@@ -529,7 +567,32 @@ export function CommunityModerationPage({
                     </a>
                     {post.isHidden ? <span className="status-chip danger">숨김</span> : null}
                   </div>
-                  <RowActions>
+                  <RowActions
+                    mobileTitle={`${post.title} 작업`}
+                    mobileChildren={
+                      <>
+                        <RowActionButton
+                          icon={
+                            post.pinned ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />
+                          }
+                          label={post.pinned ? '게시글 고정 해제' : '게시글 고정'}
+                          mobileLabel={post.pinned ? '고정 해제' : '고정'}
+                          disabled={pinPostMutation.isPending}
+                          onClick={() =>
+                            pinPostMutation.mutate({ id: post.id, pinned: !post.pinned })
+                          }
+                        />
+                        <RowActionButton
+                          icon={<Trash2 aria-hidden="true" />}
+                          label="게시글 삭제"
+                          mobileLabel="삭제"
+                          variant="danger"
+                          disabled={togglePostMutation.isPending || post.isHidden}
+                          onClick={() => setDeleteTarget(post)}
+                        />
+                      </>
+                    }
+                  >
                     <RowActionButton
                       icon={<Settings2 aria-hidden="true" />}
                       label={`${post.title} 관리`}
@@ -553,8 +616,8 @@ export function CommunityModerationPage({
           />
         </ContentQueryState>
         <MutationMessage
-          isPending={togglePostMutation.isPending}
-          error={togglePostMutation.error}
+          isPending={togglePostMutation.isPending || pinPostMutation.isPending}
+          error={togglePostMutation.error ?? pinPostMutation.error}
           pendingText="게시글 공개 상태를 변경하는 중입니다."
         />
       </ContentAdminPanel>
@@ -715,6 +778,23 @@ export function CommunityModerationPage({
           togglePostMutation.mutate(
             { id: hideTarget.id, isHidden: true },
             { onSuccess: () => setSelectedPostId(null) },
+          )
+        }
+      />
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="게시글 삭제"
+        subject={deleteTarget?.title}
+        description="게시글을 사용자 화면에서 숨깁니다. 관리자 페이지에는 기록이 남습니다."
+        confirmLabel="삭제"
+        pending={togglePostMutation.isPending}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() =>
+          deleteTarget &&
+          togglePostMutation.mutate(
+            { id: deleteTarget.id, isHidden: true },
+            { onSuccess: () => setDeleteTarget(null) },
           )
         }
       />

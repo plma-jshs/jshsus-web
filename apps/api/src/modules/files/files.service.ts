@@ -20,7 +20,7 @@ import { dirname, extname, join } from 'node:path';
 import { and, asc, eq, inArray, isNull, lt, lte, ne, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { env } from '../../shared/config/env';
-import { type AppDatabase, DatabaseService } from '../database/database.service';
+import { auditValues, type AppDatabase, DatabaseService } from '../database/database.service';
 import type { AuthSession } from '../auth/auth.service';
 
 export type FileCleanupReason =
@@ -244,12 +244,14 @@ export class FilesService {
           throw new Error('File metadata insert did not return an id.');
         }
 
-        await transaction.insert(schema.auditLogs).values({
-          actorId,
-          action: 'file.upload',
-          targetType: parsed.data.targetType,
-          targetId: String(parsed.data.targetId),
-        });
+        await transaction.insert(schema.auditLogs).values(
+          auditValues({
+            actorId,
+            action: 'file.upload',
+            targetType: parsed.data.targetType,
+            targetId: parsed.data.targetId,
+          }),
+        );
         return inserted;
       });
     } catch (error) {

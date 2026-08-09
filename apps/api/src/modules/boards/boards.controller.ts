@@ -205,6 +205,17 @@ export class BoardsController {
     return this.boardsService.updatePostHidden(Number(id), body, request.authSession?.userId);
   }
 
+  @Put('admin/boards/posts/:id/pinned')
+  @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
+  @RequirePermissions('community.manage')
+  updatePostPinned(
+    @Param('id') id: string,
+    @Body() body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.boardsService.updatePostPinned(Number(id), body, request.authSession?.userId);
+  }
+
   @Put('admin/boards/comments/:id/hidden')
   @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
   @RequirePermissions('community.manage')

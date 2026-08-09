@@ -8,7 +8,7 @@ import * as schema from '@jshsus/db';
 import type { PointReason, PointRecord, PointSummary, StudentOption } from '@jshsus/types';
 import { and, asc, count, desc, eq, gt, inArray, isNull, like, lte, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { DatabaseService, type AppDatabase } from '../database/database.service';
+import { auditValues, DatabaseService, type AppDatabase } from '../database/database.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
   calculateDepartureResetAdjustment,
@@ -706,12 +706,14 @@ export class PointsService {
           .update(schema.students)
           .set({ currentPoint: sql`${schema.students.currentPoint} + ${parsed.data.point}` })
           .where(eq(schema.students.id, parsed.data.studentId));
-        await tx.insert(schema.auditLogs).values({
-          actorId: actor,
-          action: 'points.record.create',
-          targetType: 'point_records',
-          targetId: String(result.id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId: actor,
+            action: 'points.record.create',
+            targetType: 'point_records',
+            targetId: result.id,
+          }),
+        );
 
         if (student.userId) {
           await this.notifications.createForUser(
@@ -830,12 +832,14 @@ export class PointsService {
               );
             }
           }
-          await tx.insert(schema.auditLogs).values({
-            actorId: actor,
-            action: 'points.record.batch-create',
-            targetType: 'point_batches',
-            targetId: idempotencyKey,
-          });
+          await tx.insert(schema.auditLogs).values(
+            auditValues({
+              actorId: actor,
+              action: 'points.record.batch-create',
+              targetType: 'point_batches',
+              targetId: idempotencyKey,
+            }),
+          );
 
           return { ok: true, replayed: false, recordIds };
         }),
@@ -953,12 +957,14 @@ export class PointsService {
           throw new BadRequestException(validated.error.flatten().fieldErrors);
 
         await tx.update(schema.pointReasons).set(parsed.data).where(eq(schema.pointReasons.id, id));
-        await tx.insert(schema.auditLogs).values({
-          actorId: actor,
-          action: 'points.reason.update',
-          targetType: 'point_reasons',
-          targetId: String(id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId: actor,
+            action: 'points.reason.update',
+            targetType: 'point_reasons',
+            targetId: id,
+          }),
+        );
         return { ok: true, id };
       }),
     );
@@ -1004,12 +1010,14 @@ export class PointsService {
       afterPoint: 0,
       reason,
     });
-    await tx.insert(schema.auditLogs).values({
-      actorId: actor,
-      action: 'points.record.cancel',
-      targetType: 'point_records',
-      targetId: String(id),
-    });
+    await tx.insert(schema.auditLogs).values(
+      auditValues({
+        actorId: actor,
+        action: 'points.record.cancel',
+        targetType: 'point_records',
+        targetId: id,
+      }),
+    );
     return { ok: true, id, action: 'cancel' as const, reason };
   }
 
@@ -1082,12 +1090,14 @@ export class PointsService {
           afterPoint: record.point,
           reason: parsed.data.reason,
         });
-        await tx.insert(schema.auditLogs).values({
-          actorId: actor,
-          action: 'points.record.restore',
-          targetType: 'point_records',
-          targetId: String(id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId: actor,
+            action: 'points.record.restore',
+            targetType: 'point_records',
+            targetId: id,
+          }),
+        );
         return { ok: true, id, action: 'restore', reason: parsed.data.reason };
       }),
     );
@@ -1121,12 +1131,14 @@ export class PointsService {
             })),
           );
         }
-        await tx.insert(schema.auditLogs).values({
-          actorId: actor,
-          action: 'points.departure-cases.sync',
-          targetType: 'point_award_cases',
-          targetId: String(newCandidates.length),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId: actor,
+            action: 'points.departure-cases.sync',
+            targetType: 'point_award_cases',
+            targetId: newCandidates.length,
+          }),
+        );
         return { ok: true, createdCount: newCandidates.length };
       }),
     );
@@ -1465,18 +1477,18 @@ export class PointsService {
           })
           .where(eq(schema.pointAwardCases.id, id));
         await tx.insert(schema.auditLogs).values([
-          {
+          auditValues({
             actorId: actor,
             action: 'points.departure-case.requested',
             targetType: 'point_award_cases',
-            targetId: String(id),
-          },
-          {
+            targetId: id,
+          }),
+          auditValues({
             actorId: systemActor.id,
             action: 'points.departure-case.complete',
             targetType: 'point_award_cases',
-            targetId: String(id),
-          },
+            targetId: id,
+          }),
         ]);
 
         return { ok: true, id, status: 'completed' as const, adjustment };
@@ -1757,18 +1769,18 @@ export class PointsService {
           }
 
           await tx.insert(schema.auditLogs).values([
-            {
+            auditValues({
               actorId: actor,
               action: 'points.semester-half.requested',
               targetType: 'point_semester_halves',
               targetId: operationId,
-            },
-            {
+            }),
+            auditValues({
               actorId: systemActor.id,
               action: 'points.semester-half.apply',
               targetType: 'point_semester_halves',
               targetId: operationId,
-            },
+            }),
           ]);
           return { ok: true, replayed: false, adjustedStudentCount, recordCount };
         }),

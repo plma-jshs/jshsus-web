@@ -1,26 +1,34 @@
+import type { AdminDashboardTask } from '@jshsus/types';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarCheck2, ClipboardCheck, Smartphone } from 'lucide-react';
+import {
+  CheckCircle2,
+  ChevronRight,
+  ClipboardCheck,
+  Smartphone,
+  UserRoundSearch,
+} from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 import { api, describeAdminApiError } from '../../shared/api/adminApi';
+import './dashboard.css';
+
+const taskIcons: Record<AdminDashboardTask['key'], typeof ClipboardCheck> = {
+  activity_pending: ClipboardCheck,
+  device_disconnected: Smartphone,
+  point_watchlist: UserRoundSearch,
+};
 
 export function DashboardPage() {
   const dashboardQuery = useQuery({ queryKey: ['admin-dashboard'], queryFn: api.dashboard });
 
   if (dashboardQuery.isLoading) {
     return (
-      <section className="admin-panel admin-dashboard-skeleton" aria-busy="true">
+      <section className="admin-dashboard admin-dashboard--loading" aria-busy="true">
         <span className="sr-only" role="status">
-          관리자 대시보드를 불러오는 중입니다.
+          대시보드를 불러오는 중입니다.
         </span>
         <div className="admin-dashboard-skeleton__heading" aria-hidden="true" />
-        <div className="metric-grid dashboard-today-grid" aria-hidden="true">
-          {Array.from({ length: 3 }, (_, index) => (
-            <div className="admin-dashboard-skeleton__card" key={index}>
-              <span />
-              <span />
-              <span />
-            </div>
-          ))}
-        </div>
+        <div className="admin-dashboard-skeleton__row" aria-hidden="true" />
+        <div className="admin-dashboard-skeleton__row" aria-hidden="true" />
       </section>
     );
   }
@@ -33,37 +41,69 @@ export function DashboardPage() {
     );
   }
 
-  const data = dashboardQuery.data;
+  const { tasks, shortcuts } = dashboardQuery.data;
+  const taskCount = tasks.reduce((total, task) => total + task.count, 0);
 
   return (
-    <div className="admin-stack">
-      <section className="admin-panel">
-        <div className="panel-title">
-          <div className="panel-title-copy">
-            <h2>오늘 운영 상태</h2>
-            <p>오늘 확인해야 할 학교생활 운영 지표입니다.</p>
-          </div>
-        </div>
-        <div className="metric-grid dashboard-today-grid">
-          <article className="metric-card">
-            <CalendarCheck2 size={20} />
-            <span>오늘 승인된 탐구활동서</span>
-            <strong>{data.today.approvedActivityRequests}건</strong>
-          </article>
-          <article className="metric-card">
-            <ClipboardCheck size={20} />
-            <span>탐구활동서 승인 대기</span>
-            <strong>{data.today.pendingActivityRequests}건</strong>
-          </article>
-          <article className="metric-card">
-            <Smartphone size={20} />
-            <span>휴대폰 보관함 연결</span>
-            <strong>
-              {data.today.connectedDeviceCases}/{data.today.totalDeviceCases}대
-            </strong>
-          </article>
-        </div>
+    <div className="admin-dashboard">
+      <section className="admin-dashboard__summary">
+        <span>오늘의 업무</span>
+        <h2>
+          {taskCount > 0
+            ? `확인이 필요한 업무가 ${taskCount}건 있어요`
+            : '지금 처리할 업무가 없어요'}
+        </h2>
+        <p>
+          {taskCount > 0
+            ? '중요한 항목부터 확인해 주세요.'
+            : '새로운 요청이 생기면 이곳에 바로 표시됩니다.'}
+        </p>
       </section>
+
+      {tasks.length > 0 ? (
+        <section className="admin-dashboard__section" aria-labelledby="dashboard-tasks-title">
+          <h3 id="dashboard-tasks-title">처리할 업무</h3>
+          <div className="admin-dashboard__task-list">
+            {tasks.map((task) => {
+              const Icon = taskIcons[task.key];
+              return (
+                <Link className="admin-dashboard-task" to={task.href} key={task.key}>
+                  <span className={`admin-dashboard-task__icon is-${task.tone}`}>
+                    <Icon size={20} aria-hidden="true" />
+                  </span>
+                  <span className="admin-dashboard-task__copy">
+                    <strong>{task.title}</strong>
+                    <small>{task.description}</small>
+                  </span>
+                  <strong className={`admin-dashboard-task__count is-${task.tone}`}>
+                    {task.count}
+                  </strong>
+                  <ChevronRight size={18} aria-hidden="true" />
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ) : (
+        <div className="admin-dashboard__clear" role="status">
+          <CheckCircle2 size={20} aria-hidden="true" />
+          <span>모든 업무를 확인했습니다.</span>
+        </div>
+      )}
+
+      {shortcuts.length > 0 ? (
+        <section className="admin-dashboard__section" aria-labelledby="dashboard-shortcuts-title">
+          <h3 id="dashboard-shortcuts-title">자주 찾는 메뉴</h3>
+          <nav className="admin-dashboard__shortcuts" aria-label="자주 찾는 관리자 메뉴">
+            {shortcuts.map((shortcut) => (
+              <Link to={shortcut.href} key={shortcut.key}>
+                <span>{shortcut.label}</span>
+                <ChevronRight size={17} aria-hidden="true" />
+              </Link>
+            ))}
+          </nav>
+        </section>
+      ) : null}
     </div>
   );
 }

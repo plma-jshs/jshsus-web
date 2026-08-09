@@ -4,10 +4,12 @@ import { Button, type ButtonProps } from './Button';
 
 export function RowActions({
   children,
+  mobileChildren,
   className,
   mobileTitle = '작업',
 }: {
   children: ReactNode;
+  mobileChildren?: ReactNode;
   className?: string;
   mobileTitle?: ReactNode;
 }) {
@@ -65,7 +67,7 @@ export function RowActions({
               if ((event.target as HTMLElement).closest('button')) setOpen(false);
             }}
           >
-            {children}
+            {mobileChildren ?? children}
           </div>
         </div>
       </dialog>

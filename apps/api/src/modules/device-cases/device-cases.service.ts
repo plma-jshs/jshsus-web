@@ -7,7 +7,7 @@ import type {
   DeviceCaseControlCommand,
 } from '@jshsus/types';
 import { desc, eq, inArray, sql } from 'drizzle-orm';
-import { DatabaseService } from '../database/database.service';
+import { auditValues, DatabaseService } from '../database/database.service';
 
 const DEFAULT_DEVICE_CASE_IDS = Array.from({ length: 24 }, (_, index) => index + 1);
 
@@ -124,12 +124,14 @@ export class DeviceCasesService {
         .update(schema.deviceCases)
         .set({ isOpen: targetIsOpen, updatedAt: now })
         .where(eq(schema.deviceCases.id, deviceCaseId));
-      await tx.insert(schema.auditLogs).values({
-        actorId,
-        action: `device_case.${command}`,
-        targetId: String(deviceCaseId),
-        targetType: 'device_cases',
-      });
+      await tx.insert(schema.auditLogs).values(
+        auditValues({
+          actorId,
+          action: `device_case.${command}`,
+          targetId: deviceCaseId,
+          targetType: 'device_cases',
+        }),
+      );
 
       return {
         ok: true,
@@ -186,12 +188,14 @@ export class DeviceCasesService {
           );
       }
 
-      await tx.insert(schema.auditLogs).values({
-        actorId,
-        action: `device_case.bulk-${command}`,
-        targetId: uniqueIds?.length ? uniqueIds.join(',') : 'all',
-        targetType: 'device_cases',
-      });
+      await tx.insert(schema.auditLogs).values(
+        auditValues({
+          actorId,
+          action: `device_case.bulk-${command}`,
+          targetId: uniqueIds?.length ? uniqueIds.join(',') : 'all',
+          targetType: 'device_cases',
+        }),
+      );
 
       return {
         ok: true,

@@ -71,6 +71,7 @@ export const posts = mysqlTable(
     status: postStatusEnum.default('published'),
     isAnonymous: boolean('is_anonymous').notNull().default(false),
     isHidden: boolean('is_hidden').notNull().default(false),
+    pinned: boolean('pinned').default(false),
     viewCount: int('view_count').notNull().default(0),
     ...timestamps,
   },

@@ -54,7 +54,7 @@ export function DateRangeField({
         <span aria-hidden="true">〜</span>
         <DateInput
           value={to}
-          placeholder="마감일"
+          placeholder="종료일"
           min={from || undefined}
           aria-label={`${label} 종료일`}
           onChange={(event) => onToChange(event.target.value)}

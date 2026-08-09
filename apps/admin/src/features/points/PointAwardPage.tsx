@@ -5,6 +5,7 @@ import { Check, Pencil, X } from 'lucide-react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
+import { loadExcelJs } from '../../shared/lib/excel';
 import {
   AdminSelect,
   Button,
@@ -81,7 +82,7 @@ const reasonTypeLabel: Record<PointReason['type'], string> = {
 };
 
 async function downloadImportTemplate(reasons: PointReason[]) {
-  const { Workbook } = await import('exceljs');
+  const { Workbook } = await loadExcelJs();
   const workbook = new Workbook();
   const worksheet = workbook.addWorksheet('상벌점');
   worksheet.columns = [
@@ -398,7 +399,7 @@ export function PointAwardPage() {
     if (!file) return;
     setImportErrors([]);
     try {
-      const { Workbook } = await import('exceljs');
+      const { Workbook } = await loadExcelJs();
       const workbook = new Workbook();
       const bytes = (await file.arrayBuffer()) as Parameters<typeof workbook.xlsx.load>[0];
       await workbook.xlsx.load(bytes);

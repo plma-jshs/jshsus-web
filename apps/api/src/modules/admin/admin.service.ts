@@ -43,6 +43,7 @@ import { RedisService } from '../redis/redis.service';
 import { env } from '../../shared/config/env';
 import { OperationalMetricsService } from '../../shared/observability/operational-metrics.service';
 import { AccountLifecycleService, type ManagedUserStatus } from './account-lifecycle.service';
+import { describeAuditAction, describeAuditTarget } from './audit-log-presentation';
 import {
   assertRoleAssignmentAllowed,
   assertStudentGradeUpdateAllowed,
@@ -252,48 +253,79 @@ export class AdminService {
     private readonly operationalMetrics: OperationalMetricsService,
   ) {}
 
-  async dashboard(actorId?: number | null): Promise<AdminDashboard> {
-    const todayRange = koreanDayRange();
-    const [pointSummary, deviceCases, activityRequests, todayApprovedRows] = await Promise.all([
-      this.pointsService.getSummary(),
-      this.deviceCasesService.list(),
-      this.activityRequestsService.adminList(
-        { page: 1, pageSize: 20, status: 'pending', assignedToMe: true },
-        actorId,
-      ),
-      this.database.query('admin.dashboard.today-activity-requests', async (db) =>
-        db
-          .select({ total: sql<number>`cast(count(*) as unsigned)`.mapWith(Number) })
-          .from(schema.activityRequests)
-          .where(
-            and(
-              inArray(schema.activityRequests.status, ['approved', 'completed']),
-              lte(schema.activityRequests.startsAt, todayRange.endsAt),
-              gte(schema.activityRequests.endsAt, todayRange.startsAt),
-            ),
-          ),
-      ),
-    ]);
-    const connectedDeviceCases = deviceCases.filter((deviceCase) => deviceCase.isConnected).length;
-    const disconnectedDeviceCases = deviceCases.length - connectedDeviceCases;
+  async dashboard(actorId?: number | null, permissions: string[] = []): Promise<AdminDashboard> {
+    const permissionSet = new Set(permissions);
+    const canManagePoints = permissionSet.has('points.manage');
+    const canIssuePoints = permissionSet.has('points.issue');
+    const canReviewActivity = permissionSet.has('activity.review');
+    const canManageDevices = permissionSet.has('devices.manage');
 
-    return {
-      today: {
-        approvedActivityRequests: todayApprovedRows[0]?.total ?? 0,
-        pendingActivityRequests: activityRequests.total,
-        connectedDeviceCases,
-        disconnectedDeviceCases,
-        totalDeviceCases: deviceCases.length,
-      },
-      pointSummary: {
-        totalStudents: pointSummary.totalStudents,
-        totalMeritPoints: pointSummary.totalMeritPoints,
-        totalPenaltyPoints: pointSummary.totalPenaltyPoints,
-        watchListCount: pointSummary.watchListCount,
-      },
-      deviceCases,
-      pendingActivityRequests: activityRequests.items,
-    };
+    const [pointSummary, deviceCases, activityRequests] = await Promise.all([
+      canManagePoints ? this.pointsService.getSummary() : Promise.resolve(null),
+      canManageDevices ? this.deviceCasesService.list() : Promise.resolve(null),
+      canReviewActivity
+        ? this.activityRequestsService.adminList(
+            { page: 1, pageSize: 20, status: 'pending', assignedToMe: true },
+            actorId,
+          )
+        : Promise.resolve(null),
+    ]);
+
+    const tasks: AdminDashboard['tasks'] = [];
+    if (activityRequests && activityRequests.total > 0) {
+      tasks.push({
+        key: 'activity_pending',
+        title: '탐구활동서 승인 대기',
+        description: '담당자 확인이 필요한 신청입니다.',
+        count: activityRequests.total,
+        href: '/activity-requests/review',
+        tone: 'brand',
+      });
+    }
+
+    const disconnectedDeviceCases =
+      deviceCases?.filter((deviceCase) => !deviceCase.isConnected).length ?? 0;
+    if (disconnectedDeviceCases > 0) {
+      tasks.push({
+        key: 'device_disconnected',
+        title: '연결 끊긴 휴대폰 보관함',
+        description: '현장 연결 상태를 확인해 주세요.',
+        count: disconnectedDeviceCases,
+        href: '/device-cases',
+        tone: 'danger',
+      });
+    }
+
+    if (pointSummary && pointSummary.watchListCount > 0) {
+      tasks.push({
+        key: 'point_watchlist',
+        title: '상벌점 주의 학생',
+        description: '현재 상벌점이 -10점 이하인 학생입니다.',
+        count: pointSummary.watchListCount,
+        href: '/points',
+        tone: 'warning',
+      });
+    }
+
+    const shortcuts: AdminDashboard['shortcuts'] = [];
+    if (canManagePoints) {
+      shortcuts.push({ key: 'points_records', label: '상벌점 기록', href: '/points/records' });
+    }
+    if (canIssuePoints) {
+      shortcuts.push({ key: 'points_award', label: '상벌점 부여', href: '/points/award' });
+    }
+    if (canReviewActivity) {
+      shortcuts.push({
+        key: 'activity_review',
+        label: '탐구활동서 승인 · 발급',
+        href: '/activity-requests/review',
+      });
+    }
+    if (canManageDevices) {
+      shortcuts.push({ key: 'device_cases', label: '휴대폰 보관함', href: '/device-cases' });
+    }
+
+    return { tasks, shortcuts };
   }
 
   async systemStatus(): Promise<AdminSystemStatus> {
@@ -403,6 +435,7 @@ export class AdminService {
           like(schema.auditLogs.action, pattern),
           like(schema.auditLogs.targetType, pattern),
           like(schema.auditLogs.targetId, pattern),
+          like(schema.auditLogs.ipAddress, pattern),
         )!,
       );
     }
@@ -429,10 +462,13 @@ export class AdminService {
       const rows = await db
         .select({
           id: schema.auditLogs.id,
+          actorId: schema.auditLogs.actorId,
           actorName: schema.users.name,
           action: schema.auditLogs.action,
           targetType: schema.auditLogs.targetType,
           targetId: schema.auditLogs.targetId,
+          ipAddress: schema.auditLogs.ipAddress,
+          userAgent: schema.auditLogs.userAgent,
           createdAt: schema.auditLogs.createdAt,
         })
         .from(schema.auditLogs)
@@ -445,9 +481,14 @@ export class AdminService {
       return {
         items: rows.map((row) => ({
           ...row,
+          actorId: row.actorId ?? undefined,
           actorName: row.actorName ?? 'system',
+          actionLabel: describeAuditAction(row.action),
           targetType: row.targetType ?? '',
+          targetLabel: describeAuditTarget(row.targetType, row.targetId),
           targetId: row.targetId ?? undefined,
+          ipAddress: row.ipAddress ?? undefined,
+          userAgent: row.userAgent ?? undefined,
           createdAt: row.createdAt.toISOString(),
         })),
         total,

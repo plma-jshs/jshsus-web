@@ -8,7 +8,7 @@ import * as schema from '@jshsus/db';
 import { and, asc, desc, eq, inArray, like, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import type { AuthSession } from '../auth/auth.service';
-import { DatabaseService, type AppDatabase } from '../database/database.service';
+import { auditValues, DatabaseService, type AppDatabase } from '../database/database.service';
 import { YouTubeDataApiService } from '../youtube/youtube-data-api.service';
 import {
   MAX_PENDING_WAKE_SONG_REQUESTS,
@@ -236,12 +236,14 @@ export class WakeSongsService {
           type: 'SUBMITTED',
           note: input.requestNote || null,
         });
-        await tx.insert(schema.auditLogs).values({
-          actorId: requesterId,
-          action: 'wake_song.request.create',
-          targetType: 'wake_song_requests',
-          targetId: String(result.id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId: requesterId,
+            action: 'wake_song.request.create',
+            targetType: 'wake_song_requests',
+            targetId: result.id,
+          }),
+        );
 
         return { ok: true, id: result.id, status: 'PENDING' as const };
       }),
@@ -295,12 +297,14 @@ export class WakeSongsService {
           actorId: requesterId,
           type: 'UPDATED',
         });
-        await tx.insert(schema.auditLogs).values({
-          actorId: requesterId,
-          action: 'wake_song.request.update',
-          targetType: 'wake_song_requests',
-          targetId: String(id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId: requesterId,
+            action: 'wake_song.request.update',
+            targetType: 'wake_song_requests',
+            targetId: id,
+          }),
+        );
 
         return { ok: true, id, status: 'PENDING' as const };
       }),
@@ -571,12 +575,14 @@ export class WakeSongsService {
       type,
       note: note || null,
     });
-    await tx.insert(schema.auditLogs).values({
-      actorId,
-      action: auditAction,
-      targetType: 'wake_song_requests',
-      targetId: String(id),
-    });
+    await tx.insert(schema.auditLogs).values(
+      auditValues({
+        actorId,
+        action: auditAction,
+        targetType: 'wake_song_requests',
+        targetId: id,
+      }),
+    );
   }
 
   private parseRequestInput(body: unknown) {

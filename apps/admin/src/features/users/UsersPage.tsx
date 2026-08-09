@@ -45,6 +45,7 @@ import {
 } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 import { formatKoreanDate } from '../../shared/lib/date';
+import { loadExcelJs } from '../../shared/lib/excel';
 import './users.css';
 
 type Tab = 'students' | 'staff';
@@ -177,7 +178,7 @@ function headerColumn(headers: ReadonlyMap<string, number>, aliases: string[]) {
 }
 
 async function parseRosterWorkbook(file: File): Promise<RosterImportRowInput[]> {
-  const { Workbook } = await import('exceljs');
+  const { Workbook } = await loadExcelJs();
   const workbook = new Workbook();
   const bytes = (await file.arrayBuffer()) as Parameters<typeof workbook.xlsx.load>[0];
   await workbook.xlsx.load(bytes);
@@ -248,7 +249,7 @@ async function parseRosterWorkbook(file: File): Promise<RosterImportRowInput[]> 
 }
 
 async function downloadRosterTemplate() {
-  const { Workbook } = await import('exceljs');
+  const { Workbook } = await loadExcelJs();
   const workbook = new Workbook();
   const worksheet = workbook.addWorksheet('학생명단');
   worksheet.columns = [

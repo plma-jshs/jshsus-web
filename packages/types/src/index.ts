@@ -144,6 +144,7 @@ export type BoardPostSummary = {
   authorName?: string;
   isAnonymous: boolean;
   isHidden: boolean;
+  pinned?: boolean;
   status: PostStatus;
   viewCount: number;
   commentCount: number;
@@ -160,6 +161,7 @@ export type BoardPostListItem = {
   title: string;
   authorName?: string;
   isAnonymous: boolean;
+  pinned?: boolean;
   viewCount: number;
   commentCount: number;
   createdAt: string;
@@ -613,10 +615,15 @@ export type AdminPermissionSummary = {
 
 export type AdminAuditLog = {
   id: number;
+  actorId?: number;
   actorName: string;
   action: string;
+  actionLabel: string;
   targetType: string;
+  targetLabel: string;
   targetId?: string;
+  ipAddress?: string;
+  userAgent?: string;
   createdAt: string;
 };
 
@@ -888,20 +895,24 @@ export type ActivityRequestPrintBatch = {
   documents: ActivityRequestAdminSummary[];
 };
 
+export type AdminDashboardTask = {
+  key: 'activity_pending' | 'device_disconnected' | 'point_watchlist';
+  title: string;
+  description: string;
+  count: number;
+  href: string;
+  tone: 'brand' | 'warning' | 'danger';
+};
+
+export type AdminDashboardShortcut = {
+  key: 'points_records' | 'points_award' | 'activity_review' | 'device_cases';
+  label: string;
+  href: string;
+};
+
 export type AdminDashboard = {
-  today: {
-    approvedActivityRequests: number;
-    pendingActivityRequests: number;
-    connectedDeviceCases: number;
-    disconnectedDeviceCases: number;
-    totalDeviceCases: number;
-  };
-  pointSummary: Pick<
-    PointSummary,
-    'totalStudents' | 'totalMeritPoints' | 'totalPenaltyPoints' | 'watchListCount'
-  >;
-  deviceCases: DeviceCase[];
-  pendingActivityRequests: ActivityRequestAdminSummary[];
+  tasks: AdminDashboardTask[];
+  shortcuts: AdminDashboardShortcut[];
 };
 
 export type AdminSystemStatus = {

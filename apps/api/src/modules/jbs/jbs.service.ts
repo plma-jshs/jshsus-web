@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { type ContentListQuery, toContainsPattern } from '../../shared/content-list-query';
 import type { AuthSession } from '../auth/auth.service';
 import { BoardsService } from '../boards/boards.service';
-import { DatabaseService, type AppDatabase } from '../database/database.service';
+import { auditValues, DatabaseService, type AppDatabase } from '../database/database.service';
 import { YouTubeDataApiService } from '../youtube/youtube-data-api.service';
 
 const JBS_BOARD_SLUG = 'jbs';
@@ -235,12 +235,14 @@ export class JbsService {
           youtubeVideoId: youtube.videoId,
           canonicalUrl: youtube.canonicalUrl,
         });
-        await tx.insert(schema.auditLogs).values({
-          actorId,
-          action: 'jbs.post.create',
-          targetType: 'posts',
-          targetId: String(post.id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId,
+            action: 'jbs.post.create',
+            targetType: 'posts',
+            targetId: post.id,
+          }),
+        );
         return post;
       });
 
@@ -295,12 +297,14 @@ export class JbsService {
             .where(eq(schema.jbsVideos.postId, id));
         }
 
-        await tx.insert(schema.auditLogs).values({
-          actorId: session?.userId,
-          action: 'jbs.post.update',
-          targetType: 'posts',
-          targetId: String(id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId: session?.userId,
+            action: 'jbs.post.update',
+            targetType: 'posts',
+            targetId: id,
+          }),
+        );
 
         return { ok: true as const, id };
       }),
@@ -319,12 +323,14 @@ export class JbsService {
           .update(schema.posts)
           .set({ isHidden: true, updatedAt: new Date() })
           .where(eq(schema.posts.id, id));
-        await tx.insert(schema.auditLogs).values({
-          actorId: session?.userId,
-          action: 'jbs.post.delete',
-          targetType: 'posts',
-          targetId: String(id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId: session?.userId,
+            action: 'jbs.post.delete',
+            targetType: 'posts',
+            targetId: id,
+          }),
+        );
 
         return { ok: true as const, id };
       }),

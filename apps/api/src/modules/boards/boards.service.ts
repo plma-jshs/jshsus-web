@@ -21,7 +21,7 @@ import { and, count, desc, eq, inArray, isNull, like, or, sql } from 'drizzle-or
 import { z } from 'zod';
 import { type ContentListQuery, toContainsPattern } from '../../shared/content-list-query';
 import type { AuthSession } from '../auth/auth.service';
-import { DatabaseService, type AppDatabase } from '../database/database.service';
+import { auditValues, DatabaseService, type AppDatabase } from '../database/database.service';
 import { FilesService } from '../files/files.service';
 import {
   collectInlineImageSources,
@@ -35,6 +35,7 @@ const commentSchema = z.object({
   parentId: z.coerce.number().int().positive().optional(),
 });
 const hiddenSchema = z.object({ isHidden: z.boolean() });
+const pinnedSchema = z.object({ pinned: z.boolean() });
 const pollVoteSchema = z
   .object({
     optionId: z
@@ -103,6 +104,7 @@ export class BoardsService {
           authorNickname: schema.users.nickname,
           storedAuthorName: schema.posts.authorName,
           isAnonymous: schema.posts.isAnonymous,
+          pinned: schema.posts.pinned,
           viewCount: schema.posts.viewCount,
           createdAt: schema.posts.createdAt,
           commentCount:
@@ -113,7 +115,7 @@ export class BoardsService {
         .from(schema.posts)
         .leftJoin(schema.users, eq(schema.posts.authorId, schema.users.id))
         .where(where)
-        .orderBy(desc(schema.posts.createdAt), desc(schema.posts.id))
+        .orderBy(desc(schema.posts.pinned), desc(schema.posts.createdAt), desc(schema.posts.id))
         .limit(query.pageSize)
         .offset((query.page - 1) * query.pageSize);
 
@@ -127,6 +129,7 @@ export class BoardsService {
             ? undefined
             : (row.authorNickname ?? row.authorName ?? row.storedAuthorName ?? undefined),
           isAnonymous: row.isAnonymous,
+          pinned: row.pinned ?? false,
           viewCount: row.viewCount,
           commentCount: row.commentCount,
           createdAt: row.createdAt.toISOString(),
@@ -157,6 +160,7 @@ export class BoardsService {
           storedAuthorName: schema.posts.authorName,
           isAnonymous: schema.posts.isAnonymous,
           isHidden: schema.posts.isHidden,
+          pinned: schema.posts.pinned,
           status: schema.posts.status,
           viewCount: schema.posts.viewCount,
           createdAt: schema.posts.createdAt,
@@ -174,7 +178,7 @@ export class BoardsService {
             includeHidden ? undefined : eq(schema.posts.isHidden, false),
           ),
         )
-        .orderBy(desc(schema.posts.createdAt), desc(schema.posts.id))
+        .orderBy(desc(schema.posts.pinned), desc(schema.posts.createdAt), desc(schema.posts.id))
         .limit(limit);
 
       const attachments = await this.filesService.listForTargets(
@@ -197,6 +201,7 @@ export class BoardsService {
             undefined),
         isAnonymous: row.isAnonymous,
         isHidden: row.isHidden,
+        pinned: row.pinned ?? false,
         status: row.status ?? 'published',
         viewCount: row.viewCount,
         commentCount: row.commentCount,
@@ -350,6 +355,7 @@ export class BoardsService {
             limit 1
           )`,
           isAnonymous: schema.posts.isAnonymous,
+          pinned: schema.posts.pinned,
           viewCount: schema.posts.viewCount,
           createdAt: schema.posts.createdAt,
           commentCount:
@@ -408,6 +414,7 @@ export class BoardsService {
             ? `/api/files/${row.authorProfileImageId}/content`
             : undefined,
         isAnonymous: row.isAnonymous,
+        pinned: row.pinned ?? false,
         viewCount: row.viewCount + 1,
         commentCount: row.commentCount,
         likeCount: Number(row.likeCount ?? 0),
@@ -607,12 +614,14 @@ export class BoardsService {
             .set({ isHidden: true, updatedAt: new Date() })
             .where(eq(schema.posts.id, id));
         }
-        await transaction.insert(schema.auditLogs).values({
-          actorId: session?.userId,
-          action: targetStatus === 'draft' ? 'board.post.draft.delete' : 'board.post.delete',
-          targetType: 'posts',
-          targetId: String(id),
-        });
+        await transaction.insert(schema.auditLogs).values(
+          auditValues({
+            actorId: session?.userId,
+            action: targetStatus === 'draft' ? 'board.post.draft.delete' : 'board.post.delete',
+            targetType: 'posts',
+            targetId: id,
+          }),
+        );
       });
 
       if (!shouldCleanupFiles) return { ok: true, id, cleanupPending: false };
@@ -637,6 +646,23 @@ export class BoardsService {
       targetId: id,
     });
     return { ok: true, id, isHidden: parsed.data.isHidden };
+  }
+
+  async updatePostPinned(id: number, body: unknown, actorId?: number | null) {
+    const parsed = pinnedSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+
+    await this.database.db
+      .update(schema.posts)
+      .set({ pinned: parsed.data.pinned, updatedAt: new Date() })
+      .where(eq(schema.posts.id, id));
+    await this.database.writeAudit({
+      actorId,
+      action: parsed.data.pinned ? 'board.post.pin' : 'board.post.unpin',
+      targetType: 'posts',
+      targetId: id,
+    });
+    return { ok: true, id, pinned: parsed.data.pinned };
   }
 
   private async pollStatesForPost(

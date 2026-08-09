@@ -382,6 +382,11 @@ export const api = {
       method: 'PUT',
       body: { isHidden },
     }),
+  updatePostPinned: (id: number, pinned: boolean) =>
+    request<{ ok: true; id: number; pinned: boolean }>(`/api/admin/boards/posts/${id}/pinned`, {
+      method: 'PUT',
+      body: { pinned },
+    }),
   updateCommentHidden: (id: number, isHidden: boolean) =>
     request<{ ok: true; id: number; isHidden: boolean }>(
       `/api/admin/boards/comments/${id}/hidden`,

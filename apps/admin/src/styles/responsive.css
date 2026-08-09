@@ -159,6 +159,8 @@
 
   .admin-sidebar-account {
     display: flex;
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .admin-content {

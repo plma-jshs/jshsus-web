@@ -36,7 +36,7 @@ import {
 } from 'drizzle-orm';
 import { z } from 'zod';
 import type { AuthSession } from '../auth/auth.service';
-import { DatabaseService, type AppDatabase } from '../database/database.service';
+import { auditValues, DatabaseService, type AppDatabase } from '../database/database.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
   assertActivityDateIsTodayOrFuture,
@@ -332,7 +332,7 @@ export class ActivityRequestsService {
       sortOrder,
     } = parsed.data;
     if (startDate && endDate && startDate > endDate) {
-      throw new BadRequestException('시작일은 마감일보다 늦을 수 없습니다.');
+      throw new BadRequestException('시작일은 종료일보다 늦을 수 없습니다.');
     }
     if (assignedToMe && (!actorId || actorId <= 0)) {
       throw new BadRequestException('담당 교사 계정을 확인할 수 없습니다.');
@@ -812,12 +812,14 @@ export class ActivityRequestsService {
           type: 'approved',
           note: issuedNumber,
         });
-        await tx.insert(schema.auditLogs).values({
-          actorId,
-          action: 'activity_request.issue',
-          targetType: 'activity_requests',
-          targetId: String(result.id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId,
+            action: 'activity_request.issue',
+            targetType: 'activity_requests',
+            targetId: result.id,
+          }),
+        );
         if (representative.userId) {
           await this.notifications.createForUser(
             {
@@ -913,12 +915,14 @@ export class ActivityRequestsService {
           .delete(schema.activityRequestParticipants)
           .where(eq(schema.activityRequestParticipants.activityRequestId, id));
         await tx.delete(schema.activityRequests).where(eq(schema.activityRequests.id, id));
-        await tx.insert(schema.auditLogs).values({
-          actorId: session?.userId && session.userId > 0 ? session.userId : null,
-          action: 'activity_request.delete',
-          targetType: 'activity_requests',
-          targetId: String(id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId: session?.userId,
+            action: 'activity_request.delete',
+            targetType: 'activity_requests',
+            targetId: id,
+          }),
+        );
         return { ok: true, id };
       }),
     );
@@ -971,12 +975,14 @@ export class ActivityRequestsService {
           type: 'approved',
           note: issuedNumber,
         });
-        await tx.insert(schema.auditLogs).values({
-          actorId,
-          action: 'activity_request.approve',
-          targetType: 'activity_requests',
-          targetId: String(id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId,
+            action: 'activity_request.approve',
+            targetType: 'activity_requests',
+            targetId: id,
+          }),
+        );
         if (representative?.userId) {
           await this.notifications.createForUser(
             {
@@ -1043,12 +1049,14 @@ export class ActivityRequestsService {
           type: 'rejected',
           note: parsed.data.reason,
         });
-        await tx.insert(schema.auditLogs).values({
-          actorId,
-          action: 'activity_request.reject',
-          targetType: 'activity_requests',
-          targetId: String(id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId,
+            action: 'activity_request.reject',
+            targetType: 'activity_requests',
+            targetId: id,
+          }),
+        );
         if (representative?.userId) {
           await this.notifications.createForUser(
             {
@@ -1112,12 +1120,14 @@ export class ActivityRequestsService {
               note: `${date} 일괄 인쇄`,
             })),
           );
-          await tx.insert(schema.auditLogs).values({
-            actorId,
-            action: 'activity_request.print_batch',
-            targetType: 'activity_requests',
-            targetId: `${date}:${documents.length}`,
-          });
+          await tx.insert(schema.auditLogs).values(
+            auditValues({
+              actorId,
+              action: 'activity_request.print_batch',
+              targetType: 'activity_requests',
+              targetId: `${date}:${documents.length}`,
+            }),
+          );
         }
         return { date, documents };
       }),

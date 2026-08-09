@@ -13,6 +13,7 @@ import {
   BadgeCheck,
   BedDouble,
   CalendarDays,
+  ChevronDown,
   ClipboardCheck,
   Gauge,
   KeyRound,
@@ -147,30 +148,6 @@ const adminNavigation: AdminNavGroup[] = [
         permissions: ['wake_songs.review'],
         desktopOnly: true,
       },
-    ],
-  },
-  {
-    label: '사용자와 권한',
-    entries: [
-      {
-        label: '학생 · 교직원',
-        to: '/users',
-        icon: School,
-        permissions: ['users.manage'],
-        desktopOnly: true,
-      },
-      {
-        label: 'IAM 권한',
-        to: '/iam',
-        icon: KeyRound,
-        permissions: ['iam.manage'],
-        desktopOnly: true,
-      },
-    ],
-  },
-  {
-    label: '사이트 운영',
-    entries: [
       {
         label: '공지 관리',
         to: '/site/notices',
@@ -194,6 +171,25 @@ const adminNavigation: AdminNavGroup[] = [
         to: '/school-events',
         icon: CalendarDays,
         permissions: ['school_events.manage'],
+      },
+    ],
+  },
+  {
+    label: '사용자와 권한',
+    entries: [
+      {
+        label: '학생 · 교직원',
+        to: '/users',
+        icon: School,
+        permissions: ['users.manage'],
+        desktopOnly: true,
+      },
+      {
+        label: 'IAM 권한',
+        to: '/iam',
+        icon: KeyRound,
+        permissions: ['iam.manage'],
+        desktopOnly: true,
       },
     ],
   },
@@ -230,10 +226,10 @@ const routeTitles: Array<{ prefix: string; eyebrow: string; title: string }> = [
   { prefix: '/wake-songs', eyebrow: '기타', title: '기상곡' },
   { prefix: '/users', eyebrow: '사용자와 권한', title: '학생 · 교직원' },
   { prefix: '/iam', eyebrow: '사용자와 권한', title: 'IAM 권한' },
-  { prefix: '/site/notices', eyebrow: '사이트 운영', title: '공지 관리' },
-  { prefix: '/site/community', eyebrow: '사이트 운영', title: '자유게시판 관리' },
-  { prefix: '/site/lost-items', eyebrow: '사이트 운영', title: '분실물 관리' },
-  { prefix: '/school-events', eyebrow: '사이트 운영', title: '학사일정' },
+  { prefix: '/site/notices', eyebrow: '기타', title: '공지 관리' },
+  { prefix: '/site/community', eyebrow: '기타', title: '자유게시판 관리' },
+  { prefix: '/site/lost-items', eyebrow: '기타', title: '분실물 관리' },
+  { prefix: '/school-events', eyebrow: '기타', title: '학사일정' },
   { prefix: '/audit-logs', eyebrow: '관리자', title: '감사 로그' },
   { prefix: '/system', eyebrow: '관리자', title: '시스템 관리' },
   { prefix: '/', eyebrow: '요약', title: '대시보드' },
@@ -401,19 +397,22 @@ function AdminShell() {
           ))}
         </nav>
 
-        <div className="admin-sidebar-account">
-          <div>
+        <details className="admin-sidebar-account admin-sidebar-profile-menu">
+          <summary>
             <strong>{accountIdentity || sessionQuery.data.name || '관리자'}</strong>
+            <ChevronDown size={16} aria-hidden="true" />
+          </summary>
+          <div>
+            <button
+              type="button"
+              onClick={() => logoutMutation.mutate()}
+              disabled={logoutMutation.isPending}
+            >
+              <LogOut size={17} aria-hidden="true" />
+              <span>로그아웃</span>
+            </button>
           </div>
-          <button
-            type="button"
-            aria-label="로그아웃"
-            onClick={() => logoutMutation.mutate()}
-            disabled={logoutMutation.isPending}
-          >
-            <LogOut size={18} aria-hidden="true" />
-          </button>
-        </div>
+        </details>
       </aside>
 
       {mobileNavigationOpen ? (
@@ -442,19 +441,25 @@ function AdminShell() {
             </div>
           </div>
           <div className="admin-topbar-actions">
-            <div className="admin-user-identity">
-              <UserRound size={17} aria-hidden="true" />
-              <span>{accountIdentity || sessionQuery.data.name || '관리자'}</span>
-            </div>
-            <button
-              className="admin-logout-button"
-              type="button"
-              onClick={() => logoutMutation.mutate()}
-              disabled={logoutMutation.isPending}
-            >
-              <LogOut size={17} aria-hidden="true" />
-              <span>로그아웃</span>
-            </button>
+            <details className="admin-profile-menu">
+              <summary className="admin-user-identity">
+                <UserRound size={17} aria-hidden="true" />
+                <span>{accountIdentity || sessionQuery.data.name || '관리자'}</span>
+                <ChevronDown size={15} aria-hidden="true" />
+              </summary>
+              <div className="admin-profile-menu__dropdown">
+                <span>{accountIdentity || sessionQuery.data.name || '관리자'}</span>
+                <button
+                  className="admin-logout-button"
+                  type="button"
+                  onClick={() => logoutMutation.mutate()}
+                  disabled={logoutMutation.isPending}
+                >
+                  <LogOut size={17} aria-hidden="true" />
+                  <span>로그아웃</span>
+                </button>
+              </div>
+            </details>
           </div>
         </header>
         <div className={`admin-content${isMobileDesktopOnlyRoute ? ' is-desktop-only-route' : ''}`}>

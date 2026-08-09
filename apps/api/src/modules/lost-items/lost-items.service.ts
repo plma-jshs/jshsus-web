@@ -8,7 +8,7 @@ import * as schema from '@jshsus/db';
 import type { LostItemDetail, LostItemSummary } from '@jshsus/types';
 import { and, desc, eq, ne } from 'drizzle-orm';
 import { z } from 'zod';
-import { type AppDatabase, DatabaseService } from '../database/database.service';
+import { auditValues, type AppDatabase, DatabaseService } from '../database/database.service';
 import { FilesService } from '../files/files.service';
 
 const lostItemSchema = z.object({
@@ -224,12 +224,14 @@ export class LostItemsService {
           tx as unknown as AppDatabase,
         );
         await tx.delete(schema.lostItems).where(eq(schema.lostItems.id, id));
-        await tx.insert(schema.auditLogs).values({
-          actorId,
-          action: 'lost-item.delete',
-          targetType: 'lost_items',
-          targetId: String(id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId,
+            action: 'lost-item.delete',
+            targetType: 'lost_items',
+            targetId: id,
+          }),
+        );
       });
 
       const cleanup = await this.filesService.deleteForTarget('lost_item', id);

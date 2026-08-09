@@ -9,7 +9,7 @@ import * as schema from '@jshsus/db';
 import type { PetitionDetail, PetitionSummary, RichTextDocument } from '@jshsus/types';
 import { and, desc, eq, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { DatabaseService } from '../database/database.service';
+import { auditValues, DatabaseService } from '../database/database.service';
 import { parsePetitionCreate, parsePetitionUpdate } from './petition-content';
 
 const PETITION_THRESHOLD = 50;
@@ -254,12 +254,14 @@ export class PetitionsService {
             updatedAt: new Date(),
           })
           .where(eq(schema.petitions.id, id));
-        await tx.insert(schema.auditLogs).values({
-          actorId,
-          action: 'petition.participate',
-          targetType: 'petitions',
-          targetId: String(id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId,
+            action: 'petition.participate',
+            targetType: 'petitions',
+            targetId: id,
+          }),
+        );
 
         return {
           ok: true,
@@ -307,12 +309,14 @@ export class PetitionsService {
             updatedAt: new Date(),
           })
           .where(eq(schema.petitions.id, id));
-        await tx.insert(schema.auditLogs).values({
-          actorId,
-          action: 'petition.update',
-          targetType: 'petitions',
-          targetId: String(id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId,
+            action: 'petition.update',
+            targetType: 'petitions',
+            targetId: id,
+          }),
+        );
 
         return { ok: true as const, id };
       }),
@@ -344,12 +348,14 @@ export class PetitionsService {
           .update(schema.petitions)
           .set({ status: 'hidden', updatedAt: new Date() })
           .where(eq(schema.petitions.id, id));
-        await tx.insert(schema.auditLogs).values({
-          actorId,
-          action: 'petition.delete',
-          targetType: 'petitions',
-          targetId: String(id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId,
+            action: 'petition.delete',
+            targetType: 'petitions',
+            targetId: id,
+          }),
+        );
 
         return { ok: true as const, id };
       }),
@@ -392,12 +398,14 @@ export class PetitionsService {
           .update(schema.petitions)
           .set({ status: 'answered', updatedAt: new Date() })
           .where(eq(schema.petitions.id, id));
-        await tx.insert(schema.auditLogs).values({
-          actorId,
-          action: 'petition.answer',
-          targetType: 'petitions',
-          targetId: String(id),
-        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId,
+            action: 'petition.answer',
+            targetType: 'petitions',
+            targetId: id,
+          }),
+        );
 
         return { ok: true, id, answer: { id: answer.id, ...parsed.data } };
       });

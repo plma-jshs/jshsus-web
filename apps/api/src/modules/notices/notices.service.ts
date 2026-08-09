@@ -10,7 +10,7 @@ import type {
 import { and, count, desc, eq, like, lte, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { type ContentListQuery, toContainsPattern } from '../../shared/content-list-query';
-import { type AppDatabase, DatabaseService } from '../database/database.service';
+import { auditValues, type AppDatabase, DatabaseService } from '../database/database.service';
 import { FilesService } from '../files/files.service';
 
 const noticeSchema = z.object({
@@ -262,12 +262,14 @@ export class NoticesService {
           transaction as unknown as AppDatabase,
         );
         await transaction.delete(schema.notices).where(eq(schema.notices.id, id));
-        await transaction.insert(schema.auditLogs).values({
-          actorId: actorId && actorId > 0 ? actorId : null,
-          action: 'notice.delete',
-          targetType: 'notices',
-          targetId: String(id),
-        });
+        await transaction.insert(schema.auditLogs).values(
+          auditValues({
+            actorId,
+            action: 'notice.delete',
+            targetType: 'notices',
+            targetId: id,
+          }),
+        );
       });
 
       const cleanup = await this.filesService.deleteForTarget('notice', id);

@@ -4,8 +4,30 @@ import { readFileSync } from 'node:fs';
 import { drizzle, type MySql2Database } from 'drizzle-orm/mysql2';
 import mysql, { type Pool } from 'mysql2/promise';
 import { env } from '../../shared/config/env';
+import { getRequestAuditContext } from '../../shared/observability/request-audit-context';
 
 export type AppDatabase = MySql2Database<typeof schema>;
+
+export type AuditInput = {
+  actorId?: number | null;
+  action: string;
+  targetType?: string;
+  targetId?: string | number;
+  ipAddress?: string;
+  userAgent?: string;
+};
+
+export function auditValues(input: AuditInput) {
+  const requestContext = getRequestAuditContext();
+  return {
+    actorId: input.actorId && input.actorId > 0 ? input.actorId : null,
+    action: input.action,
+    targetType: input.targetType,
+    targetId: input.targetId === undefined ? undefined : String(input.targetId),
+    ipAddress: input.ipAddress ?? requestContext.ipAddress,
+    userAgent: input.userAgent ?? requestContext.userAgent,
+  };
+}
 
 @Injectable()
 export class DatabaseService implements OnApplicationShutdown {
@@ -46,23 +68,9 @@ export class DatabaseService implements OnApplicationShutdown {
     }
   }
 
-  async writeAudit(input: {
-    actorId?: number | null;
-    action: string;
-    targetType?: string;
-    targetId?: string | number;
-    ipAddress?: string;
-    userAgent?: string;
-  }): Promise<void> {
+  async writeAudit(input: AuditInput): Promise<void> {
     try {
-      await this.db.insert(schema.auditLogs).values({
-        actorId: input.actorId && input.actorId > 0 ? input.actorId : null,
-        action: input.action,
-        targetType: input.targetType,
-        targetId: input.targetId === undefined ? undefined : String(input.targetId),
-        ipAddress: input.ipAddress,
-        userAgent: input.userAgent,
-      });
+      await this.db.insert(schema.auditLogs).values(auditValues(input));
     } catch (error) {
       this.logger.warn(`audit_logs insert failed: ${(error as Error).message}`);
     }

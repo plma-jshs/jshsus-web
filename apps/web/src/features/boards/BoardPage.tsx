@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
-import { BookOpen, Eye, PenLine, X } from 'lucide-react';
+import { BookOpen, Eye, PenLine, Pin, X } from 'lucide-react';
 import type { BoardPostListItem } from '@jshsus/types';
 import {
   DataTablePagination,
@@ -198,6 +198,7 @@ export function BoardPage() {
                           params={{ postId: String(post.id) }}
                         >
                           <span className="data-table__title-text">{post.title}</span>
+                          {post.pinned ? <Pin size={13} aria-label="고정 게시글" /> : null}
                           {post.commentCount > 0 ? (
                             <span className="data-table__comment-count">
                               [{post.commentCount.toLocaleString('ko-KR')}]

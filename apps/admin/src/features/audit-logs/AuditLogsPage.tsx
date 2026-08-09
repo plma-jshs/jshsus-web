@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { AdminAuditLog, AdminAuditLogListQuery } from '@jshsus/types';
-import { Search } from 'lucide-react';
+import { MoreHorizontal, Search } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { DateRangeField, PageSizeSelect, TableToolbar } from '../../components/ui';
+import { DateRangeField, Drawer, PageSizeSelect, TableToolbar } from '../../components/ui';
 import { api, describeAdminApiError } from '../../shared/api/adminApi';
 import { formatKoreanDate } from '../../shared/lib/date';
 import './audit-logs.css';
@@ -20,49 +20,21 @@ function formatAuditDate(value: string) {
   });
 }
 
-const columns: ColumnDef<AdminAuditLog>[] = [
-  {
-    id: 'createdAt',
-    accessorKey: 'createdAt',
-    header: '생성일시',
-    cell: ({ getValue }) => formatAuditDate(getValue<string>()),
-    meta: { kind: 'dateTime', width: 170 },
-  },
-  {
-    id: 'actorName',
-    accessorKey: 'actorName',
-    header: '수행자',
-    meta: { kind: 'person', width: 150, mobileRole: 'subtitle' },
-  },
-  {
-    id: 'action',
-    accessorKey: 'action',
-    header: '작업 내용',
-    enableSorting: false,
-    meta: { kind: 'description', minWidth: 220, mobileRole: 'title' },
-  },
-  {
-    id: 'targetType',
-    accessorKey: 'targetType',
-    header: '대상',
-    enableSorting: false,
-    meta: { kind: 'category', width: 170 },
-  },
-  {
-    id: 'targetId',
-    accessorKey: 'targetId',
-    header: '대상 ID',
-    enableSorting: false,
-    cell: ({ getValue }) => getValue<string>() || '-',
-    meta: { align: 'center', width: 130, hideOnMobile: true },
-  },
-];
+function DetailButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button className="audit-log-detail-trigger" type="button" onClick={onClick}>
+      <MoreHorizontal size={18} aria-hidden="true" />
+      <span className="sr-only">감사 로그 상세 정보</span>
+    </button>
+  );
+}
 
 export function AuditLogsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [sorting, setSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
   const [filters, setFilters] = useState({ q: '', from: '', to: '' });
+  const [selectedLog, setSelectedLog] = useState<AdminAuditLog | null>(null);
   const query: AdminAuditLogListQuery = {
     page,
     pageSize,
@@ -77,6 +49,44 @@ export function AuditLogsPage() {
     queryFn: () => api.auditLogs(query),
     placeholderData: keepPreviousData,
   });
+  const columns = useMemo<ColumnDef<AdminAuditLog>[]>(
+    () => [
+      {
+        id: 'createdAt',
+        accessorKey: 'createdAt',
+        header: '일시',
+        cell: ({ getValue }) => formatAuditDate(getValue<string>()),
+        meta: { kind: 'dateTime', width: 170 },
+      },
+      {
+        id: 'action',
+        accessorKey: 'actionLabel',
+        header: '작업',
+        enableSorting: false,
+        meta: { kind: 'description', minWidth: 220, mobileRole: 'title' },
+      },
+      {
+        id: 'actorName',
+        accessorKey: 'actorName',
+        header: '수행자',
+        meta: { kind: 'person', width: 150, mobileRole: 'subtitle' },
+      },
+      {
+        id: 'targetType',
+        accessorKey: 'targetLabel',
+        header: '대상',
+        meta: { kind: 'category', minWidth: 180 },
+      },
+      {
+        id: 'details',
+        header: '상세',
+        enableSorting: false,
+        cell: ({ row }) => <DetailButton onClick={() => setSelectedLog(row.original)} />,
+        meta: { align: 'center', width: 72, hideOnMobile: true },
+      },
+    ],
+    [],
+  );
 
   return (
     <section className="admin-panel audit-log-panel">
@@ -93,11 +103,10 @@ export function AuditLogsPage() {
               type="search"
               value={filters.q}
               onChange={(event) => {
-                const q = event.target.value;
-                setFilters((current) => ({ ...current, q }));
+                setFilters((current) => ({ ...current, q: event.target.value }));
                 setPage(1);
               }}
-              placeholder="수행자, 작업, 대상 검색"
+              placeholder="수행자, 작업, 대상, IP 검색"
             />
           </label>
         }
@@ -151,17 +160,71 @@ export function AuditLogsPage() {
         caption="감사 로그 목록"
         renderMobileRow={(log) => (
           <article className="audit-log-mobile-card">
-            <header>
-              <strong>{log.action}</strong>
-              <span>{log.actorName || '시스템'}</span>
-            </header>
-            <p>
-              {formatAuditDate(log.createdAt)} · {log.targetType}
-              {log.targetId ? ` ${log.targetId}` : ''}
-            </p>
+            <button type="button" onClick={() => setSelectedLog(log)}>
+              <span className="audit-log-mobile-card__heading">
+                <strong>{log.actionLabel}</strong>
+                <MoreHorizontal size={18} aria-hidden="true" />
+              </span>
+              <span>{log.targetLabel}</span>
+              <small>
+                {log.actorName || '시스템'} · {formatAuditDate(log.createdAt)}
+              </small>
+            </button>
           </article>
         )}
       />
+      <Drawer
+        open={selectedLog !== null}
+        onClose={() => setSelectedLog(null)}
+        title="감사 로그 상세"
+        description={selectedLog?.actionLabel}
+        className="audit-log-detail-drawer"
+      >
+        {selectedLog ? (
+          <dl className="audit-log-detail-list">
+            <div>
+              <dt>일시</dt>
+              <dd>{formatAuditDate(selectedLog.createdAt)}</dd>
+            </div>
+            <div>
+              <dt>수행자</dt>
+              <dd>
+                {selectedLog.actorName || '시스템'}
+                {selectedLog.actorId ? ` (#${selectedLog.actorId})` : ''}
+              </dd>
+            </div>
+            <div>
+              <dt>작업</dt>
+              <dd>
+                {selectedLog.actionLabel}
+                <small>{selectedLog.action}</small>
+              </dd>
+            </div>
+            <div>
+              <dt>대상</dt>
+              <dd>
+                {selectedLog.targetLabel}
+                <small>
+                  {selectedLog.targetType || '-'}
+                  {selectedLog.targetId ? ` · ${selectedLog.targetId}` : ''}
+                </small>
+              </dd>
+            </div>
+            <div>
+              <dt>접속 IP</dt>
+              <dd>{selectedLog.ipAddress || '-'}</dd>
+            </div>
+            <div>
+              <dt>접속 환경</dt>
+              <dd className="audit-log-detail-list__agent">{selectedLog.userAgent || '-'}</dd>
+            </div>
+            <div>
+              <dt>로그 ID</dt>
+              <dd>#{selectedLog.id}</dd>
+            </div>
+          </dl>
+        ) : null}
+      </Drawer>
     </section>
   );
 }

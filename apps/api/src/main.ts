@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import type { NextFunction, Request, Response } from 'express';
 import { RouteParameterPipe } from './shared/validation/route-parameter.pipe';
 import { OperationalMetricsService } from './shared/observability/operational-metrics.service';
+import { runWithRequestAuditContext } from './shared/observability/request-audit-context';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -19,6 +20,17 @@ async function bootstrap() {
   app.use(helmet());
   app.useGlobalPipes(new RouteParameterPipe());
   app.use(cookieParser());
+  app.use((request: Request, _response: Response, next: NextFunction) => {
+    const ipAddress = String(request.ip || request.socket.remoteAddress || '').slice(0, 64);
+    const userAgent = String(request.headers['user-agent'] || '').slice(0, 500);
+    runWithRequestAuditContext(
+      {
+        ipAddress: ipAddress || undefined,
+        userAgent: userAgent || undefined,
+      },
+      next,
+    );
+  });
   const operationalMetrics = app.get(OperationalMetricsService);
   app.use((_request: Request, response: Response, next: NextFunction) => {
     response.once('finish', () => operationalMetrics.record(response.statusCode));
