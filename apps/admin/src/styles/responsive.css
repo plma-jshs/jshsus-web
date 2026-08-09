@@ -39,7 +39,7 @@
   .admin-sidebar-account--top {
     align-items: center;
     flex-direction: row;
-    background: var(--sidebar-soft);
+    background: #f3f4f6;
   }
 
   .admin-sidebar.open {

@@ -146,7 +146,7 @@
   padding: 11px 10px;
   border: 0;
   border-radius: 11px;
-  background: var(--sidebar-soft);
+  background: #f3f4f6;
 }
 
 .admin-sidebar-profile-menu > summary,
@@ -204,9 +204,17 @@
   height: 34px;
   flex: 0 0 auto;
   place-items: center;
+  overflow: visible;
   border-radius: 50%;
-  background: var(--sidebar-soft);
+  background: transparent;
   color: var(--primary-dark);
+}
+
+.admin-sidebar-account__icon > svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  overflow: visible;
 }
 
 .admin-sidebar-account > button {

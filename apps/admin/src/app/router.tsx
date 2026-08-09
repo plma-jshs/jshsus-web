@@ -377,7 +377,6 @@ function AdminShell() {
           </span>
           <div>
             <strong>{accountIdentity || sessionQuery.data.name || '관리자'}</strong>
-            <span>관리자 계정</span>
           </div>
           <button
             type="button"

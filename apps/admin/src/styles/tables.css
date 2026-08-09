@@ -518,6 +518,7 @@
   .admin-filter-sheet__controls > .admin-mobile-sort-field {
     display: grid;
     width: 100%;
+    grid-column: 1 / -1;
     gap: 6px;
     color: var(--j-color-text-secondary);
     font-size: 13px;
