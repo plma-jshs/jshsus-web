@@ -212,7 +212,7 @@ export function PointRecordsPage() {
         accessorFn: (row) => row.reason,
         header: '사유',
         enableSorting: false,
-        meta: { minWidth: 260, truncate: true },
+        meta: { minWidth: 260, maxWidth: 420, truncate: true },
       },
       {
         accessorKey: 'point',

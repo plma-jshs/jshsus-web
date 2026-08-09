@@ -203,11 +203,13 @@
 
 @media (max-width: 680px) {
   .admin-dashboard {
-    gap: 24px;
+    width: 100%;
+    padding-inline: 16px;
+    gap: 22px;
   }
 
   .admin-dashboard__summary {
-    padding-inline: 4px;
+    padding-inline: 0;
   }
 
   .admin-dashboard__summary h2 {
@@ -216,9 +218,8 @@
 
   .admin-dashboard__task-list,
   .admin-dashboard__shortcuts {
-    margin-inline: -16px;
-    border-inline: 0;
-    border-radius: 0;
+    margin-inline: 0;
+    border-radius: 14px;
   }
 
   .admin-dashboard-task {

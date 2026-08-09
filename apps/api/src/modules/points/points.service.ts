@@ -371,7 +371,8 @@ export class PointsService {
       if (grade) conditions.push(eq(schema.students.grade, grade));
       if (classNo) conditions.push(eq(schema.students.classNo, classNo));
       if (number) conditions.push(eq(schema.students.number, number));
-      if (watchOnly) conditions.push(lte(schema.students.currentPoint, -10));
+      if (watchOnly)
+        conditions.push(lte(schema.students.currentPoint, DEPARTURE_RISK_POINT_THRESHOLD));
       if (riskStatus === 'normal') {
         conditions.push(gt(schema.students.currentPoint, DEPARTURE_RISK_POINT_THRESHOLD));
       }
@@ -650,7 +651,7 @@ export class PointsService {
         .select({
           totalStudents: count(),
           watchListCount:
-            sql<number>`cast(sum(case when ${schema.students.currentPoint} <= -10 then 1 else 0 end) as unsigned)`.mapWith(
+            sql<number>`cast(sum(case when ${schema.students.currentPoint} <= ${DEPARTURE_RISK_POINT_THRESHOLD} then 1 else 0 end) as unsigned)`.mapWith(
               Number,
             ),
         })

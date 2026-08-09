@@ -1,10 +1,24 @@
 .table-wrap,
 .admin-table-wrap {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   overflow: auto;
+  overscroll-behavior-inline: contain;
   border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
   border-radius: 10px;
   background: var(--surface);
   box-shadow: 0 1px 2px rgb(15 23 42 / 3%);
+}
+
+.admin-data-table {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ui-list-panel > * {
+  min-width: 0;
 }
 
 :where(.table-wrap, .admin-table-wrap) > table,
@@ -391,6 +405,29 @@
   .admin-table-toolbar__controls {
     flex-wrap: wrap;
     justify-content: flex-start;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1100px) {
+  .content-panel-actions .admin-table-toolbar,
+  .content-panel-actions .admin-table-toolbar__controls {
+    width: 100%;
+  }
+
+  .content-panel-actions .admin-table-toolbar__controls {
+    flex-wrap: nowrap;
+  }
+
+  .content-panel-actions .content-search-field {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .content-panel-actions .content-toolbar {
+    width: auto;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
   }
 }
 

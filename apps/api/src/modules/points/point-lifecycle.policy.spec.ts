@@ -37,8 +37,8 @@ describe('point lifecycle policy', () => {
   });
 
   it('separates departure risk from students who require approval', () => {
-    expect(classifyPointRisk(-9)).toBe('normal');
-    expect(classifyPointRisk(-10)).toBe('risk');
+    expect(classifyPointRisk(-14)).toBe('normal');
+    expect(classifyPointRisk(-15)).toBe('risk');
     expect(classifyPointRisk(-19)).toBe('risk');
     expect(classifyPointRisk(-20)).toBe('departure');
   });

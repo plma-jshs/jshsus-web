@@ -1,5 +1,5 @@
 export const DEPARTURE_POINT_THRESHOLD = -20;
-export const DEPARTURE_RISK_POINT_THRESHOLD = -10;
+export const DEPARTURE_RISK_POINT_THRESHOLD = -15;
 
 export type PointRiskStatus = 'normal' | 'risk' | 'departure';
 

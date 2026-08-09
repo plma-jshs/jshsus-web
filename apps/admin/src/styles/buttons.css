@@ -164,6 +164,7 @@
 
 .admin-row-action-button__label {
   position: absolute;
+  inset: 0 auto auto 0;
   width: 1px;
   height: 1px;
   padding: 0;

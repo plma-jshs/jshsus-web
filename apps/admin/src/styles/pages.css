@@ -1,5 +1,7 @@
 .admin-shell {
   display: grid;
+  width: 100%;
+  min-width: 0;
   grid-template-columns: 244px minmax(0, 1fr);
   min-height: 100vh;
 }
@@ -240,7 +242,9 @@
 }
 
 .admin-main {
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
   background: #f7faf9;
 }
 
@@ -388,9 +392,15 @@
 
 .admin-content {
   width: 100%;
+  min-width: 0;
   max-width: 1680px;
   margin: 0 auto;
   padding: 26px 30px 48px;
+}
+
+.admin-route-outlet {
+  width: 100%;
+  min-width: 0;
 }
 
 .admin-mobile-pc-only-route {
@@ -431,6 +441,8 @@
 
 .admin-stack {
   display: grid;
+  width: 100%;
+  min-width: 0;
   gap: 16px;
 }
 
@@ -446,6 +458,8 @@
 
 .metric-card,
 .admin-panel {
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
