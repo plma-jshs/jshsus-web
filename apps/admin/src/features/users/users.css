@@ -38,6 +38,11 @@
   box-shadow: var(--j-shadow-overlay);
 }
 
+.identity-more-actions.is-last-row .identity-more-actions__menu {
+  top: auto;
+  bottom: calc(100% + 5px);
+}
+
 .identity-more-actions__menu > button {
   display: flex;
   min-height: 36px;
@@ -151,10 +156,6 @@
   padding: 0 18px 18px;
 }
 
-.identity-panel > .admin-table-toolbar .admin-table-toolbar__controls {
-  margin-left: auto;
-  justify-content: flex-end;
-}
 .identity-filter-bar {
   display: grid;
   align-items: end;
@@ -485,6 +486,25 @@
   text-align: center;
   white-space: nowrap;
 }
+
+@media (min-width: 641px) {
+  .identity-panel > .admin-table-toolbar .admin-table-toolbar__controls {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+  }
+
+  .identity-panel > .admin-table-toolbar .admin-table-toolbar__controls > .identity-field {
+    flex: 0 1 280px;
+    min-width: 180px;
+  }
+
+  .identity-panel > .admin-table-toolbar .identity-filter-bar {
+    flex: 0 0 auto;
+    width: auto;
+    margin-left: auto;
+  }
+}
+
 @media (max-width: 1000px) {
   .identity-filter-bar.is-students,
   .identity-filter-bar.is-staff {

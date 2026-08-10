@@ -309,12 +309,10 @@ async function downloadRosterTemplate(targetYear: number, students: AdminStudent
   worksheet.mergeCells('A1:C1');
   worksheet.mergeCells('A2:C2');
   worksheet.getCell('A1').value =
-    `${targetYear}학년도 안내 · 신입생은 맨 아래 빈 행에 [${targetYear}년 학번]과 [이름]만 입력해 주세요. [기존 학번]은 비워 둡니다.`;
-  worksheet.getCell('A2').value =
-    '재학생은 기존 학번과 이름이 미리 입력되어 있습니다. 진급 학생은 신규 학번을 입력하고, 졸업생은 해당 행을 삭제해 주세요.';
-  worksheet.getRow(1).height = 34;
-  worksheet.getRow(2).height = 34;
-  for (const rowNumber of [1, 2]) {
+    `${targetYear}학년도 안내 · 신입생은 맨 아래 빈 행에 [${targetYear}년 학번]과 [이름]만 입력해 주세요. [기존 학번]은 비워 둡니다.\n재학생은 기존 학번과 이름이 미리 입력되어 있습니다. 진급 학생은 신규 학번을 입력하고, 졸업생은 해당 행을 삭제해 주세요.`;
+  worksheet.getRow(1).height = 58;
+  worksheet.getRow(2).height = 8;
+  for (const rowNumber of [1]) {
     for (let columnNumber = 1; columnNumber <= 3; columnNumber += 1) {
       const cell = worksheet.getRow(rowNumber).getCell(columnNumber);
       cell.alignment = { vertical: 'middle', wrapText: true };
@@ -328,7 +326,7 @@ async function downloadRosterTemplate(targetYear: number, students: AdminStudent
   }
 
   const header = worksheet.getRow(3);
-  header.values = [undefined, '신규 학번', '이름', '기존 학번'];
+  header.values = ['신규 학번', '이름', '기존 학번'];
   header.height = 26;
   header.eachCell((cell) => {
     cell.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -447,7 +445,14 @@ export function UsersPage() {
     queryKey: ['iam-roles'],
     queryFn: api.iamRoles,
     retry: false,
-    enabled: canManageRoles,
+    enabled: canManageRoles || dialog?.type === 'roles',
+  });
+  const roleIdentity = dialog?.type === 'roles' ? dialog.identity : null;
+  const userRolesQuery = useQuery({
+    queryKey: ['admin-user-roles', roleIdentity?.value.userId],
+    queryFn: () => api.userRoles(roleIdentity?.value.userId ?? 0),
+    retry: false,
+    enabled: Boolean(canManageRoles && roleIdentity?.value.userId),
   });
   const schoolYearsQuery = useQuery({
     queryKey: ['admin-school-years'],
@@ -460,6 +465,9 @@ export function UsersPage() {
     enabled: dialog?.type === 'roster',
   });
   const defaultSchoolYear = activeSchoolYear(schoolYearsQuery.data);
+  const schoolYearOptions = [
+    ...new Set([defaultSchoolYear, ...(schoolYearsQuery.data ?? []).map((year) => year.year)]),
+  ].sort((left, right) => right - left);
 
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['admin-identities'] });
@@ -651,6 +659,7 @@ export function UsersPage() {
       cell: ({ row }) => (
         <IdentityActions
           identity={{ kind: 'student', value: row.original }}
+          isLastRow={row.index === (studentsQuery.data?.items.length ?? 0) - 1}
           canManageRoles={canManageRoles}
           canManageStatus={canManageUsers}
           statusPending={updateUserStatus.isPending}
@@ -733,6 +742,7 @@ export function UsersPage() {
       cell: ({ row }) => (
         <IdentityActions
           identity={{ kind: 'staff', value: row.original }}
+          isLastRow={row.index === (staffQuery.data?.items.length ?? 0) - 1}
           canManageRoles={canManageRoles}
           canManageStatus={canManageUsers}
           statusPending={updateUserStatus.isPending}
@@ -880,7 +890,7 @@ export function UsersPage() {
     }
   };
   const bulkActivationPayload = () => ({
-    schoolYear: filters.schoolYear,
+    schoolYear: filters.schoolYear ?? defaultSchoolYear,
     grade: filters.grade,
     classNo: filters.classNo,
   });
@@ -995,7 +1005,7 @@ export function UsersPage() {
                 <Field label="학년도">
                   <AdminSelect
                     name="schoolYear"
-                    value={filters.schoolYear ?? ''}
+                    value={filters.schoolYear ?? defaultSchoolYear}
                     onChange={(event) =>
                       updateFilters({
                         schoolYear: event.currentTarget.value
@@ -1004,10 +1014,9 @@ export function UsersPage() {
                       })
                     }
                   >
-                    <option value="">활성</option>
-                    {(schoolYearsQuery.data ?? []).map((year) => (
-                      <option key={year.id} value={year.year}>
-                        {year.year}
+                    {schoolYearOptions.map((year) => (
+                      <option key={year} value={year}>
+                        {year}학년도
                       </option>
                     ))}
                   </AdminSelect>
@@ -1119,55 +1128,57 @@ export function UsersPage() {
       {dialog?.type === 'roster' ? (
         <IdentityDialog title="학생 명단 업로드" size="lg" onClose={() => setDialog(null)}>
           <div className="identity-dialog-form identity-roster-dialog">
-            <div className="identity-form-grid three">
-              <Field label="적용 학년도">
-                <input
-                  name="schoolYear"
-                  type="number"
-                  min={2000}
-                  max={2100}
-                  value={rosterYear}
-                  onChange={(event) => {
-                    const nextYear = event.currentTarget.value
-                      ? Number(event.currentTarget.value)
-                      : '';
-                    setRosterYear(nextYear);
-                    setRosterPreview(null);
-                    if (nextYear && rosterRows.length > 0 && rosterFileName) {
-                      requestRosterPreview(rosterRows, rosterFileName, nextYear);
-                    }
-                  }}
-                  required
-                />
-              </Field>
-              <Field label="엑셀 파일">
-                <label className="identity-file-picker">
-                  <input type="file" accept=".xlsx" onChange={handleRosterFileChange} />
-                  <span>
-                    <FileSpreadsheet size={16} aria-hidden="true" />
-                    파일 선택
-                  </span>
-                  <small>{rosterFileName || '선택된 파일 없음'}</small>
-                </label>
-              </Field>
-              <div className="identity-roster-toolbox">
-                <button
-                  className="identity-secondary-button"
-                  type="button"
-                  disabled={rosterStudentsQuery.isPending}
-                  onClick={() => {
-                    void downloadRosterTemplate(
-                      Number(rosterYear || defaultSchoolYear + 1),
-                      (rosterStudentsQuery.data ?? []).filter(
-                        (student) => student.studentNo !== 9999,
-                      ),
-                    );
-                  }}
-                >
-                  <Download size={16} /> 양식 다운로드
-                </button>
+            {!rosterPreview ? (
+              <div className="identity-form-grid three">
+                <Field label="적용 학년도">
+                  <input
+                    name="schoolYear"
+                    type="number"
+                    min={2000}
+                    max={2100}
+                    value={rosterYear}
+                    onChange={(event) => {
+                      const nextYear = event.currentTarget.value
+                        ? Number(event.currentTarget.value)
+                        : '';
+                      setRosterYear(nextYear);
+                      setRosterPreview(null);
+                      if (nextYear && rosterRows.length > 0 && rosterFileName) {
+                        requestRosterPreview(rosterRows, rosterFileName, nextYear);
+                      }
+                    }}
+                    required
+                  />
+                </Field>
+                <Field label="엑셀 파일">
+                  <label className="identity-file-picker">
+                    <input type="file" accept=".xlsx" onChange={handleRosterFileChange} />
+                    <span>
+                      <FileSpreadsheet size={16} aria-hidden="true" />
+                      파일 선택
+                    </span>
+                    <small>{rosterFileName || '선택된 파일 없음'}</small>
+                  </label>
+                </Field>
+                <div className="identity-roster-toolbox">
+                  <button
+                    className="identity-secondary-button"
+                    type="button"
+                    disabled={rosterStudentsQuery.isPending}
+                    onClick={() => {
+                      void downloadRosterTemplate(
+                        Number(rosterYear || defaultSchoolYear + 1),
+                        (rosterStudentsQuery.data ?? []).filter(
+                          (student) => student.studentNo !== 9999,
+                        ),
+                      );
+                    }}
+                  >
+                    <Download size={16} /> 양식 다운로드
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : null}
 
             {rosterFileName ? (
               <p className="identity-field-note">
@@ -1290,10 +1301,10 @@ export function UsersPage() {
                   <option value="female">여</option>
                 </AdminSelect>
               </Field>
-              <Field label="이메일">
+              <Field label="이메일 (선택)">
                 <input name="email" type="email" />
               </Field>
-              <Field label="전화번호">
+              <Field label="전화번호 (선택)">
                 <input name="phone" inputMode="tel" />
               </Field>
             </div>
@@ -1324,10 +1335,10 @@ export function UsersPage() {
                   <option value="female">여</option>
                 </AdminSelect>
               </Field>
-              <Field label="이메일">
+              <Field label="이메일 (선택)">
                 <input name="email" type="email" />
               </Field>
-              <Field label="전화번호">
+              <Field label="전화번호 (선택)">
                 <input name="phone" inputMode="tel" />
               </Field>
             </div>
@@ -1371,6 +1382,13 @@ export function UsersPage() {
             }}
           >
             <div className="identity-role-grid">
+              {rolesQuery.isPending || userRolesQuery.isPending ? (
+                <p className="identity-field-note">역할 목록을 불러오는 중입니다.</p>
+              ) : rolesQuery.isError || userRolesQuery.isError ? (
+                <p className="identity-form-error">
+                  역할 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+                </p>
+              ) : null}
               {[...(rolesQuery.data ?? [])]
                 .sort(
                   (left, right) =>
@@ -1383,7 +1401,12 @@ export function UsersPage() {
                     dialog.identity.kind === 'student'
                       ? role.name === 'student'
                       : role.name === 'teacher';
-                  const checked = required || dialog.identity.value.roles.includes(role.name);
+                  const assignedRoleIds = userRolesQuery.data;
+                  const checked =
+                    required ||
+                    (assignedRoleIds
+                      ? assignedRoleIds.includes(role.id)
+                      : (dialog.identity.value.roles ?? []).includes(role.name));
                   return (
                     <label key={role.id}>
                       {required ? <input type="hidden" name="roles" value={role.id} /> : null}
@@ -1467,6 +1490,7 @@ export function UsersPage() {
 
 function IdentityActions({
   identity,
+  isLastRow,
   canManageRoles,
   canManageStatus,
   statusPending,
@@ -1475,6 +1499,7 @@ function IdentityActions({
   onOpenActivation,
 }: {
   identity: Identity;
+  isLastRow: boolean;
   canManageRoles: boolean;
   canManageStatus: boolean;
   statusPending: boolean;
@@ -1508,7 +1533,7 @@ function IdentityActions({
         label="정보 수정"
         onClick={() => onOpen({ type: 'edit', identity })}
       />
-      <div className="identity-more-actions" ref={menuRef}>
+      <div className={`identity-more-actions${isLastRow ? ' is-last-row' : ''}`} ref={menuRef}>
         <RowActionButton
           icon={<MoreHorizontal aria-hidden="true" />}
           label="더보기"
@@ -1601,13 +1626,16 @@ function EditForm({
       {identity.kind === 'student' ? (
         <div className="identity-form-grid two">
           <Field label="학번">
-            <input
-              name="studentNo"
-              defaultValue={identity.value.studentNo}
-              inputMode="numeric"
-              onInput={(event) => event.currentTarget.setCustomValidity('')}
-              required
-            />
+            <>
+              <input
+                name="studentNoDisplay"
+                defaultValue={identity.value.studentNo}
+                inputMode="numeric"
+                disabled
+                aria-label="학번"
+              />
+              <input type="hidden" name="studentNo" value={identity.value.studentNo} />
+            </>
           </Field>
           <Field label="이름">
             <input name="name" defaultValue={identity.value.name} required />
