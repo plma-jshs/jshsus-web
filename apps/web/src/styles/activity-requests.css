@@ -746,7 +746,7 @@
   border: 1px solid var(--j-color-border-strong);
   border-radius: 8px;
   background: var(--j-color-surface);
-  box-shadow: 0 10px 24px rgb(20 52 47 / 10%);
+  box-shadow: var(--j-shadow-overlay);
 }
 
 .activity-participant-results > p {

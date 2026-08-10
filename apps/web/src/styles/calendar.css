@@ -422,7 +422,7 @@
   border-radius: 8px;
   color: var(--j-color-text);
   background: var(--j-color-surface);
-  box-shadow: 0 7px 20px rgb(15 23 42 / 13%);
+  box-shadow: var(--j-shadow-overlay);
   font-size: 11px;
   line-height: 1.4;
   pointer-events: none;

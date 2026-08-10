@@ -363,7 +363,7 @@
 .ui-segmented-tabs button[aria-selected='true'] {
   background: var(--surface);
   color: var(--primary-dark);
-  box-shadow: 0 1px 3px rgb(16 42 39 / 9%);
+  box-shadow: var(--j-shadow-card);
 }
 
 .ui-segmented-tabs button:disabled {

@@ -15,7 +15,7 @@
   border: 1px solid color-mix(in srgb, var(--j-color-border) 86%, var(--j-color-text));
   border-radius: var(--j-radius-lg);
   background: var(--j-color-surface);
-  box-shadow: 0 12px 28px rgb(23 32 51 / 6%);
+  box-shadow: var(--j-shadow-card);
   transition:
     transform var(--j-motion-base),
     border-color var(--j-motion-fast),
@@ -25,7 +25,7 @@
 .jbs-card:hover,
 .jbs-card:focus-within {
   border-color: color-mix(in srgb, var(--j-color-brand) 28%, var(--j-color-border));
-  box-shadow: 0 18px 38px rgb(23 32 51 / 11%);
+  box-shadow: var(--j-shadow-card-hover);
   transform: translateY(-3px);
 }
 

@@ -1087,7 +1087,7 @@
   padding: 28px;
   border-radius: var(--j-radius-lg);
   background: var(--j-color-surface);
-  box-shadow: 0 24px 64px rgb(15 23 42 / 22%);
+  box-shadow: var(--j-shadow-overlay);
 }
 
 .editor-resume-modal__dialog h2,

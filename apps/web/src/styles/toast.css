@@ -18,7 +18,7 @@
   border: 0;
   border-radius: 14px;
   background: #1e293b;
-  box-shadow: 0 16px 36px rgb(15 23 42 / 24%);
+  box-shadow: var(--j-shadow-overlay);
   color: var(--j-color-white, #fff);
   pointer-events: auto;
   animation: web-toast-enter 180ms ease-out;

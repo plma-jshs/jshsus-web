@@ -163,11 +163,11 @@
 }
 
 .identity-filter-bar.is-students {
-  grid-template-columns: minmax(220px, 320px) 110px 100px 100px 88px;
+  grid-template-columns: minmax(180px, 220px) 92px 92px 88px;
 }
 
 .identity-filter-bar.is-staff {
-  grid-template-columns: minmax(260px, 360px) 88px;
+  grid-template-columns: 88px;
 }
 .identity-field {
   display: grid;
@@ -502,6 +502,17 @@
     flex: 0 0 auto;
     width: auto;
     margin-left: auto;
+  }
+}
+
+@media (min-width: 1001px) {
+  .identity-panel > .admin-table-toolbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .identity-panel > .admin-table-toolbar .admin-table-toolbar__controls {
+    min-width: 0;
   }
 }
 

@@ -46,7 +46,7 @@
   .admin-sidebar.open {
     display: flex;
     transform: translateX(0);
-    box-shadow: -20px 0 50px rgba(18, 42, 38, 0.16);
+    box-shadow: -8px 0 24px rgb(18 42 38 / 10%);
   }
 
   .admin-mobile-close,

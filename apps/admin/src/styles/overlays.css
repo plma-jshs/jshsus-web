@@ -194,7 +194,7 @@
   border-radius: 18px 18px 0 0;
   background: var(--surface);
   color: var(--j-color-text);
-  box-shadow: 0 -14px 40px rgb(15 23 42 / 16%);
+  box-shadow: 0 -8px 24px rgb(15 23 42 / 10%);
 }
 
 .admin-filter-sheet[open] {
@@ -434,7 +434,7 @@
   border: 0;
   border-radius: 14px;
   background: #1e293b;
-  box-shadow: 0 16px 36px rgb(15 23 42 / 24%);
+  box-shadow: var(--j-shadow-overlay);
   color: var(--j-color-white, #fff);
   pointer-events: auto;
   animation: ui-toast-enter 180ms ease-out;

@@ -651,7 +651,7 @@
   .meal-tabs button.is-active {
     color: var(--j-color-brand-strong);
     background: var(--j-color-surface);
-    box-shadow: 0 1px 3px rgb(15 23 42 / 10%);
+    box-shadow: var(--j-shadow-card);
   }
 
   .meal-column:not(.is-active) {
