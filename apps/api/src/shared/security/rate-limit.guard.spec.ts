@@ -3,6 +3,7 @@ import { HttpException } from '@nestjs/common';
 import type { ExecutionContext } from '@nestjs/common';
 import type { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
+import { AuthController } from '../../modules/auth/auth.controller';
 import type { RedisService } from '../../modules/redis/redis.service';
 import { SchoolDataController } from '../../modules/school-data/school-data.controller';
 import { RATE_LIMIT_KEY, RateLimitGuard, type RateLimitOptions } from './rate-limit.guard';
@@ -62,5 +63,26 @@ describe('RateLimitGuard', () => {
       max: 30,
       windowSeconds: 60,
     });
+  });
+
+  it('keeps account activation endpoints protected against code guessing', () => {
+    expect(
+      Reflect.getMetadata(RATE_LIMIT_KEY, AuthController.prototype.lookupAccountActivation),
+    ).toEqual({ max: 10, windowSeconds: 900 });
+    expect(
+      Reflect.getMetadata(RATE_LIMIT_KEY, AuthController.prototype.completeAccountActivation),
+    ).toEqual({ max: 5, windowSeconds: 900 });
+    expect(
+      Reflect.getMetadata(
+        RATE_LIMIT_KEY,
+        AuthController.prototype.requestAccountActivationPhoneCode,
+      ),
+    ).toEqual({ max: 5, windowSeconds: 900 });
+    expect(
+      Reflect.getMetadata(
+        RATE_LIMIT_KEY,
+        AuthController.prototype.requestAccountActivationEmailCode,
+      ),
+    ).toEqual({ max: 5, windowSeconds: 900 });
   });
 });

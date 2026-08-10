@@ -480,6 +480,7 @@ export type StudentGender = 'male' | 'female';
 
 export type AdminStudentSummary = StudentOption & {
   userId?: number;
+  accountStatus?: 'pending' | 'active';
   schoolYear?: number;
   enrollmentId?: number;
   enrollmentStatus?: StudentEnrollmentStatus;
@@ -524,6 +525,7 @@ export type AccountActivationIssueResult = {
   ok: true;
   identityType: AccountActivationIdentityType;
   identityNumber: number;
+  schoolYear?: number;
   code: string;
 };
 
@@ -531,11 +533,14 @@ export type AccountActivationLookupResult = {
   ok: true;
   identityType: AccountActivationIdentityType;
   identityNumber: number;
+  name?: string;
+  schoolYear?: number;
 };
 
 export type AccountActivationBulkIssueResult = {
   ok: true;
   identityType: 'student';
+  schoolYear: number;
   issuedAt: string;
   total: number;
   codes: Array<{

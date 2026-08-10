@@ -167,7 +167,7 @@ export function completeAccountActivation(input: {
   identityType: AccountActivationIdentityType;
   identityNumber: number;
   activationCode: string;
-  name: string;
+  name?: string;
   gender: StudentGender;
   email: string;
   phone: string;

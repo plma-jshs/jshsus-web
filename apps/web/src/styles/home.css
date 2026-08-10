@@ -62,12 +62,12 @@
   background: var(--j-color-surface);
   box-shadow:
     var(--j-shadow-card),
-    0 8px 24px rgb(8 109 115 / 3%);
+    0 4px 12px rgb(8 109 115 / 2%);
 }
 
 @media (min-width: 768px) {
   .home-card {
-    box-shadow: 0 4px 14px rgb(15 23 42 / 5%);
+    box-shadow: 0 3px 10px rgb(15 23 42 / 4%);
   }
 }
 

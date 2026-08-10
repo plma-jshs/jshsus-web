@@ -75,6 +75,8 @@ export function AccountActivationPage() {
   const [identity, setIdentity] = useState<{
     identityType: AccountActivationIdentityType;
     identityNumber: number;
+    name?: string;
+    schoolYear?: number;
   } | null>(null);
   const [name, setName] = useState('');
   const [gender, setGender] = useState<StudentGender | ''>('');
@@ -91,7 +93,13 @@ export function AccountActivationPage() {
   const lookupMutation = useMutation({
     mutationFn: lookupAccountActivation,
     onSuccess: (result) => {
-      setIdentity({ identityType: result.identityType, identityNumber: result.identityNumber });
+      setIdentity({
+        identityType: result.identityType,
+        identityNumber: result.identityNumber,
+        name: result.name,
+        schoolYear: result.schoolYear,
+      });
+      setName(result.name ?? '');
       setValidationError(null);
     },
   });
@@ -149,6 +157,10 @@ export function AccountActivationPage() {
       setValidationError('성별을 선택해 주세요.');
       return;
     }
+    if (identity.identityType === 'staff' && !name.trim()) {
+      setValidationError('이름을 입력해 주세요.');
+      return;
+    }
     if (!phoneCodeRequested || !/^\d{6}$/.test(phoneVerificationCode)) {
       setValidationError('전화번호 인증을 완료해 주세요.');
       return;
@@ -166,7 +178,7 @@ export function AccountActivationPage() {
     activationMutation.mutate({
       ...identity,
       activationCode: activationCode.trim(),
-      name,
+      ...(identity.identityType === 'staff' ? { name: name.trim() } : {}),
       gender,
       email,
       phone: normalizedPhone(phone),
@@ -236,16 +248,16 @@ export function AccountActivationPage() {
         </form>
       ) : (
         <form className="auth-form" onSubmit={submitActivation}>
-          <label htmlFor="activation-identity-number">
-            <span>{identity.identityType === 'student' ? '학번' : '교사번호'}</span>
-            <input
-              id="activation-identity-number"
-              value={identity.identityNumber}
-              autoComplete="username"
-              disabled
-            />
-          </label>
           <div className="auth-form-grid two">
+            <label htmlFor="activation-identity-number">
+              <span>{identity.identityType === 'student' ? '학번' : '교사번호'}</span>
+              <input
+                id="activation-identity-number"
+                value={identity.identityNumber}
+                autoComplete="username"
+                disabled
+              />
+            </label>
             <label htmlFor="activation-name">
               <span>이름</span>
               <input
@@ -253,10 +265,18 @@ export function AccountActivationPage() {
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 autoComplete="name"
-                placeholder="이름을 입력해주세요."
-                required
+                placeholder={
+                  identity.identityType === 'student'
+                    ? '명단에 등록된 이름'
+                    : '이름을 입력해주세요.'
+                }
+                readOnly={identity.identityType === 'student'}
+                disabled={identity.identityType === 'student'}
+                required={identity.identityType === 'staff'}
               />
             </label>
+          </div>
+          <div className="auth-form-grid two">
             <label htmlFor="activation-gender">
               <span>성별</span>
               <AuthSelect

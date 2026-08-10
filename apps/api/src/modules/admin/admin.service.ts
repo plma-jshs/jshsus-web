@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import * as schema from '@jshsus/db';
 import type {
   AdminAuditLog,
@@ -79,7 +84,10 @@ const studentSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
   phone: phoneSchema.optional().default(''),
 });
-const createStudentSchema = studentSchema;
+const createStudentSchema = studentSchema.extend({
+  // A roster-only student may complete this field during account activation.
+  gender: studentGenderSchema.optional(),
+});
 const updateStudentSchema = studentSchema.partial();
 
 const schoolYearValueSchema = z.coerce.number().int().min(2000).max(2100);
@@ -99,7 +107,7 @@ const rosterImportSchema = z.object({
   schoolYear: schoolYearValueSchema,
   fileName: z.string().trim().max(255).optional(),
   rows: z.array(rosterRowInputSchema).min(1).max(2000),
-  activateYear: z.boolean().optional().default(true),
+  activateYear: z.boolean().optional().default(false),
 });
 const emailValueSchema = z.string().email();
 
@@ -615,14 +623,30 @@ export class AdminService {
         .orderBy(direction(sortColumn), asc(schema.studentEnrollments.studentId))
         .limit(pageSize)
         .offset((page - 1) * pageSize);
-      const roles = await this.rolesByUserIds(
-        rows.flatMap((row) => (row.userId ? [row.userId] : [])),
+      const userIds = rows.flatMap((row) => (row.userId ? [row.userId] : []));
+      const authenticatedUserIds = new Set(
+        userIds.length > 0
+          ? (
+              await db
+                .select({ userId: schema.authAccounts.userId })
+                .from(schema.authAccounts)
+                .where(
+                  and(
+                    inArray(schema.authAccounts.userId, userIds),
+                    eq(schema.authAccounts.provider, 'cognito'),
+                  ),
+                )
+            ).map((row) => row.userId)
+          : [],
       );
+      const roles = await this.rolesByUserIds(userIds);
 
       return {
         items: rows.map((row) => ({
           id: row.id,
           userId: row.userId ?? undefined,
+          accountStatus:
+            row.userId && authenticatedUserIds.has(row.userId) ? ('active' as const) : 'pending',
           schoolYear: row.schoolYear,
           enrollmentId: row.enrollmentId,
           enrollmentStatus: row.enrollmentStatus,
@@ -668,7 +692,7 @@ export class AdminService {
           grade: studentIdentity.grade,
           classNo: studentIdentity.classNo,
           number: studentIdentity.number,
-          gender: toStoredStudentGender(parsed.data.gender),
+          gender: parsed.data.gender ? toStoredStudentGender(parsed.data.gender) : null,
           email: parsed.data.email || null,
           phone: parsed.data.phone || null,
         })
@@ -829,6 +853,7 @@ export class AdminService {
     row: NormalizedRosterRow,
     existing: ExistingStudentSnapshot,
     targetEnrollment?: EnrollmentSnapshot,
+    syncCurrentIdentity = true,
   ) {
     if (!targetEnrollment || targetEnrollment.status !== 'active') return true;
     if (
@@ -840,18 +865,25 @@ export class AdminService {
       return true;
     }
     if (
-      existing.currentStudentNo !== row.studentNo ||
-      existing.grade !== row.grade ||
-      existing.classNo !== row.classNo ||
-      existing.number !== row.number ||
-      existing.name !== row.name ||
-      existing.status !== 'active'
+      syncCurrentIdentity &&
+      (existing.currentStudentNo !== row.studentNo ||
+        existing.grade !== row.grade ||
+        existing.classNo !== row.classNo ||
+        existing.number !== row.number ||
+        existing.name !== row.name ||
+        existing.status !== 'active')
     ) {
       return true;
     }
-    if (row.storedGender !== undefined && existing.gender !== row.storedGender) return true;
-    if (row.email !== undefined && existing.email !== row.email) return true;
-    if (row.phone !== undefined && existing.phone !== row.phone) return true;
+    if (
+      syncCurrentIdentity &&
+      row.storedGender !== undefined &&
+      existing.gender !== row.storedGender
+    ) {
+      return true;
+    }
+    if (syncCurrentIdentity && row.email !== undefined && existing.email !== row.email) return true;
+    if (syncCurrentIdentity && row.phone !== undefined && existing.phone !== row.phone) return true;
     return false;
   }
 
@@ -1063,11 +1095,6 @@ export class AdminService {
         }
       }
 
-      if (existing && !existing.userId) {
-        conflict = true;
-        messages.push('기존 학생 레코드에 연결된 사용자 계정이 없습니다.');
-      }
-
       const normalized: NormalizedRosterRow | undefined =
         identity && !invalid
           ? {
@@ -1097,7 +1124,12 @@ export class AdminService {
         action = 'conflict';
       } else if (existing && normalized) {
         matchedStudentIds.add(existing.studentId);
-        action = this.rosterRowHasChanges(normalized, existing, matchedTargetEnrollment)
+        action = this.rosterRowHasChanges(
+          normalized,
+          existing,
+          matchedTargetEnrollment,
+          input.activateYear || input.schoolYear === activeSchoolYear,
+        )
           ? 'update'
           : 'unchanged';
       } else {
@@ -1107,7 +1139,7 @@ export class AdminService {
       if (messages.length === 0) {
         messages.push(
           action === 'create'
-            ? '신규 학생 계정을 생성합니다.'
+            ? '학생 명단과 학년도 이력을 생성합니다. 인증코드로 가입을 완료할 수 있습니다.'
             : action === 'update'
               ? '기존 학생 계정과 학년도 이력을 갱신합니다.'
               : action === 'unchanged'
@@ -1135,13 +1167,13 @@ export class AdminService {
       for (const enrollment of activeEnrollments.values()) {
         if (matchedStudentIds.has(enrollment.studentId) || enrollment.studentNo === 9999) continue;
         const existing = studentById.get(enrollment.studentId);
-        if (!existing?.userId) continue;
+        if (!existing) continue;
         plannedRows.push({
           rowNumber: 0,
           action: 'graduate',
           studentNo: enrollment.studentNo,
           name: existing.name,
-          matchedUserId: existing.userId,
+          matchedUserId: existing.userId ?? undefined,
           matchedStudentId: existing.studentId,
           messages: [
             `${activeSchoolYear}학년도 활성 명단에는 있지만 업로드 명단에는 없어 졸업 처리합니다.`,
@@ -1195,6 +1227,17 @@ export class AdminService {
     const graduatedUserIds = new Set<number>();
     const result = await this.database.db.transaction(async (tx) => {
       const now = new Date();
+      const activeSchoolYears = await tx
+        .select({ year: schema.schoolYears.year })
+        .from(schema.schoolYears)
+        .where(eq(schema.schoolYears.isActive, true))
+        .orderBy(desc(schema.schoolYears.year))
+        .for('update');
+      if (activeSchoolYears[0]?.year !== plan.activeSchoolYear) {
+        throw new ConflictException(
+          '활성 학년도가 변경되었습니다. 명단을 다시 미리보기한 후 적용해 주세요.',
+        );
+      }
       if (parsed.data.activateYear) {
         await tx
           .update(schema.schoolYears)
@@ -1269,39 +1312,66 @@ export class AdminService {
         if (row.action === 'update') {
           const normalized = row.normalized;
           const existing = row.existing;
-          if (!normalized || !existing?.userId)
-            throw new BadRequestException('Invalid update row.');
+          if (!normalized || !existing) throw new BadRequestException('Invalid update row.');
 
-          await tx
-            .update(schema.students)
-            .set({
-              studentNo: normalized.studentNo,
-              name: normalized.name,
-              grade: normalized.grade,
-              classNo: normalized.classNo,
-              number: normalized.number,
-              updatedAt: now,
-            })
-            .where(eq(schema.students.id, existing.studentId));
+          const syncCurrentIdentity =
+            parsed.data.activateYear || parsed.data.schoolYear === plan.activeSchoolYear;
+          let userId = existing.userId;
+          if (syncCurrentIdentity) {
+            if (!userId) {
+              const [user] = await tx
+                .insert(schema.users)
+                .values({
+                  studentNo: normalized.studentNo,
+                  name: normalized.name,
+                  nickname: normalized.name,
+                  grade: normalized.grade,
+                  classNo: normalized.classNo,
+                  number: normalized.number,
+                  gender: normalized.storedGender ?? null,
+                  email: normalized.email ?? null,
+                  phone: normalized.phone ?? null,
+                  status: 'active',
+                })
+                .$returningId();
+              userId = user.id;
+              await tx.insert(schema.userRoles).values({ userId, roleId: studentRole.id });
+            }
 
-          await tx
-            .update(schema.users)
-            .set({
-              studentNo: normalized.studentNo,
-              name: normalized.name,
-              grade: normalized.grade,
-              classNo: normalized.classNo,
-              number: normalized.number,
-              gender: normalized.storedGender,
-              email: normalized.email,
-              phone: normalized.phone,
-              status: 'active',
-              statusChangedAt: existing.status === 'active' ? undefined : now,
-              deactivatedAt: null,
-              cognitoDeleteAfter: null,
-              updatedAt: now,
-            })
-            .where(eq(schema.users.id, existing.userId));
+            await tx
+              .update(schema.students)
+              .set({
+                userId,
+                studentNo: normalized.studentNo,
+                name: normalized.name,
+                grade: normalized.grade,
+                classNo: normalized.classNo,
+                number: normalized.number,
+                updatedAt: now,
+              })
+              .where(eq(schema.students.id, existing.studentId));
+
+            if (existing.userId) {
+              await tx
+                .update(schema.users)
+                .set({
+                  studentNo: normalized.studentNo,
+                  name: normalized.name,
+                  grade: normalized.grade,
+                  classNo: normalized.classNo,
+                  number: normalized.number,
+                  gender: normalized.storedGender,
+                  email: normalized.email,
+                  phone: normalized.phone,
+                  status: 'active',
+                  statusChangedAt: existing.status === 'active' ? undefined : now,
+                  deactivatedAt: null,
+                  cognitoDeleteAfter: null,
+                  updatedAt: now,
+                })
+                .where(eq(schema.users.id, existing.userId));
+            }
+          }
 
           await tx
             .insert(schema.studentEnrollments)
@@ -1325,11 +1395,11 @@ export class AdminService {
                 updatedAt: now,
               },
             });
-          affectedUserIds.add(existing.userId);
+          if (userId) affectedUserIds.add(userId);
           continue;
         }
 
-        if (row.action === 'graduate' && row.existing?.userId && row.matchedStudentId) {
+        if (row.action === 'graduate' && row.existing && row.matchedStudentId) {
           await tx
             .update(schema.studentEnrollments)
             .set({ status: 'graduated', statusChangedAt: now, updatedAt: now })
@@ -1340,12 +1410,14 @@ export class AdminService {
                 eq(schema.studentEnrollments.status, 'active'),
               ),
             );
-          await tx
-            .update(schema.users)
-            .set({ status: 'graduated', statusChangedAt: now, updatedAt: now })
-            .where(eq(schema.users.id, row.existing.userId));
-          affectedUserIds.add(row.existing.userId);
-          graduatedUserIds.add(row.existing.userId);
+          if (row.existing.userId) {
+            await tx
+              .update(schema.users)
+              .set({ status: 'graduated', statusChangedAt: now, updatedAt: now })
+              .where(eq(schema.users.id, row.existing.userId));
+            affectedUserIds.add(row.existing.userId);
+            graduatedUserIds.add(row.existing.userId);
+          }
         }
       }
 

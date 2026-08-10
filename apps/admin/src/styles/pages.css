@@ -204,11 +204,13 @@
   width: 28px;
   height: 28px;
   flex: 0 0 auto;
+  align-self: center;
   place-items: center;
   overflow: visible;
   border-radius: 50%;
   background: transparent;
   color: var(--primary-dark);
+  line-height: 0;
 }
 
 .admin-sidebar-account__icon > svg {
@@ -261,7 +263,7 @@
 }
 
 .admin-sidebar-account strong,
-.admin-sidebar-account span {
+.admin-sidebar-account > div > span {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -272,7 +274,7 @@
   font-size: 13px;
 }
 
-.admin-sidebar-account span {
+.admin-sidebar-account > div > span {
   margin-top: 2px;
   color: var(--muted);
   font-size: 11px;

@@ -288,8 +288,9 @@ function csvCell(value: unknown) {
 
 function downloadActivationCodes(result: AccountActivationBulkIssueResult) {
   const rows = [
-    ['학번', '이름', '인증코드', '발급일시'],
+    ['학년도', '학번', '이름', '인증코드', '발급일시'],
     ...result.codes.map((item) => [
+      result.schoolYear,
       item.identityNumber,
       item.name ?? '',
       item.code,
@@ -321,6 +322,7 @@ export function UsersPage() {
   const [rosterFileName, setRosterFileName] = useState('');
   const [rosterPreview, setRosterPreview] = useState<RosterImportPreview | null>(null);
   const [rosterYear, setRosterYear] = useState<number | ''>('');
+  const [rosterActivateYear, setRosterActivateYear] = useState(false);
   const [issuedActivation, setIssuedActivation] = useState<AccountActivationIssueResult | null>(
     null,
   );
@@ -543,6 +545,13 @@ export function UsersPage() {
       meta: { align: 'center', width: 112, mobileRole: 'badge' },
     },
     {
+      id: 'accountStatus',
+      header: '계정',
+      enableSorting: false,
+      cell: ({ row }) => (row.original.accountStatus === 'active' ? '가입 완료' : '미가입'),
+      meta: { align: 'center', width: 112, mobileRole: 'badge' },
+    },
+    {
       id: 'lastLoginAt',
       accessorKey: 'lastLoginAt',
       header: '최근 로그인',
@@ -687,7 +696,7 @@ export function UsersPage() {
     createStudent.mutate({
       studentNo: parts.studentNo,
       name: String(form.get('name')),
-      gender: String(form.get('gender')) as StudentGender,
+      ...(form.get('gender') ? { gender: String(form.get('gender')) as StudentGender } : {}),
       email: String(form.get('email') || ''),
       phone: String(form.get('phone') || ''),
     });
@@ -745,14 +754,15 @@ export function UsersPage() {
     schoolYear: Number(rosterYear || filters.schoolYear || defaultSchoolYear),
     fileName: rosterFileName || undefined,
     rows: rosterRows,
-    activateYear: true,
+    activateYear: rosterActivateYear,
   });
 
-  const openRosterDialog = () => {
+  const openRosterDialog = (targetYear = defaultSchoolYear) => {
     setRosterRows([]);
     setRosterFileName('');
     setRosterPreview(null);
-    setRosterYear(filters.schoolYear ?? defaultSchoolYear);
+    setRosterYear(targetYear);
+    setRosterActivateYear(false);
     setDialog({ type: 'roster' });
   };
 
@@ -795,7 +805,7 @@ export function UsersPage() {
       .filter(Boolean)
       .join(' ');
     const ok = window.confirm(
-      `${scope} 학생 인증코드를 새로 발급합니다. 기존에 발급된 미사용 코드도 새 코드로 바뀝니다.`,
+      `${scope} 중 아직 가입하지 않은 학생에게 인증코드를 발급합니다. 이미 가입한 학생과 이미 사용 가능한 인증코드가 있는 학생은 제외됩니다.`,
     );
     if (ok) issueBulkActivation.mutate(bulkActivationPayload());
   };
@@ -818,9 +828,16 @@ export function UsersPage() {
               <button
                 className="identity-secondary-button"
                 type="button"
-                onClick={openRosterDialog}
+                onClick={() => openRosterDialog()}
               >
                 <FileSpreadsheet size={17} /> 명단 업로드
+              </button>
+              <button
+                className="identity-secondary-button"
+                type="button"
+                onClick={() => openRosterDialog(defaultSchoolYear + 1)}
+              >
+                다음 학년도 준비
               </button>
               <button
                 className="identity-secondary-button"
@@ -863,14 +880,17 @@ export function UsersPage() {
       ) : null}
 
       {bulkActivationResult ? (
-        <div className="identity-success" role="status">
-          학생 인증코드 <strong>{bulkActivationResult.total}건</strong>을 발급했습니다.
-          <button type="button" onClick={() => downloadActivationCodes(bulkActivationResult)}>
-            <Download size={15} /> CSV 다운로드
-          </button>
-          <button type="button" onClick={() => setBulkActivationResult(null)}>
-            확인
-          </button>
+        <div className="identity-success identity-success--bulk" role="status">
+          {bulkActivationResult.schoolYear}학년도 미가입 학생 인증코드{' '}
+          <strong>{bulkActivationResult.total}건</strong>을 발급했습니다.
+          <div className="identity-success__actions">
+            <button type="button" onClick={() => downloadActivationCodes(bulkActivationResult)}>
+              <Download size={15} /> CSV 다운로드
+            </button>
+            <button type="button" onClick={() => setBulkActivationResult(null)}>
+              확인
+            </button>
+          </div>
         </div>
       ) : null}
 
@@ -1026,11 +1046,12 @@ export function UsersPage() {
                   min={2000}
                   max={2100}
                   value={rosterYear}
-                  onChange={(event) =>
+                  onChange={(event) => {
                     setRosterYear(
                       event.currentTarget.value ? Number(event.currentTarget.value) : '',
-                    )
-                  }
+                    );
+                    setRosterPreview(null);
+                  }}
                   required
                 />
               </Field>
@@ -1063,6 +1084,23 @@ export function UsersPage() {
                 </button>
               </div>
             </div>
+
+            <label className="identity-roster-activation-toggle">
+              <input
+                type="checkbox"
+                checked={rosterActivateYear}
+                onChange={(event) => {
+                  setRosterActivateYear(event.currentTarget.checked);
+                  setRosterPreview(null);
+                }}
+              />
+              <span>반영 후 {rosterYear || '선택한'} 학년도를 활성 학년도로 전환</span>
+            </label>
+            <p className="identity-field-note">
+              {rosterActivateYear
+                ? '활성 전환 시 업로드 명단에 없는 현재 재학생은 학적 종료 처리됩니다.'
+                : '비활성 상태로 학년도를 준비합니다. 현재 활성 학년도와 기존 재학생은 변경하지 않습니다.'}
+            </p>
 
             {rosterFileName ? (
               <p className="identity-field-note">
@@ -1164,11 +1202,9 @@ export function UsersPage() {
               <Field label="이름">
                 <input name="name" required />
               </Field>
-              <Field label="성별">
-                <AdminSelect name="gender" defaultValue="" required aria-label="성별">
-                  <option value="" disabled>
-                    선택
-                  </option>
+              <Field label="성별 (선택)">
+                <AdminSelect name="gender" defaultValue="" aria-label="성별">
+                  <option value="">나중에 입력</option>
                   <option value="male">남</option>
                   <option value="female">여</option>
                 </AdminSelect>
@@ -1330,6 +1366,11 @@ export function UsersPage() {
                   issueActivation.mutate({
                     identityType: dialog.identity.kind,
                     identityNumber: identityNumber(dialog.identity),
+                    schoolYear:
+                      dialog.identity.kind === 'student'
+                        ? dialog.identity.value.schoolYear
+                        : undefined,
+                    force: Boolean(issuedActivation),
                   })
                 }
               >

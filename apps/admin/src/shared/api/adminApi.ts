@@ -224,7 +224,7 @@ export const api = {
   createStudent: (input: {
     studentNo: number;
     name: string;
-    gender: 'male' | 'female';
+    gender?: 'male' | 'female';
     email?: string;
     phone?: string;
   }) =>
@@ -287,6 +287,8 @@ export const api = {
   issueAccountActivation: (input: {
     identityType: AccountActivationIdentityType;
     identityNumber: number;
+    schoolYear?: number;
+    force?: boolean;
   }) =>
     request<AccountActivationIssueResult>('/api/admin/account-activations', {
       method: 'POST',

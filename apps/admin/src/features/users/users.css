@@ -114,14 +114,26 @@
   background: #effaf7;
   color: #245a52;
 }
-.identity-success button {
+.identity-success__actions {
+  display: inline-flex;
   margin-left: auto;
+  align-items: center;
+  gap: 8px;
+}
+.identity-success button {
   border: 0;
   background: transparent;
   color: #006d68;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+}
+.identity-success__actions button {
+  display: inline-flex;
+  margin-left: 0;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 .identity-panel {
   overflow: hidden;
@@ -137,6 +149,11 @@
 
 .identity-panel > .admin-data-table {
   padding: 0 18px 18px;
+}
+
+.identity-panel > .admin-table-toolbar .admin-table-toolbar__controls {
+  margin-left: auto;
+  justify-content: flex-end;
 }
 .identity-filter-bar {
   display: grid;
@@ -273,6 +290,19 @@
 .identity-dialog-form {
   display: grid;
   gap: 18px;
+}
+.identity-roster-activation-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+.identity-roster-activation-toggle input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
 }
 .identity-form-grid {
   display: grid;
@@ -438,6 +468,16 @@
   }
 }
 @media (max-width: 640px) {
+  .identity-success {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .identity-success__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
   .identity-page-toolbar {
     align-items: stretch;
     flex-direction: column;
