@@ -565,6 +565,11 @@ export type AdminSchoolYearSummary = {
   isActive: boolean;
 };
 
+export type AdminStudentRosterRow = {
+  studentNo: number;
+  name: string;
+};
+
 export type RosterImportRowInput = {
   rowNumber: number;
   studentNo: number;

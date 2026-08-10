@@ -16,6 +16,7 @@ import type {
   AdminPermissionSummary,
   AdminRoleSummary,
   AdminSchoolYearSummary,
+  AdminStudentRosterRow,
   AdminStaffSummary,
   AdminStudentSummary,
   AdminUserStatus,
@@ -221,6 +222,10 @@ export const api = {
   adminStudents: (query: AdminIdentityListQuery = {}) =>
     request<PaginatedResponse<AdminStudentSummary>>(withQuery('/api/admin/students', { ...query })),
   schoolYears: () => request<AdminSchoolYearSummary[]>('/api/admin/school-years'),
+  studentRoster: (schoolYear?: number) =>
+    request<AdminStudentRosterRow[]>(
+      withQuery('/api/admin/students/roster', schoolYear ? { schoolYear } : {}),
+    ),
   createStudent: (input: {
     studentNo: number;
     name: string;

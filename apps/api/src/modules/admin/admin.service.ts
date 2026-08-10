@@ -94,12 +94,12 @@ const schoolYearValueSchema = z.coerce.number().int().min(2000).max(2100);
 
 const rosterRowInputSchema = z.object({
   rowNumber: z.coerce.number().int().positive(),
-  studentNo: z.coerce.number().int().positive(),
-  name: z.string().trim().min(1).max(64),
+  studentNo: z.coerce.number().int(),
+  name: z.string().trim().max(64),
   gender: z.unknown().optional(),
   phone: z.string().optional(),
   email: z.string().trim().optional(),
-  previousStudentNo: z.coerce.number().int().positive().optional(),
+  previousStudentNo: z.coerce.number().int().optional(),
   userId: z.coerce.number().int().positive().optional(),
 });
 
@@ -232,6 +232,16 @@ function emptyRosterSummary(): Record<RosterImportAction, number> {
 
 function hasOwnField(row: object, key: PropertyKey) {
   return Object.prototype.hasOwnProperty.call(row, key);
+}
+
+function isRosterName(value: string) {
+  return (
+    value.length > 0 &&
+    value.length <= 64 &&
+    /\p{L}/u.test(value) &&
+    !/\p{N}/u.test(value) &&
+    !/[^\p{L}\p{M}\s.'’·-]/u.test(value)
+  );
 }
 
 function koreanDayRange(value = new Date()) {
@@ -541,6 +551,36 @@ export class AdminService {
         })
         .from(schema.schoolYears)
         .orderBy(desc(schema.schoolYears.year)),
+    );
+  }
+
+  async studentRoster(schoolYear?: unknown) {
+    const parsedSchoolYear =
+      schoolYear === undefined || schoolYear === ''
+        ? undefined
+        : schoolYearValueSchema.safeParse(schoolYear);
+    if (parsedSchoolYear && !parsedSchoolYear.success) {
+      throw new BadRequestException('Invalid school year.');
+    }
+
+    const targetSchoolYear = parsedSchoolYear
+      ? parsedSchoolYear.data
+      : await this.getActiveSchoolYear();
+    return this.database.query('admin.student-roster', async (db) =>
+      db
+        .select({
+          studentNo: schema.studentEnrollments.studentNo,
+          name: schema.students.name,
+        })
+        .from(schema.studentEnrollments)
+        .innerJoin(schema.students, eq(schema.studentEnrollments.studentId, schema.students.id))
+        .where(
+          and(
+            eq(schema.studentEnrollments.schoolYear, targetSchoolYear),
+            eq(schema.studentEnrollments.status, 'active'),
+          ),
+        )
+        .orderBy(asc(schema.studentEnrollments.studentNo)),
     );
   }
 
@@ -986,11 +1026,19 @@ export class AdminService {
           }
         | undefined;
 
-      try {
-        identity = deriveStudentNumberParts(row.studentNo);
-      } catch {
+      if (row.studentNo === 0) {
         invalid = true;
-        messages.push('학번은 1101~3420 범위의 학년·반·번호 조합이어야 합니다.');
+        messages.push('신규 학번을 입력해 주세요.');
+      } else if (row.studentNo < 0) {
+        invalid = true;
+        messages.push('신규 학번은 숫자로 입력해 주세요.');
+      } else {
+        try {
+          identity = deriveStudentNumberParts(row.studentNo);
+        } catch {
+          invalid = true;
+          messages.push('신규 학번은 1101~3420 범위의 학년·반·번호 조합이어야 합니다.');
+        }
       }
 
       if (row.studentNo === 9999) {
@@ -998,11 +1046,16 @@ export class AdminService {
         messages.push('9999 테스트 계정은 명단 업로드 대상이 아닙니다.');
       }
 
-      if (uploadedStudentNos.has(row.studentNo)) {
+      if (row.studentNo > 0 && uploadedStudentNos.has(row.studentNo)) {
         invalid = true;
         messages.push('업로드 파일 안에서 학번이 중복되었습니다.');
       }
-      uploadedStudentNos.add(row.studentNo);
+      if (row.studentNo > 0) uploadedStudentNos.add(row.studentNo);
+
+      if (!isRosterName(row.name)) {
+        invalid = true;
+        messages.push('이름은 한글 또는 영문으로 입력해 주세요.');
+      }
 
       let storedGender: '0' | '1' | undefined;
       let gender: StudentGender | undefined;
@@ -1039,11 +1092,19 @@ export class AdminService {
       }
 
       if (row.previousStudentNo !== undefined) {
-        try {
-          deriveStudentNumberParts(row.previousStudentNo);
-        } catch {
+        if (row.previousStudentNo < 0) {
           invalid = true;
-          messages.push('이전 학번 형식이 올바르지 않습니다.');
+          messages.push('기존 학번은 숫자로 입력해 주세요.');
+        } else if (row.previousStudentNo === 0) {
+          invalid = true;
+          messages.push('기존 학번 형식이 올바르지 않습니다.');
+        } else {
+          try {
+            deriveStudentNumberParts(row.previousStudentNo);
+          } catch {
+            invalid = true;
+            messages.push('기존 학번 형식이 올바르지 않습니다.');
+          }
         }
       }
 
@@ -1074,15 +1135,24 @@ export class AdminService {
       );
 
       if (row.previousStudentNo !== undefined) {
-        const previousEnrollment = activeEnrollmentByStudentNo.get(row.previousStudentNo);
+        const previousEnrollment =
+          row.previousStudentNo > 0
+            ? activeEnrollmentByStudentNo.get(row.previousStudentNo)
+            : undefined;
         if (!previousEnrollment) {
           conflict = true;
-          messages.push('이전 학번과 연결된 현재 재학생을 찾을 수 없습니다.');
+          messages.push('기존 학번과 연결된 현재 재학생을 찾을 수 없습니다.');
         }
-        addCandidate(
-          previousEnrollment ? studentById.get(previousEnrollment.studentId) : undefined,
-          '이전 학번',
-        );
+        const previousStudent = previousEnrollment
+          ? studentById.get(previousEnrollment.studentId)
+          : undefined;
+        if (previousStudent && previousStudent.name !== row.name) {
+          conflict = true;
+          messages.push(
+            `기존 학번 ${row.previousStudentNo}의 이름(${previousStudent.name})과 입력한 이름이 다릅니다.`,
+          );
+        }
+        addCandidate(previousStudent, '기존 학번');
       }
 
       if (!existing && phone) {

@@ -103,6 +103,12 @@ export class AdminController {
     return this.adminService.schoolYears();
   }
 
+  @Get('students/roster')
+  @RequirePermissions('users.manage')
+  studentRoster(@Query('schoolYear') schoolYear?: string) {
+    return this.adminService.studentRoster(schoolYear);
+  }
+
   @Post('students')
   @RequirePermissions('users.manage')
   createStudent(@Body() body: unknown, @Req() request: AuthenticatedRequest) {

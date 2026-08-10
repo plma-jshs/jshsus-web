@@ -359,9 +359,36 @@
   justify-content: flex-end;
   gap: 8px;
 }
+.identity-roster-dialog {
+  min-width: 0;
+}
+.identity-roster-loading {
+  padding: 13px 14px;
+  border-radius: 10px;
+  background: #f2f8f7;
+  color: #17645e;
+  font-size: 13px;
+}
 .identity-roster-preview {
   display: grid;
   gap: 12px;
+}
+.identity-roster-group {
+  display: grid;
+  gap: 8px;
+}
+.identity-roster-group__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--ink);
+  font-size: 14px;
+}
+.identity-roster-group__heading span {
+  color: #74827f;
+  font-size: 12px;
+  font-weight: 600;
 }
 .identity-activation-code {
   display: grid;
@@ -511,10 +538,6 @@
   }
   .identity-roster-toolbox > button {
     width: 100%;
-  }
-
-  .identity-roster-toolbox {
-    display: none;
   }
 
   .admin-filter-sheet .identity-filter-bar.is-students,
