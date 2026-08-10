@@ -494,14 +494,15 @@
   }
 
   .identity-panel > .admin-table-toolbar .admin-table-toolbar__controls > .identity-field {
-    flex: 0 1 280px;
+    width: min(280px, 28vw);
     min-width: 180px;
+    flex: 0 0 min(280px, 28vw);
   }
 
   .identity-panel > .admin-table-toolbar .identity-filter-bar {
     flex: 0 0 auto;
     width: auto;
-    margin-left: auto;
+    margin-left: 0;
   }
 }
 

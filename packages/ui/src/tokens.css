@@ -91,9 +91,9 @@
     --j-radius-xl: 20px;
     --j-radius-pill: 999px;
 
-    --j-shadow-card: 0 1px 2px rgb(16 24 40 / 5%);
-    --j-shadow-card-hover: 0 4px 12px rgb(16 24 40 / 8%);
-    --j-shadow-overlay: 0 8px 24px rgb(16 24 40 / 10%);
+    --j-shadow-card: 0 2px 8px rgb(0 0 0 / 4%);
+    --j-shadow-card-hover: 0 4px 12px rgb(0 0 0 / 8%);
+    --j-shadow-overlay: 0 10px 30px -5px rgb(0 0 0 / 8%);
     --j-shadow-focus: 0 0 0 2px rgb(47 133 133 / 10%);
     --j-focus-ring: 2px solid rgb(47 133 133 / 42%);
     --j-focus-offset: 2px;

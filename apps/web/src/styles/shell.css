@@ -312,9 +312,9 @@
   display: grid;
   width: 180px;
   padding: 6px;
-  border: 1px solid var(--j-color-border);
-  border-radius: var(--j-radius-md);
-  background: var(--j-color-surface);
+  border: 1px solid rgb(0 0 0 / 5%);
+  border-radius: 16px;
+  background: #fff;
   box-shadow: var(--j-shadow-overlay);
 }
 

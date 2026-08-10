@@ -193,6 +193,36 @@ function headerColumn(headers: ReadonlyMap<string, number>, aliases: string[]) {
   return undefined;
 }
 
+function rosterCellText(cell: { text: string; value: unknown }) {
+  const text = cell.text.trim();
+  if (text) return text;
+  if (typeof cell.value === 'string' || typeof cell.value === 'number') {
+    return String(cell.value).trim();
+  }
+  if (cell.value && typeof cell.value === 'object') {
+    const value = cell.value as {
+      richText?: Array<{ text?: unknown }>;
+      result?: unknown;
+      text?: unknown;
+    };
+    if (value.richText)
+      return value.richText
+        .map((part) => String(part.text ?? ''))
+        .join('')
+        .trim();
+    if (value.text !== undefined) return String(value.text).trim();
+    if (value.result !== undefined) return String(value.result).trim();
+  }
+  return '';
+}
+
+function rosterNumber(value: string) {
+  const normalized = value.replace(/[\s,]/g, '');
+  if (!normalized) return undefined;
+  const parsed = Number(normalized);
+  return Number.isInteger(parsed) ? parsed : undefined;
+}
+
 async function parseRosterWorkbook(file: File): Promise<RosterImportRowInput[]> {
   const { Workbook } = await loadExcelJs();
   const workbook = new Workbook();
@@ -217,7 +247,11 @@ async function parseRosterWorkbook(file: File): Promise<RosterImportRowInput[]> 
       'studentNo',
     ]);
     const candidateNameColumn = headerColumn(candidate, ['이름', '성명', 'name']);
-    if (candidateStudentNoColumn && candidateNameColumn) {
+    if (
+      candidateStudentNoColumn &&
+      candidateNameColumn &&
+      candidateStudentNoColumn !== candidateNameColumn
+    ) {
       headerRowNumber = rowNumber;
       headers = candidate;
       break;
@@ -255,8 +289,8 @@ async function parseRosterWorkbook(file: File): Promise<RosterImportRowInput[]> 
   const rows: RosterImportRowInput[] = [];
   worksheet.eachRow((row, rowNumber) => {
     if (rowNumber <= headerRowNumber) return;
-    const studentNoText = row.getCell(studentNoColumn).text.trim();
-    const name = row.getCell(nameColumn).text.trim();
+    const studentNoText = rosterCellText(row.getCell(studentNoColumn));
+    const name = rosterCellText(row.getCell(nameColumn));
     const optionalCells = [
       genderColumn,
       phoneColumn,
@@ -265,29 +299,28 @@ async function parseRosterWorkbook(file: File): Promise<RosterImportRowInput[]> 
       userIdColumn,
     ]
       .filter((column): column is number => column !== undefined)
-      .map((column) => row.getCell(column).text.trim());
+      .map((column) => rosterCellText(row.getCell(column)));
     if (!studentNoText && !name && optionalCells.every((value) => !value)) return;
 
-    const parsedStudentNo = Number(studentNoText);
-    const studentNo = !studentNoText ? 0 : Number.isInteger(parsedStudentNo) ? parsedStudentNo : -1;
+    const parsedStudentNo = rosterNumber(studentNoText);
+    const studentNo = !studentNoText ? 0 : (parsedStudentNo ?? -1);
     const input: RosterImportRowInput = {
       rowNumber,
       studentNo,
       name,
     };
-    if (genderColumn) input.gender = row.getCell(genderColumn).text.trim();
-    if (phoneColumn) input.phone = row.getCell(phoneColumn).text.trim();
-    if (emailColumn) input.email = row.getCell(emailColumn).text.trim();
+    if (genderColumn) input.gender = rosterCellText(row.getCell(genderColumn));
+    if (phoneColumn) input.phone = rosterCellText(row.getCell(phoneColumn));
+    if (emailColumn) input.email = rosterCellText(row.getCell(emailColumn));
     if (previousStudentNoColumn) {
-      const text = row.getCell(previousStudentNoColumn).text.trim();
+      const text = rosterCellText(row.getCell(previousStudentNoColumn));
       if (text) {
-        const value = Number(text);
-        input.previousStudentNo = Number.isInteger(value) ? value : -1;
+        input.previousStudentNo = rosterNumber(text) ?? -1;
       }
     }
     if (userIdColumn) {
-      const value = Number(row.getCell(userIdColumn).text.trim());
-      if (Number.isFinite(value) && value > 0) input.userId = value;
+      const value = rosterNumber(rosterCellText(row.getCell(userIdColumn)));
+      if (value !== undefined && value > 0) input.userId = value;
     }
     rows.push(input);
   });
@@ -400,6 +433,7 @@ export function UsersPage() {
   } | null>(null);
   const [rosterRows, setRosterRows] = useState<RosterImportRowInput[]>([]);
   const [rosterFileName, setRosterFileName] = useState('');
+  const [rosterParsing, setRosterParsing] = useState(false);
   const [rosterPreview, setRosterPreview] = useState<RosterImportPreview | null>(null);
   const [rosterYear, setRosterYear] = useState<number | ''>('');
   const [issuedActivation, setIssuedActivation] = useState<AccountActivationIssueResult | null>(
@@ -868,6 +902,7 @@ export function UsersPage() {
   const openRosterDialog = () => {
     setRosterRows([]);
     setRosterFileName('');
+    setRosterParsing(false);
     setRosterPreview(null);
     setRosterYear(defaultSchoolYear + 1);
     setDialog({ type: 'roster' });
@@ -877,16 +912,22 @@ export function UsersPage() {
     const file = event.currentTarget.files?.[0];
     setRosterPreview(null);
     setRosterRows([]);
-    setRosterFileName(file?.name ?? '');
+    setRosterFileName('');
+    setRosterParsing(Boolean(file));
     if (!file) return;
     try {
       const rows = await parseRosterWorkbook(file);
+      setRosterFileName(file.name);
       setRosterRows(rows);
       requestRosterPreview(rows, file.name, Number(rosterYear || defaultSchoolYear + 1));
-    } catch {
+    } catch (error) {
       event.currentTarget.value = '';
-      setRosterFileName('');
-      showToast({ title: '엑셀 파일을 읽지 못했습니다.', tone: 'danger' });
+      showToast({
+        title: error instanceof Error ? error.message : '엑셀 파일을 읽지 못했습니다.',
+        tone: 'danger',
+      });
+    } finally {
+      setRosterParsing(false);
     }
   };
   const bulkActivationPayload = () => ({
@@ -1180,7 +1221,9 @@ export function UsersPage() {
               </div>
             ) : null}
 
-            {rosterFileName ? (
+            {rosterParsing ? (
+              <p className="identity-field-note">엑셀 파일을 읽는 중입니다.</p>
+            ) : rosterFileName ? (
               <p className="identity-field-note">
                 {rosterFileName} · {rosterRows.length}개 행
               </p>

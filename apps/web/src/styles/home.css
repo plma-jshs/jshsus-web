@@ -57,9 +57,9 @@
   height: 100%;
   min-width: 0;
   padding: var(--j-space-5);
-  border: 1px solid var(--j-color-border);
-  border-radius: var(--j-radius-md);
-  background: var(--j-color-surface);
+  border: 1px solid rgb(0 0 0 / 6%);
+  border-radius: 16px;
+  background: #fff;
   box-shadow: var(--j-shadow-card);
 }
 

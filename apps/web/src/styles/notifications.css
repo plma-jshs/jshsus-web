@@ -60,9 +60,9 @@
   right: 0;
   width: min(400px, calc(100vw - 32px));
   overflow: hidden;
-  border: 1px solid var(--j-color-border);
-  border-radius: var(--j-radius-lg);
-  background: var(--j-color-surface);
+  border: 1px solid rgb(0 0 0 / 5%);
+  border-radius: 16px;
+  background: #fff;
   box-shadow: var(--j-shadow-overlay);
 }
 
