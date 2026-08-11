@@ -18,6 +18,7 @@ import { DatabaseService } from '../database/database.service';
 import { RedisService } from '../redis/redis.service';
 import { env } from '../../shared/config/env';
 import { CognitoAuthError, CognitoAuthService, type CognitoSurface } from './cognito-auth.service';
+import { EmailVerificationService } from './email-verification.service';
 import { SendonPasswordResetService } from './sendon-password-reset.service';
 
 const legacySessionSchema = z.object({
@@ -70,17 +71,10 @@ const passwordResetFlowSchema = z
     userId: z.number().int().positive(),
     delivery: z.enum(['phone', 'email']).optional().default('phone'),
     surface: z.enum(['web', 'admin']).optional(),
-    codeHash: z.string().length(64).optional(),
+    codeHash: z.string().length(64),
     attemptCount: z.number().int().min(0).max(5).optional().default(0),
   })
   .superRefine((flow, context) => {
-    if (flow.delivery === 'phone' && !flow.codeHash) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Phone recovery requires a code hash.',
-        path: ['codeHash'],
-      });
-    }
     if (flow.delivery === 'email' && !flow.surface) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
@@ -149,6 +143,7 @@ export class AuthService {
     private readonly database: DatabaseService,
     private readonly cognito: CognitoAuthService,
     private readonly sendonPasswordReset?: SendonPasswordResetService,
+    private readonly emailVerification?: EmailVerificationService,
   ) {}
 
   extractToken(request: Request): string | null {
@@ -511,7 +506,7 @@ export class AuthService {
       target.status !== 'active' ||
       !target.cognitoSubject ||
       (delivery === 'phone' && (!target.phone || !this.sendonPasswordReset)) ||
-      (delivery === 'email' && !target.email)
+      (delivery === 'email' && (!target.email || !this.emailVerification))
     ) {
       if (target && target.status === 'active' && delivery === 'email') {
         this.logger.warn(
@@ -544,29 +539,27 @@ export class AuthService {
         throw error;
       }
     } else {
-      try {
-        await this.cognito.forgotPassword(target.username, surface);
-      } catch (error) {
-        if (
-          error instanceof CognitoAuthError &&
-          ['AUTH_INVALID_CREDENTIALS', 'AUTH_RECOVERY_UNAVAILABLE'].includes(error.code)
-        ) {
-          this.logger.warn(
-            `Password reset email was not sent: userId=${target.userId} code=${error.code} cause=${error.causeName ?? 'unknown'}`,
-          );
-          return { ok: true };
-        }
-        this.throwMappedCognitoError(error);
-      }
-
+      const code = String(randomInt(100_000, 1_000_000));
       const flow: PasswordResetFlow = {
         username: target.username,
         userId: target.userId,
         delivery,
         surface,
+        codeHash: this.hashPasswordResetCode(target.username, code),
         attemptCount: 0,
       };
       await this.redis.setJson(flowKey, flow, env.PASSWORD_RESET_CODE_TTL_SECONDS);
+
+      try {
+        await this.emailVerification!.sendVerificationCode({
+          email: target.email!,
+          code,
+          purpose: 'password-reset',
+        });
+      } catch (error) {
+        await this.redis.delete(flowKey);
+        throw error;
+      }
     }
 
     await this.database.writeAudit({
@@ -617,41 +610,28 @@ export class AuthService {
       });
     }
 
-    if (parsedFlow.data.delivery === 'phone') {
-      const expectedHash = this.hashPasswordResetCode(parsedFlow.data.username, input.code.trim());
-      if (!safeCompareHex(parsedFlow.data.codeHash!, expectedHash)) {
-        const nextAttemptCount = parsedFlow.data.attemptCount + 1;
-        if (nextAttemptCount >= 5) {
-          await this.redis.delete(flowKey);
-        } else {
-          await this.redis.setJson(
-            flowKey,
-            { ...parsedFlow.data, attemptCount: nextAttemptCount },
-            env.PASSWORD_RESET_CODE_TTL_SECONDS,
-          );
-        }
-        throw new BadRequestException({
-          code: 'AUTH_CODE_MISMATCH',
-          message: '인증 코드 또는 계정 정보를 확인해 주세요.',
-        });
+    const expectedHash = this.hashPasswordResetCode(parsedFlow.data.username, input.code.trim());
+    if (!safeCompareHex(parsedFlow.data.codeHash, expectedHash)) {
+      const nextAttemptCount = parsedFlow.data.attemptCount + 1;
+      if (nextAttemptCount >= 5) {
+        await this.redis.delete(flowKey);
+      } else {
+        await this.redis.setJson(
+          flowKey,
+          { ...parsedFlow.data, attemptCount: nextAttemptCount },
+          env.PASSWORD_RESET_CODE_TTL_SECONDS,
+        );
       }
+      throw new BadRequestException({
+        code: 'AUTH_CODE_MISMATCH',
+        message: '인증 코드 또는 계정 정보를 확인해 주세요.',
+      });
+    }
 
-      try {
-        await this.cognito.setPermanentPassword(parsedFlow.data.username, input.newPassword);
-      } catch (error) {
-        this.throwMappedCognitoError(error);
-      }
-    } else {
-      try {
-        await this.cognito.confirmForgotPassword({
-          username: parsedFlow.data.username,
-          code: input.code.trim(),
-          newPassword: input.newPassword,
-          surface: parsedFlow.data.surface!,
-        });
-      } catch (error) {
-        this.throwMappedCognitoError(error);
-      }
+    try {
+      await this.cognito.setPermanentPassword(parsedFlow.data.username, input.newPassword);
+    } catch (error) {
+      this.throwMappedCognitoError(error);
     }
 
     await this.redis.delete(flowKey);

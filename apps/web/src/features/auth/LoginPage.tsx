@@ -1,6 +1,7 @@
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { ArrowLeft, Eye, EyeOff, LoaderCircle, LockKeyhole, UserRound } from 'lucide-react';
 import { safeInternalReturnTo } from '../../shared/lib/route';
 import {
@@ -223,13 +224,13 @@ export function LoginPage() {
 
   const title = mode === 'login' ? '전남과학고 통합로그인' : '새 비밀번호 설정';
   const normalizedUsername = username.trim();
-  const forgotPasswordHref = normalizedUsername
-    ? `/forgot-password?username=${encodeURIComponent(normalizedUsername)}${
-        ssoRequestId ? `&returnTo=${encodeURIComponent(`/login?sso=${ssoRequestId}`)}` : ''
-      }`
-    : ssoRequestId
-      ? `/forgot-password?returnTo=${encodeURIComponent(`/login?sso=${ssoRequestId}`)}`
-      : '/forgot-password';
+  const forgotPasswordSearch = {
+    username: normalizedUsername || undefined,
+    returnTo: ssoRequestId ? `/login?sso=${ssoRequestId}` : undefined,
+  };
+  const accountActivationSearch = {
+    returnTo: ssoRequestId ? `/login?sso=${ssoRequestId}` : undefined,
+  };
 
   const activeError =
     validationError ??
@@ -257,8 +258,17 @@ export function LoginPage() {
 
   if (ssoRequestId && requestQuery.isError) {
     return (
-      <AuthLayout active="login" title="로그인 요청 만료">
-        <FormMessage>이용할 서비스로 돌아가 로그인을 다시 시작해 주세요.</FormMessage>
+      <AuthLayout active="login" title="로그인 요청 만료" className="auth-page--expired">
+        <div className="auth-expired-state">
+          <FormMessage>
+            인증 요청 유효시간이 만료되었습니다.
+            <br />
+            아래 버튼을 눌러 다시 시도해 주세요
+          </FormMessage>
+          <Link className="auth-submit" to="/login" search={{ returnTo: undefined }}>
+            다시 로그인하기
+          </Link>
+        </div>
       </AuthLayout>
     );
   }
@@ -309,9 +319,9 @@ export function LoginPage() {
               />
               <span>로그인 기억하기</span>
             </label>
-            <a className="auth-link-button" href={forgotPasswordHref}>
+            <Link className="auth-link-button" to="/forgot-password" search={forgotPasswordSearch}>
               비밀번호를 잊으셨나요?
-            </a>
+            </Link>
           </div>
 
           <button className="auth-submit" type="submit" disabled={loginMutation.isPending}>
@@ -326,15 +336,9 @@ export function LoginPage() {
           </button>
           <p className="auth-signup-prompt">
             통합로그인 계정이 없나요?{' '}
-            <a
-              href={
-                ssoRequestId
-                  ? `/account-activation?returnTo=${encodeURIComponent(`/login?sso=${ssoRequestId}`)}`
-                  : '/account-activation'
-              }
-            >
+            <Link to="/account-activation" search={accountActivationSearch}>
               계정 생성하기
-            </a>
+            </Link>
           </p>
         </form>
       ) : null}

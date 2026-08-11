@@ -14,9 +14,7 @@ import {
   Menu,
   MessageSquareText,
   Megaphone,
-  Moon,
   ShieldCheck,
-  Sun,
   User,
   X,
 } from 'lucide-react';
@@ -26,6 +24,7 @@ import { getAdminSiteHref } from '../../shared/lib/adminSiteHref';
 import { GoogleAnalytics } from '../analytics/GoogleAnalytics';
 import { UserAvatar } from '../page/UserAvatar';
 import { NotificationMenu } from './NotificationMenu';
+import { ThemeToggle } from './ThemeToggle';
 
 type InternalNavigationPath =
   | '/notices'
@@ -144,31 +143,6 @@ function PortalNavigationLink({
     <a href={item.href} target="_blank" rel="noreferrer" onClick={onNavigate}>
       {item.label}
     </a>
-  );
-}
-
-function DarkModeToggle() {
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.localStorage.getItem('jshsus-theme') === 'dark';
-  });
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
-    window.localStorage.setItem('jshsus-theme', isDark ? 'dark' : 'light');
-  }, [isDark]);
-
-  return (
-    <button
-      className="header-theme-toggle"
-      type="button"
-      aria-label={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
-      aria-pressed={isDark}
-      title={isDark ? '라이트 모드' : '다크 모드'}
-      onClick={() => setIsDark((current) => !current)}
-    >
-      {isDark ? <Sun aria-hidden="true" size={18} /> : <Moon aria-hidden="true" size={18} />}
-    </button>
   );
 }
 
@@ -628,7 +602,7 @@ function PortalShell() {
                 <span className="header-session-skeleton" aria-hidden="true" />
               ) : session?.isLogined ? (
                 <>
-                  <DarkModeToggle />
+                  <ThemeToggle />
                   <NotificationMenu />
                   <UserMenu
                     displayName={sessionDisplayName}

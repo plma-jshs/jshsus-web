@@ -180,6 +180,7 @@ function activeSchoolYear(years?: AdminSchoolYearSummary[]) {
 
 function normalizeRosterHeader(value: string) {
   return value
+    .replace(/^\uFEFF/, '')
     .trim()
     .toLocaleLowerCase('ko-KR')
     .replace(/[\s_-]/g, '');
@@ -236,7 +237,7 @@ async function parseRosterWorkbook(file: File): Promise<RosterImportRowInput[]> 
   for (let rowNumber = 1; rowNumber <= Math.min(10, worksheet.rowCount); rowNumber += 1) {
     const candidate = new Map<string, number>();
     worksheet.getRow(rowNumber).eachCell((cell, columnNumber) => {
-      const key = normalizeRosterHeader(cell.text);
+      const key = normalizeRosterHeader(rosterCellText(cell));
       if (key) candidate.set(key, columnNumber);
     });
     const candidateStudentNoColumn = headerColumn(candidate, [
@@ -287,7 +288,7 @@ async function parseRosterWorkbook(file: File): Promise<RosterImportRowInput[]> 
   ]);
   const userIdColumn = headerColumn(headers, ['user_id', 'userId', '사용자id', '사용자번호']);
   const rows: RosterImportRowInput[] = [];
-  worksheet.eachRow((row, rowNumber) => {
+  worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
     if (rowNumber <= headerRowNumber) return;
     const studentNoText = rosterCellText(row.getCell(studentNoColumn));
     const name = rosterCellText(row.getCell(nameColumn));
@@ -359,7 +360,9 @@ async function downloadRosterTemplate(targetYear: number, students: AdminStudent
   }
 
   const header = worksheet.getRow(3);
-  header.values = ['신규 학번', '이름', '기존 학번'];
+  header.getCell(1).value = '신규 학번';
+  header.getCell(2).value = '이름';
+  header.getCell(3).value = '기존 학번';
   header.height = 26;
   header.eachCell((cell) => {
     cell.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -433,6 +436,7 @@ export function UsersPage() {
   } | null>(null);
   const [rosterRows, setRosterRows] = useState<RosterImportRowInput[]>([]);
   const [rosterFileName, setRosterFileName] = useState('');
+  const [rosterFileError, setRosterFileError] = useState<string | null>(null);
   const [rosterParsing, setRosterParsing] = useState(false);
   const [rosterPreview, setRosterPreview] = useState<RosterImportPreview | null>(null);
   const [rosterYear, setRosterYear] = useState<number | ''>('');
@@ -902,6 +906,7 @@ export function UsersPage() {
   const openRosterDialog = () => {
     setRosterRows([]);
     setRosterFileName('');
+    setRosterFileError(null);
     setRosterParsing(false);
     setRosterPreview(null);
     setRosterYear(defaultSchoolYear + 1);
@@ -909,10 +914,12 @@ export function UsersPage() {
   };
 
   const handleRosterFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.currentTarget.files?.[0];
+    const input = event.currentTarget;
+    const file = input.files?.[0];
     setRosterPreview(null);
     setRosterRows([]);
     setRosterFileName('');
+    setRosterFileError(null);
     setRosterParsing(Boolean(file));
     if (!file) return;
     try {
@@ -921,9 +928,11 @@ export function UsersPage() {
       setRosterRows(rows);
       requestRosterPreview(rows, file.name, Number(rosterYear || defaultSchoolYear + 1));
     } catch (error) {
-      event.currentTarget.value = '';
+      input.value = '';
+      const message = error instanceof Error ? error.message : '엑셀 파일을 읽지 못했습니다.';
+      setRosterFileError(message);
       showToast({
-        title: error instanceof Error ? error.message : '엑셀 파일을 읽지 못했습니다.',
+        title: message,
         tone: 'danger',
       });
     } finally {
@@ -1223,6 +1232,10 @@ export function UsersPage() {
 
             {rosterParsing ? (
               <p className="identity-field-note">엑셀 파일을 읽는 중입니다.</p>
+            ) : rosterFileError ? (
+              <p className="identity-form-error" role="alert">
+                {rosterFileError}
+              </p>
             ) : rosterFileName ? (
               <p className="identity-field-note">
                 {rosterFileName} · {rosterRows.length}개 행
@@ -1301,7 +1314,11 @@ export function UsersPage() {
 
             {previewRoster.isError || applyRoster.isError ? (
               <p className="identity-form-error">
-                명단을 처리하지 못했습니다. 오류 행을 확인해 주세요.
+                {previewRoster.error instanceof Error
+                  ? previewRoster.error.message
+                  : applyRoster.error instanceof Error
+                    ? applyRoster.error.message
+                    : '명단을 처리하지 못했습니다. 오류 행을 확인해 주세요.'}
               </p>
             ) : null}
 

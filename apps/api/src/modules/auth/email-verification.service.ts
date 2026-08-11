@@ -2,7 +2,7 @@ import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common'
 import { SendEmailCommand, SESv2Client } from '@aws-sdk/client-sesv2';
 import { env } from '../../shared/config/env';
 
-type VerificationPurpose = 'account-activation' | 'contact-change';
+type VerificationPurpose = 'account-activation' | 'contact-change' | 'password-reset';
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => {
@@ -42,7 +42,12 @@ export class EmailVerificationService {
       });
     }
 
-    const title = input.purpose === 'account-activation' ? '계정 생성' : '이메일 변경';
+    const title =
+      input.purpose === 'account-activation'
+        ? '계정 생성'
+        : input.purpose === 'password-reset'
+          ? '비밀번호 재설정'
+          : '이메일 변경';
     const code = escapeHtml(input.code);
     await this.sendEmail({
       to: input.email,

@@ -18,6 +18,13 @@
   background: #081b30;
 }
 
+.auth-page__theme-toggle {
+  position: absolute;
+  z-index: 3;
+  top: 24px;
+  right: 24px;
+}
+
 .auth-page::before {
   position: fixed;
   z-index: 0;
@@ -407,8 +414,22 @@
 }
 
 .auth-resend-button {
-  font-size: var(--j-text-sm);
-  font-weight: var(--j-weight-bold);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.auth-page--expired .auth-heading h1 {
+  margin-bottom: 18px;
+}
+
+.auth-expired-state {
+  display: grid;
+  gap: 14px;
+  margin-top: 25px;
+}
+
+.auth-expired-state .auth-error {
+  margin: 0;
 }
 
 .auth-remember {
@@ -600,6 +621,11 @@
 
   .auth-page::before {
     display: none;
+  }
+
+  .auth-page__theme-toggle {
+    top: 16px;
+    right: 16px;
   }
 
   .auth-card {

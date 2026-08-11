@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
+import { ThemeToggle } from '../../components/layout/ThemeToggle';
 
 type AuthSection = 'login' | 'password' | 'activation';
 
@@ -8,14 +9,22 @@ export function AuthLayout({
   title,
   description,
   children,
+  className,
 }: {
   active: AuthSection;
   title: string;
   description?: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="auth-page" aria-labelledby="auth-page-title">
+    <section
+      className={`auth-page${className ? ` ${className}` : ''}`}
+      aria-labelledby="auth-page-title"
+    >
+      <div className="auth-page__theme-toggle">
+        <ThemeToggle />
+      </div>
       <div className="auth-card">
         <aside className="auth-intro">
           <Link to="/" className="auth-brand" aria-label="과구리 홈으로 이동">

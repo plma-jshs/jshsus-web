@@ -10,7 +10,9 @@ import {
 import { AppShell } from '../components/layout/AppShell';
 import { PageScaffold, PageState } from '../components/page/PageScaffold';
 import { getSession } from '../features/auth/api';
+import { AccountActivationPage } from '../features/auth/AccountActivationPage';
 import { LoginPage } from '../features/auth/LoginPage';
+import { PasswordResetPage } from '../features/auth/PasswordResetPage';
 import { SsoCallbackPage } from '../features/auth/SsoCallbackPage';
 import { SsoLogoutPage } from '../features/auth/SsoLogoutPage';
 import '../styles/not-found.css';
@@ -506,19 +508,16 @@ const forgotPasswordRoute = createRoute({
     username: typeof search.username === 'string' ? search.username : undefined,
     returnTo: safeInternalReturnTo(search.returnTo),
   }),
-  component: lazyRouteComponent(
-    () => import('../features/auth/PasswordResetPage'),
-    'PasswordResetPage',
-  ),
+  component: PasswordResetPage,
 });
 
 const accountActivationRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/account-activation',
-  component: lazyRouteComponent(
-    () => import('../features/auth/AccountActivationPage'),
-    'AccountActivationPage',
-  ),
+  validateSearch: (search: Record<string, unknown>) => ({
+    returnTo: safeInternalReturnTo(search.returnTo),
+  }),
+  component: AccountActivationPage,
 });
 
 const routeTree = rootRoute.addChildren([

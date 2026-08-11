@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { AuthLayout } from './AuthLayout';
 import { exchangeSso, getAuthErrorMessage } from './api';
 
@@ -37,9 +38,9 @@ export function SsoCallbackPage() {
       <p className="auth-error" role="alert">
         {error}
       </p>
-      <a className="auth-submit auth-submit--link" href="/login">
+      <Link className="auth-submit auth-submit--link" to="/login" search={{ returnTo: undefined }}>
         다시 로그인
-      </a>
+      </Link>
     </AuthLayout>
   );
 }

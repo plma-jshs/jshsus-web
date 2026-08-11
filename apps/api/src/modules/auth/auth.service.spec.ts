@@ -207,19 +207,21 @@ describe('Cognito authentication routing', () => {
     });
   });
 
-  it('uses Cognito delivery when the user selects a verified email', async () => {
+  it('stores an email reset challenge and sends it through the shared SES service', async () => {
     const redis = {
       incrementWithTtl: vi.fn().mockResolvedValue(1),
       setJson: vi.fn().mockResolvedValue(undefined),
     };
     const database = { writeAudit: vi.fn().mockResolvedValue(undefined) };
-    const cognito = { forgotPassword: vi.fn().mockResolvedValue(undefined) };
+    const cognito = { forgotPassword: vi.fn() };
     const sendon = { sendPasswordResetCode: vi.fn() };
+    const emailVerification = { sendVerificationCode: vi.fn().mockResolvedValue(undefined) };
     const service = new AuthService(
       redis as never,
       database as never,
       cognito as never,
       sendon as never,
+      emailVerification as never,
     );
     vi.spyOn(
       service as unknown as { findPasswordResetTarget: () => Promise<unknown> },
@@ -237,7 +239,12 @@ describe('Cognito authentication routing', () => {
       ok: true,
     });
 
-    expect(cognito.forgotPassword).toHaveBeenCalledWith('9999', 'web');
+    expect(emailVerification.sendVerificationCode).toHaveBeenCalledWith({
+      email: 'student@example.com',
+      code: expect.stringMatching(/^\d{6}$/),
+      purpose: 'password-reset',
+    });
+    expect(cognito.forgotPassword).not.toHaveBeenCalled();
     expect(sendon.sendPasswordResetCode).not.toHaveBeenCalled();
     expect(redis.setJson).toHaveBeenCalledWith(
       expect.any(String),
@@ -246,6 +253,7 @@ describe('Cognito authentication routing', () => {
         userId: 1,
         delivery: 'email',
         surface: 'web',
+        codeHash: expect.stringMatching(/^[a-f0-9]{64}$/),
       }),
       expect.any(Number),
     );
@@ -323,7 +331,7 @@ describe('Cognito authentication routing', () => {
     expect(cognito.setPermanentPassword).toHaveBeenCalledWith('9999', 'NewPassword1!');
   });
 
-  it('confirms an email-delivered reset code with the same Cognito app client', async () => {
+  it('confirms an email-delivered reset code before changing the Cognito password', async () => {
     const redis = {
       incrementWithTtl: vi.fn().mockResolvedValue(1),
       get: vi.fn().mockResolvedValue(
@@ -332,6 +340,7 @@ describe('Cognito authentication routing', () => {
           userId: 1,
           delivery: 'email',
           surface: 'web',
+          codeHash: '0'.repeat(64),
           attemptCount: 0,
         }),
       ),
@@ -339,14 +348,25 @@ describe('Cognito authentication routing', () => {
       setMembers: vi.fn().mockResolvedValue([]),
       deleteMany: vi.fn().mockResolvedValue(undefined),
     };
-    const cognito = {
-      confirmForgotPassword: vi.fn().mockResolvedValue(undefined),
-      setPermanentPassword: vi.fn(),
-    };
+    const cognito = { setPermanentPassword: vi.fn().mockResolvedValue(undefined) };
     const service = new AuthService(
       redis as never,
       { writeAudit: vi.fn().mockResolvedValue(undefined) } as never,
       cognito as never,
+    );
+
+    const internal = service as unknown as {
+      hashPasswordResetCode: (username: string, code: string) => string;
+    };
+    redis.get.mockResolvedValue(
+      JSON.stringify({
+        username: '9999',
+        userId: 1,
+        delivery: 'email',
+        surface: 'web',
+        codeHash: internal.hashPasswordResetCode('9999', '123456'),
+        attemptCount: 0,
+      }),
     );
 
     await expect(
@@ -358,13 +378,7 @@ describe('Cognito authentication routing', () => {
       }),
     ).resolves.toEqual({ ok: true });
 
-    expect(cognito.confirmForgotPassword).toHaveBeenCalledWith({
-      username: '9999',
-      code: '123456',
-      newPassword: 'NewPassword1!',
-      surface: 'web',
-    });
-    expect(cognito.setPermanentPassword).not.toHaveBeenCalled();
+    expect(cognito.setPermanentPassword).toHaveBeenCalledWith('9999', 'NewPassword1!');
   });
 
   it('does not allow a web challenge flow to be completed through the admin surface', async () => {
