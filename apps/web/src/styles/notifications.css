@@ -62,7 +62,7 @@
   overflow: hidden;
   border: 1px solid rgb(0 0 0 / 5%);
   border-radius: 16px;
-  background: #fff;
+  background: var(--j-color-surface-raised);
   box-shadow: var(--j-shadow-dropdown);
 }
 
@@ -93,7 +93,7 @@
 }
 
 .notification-popover__header button:hover:not(:disabled) {
-  background: var(--j-color-info-subtle);
+  color: var(--j-color-brand-strong);
 }
 
 .notification-popover__header button:disabled {
@@ -176,6 +176,14 @@
 
 .notification-item__content {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
+  gap: 4px;
+  align-items: start;
+}
+
+.notification-item__main {
+  display: grid;
   min-width: 0;
   gap: 4px;
 }
@@ -200,6 +208,10 @@
 }
 
 .notification-item__content time {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  white-space: nowrap;
   color: var(--j-color-text-muted);
   font-size: var(--j-text-xs);
   line-height: var(--j-leading-snug);

@@ -370,7 +370,7 @@
   border: 1px solid var(--j-color-border);
   border-radius: 9px;
   background: var(--j-color-surface);
-  box-shadow: var(--j-shadow-overlay);
+  box-shadow: var(--j-shadow-dropdown);
 }
 
 .data-table-toolbar-select__menu button {
@@ -752,7 +752,7 @@
     border: 1px solid var(--j-color-border);
     border-radius: var(--j-radius-lg);
     background: var(--j-color-surface);
-    box-shadow: var(--j-shadow-overlay);
+    box-shadow: var(--j-shadow-dropdown);
   }
 
   .data-table-toolbar.is-filter-open .data-table-toolbar__filters {

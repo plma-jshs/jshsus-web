@@ -50,7 +50,7 @@ export function LostItemsPage() {
           <PackagePlus size={16} aria-hidden="true" /> 등록하기
         </Link>
       }
-      width="wide"
+      width="reading"
       variant="workspace"
     >
       <section className="lost-items-view" aria-label="분실물 목록">

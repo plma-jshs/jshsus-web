@@ -15,6 +15,10 @@
   border-bottom: 1px solid var(--j-color-border);
 }
 
+.lost-items-view .page-search-field {
+  width: min(100%, 240px);
+}
+
 .lost-items-view .filter-chips button {
   min-height: 34px;
   font-size: 13px;
@@ -707,6 +711,10 @@
   .lost-items-view .page-toolbar {
     align-items: stretch;
     margin-bottom: 18px;
+  }
+
+  .lost-items-view .page-search-field {
+    width: 100%;
   }
 
   .lost-items-view .page-toolbar--split {

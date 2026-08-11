@@ -226,9 +226,7 @@
   border: 1px solid var(--j-color-border);
   border-radius: 10px;
   background: var(--j-color-surface);
-  box-shadow:
-    0 18px 40px rgb(15 23 42 / 18%),
-    0 4px 12px rgb(15 23 42 / 10%);
+  box-shadow: var(--j-shadow-dropdown);
 }
 
 .rich-text-toolbar-select__menu--portal {
@@ -331,9 +329,7 @@
   border: 1px solid var(--j-color-border);
   border-radius: 10px;
   background: var(--j-color-surface);
-  box-shadow:
-    0 18px 40px rgb(15 23 42 / 18%),
-    0 4px 12px rgb(15 23 42 / 10%);
+  box-shadow: var(--j-shadow-dropdown);
 }
 
 .rich-text-toolbar-palette__menu--portal {
@@ -431,9 +427,7 @@
   border: 1px solid var(--j-color-border);
   border-radius: 10px;
   background: var(--j-color-surface);
-  box-shadow:
-    0 18px 40px rgb(15 23 42 / 18%),
-    0 4px 12px rgb(15 23 42 / 10%);
+  box-shadow: var(--j-shadow-dropdown);
 }
 
 .rich-text-toolbar-more__menu--portal {

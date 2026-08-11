@@ -1,15 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
 import type { NotificationItem, NotificationListResponse } from '@jshsus/types';
-import {
-  Award,
-  Bell,
-  BellRing,
-  CircleCheck,
-  CircleX,
-  ClipboardCheck,
-  RefreshCw,
-} from 'lucide-react';
+import { Award, Bell, CircleCheck, CircleX, ClipboardCheck, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   getNotifications,
@@ -165,11 +157,7 @@ export function NotificationMenuView({
         aria-controls="header-notification-popover"
         onClick={() => setIsOpen((current) => !current)}
       >
-        {unreadCount > 0 ? (
-          <BellRing aria-hidden="true" size={19} />
-        ) : (
-          <Bell aria-hidden="true" size={19} />
-        )}
+        <Bell aria-hidden="true" size={19} />
         {unreadCount > 0 ? (
           <span
             className={`header-notification-badge${unreadCount > 9 ? ' is-wide' : ''}`}
@@ -224,10 +212,12 @@ export function NotificationMenuView({
                     >
                       <NotificationTypeIcon notification={notification} />
                       <span className="notification-item__content">
-                        <NotificationTitle title={notification.title} />
-                        {notification.body ? (
-                          <span className="notification-item__body">{notification.body}</span>
-                        ) : null}
+                        <span className="notification-item__main">
+                          <NotificationTitle title={notification.title} />
+                          {notification.body ? (
+                            <span className="notification-item__body">{notification.body}</span>
+                          ) : null}
+                        </span>
                         <time dateTime={notification.createdAt}>
                           {formatKoreanRelativeTime(notification.createdAt)}
                         </time>

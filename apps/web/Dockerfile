@@ -10,6 +10,8 @@ COPY packages/ui/package.json packages/ui/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
+ARG VITE_GOOGLE_ANALYTICS_MEASUREMENT_ID
+ENV VITE_GOOGLE_ANALYTICS_MEASUREMENT_ID=$VITE_GOOGLE_ANALYTICS_MEASUREMENT_ID
 COPY . .
 RUN pnpm --filter @jshsus/types build
 RUN pnpm --filter @jshsus/ui build

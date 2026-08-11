@@ -35,7 +35,7 @@
   border: 1px solid var(--line);
   border-radius: 9px;
   background: var(--surface);
-  box-shadow: var(--j-shadow-overlay);
+  box-shadow: var(--j-shadow-dropdown);
 }
 
 .identity-more-actions.is-last-row .identity-more-actions__menu {

@@ -539,7 +539,7 @@
     border: 1px solid var(--j-color-border);
     border-radius: var(--j-radius-lg);
     background: var(--j-color-surface);
-    box-shadow: var(--j-shadow-overlay);
+    box-shadow: var(--j-shadow-dropdown);
   }
 
   .page-toolbar--split.is-filter-open .page-toolbar__filters-content {

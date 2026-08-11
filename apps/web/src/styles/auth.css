@@ -316,7 +316,7 @@
   border: 1px solid var(--j-color-border);
   border-radius: 4px;
   background: #fff;
-  box-shadow: var(--j-shadow-overlay);
+  box-shadow: var(--j-shadow-dropdown);
 }
 
 .auth-select__menu > button {

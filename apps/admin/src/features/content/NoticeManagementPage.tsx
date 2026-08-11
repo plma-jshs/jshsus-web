@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { NoticeSummary } from '@jshsus/types';
-import { ExternalLink, Eye, Paperclip, Pin, PinOff, Search, Trash2 } from 'lucide-react';
+import { ExternalLink, Eye, Paperclip, Pin, PinOff, Search, Settings2, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   ConfirmDialog,
+  Drawer,
   MobileSortSelect,
   PageSizeSelect,
   RowActionButton,
@@ -27,6 +28,7 @@ export function NoticeManagementPage() {
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState(20);
   const [sorting, setSorting] = useState<SortingState>([{ id: 'id', desc: true }]);
+  const [selectedNotice, setSelectedNotice] = useState<NoticeSummary | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<NoticeSummary | null>(null);
 
   const noticesQuery = useQuery({
@@ -53,6 +55,7 @@ export function NoticeManagementPage() {
     mutationFn: api.deleteNotice,
     onSuccess: async () => {
       setDeleteTarget(null);
+      setSelectedNotice(null);
       await refreshNotices();
       showToast({ title: '공지를 삭제했습니다.', tone: 'success' });
     },
@@ -134,28 +137,39 @@ export function NoticeManagementPage() {
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <RowActions>
+          <RowActions
+            mobileTitle="작업"
+            mobileChildren={
+              <>
+                <RowActionButton
+                  icon={
+                    row.original.pinned ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />
+                  }
+                  label={row.original.pinned ? '공지 고정 해제' : '공지 고정'}
+                  mobileLabel={row.original.pinned ? '고정 해제' : '고정'}
+                  disabled={updateNoticeMutation.isPending}
+                  onClick={() =>
+                    updateNoticeMutation.mutate({
+                      id: row.original.id,
+                      pinned: !row.original.pinned,
+                    })
+                  }
+                />
+                <RowActionButton
+                  icon={<Trash2 aria-hidden="true" />}
+                  label="공지 삭제"
+                  mobileLabel="삭제"
+                  variant="danger"
+                  disabled={deleteNoticeMutation.isPending}
+                  onClick={() => setDeleteTarget(row.original)}
+                />
+              </>
+            }
+          >
             <RowActionButton
-              icon={
-                row.original.pinned ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />
-              }
-              label={row.original.pinned ? '공지 고정 해제' : '공지 고정'}
-              mobileLabel={row.original.pinned ? '고정 해제' : '고정'}
-              disabled={updateNoticeMutation.isPending}
-              onClick={() =>
-                updateNoticeMutation.mutate({
-                  id: row.original.id,
-                  pinned: !row.original.pinned,
-                })
-              }
-            />
-            <RowActionButton
-              icon={<Trash2 aria-hidden="true" />}
-              label="공지 삭제"
-              mobileLabel="삭제"
-              variant="danger"
-              disabled={deleteNoticeMutation.isPending}
-              onClick={() => setDeleteTarget(row.original)}
+              icon={<Settings2 aria-hidden="true" />}
+              label={`${row.original.title} 관리`}
+              onClick={() => setSelectedNotice(row.original)}
             />
           </RowActions>
         ),
@@ -249,25 +263,40 @@ export function NoticeManagementPage() {
                       <Pin className="content-pinned-icon" size={13} aria-label="공지 고정" />
                     ) : null}
                   </div>
-                  <RowActions>
+                  <RowActions
+                    mobileTitle="작업"
+                    mobileChildren={
+                      <>
+                        <RowActionButton
+                          icon={
+                            notice.pinned ? (
+                              <PinOff aria-hidden="true" />
+                            ) : (
+                              <Pin aria-hidden="true" />
+                            )
+                          }
+                          label={notice.pinned ? '공지 고정 해제' : '공지 고정'}
+                          mobileLabel={notice.pinned ? '고정 해제' : '고정'}
+                          disabled={updateNoticeMutation.isPending}
+                          onClick={() =>
+                            updateNoticeMutation.mutate({ id: notice.id, pinned: !notice.pinned })
+                          }
+                        />
+                        <RowActionButton
+                          icon={<Trash2 aria-hidden="true" />}
+                          label="공지 삭제"
+                          mobileLabel="삭제"
+                          variant="danger"
+                          disabled={deleteNoticeMutation.isPending}
+                          onClick={() => setDeleteTarget(notice)}
+                        />
+                      </>
+                    }
+                  >
                     <RowActionButton
-                      icon={
-                        notice.pinned ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />
-                      }
-                      label={notice.pinned ? '공지 고정 해제' : '공지 고정'}
-                      mobileLabel={notice.pinned ? '고정 해제' : '고정'}
-                      disabled={updateNoticeMutation.isPending}
-                      onClick={() =>
-                        updateNoticeMutation.mutate({ id: notice.id, pinned: !notice.pinned })
-                      }
-                    />
-                    <RowActionButton
-                      icon={<Trash2 aria-hidden="true" />}
-                      label="공지 삭제"
-                      mobileLabel="삭제"
-                      variant="danger"
-                      disabled={deleteNoticeMutation.isPending}
-                      onClick={() => setDeleteTarget(notice)}
+                      icon={<Settings2 aria-hidden="true" />}
+                      label={`${notice.title} 관리`}
+                      onClick={() => setSelectedNotice(notice)}
                     />
                   </RowActions>
                 </header>
@@ -291,6 +320,73 @@ export function NoticeManagementPage() {
           pendingText="공지 정보를 변경하는 중입니다."
         />
       </ContentAdminPanel>
+      <Drawer
+        open={selectedNotice !== null}
+        onClose={() => setSelectedNotice(null)}
+        title={selectedNotice?.title ?? '공지 관리'}
+        description={
+          selectedNotice
+            ? `${selectedNotice.department || '작성자 미상'} · 공지 #${selectedNotice.publicNumber}`
+            : undefined
+        }
+        className="content-drawer content-drawer--wide"
+        footer={
+          selectedNotice ? (
+            <div className="content-drawer__actions">
+              <button
+                className="quiet-button"
+                type="button"
+                disabled={updateNoticeMutation.isPending}
+                onClick={() =>
+                  updateNoticeMutation.mutate({
+                    id: selectedNotice.id,
+                    pinned: !selectedNotice.pinned,
+                  })
+                }
+              >
+                {selectedNotice.pinned ? '고정 해제' : '고정'}
+              </button>
+              <button
+                className="ui-button ui-button--danger"
+                type="button"
+                disabled={deleteNoticeMutation.isPending}
+                onClick={() => setDeleteTarget(selectedNotice)}
+              >
+                삭제
+              </button>
+            </div>
+          ) : null
+        }
+      >
+        {selectedNotice ? (
+          <div className="content-detail-stack">
+            <dl className="content-detail-list">
+              <div>
+                <dt>작성자</dt>
+                <dd>{selectedNotice.department || '알 수 없음'}</dd>
+              </div>
+              <div>
+                <dt>게시일</dt>
+                <dd>{formatAdminDate(selectedNotice.publishedAt)}</dd>
+              </div>
+              <div>
+                <dt>조회</dt>
+                <dd>{selectedNotice.viewCount.toLocaleString('ko-KR')}</dd>
+              </div>
+              <div>
+                <dt>첨부</dt>
+                <dd>{selectedNotice.attachments?.length ?? 0}개</dd>
+              </div>
+            </dl>
+            <section className="content-detail-section">
+              <h3>본문</h3>
+              <div className="content-detail-copy">
+                {selectedNotice.content || '본문이 없습니다.'}
+              </div>
+            </section>
+          </div>
+        ) : null}
+      </Drawer>
       <ConfirmDialog
         open={Boolean(deleteTarget)}
         title="공지 삭제"

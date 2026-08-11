@@ -1,6 +1,7 @@
-import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { MoreVertical, Pencil, Share2, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
+import { useToast } from '../feedback/Toast';
 
 export function ContentMoreMenu({
   deleteDisabled = false,
@@ -18,6 +19,28 @@ export function ContentMoreMenu({
   const [open, setOpen] = useState(false);
   const { isClosing, requestClose, resetClosing } = useBottomSheetClose(() => setOpen(false));
   const menuRef = useRef<HTMLDivElement>(null);
+  const { showToast } = useToast();
+
+  const shareCurrentPage = async () => {
+    const shareUrl = window.location.href;
+    const shareTitle = document.title || '과구리';
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: shareTitle, text: shareTitle, url: shareUrl });
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast({ title: '링크를 복사했습니다.', tone: 'success' });
+      } else {
+        throw new Error('share-unavailable');
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      showToast({ title: '공유 링크를 복사하지 못했습니다.', tone: 'danger' });
+    } finally {
+      requestClose();
+    }
+  };
 
   useEffect(() => {
     if (!open) return undefined;
@@ -50,6 +73,16 @@ export function ContentMoreMenu({
       </button>
       {open ? (
         <div className={`content-more-menu__dropdown${isClosing ? ' is-closing' : ''}`} role="menu">
+          <button
+            onClick={() => {
+              void shareCurrentPage();
+            }}
+            role="menuitem"
+            type="button"
+          >
+            <Share2 size={15} aria-hidden="true" />
+            공유
+          </button>
           <button
             onClick={() => {
               requestClose(onEdit);

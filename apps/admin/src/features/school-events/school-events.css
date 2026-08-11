@@ -728,7 +728,7 @@
   border: 1px solid var(--j-color-border, var(--line));
   border-radius: 10px;
   background: var(--surface);
-  box-shadow: var(--j-shadow-overlay);
+  box-shadow: var(--j-shadow-dropdown);
 }
 
 .calendar-category-select__menu button {

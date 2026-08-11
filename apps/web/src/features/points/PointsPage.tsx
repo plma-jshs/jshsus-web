@@ -30,7 +30,7 @@ export function PointsPage() {
       <PageScaffold
         breadcrumbs={listBreadcrumbs('points')}
         title="상벌점"
-        width="wide"
+        width="reading"
         variant="workspace"
       >
         <PageState kind="loading" title="상벌점 정보를 불러오는 중입니다." variant="page" />
@@ -47,7 +47,7 @@ export function PointsPage() {
       <PageScaffold
         breadcrumbs={listBreadcrumbs('points')}
         title="상벌점"
-        width="wide"
+        width="reading"
         variant="workspace"
       >
         <PageState
@@ -108,7 +108,7 @@ export function PointsPage() {
     <PageScaffold
       breadcrumbs={listBreadcrumbs('points')}
       title="상벌점"
-      width="wide"
+      width="reading"
       variant="workspace"
     >
       <section className="points-card" aria-labelledby="points-records-title">

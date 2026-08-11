@@ -197,7 +197,7 @@ export function ThanksPage() {
 
               {selectedSchoolNumber ? (
                 <div className="thanks-filter-state" aria-live="polite">
-                  <span>{selectedSchoolNumber} 학번 감사 메시지만 표시 중</span>
+                  <span>{selectedSchoolNumber} 감사 메시지만 표시 중</span>
                   <button type="button" onClick={() => setSelectedSchoolNumber(null)}>
                     전체 보기
                   </button>

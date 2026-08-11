@@ -443,6 +443,23 @@ const lostItemDetailRoute = createRoute({
   ),
 });
 
+const dormRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/dorm',
+  beforeLoad: ({ location }) => requireSession(location),
+  component: lazyRouteComponent(() => import('../features/dorm/DormPage'), 'DormPage'),
+});
+
+const newDormReportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/dorm/reports/new',
+  beforeLoad: ({ location }) => requireSession(location),
+  component: lazyRouteComponent(
+    () => import('../features/dorm/NewDormReportPage'),
+    'NewDormReportPage',
+  ),
+});
+
 const aboutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/about',
@@ -537,6 +554,8 @@ const routeTree = rootRoute.addChildren([
   lostItemsRoute,
   newLostItemRoute,
   lostItemDetailRoute,
+  dormRoute,
+  newDormReportRoute,
   aboutRoute,
   privacyRoute,
   termsRoute,

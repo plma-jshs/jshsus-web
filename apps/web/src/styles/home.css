@@ -598,7 +598,7 @@
   border-radius: 8px;
   color: var(--j-color-text-secondary);
   background: var(--j-color-surface);
-  box-shadow: var(--j-shadow-dropdown);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 3%);
   opacity: 0;
   pointer-events: none;
   text-align: left;

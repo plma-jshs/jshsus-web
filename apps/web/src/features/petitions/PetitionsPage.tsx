@@ -100,16 +100,18 @@ export function PetitionsPage() {
       <section className="workflow-table-section petition-list-section" aria-label="청원 목록">
         <PageToolbar
           filters={
-            <>
-              <FilterChips
-                value={filter}
-                onChange={(value) => {
-                  setFilter(value);
-                  setPage(1);
-                }}
-                label="청원 상태"
-                options={filterOptions}
-              />
+            <FilterChips
+              value={filter}
+              onChange={(value) => {
+                setFilter(value);
+                setPage(1);
+              }}
+              label="청원 상태"
+              options={filterOptions}
+            />
+          }
+          search={
+            <div className="petition-search-controls">
               <ToolbarSelect
                 ariaLabel="검색 기준"
                 label="검색"
@@ -124,10 +126,6 @@ export function PetitionsPage() {
                   setPage(1);
                 }}
               />
-            </>
-          }
-          search={
-            <div className="petition-search-controls">
               <SearchField
                 value={query}
                 onChange={(value) => {

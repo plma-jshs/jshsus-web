@@ -790,6 +790,7 @@
 
 @media (max-width: 767px) {
   .header-notification-trigger,
+  .header-theme-toggle,
   .mobile-menu__trigger,
   .header-user-link,
   .header-user-menu,

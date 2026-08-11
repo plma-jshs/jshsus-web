@@ -9,6 +9,10 @@
     linear-gradient(180deg, rgb(237 249 246 / 74%) 0, rgb(247 251 250 / 92%) 340px), #f7faf9;
 }
 
+:root[data-theme='dark'] .app-shell {
+  background: var(--j-color-canvas);
+}
+
 .skip-link {
   position: fixed;
   z-index: calc(var(--j-layer-modal) + 1);
@@ -34,6 +38,10 @@
   border-bottom: 1px solid var(--j-color-border);
   background: rgb(251 254 253 / 96%);
   backdrop-filter: blur(12px);
+}
+
+:root[data-theme='dark'] .portal-header {
+  background: rgb(18 28 32 / 96%);
 }
 
 .portal-header__inner {
@@ -145,6 +153,10 @@
     visibility var(--j-motion-base);
 }
 
+:root[data-theme='dark'] .mega-menu {
+  background: var(--j-color-surface-raised);
+}
+
 .portal-nav.is-open .mega-menu {
   visibility: visible;
   opacity: 1;
@@ -212,6 +224,30 @@
   display: flex;
   align-items: center;
   gap: var(--j-space-2);
+}
+
+.header-theme-toggle {
+  display: grid;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-md);
+  color: var(--j-color-text-secondary);
+  background: var(--j-color-surface);
+  transition:
+    color var(--j-motion-fast),
+    border-color var(--j-motion-fast),
+    background var(--j-motion-fast);
+}
+
+.header-theme-toggle:hover,
+.header-theme-toggle[aria-pressed='true'] {
+  border-color: var(--j-color-brand-subtle-strong);
+  color: var(--j-color-brand-strong);
+  background: var(--j-color-surface-selected);
 }
 
 .portal-header__editor-action {
@@ -314,7 +350,7 @@
   padding: 6px;
   border: 1px solid rgb(0 0 0 / 5%);
   border-radius: 16px;
-  background: #fff;
+  background: var(--j-color-surface-raised);
   box-shadow: var(--j-shadow-dropdown);
 }
 

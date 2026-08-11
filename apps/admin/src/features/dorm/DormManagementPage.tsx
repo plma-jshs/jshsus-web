@@ -4,17 +4,15 @@ import { DormAssignmentPanel } from './DormAssignmentPanel';
 import { useDormData, useRefreshDorm } from './dormData';
 import { DormReportsPanel } from './DormReportsPanel';
 import { DormRoommateBlocksPanel } from './DormRoommateBlocksPanel';
-import { DormRoomPointsPanel } from './DormRoomPointsPanel';
 import './dorm.css';
 
 const now = new Date();
 const currentYear = now.getFullYear();
-type Tab = 'assignments' | 'reports' | 'points' | 'blocks';
+type Tab = 'assignments' | 'reports' | 'blocks';
 
 const tabs = [
   { value: 'assignments', label: '방 배정·추첨' },
   { value: 'reports', label: '민원' },
-  { value: 'points', label: '방 상벌점' },
   { value: 'blocks', label: '블랙리스트' },
 ] as const;
 
@@ -75,9 +73,6 @@ export function DormManagementPage() {
           loading={reportsQuery.isPending}
           refresh={refreshDorm}
         />
-      ) : null}
-      {tab === 'points' ? (
-        <DormRoomPointsPanel key={`${year}-${semester}`} rooms={roomsQuery.data ?? []} />
       ) : null}
       {tab === 'blocks' ? (
         <DormRoommateBlocksPanel

@@ -163,6 +163,16 @@ a.content-table-primary:focus-visible {
   gap: 18px;
 }
 
+.content-drawer__actions {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+}
+
+.content-drawer__actions > * {
+  flex: 1;
+}
+
 .content-drawer-form > label,
 .content-drawer-field {
   display: grid;

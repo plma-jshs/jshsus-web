@@ -194,7 +194,7 @@
   border-radius: 18px 18px 0 0;
   background: var(--surface);
   color: var(--j-color-text);
-  box-shadow: 0 -8px 24px rgb(15 23 42 / 10%);
+  box-shadow: var(--j-shadow-dropdown);
 }
 
 .admin-filter-sheet[open] {

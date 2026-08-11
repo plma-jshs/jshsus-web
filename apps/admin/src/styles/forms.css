@@ -239,7 +239,7 @@ select.ui-control:not([multiple]) {
   border: 1px solid var(--j-color-border);
   border-radius: 10px;
   background: var(--j-color-surface-raised);
-  box-shadow: var(--j-shadow-overlay);
+  box-shadow: var(--j-shadow-dropdown);
 }
 
 .admin-select__menu button {

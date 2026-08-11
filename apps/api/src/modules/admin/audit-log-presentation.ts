@@ -46,6 +46,7 @@ const actionLabels: Record<string, string> = {
   'dorm.assignment.move': '기숙사 방 이동',
   'dorm.assignment.swap': '기숙사 방 교환',
   'dorm.draw.apply': '기숙사 추첨 반영',
+  'dorm.report.create': '기숙사 민원 등록',
   'dorm.report.status.update': '기숙사 민원 상태 변경',
   'dorm.roommate-block.create': '기숙사 블랙리스트 등록',
   'dorm.roommate-block.delete': '기숙사 블랙리스트 삭제',

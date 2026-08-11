@@ -315,7 +315,7 @@
   border: 1px solid var(--j-color-border);
   border-radius: var(--j-radius-md);
   background: var(--j-color-surface);
-  box-shadow: var(--j-shadow-overlay);
+  box-shadow: var(--j-shadow-dropdown);
 }
 
 .content-more-menu__dropdown button {
@@ -644,7 +644,7 @@
     border-radius: 20px 20px 0 0;
     box-shadow:
       0 -100vh 0 100vh rgb(15 23 42 / 34%),
-      0 -12px 30px rgb(15 23 42 / 14%);
+      0 2px 8px rgb(0 0 0 / 4%);
     animation: content-more-sheet-in 160ms ease-out both;
   }
 

@@ -4,6 +4,7 @@ export type PortalPageKey =
   | 'notices'
   | 'calendar'
   | 'activityRequests'
+  | 'dorm'
   | 'myStatus'
   | 'points'
   | 'lostItems'
@@ -28,6 +29,7 @@ export const portalPageHierarchy: Record<PortalPageKey, PageHierarchy> = {
     feature: '탐구활동서',
     to: '/activity-requests',
   },
+  dorm: { section: '학교생활', feature: '기숙사', to: '/dorm' },
   myStatus: { section: '학교생활', feature: '마이페이지', to: '/my-status' },
   points: { section: '학교생활', feature: '상벌점', to: '/points' },
   lostItems: { section: '학교생활', feature: '분실물', to: '/lost-items' },

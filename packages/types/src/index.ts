@@ -802,6 +802,20 @@ export type DormReport = {
   createdAt: string;
 };
 
+export type DormSelfRoommate = Pick<
+  DormAssignment,
+  'studentNo' | 'studentName' | 'grade' | 'classNo' | 'number' | 'bedPosition'
+>;
+
+export type DormSelfView = {
+  currentTerm: { year: number; semester: number };
+  student: Pick<DormAssignment, 'studentNo' | 'studentName' | 'grade' | 'classNo' | 'number'>;
+  currentAssignment: DormAssignment | null;
+  roommates: DormSelfRoommate[];
+  assignmentHistory: DormAssignment[];
+  reports: DormReport[];
+};
+
 export type ActivityRequestStatus =
   'draft' | 'submitted' | 'approved' | 'rejected' | 'canceled' | 'completed';
 

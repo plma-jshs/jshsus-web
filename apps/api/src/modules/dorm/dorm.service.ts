@@ -6,6 +6,7 @@ import type {
   DormReport,
   DormRoom,
   DormRoommateBlock,
+  DormSelfView,
   DormStudentOption,
 } from '@jshsus/types';
 import { and, desc, eq, inArray, isNotNull, like, ne, sql } from 'drizzle-orm';
@@ -99,6 +100,10 @@ const reportStatusSchema = z.object({
   comment: z.string().trim().max(500).optional().default(''),
 });
 
+const selfReportSchema = z.object({
+  description: z.string().trim().min(1, '민원 내용을 입력해 주세요.').max(500),
+});
+
 function currentDormTerm() {
   const now = new Date();
   return {
@@ -120,6 +125,151 @@ function parseTerm(input: Record<string, unknown>) {
 @Injectable()
 export class DormService {
   constructor(private readonly database: DatabaseService) {}
+
+  async self(userId: number): Promise<DormSelfView> {
+    const term = currentDormTerm();
+
+    return this.database.query('dorm.self', async (db) => {
+      const [student] = await db
+        .select({
+          studentNo: schema.students.studentNo,
+          studentName: schema.students.name,
+          grade: schema.students.grade,
+          classNo: schema.students.classNo,
+          number: schema.students.number,
+        })
+        .from(schema.students)
+        .innerJoin(schema.users, eq(schema.students.userId, schema.users.id))
+        .where(and(eq(schema.students.userId, userId), eq(schema.users.status, 'active')))
+        .limit(1);
+
+      if (!student) throw new NotFoundException('학생 정보를 찾을 수 없습니다.');
+
+      const assignmentHistory = await db
+        .select({
+          id: schema.dormAssignments.id,
+          roomId: schema.dormAssignments.roomId,
+          userId: schema.dormAssignments.userId,
+          studentId: schema.students.id,
+          dormName: schema.dormRooms.dormName,
+          roomName: schema.dormRooms.name,
+          studentNo: schema.students.studentNo,
+          studentName: schema.students.name,
+          grade: schema.students.grade,
+          classNo: schema.students.classNo,
+          number: schema.students.number,
+          year: schema.dormAssignments.year,
+          semester: schema.dormAssignments.semester,
+          bedPosition: schema.dormAssignments.bedPosition,
+        })
+        .from(schema.dormAssignments)
+        .innerJoin(schema.dormRooms, eq(schema.dormAssignments.roomId, schema.dormRooms.id))
+        .innerJoin(schema.students, eq(schema.dormAssignments.userId, schema.students.userId))
+        .where(eq(schema.dormAssignments.userId, userId))
+        .orderBy(
+          desc(schema.dormAssignments.year),
+          desc(schema.dormAssignments.semester),
+          desc(schema.dormAssignments.id),
+        );
+
+      const currentAssignment =
+        assignmentHistory.find(
+          (assignment) => assignment.year === term.year && assignment.semester === term.semester,
+        ) ?? null;
+
+      const roommates = currentAssignment
+        ? await db
+            .select({
+              studentNo: schema.students.studentNo,
+              studentName: schema.students.name,
+              grade: schema.students.grade,
+              classNo: schema.students.classNo,
+              number: schema.students.number,
+              bedPosition: schema.dormAssignments.bedPosition,
+            })
+            .from(schema.dormAssignments)
+            .innerJoin(schema.students, eq(schema.dormAssignments.userId, schema.students.userId))
+            .where(
+              and(
+                eq(schema.dormAssignments.roomId, currentAssignment.roomId),
+                eq(schema.dormAssignments.year, term.year),
+                eq(schema.dormAssignments.semester, term.semester),
+                ne(schema.dormAssignments.userId, userId),
+              ),
+            )
+            .orderBy(schema.dormAssignments.bedPosition)
+        : [];
+
+      const reports = await db
+        .select({
+          id: schema.dormReports.id,
+          roomId: schema.dormRooms.id,
+          dormName: schema.dormRooms.dormName,
+          roomName: schema.dormRooms.name,
+          studentNo: schema.students.studentNo,
+          studentName: schema.students.name,
+          description: schema.dormReports.description,
+          imageUrl: schema.dormReports.imageUrl,
+          status: schema.dormReports.status,
+          comment: schema.dormReports.comment,
+          createdAt: schema.dormReports.createdAt,
+        })
+        .from(schema.dormReports)
+        .innerJoin(schema.dormRooms, eq(schema.dormReports.roomId, schema.dormRooms.id))
+        .innerJoin(schema.students, eq(schema.dormReports.userId, schema.students.userId))
+        .where(eq(schema.dormReports.userId, userId))
+        .orderBy(desc(schema.dormReports.createdAt), desc(schema.dormReports.id))
+        .limit(100);
+
+      return {
+        currentTerm: term,
+        student,
+        currentAssignment,
+        roommates,
+        assignmentHistory,
+        reports: reports.map((report) => ({
+          ...report,
+          imageUrl: report.imageUrl ?? undefined,
+          comment: report.comment ?? undefined,
+          createdAt: report.createdAt.toISOString(),
+        })),
+      };
+    });
+  }
+
+  async createSelfReport(body: unknown, userId: number) {
+    const parsed = selfReportSchema.safeParse(body ?? {});
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+
+    const term = currentDormTerm();
+    const [assignment] = await this.database.db
+      .select({ roomId: schema.dormAssignments.roomId })
+      .from(schema.dormAssignments)
+      .where(
+        and(
+          eq(schema.dormAssignments.userId, userId),
+          eq(schema.dormAssignments.year, term.year),
+          eq(schema.dormAssignments.semester, term.semester),
+        ),
+      )
+      .limit(1);
+
+    if (!assignment) {
+      throw new BadRequestException('현재 학기 기숙사 배정이 없어 민원을 등록할 수 없습니다.');
+    }
+
+    const [created] = await this.database.db
+      .insert(schema.dormReports)
+      .values({ userId, roomId: assignment.roomId, description: parsed.data.description })
+      .$returningId();
+    await this.database.writeAudit({
+      actorId: userId,
+      action: 'dorm.report.create',
+      targetType: 'dorm_reports',
+      targetId: created.id,
+    });
+    return { ok: true, id: created.id };
+  }
 
   async rooms(query: Record<string, unknown> = {}): Promise<DormRoom[]> {
     const current = currentDormTerm();

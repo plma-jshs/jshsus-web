@@ -14,13 +14,16 @@ import {
   Menu,
   MessageSquareText,
   Megaphone,
+  Moon,
   ShieldCheck,
+  Sun,
   User,
   X,
 } from 'lucide-react';
 import { getSession, getSsoConfig, logout } from '../../features/auth/api';
 import { getMyStatus } from '../../features/my-status/api';
 import { getAdminSiteHref } from '../../shared/lib/adminSiteHref';
+import { GoogleAnalytics } from '../analytics/GoogleAnalytics';
 import { UserAvatar } from '../page/UserAvatar';
 import { NotificationMenu } from './NotificationMenu';
 
@@ -28,6 +31,7 @@ type InternalNavigationPath =
   | '/notices'
   | '/calendar'
   | '/activity-requests'
+  | '/dorm'
   | '/my-status'
   | '/points'
   | '/lost-items'
@@ -62,6 +66,7 @@ const navigationCategories = [
     label: '학교생활',
     links: [
       { label: '탐구활동서', to: '/activity-requests' },
+      { label: '기숙사', to: '/dorm' },
       { label: '상벌점', to: '/points' },
       { label: '분실물', to: '/lost-items' },
     ],
@@ -102,6 +107,8 @@ function getMobilePortalHeaderTitle(pathname: string) {
   if (normalizedPathname === '/activity-requests/new') return '탐구활동서 작성';
   if (/^\/activity-requests\/[^/]+\/edit$/.test(normalizedPathname)) return '탐구활동서 수정';
   if (/^\/activity-requests\/[^/]+$/.test(normalizedPathname)) return '탐구활동서';
+  if (normalizedPathname === '/dorm/reports/new') return '민원 등록';
+  if (normalizedPathname === '/dorm') return '기숙사';
   if (normalizedPathname === '/lost-items/new') return '분실물 등록';
   if (/^\/lost-items\/[^/]+$/.test(normalizedPathname)) return '분실물';
   return null;
@@ -136,6 +143,31 @@ function PortalNavigationLink({
     <a href={item.href} target="_blank" rel="noreferrer" onClick={onNavigate}>
       {item.label}
     </a>
+  );
+}
+
+function DarkModeToggle() {
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('jshsus-theme') === 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+    window.localStorage.setItem('jshsus-theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
+
+  return (
+    <button
+      className="header-theme-toggle"
+      type="button"
+      aria-label={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
+      aria-pressed={isDark}
+      title={isDark ? '라이트 모드' : '다크 모드'}
+      onClick={() => setIsDark((current) => !current)}
+    >
+      {isDark ? <Sun aria-hidden="true" size={18} /> : <Moon aria-hidden="true" size={18} />}
+    </button>
   );
 }
 
@@ -594,6 +626,7 @@ function PortalShell() {
                 <span className="header-session-skeleton" aria-hidden="true" />
               ) : session?.isLogined ? (
                 <>
+                  <DarkModeToggle />
                   <NotificationMenu />
                   <UserMenu
                     displayName={sessionDisplayName}
@@ -727,7 +760,7 @@ function PortalShell() {
   );
 }
 
-export function AppShell() {
+function AppShellContent() {
   const pathname = useRouterState({
     select: (state) => state.matches[state.matches.length - 1]?.pathname ?? state.location.pathname,
   });
@@ -802,4 +835,13 @@ export function AppShell() {
   }
 
   return <PortalShell />;
+}
+
+export function AppShell() {
+  return (
+    <>
+      <GoogleAnalytics />
+      <AppShellContent />
+    </>
+  );
 }

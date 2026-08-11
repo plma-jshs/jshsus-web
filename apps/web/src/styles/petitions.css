@@ -16,6 +16,7 @@
 
 .petition-search-controls .page-search-field {
   width: min(28vw, 260px);
+  flex: 1 1 auto;
 }
 
 .petition-search-controls .page-search-field input {

@@ -32,6 +32,7 @@ import {
 import '../../styles/my-status.css';
 
 const dateFormatter = createKoreanDateFormatter({ month: 'long', day: 'numeric' });
+const pointDateFormatter = createKoreanDateFormatter({ month: 'long', day: 'numeric' });
 const PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 const PROFILE_CROP_FRAME_SIZE = 320;
 const PROFILE_CROP_OUTPUT_SIZE = 512;
@@ -76,6 +77,10 @@ const activitySlotLabels: Record<string, string> = {
 
 function signedPoint(value: number) {
   return value > 0 ? `+${value}` : String(value);
+}
+
+function pointDateLabel(value: string) {
+  return pointDateFormatter.format(new Date(`${value}T00:00:00`));
 }
 
 export function maskEmail(value?: string) {
@@ -242,7 +247,7 @@ export function MyStatusPage() {
       await queryClient.invalidateQueries({ queryKey: ['my-status'] });
       setContactDraft(null);
       showToast({
-        title: `${draft.field === 'email' ? '이메일' : '전화번호'}를 변경했습니다.`,
+        title: `${draft.field === 'email' ? '이메일을' : '전화번호를'} 변경했습니다.`,
         tone: 'success',
       });
     },
@@ -604,7 +609,7 @@ export function MyStatusPage() {
       <section className="status-overview" aria-labelledby="status-points-title">
         <header className="status-section-heading">
           <div className="status-heading-with-chips">
-            <h2 id="status-points-title">상벌점</h2>
+            <h2 id="status-points-title">최근 상벌점</h2>
             <div className="status-point-chips" aria-label="상벌점 요약">
               <span className="is-positive">
                 상점 <strong>{Math.abs(status.points.meritPoint)}</strong>
@@ -613,7 +618,7 @@ export function MyStatusPage() {
                 벌점 <strong>{Math.abs(status.points.penaltyPoint)}</strong>
               </span>
               <span className="is-total">
-                합계 <strong>{signedPoint(status.points.currentPoint)}</strong>
+                합계 <strong>{String(status.points.currentPoint)}</strong>
               </span>
             </div>
           </div>
@@ -625,11 +630,14 @@ export function MyStatusPage() {
           {status.points.records.length ? (
             status.points.records.slice(0, 3).map((record) => (
               <div key={record.id}>
-                <time>{record.baseDate.replaceAll('-', '. ')}</time>
+                <time>{pointDateLabel(record.baseDate)}</time>
                 <strong className={record.point >= 0 ? 'is-positive' : 'is-negative'}>
                   {signedPoint(record.point)}
                 </strong>
                 <span>{record.comment || record.reason}</span>
+                <small className="status-point-preview__processor">
+                  처리자 {record.teacherName}
+                </small>
               </div>
             ))
           ) : (
@@ -876,7 +884,7 @@ export function MyStatusPage() {
             >
               <p className="status-contact-modal__lead">
                 <strong>{status.student.name}</strong>님의{' '}
-                <em>{contactDraft.field === 'email' ? '이메일' : '전화번호'}</em>를 변경합니다.
+                <em>{contactDraft.field === 'email' ? '이메일을' : '전화번호를'}</em> 변경합니다.
               </p>
               <label className="status-contact-password-field" htmlFor="status-contact-password">
                 <span>현재 비밀번호</span>

@@ -302,6 +302,7 @@ jobs:
           docker buildx build . \
             --file "${{ matrix.dockerfile }}" \
             --platform linux/amd64 \
+            --build-arg "VITE_GOOGLE_ANALYTICS_MEASUREMENT_ID=${{ vars.VITE_GOOGLE_ANALYTICS_MEASUREMENT_ID }}" \
             --push \
             --tag "$image:${{ github.sha }}" \
             --label "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
