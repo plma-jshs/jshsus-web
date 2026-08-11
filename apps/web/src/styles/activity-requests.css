@@ -354,7 +354,7 @@
   margin: 0;
   color: var(--j-color-text);
   font-size: clamp(1.15rem, 2.4vw, 1.45rem);
-  font-weight: var(--j-weight-medium);
+  font-weight: 700;
   letter-spacing: -0.045em;
   line-height: 1.25;
   overflow-wrap: anywhere;
@@ -1074,7 +1074,7 @@
   .activity-form-field label,
   .activity-slot-selector legend {
     font-size: 12px;
-    font-weight: var(--j-weight-medium);
+    font-weight: 700;
   }
 
   .activity-form-field input,
@@ -1298,7 +1298,7 @@
 
   .activity-detail-summary__title h1 {
     font-size: clamp(1.1rem, 4.6vw, 1.35rem);
-    font-weight: var(--j-weight-medium);
+    font-weight: 700;
   }
 
   .activity-detail-summary__facts {

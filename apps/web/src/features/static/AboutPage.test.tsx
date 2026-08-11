@@ -46,7 +46,8 @@ describe('AboutPage', () => {
     expect(kim).toBeInTheDocument();
     expect(kang.compareDocumentPosition(kim) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole('button', { name: '나주붉은매 화이팅' })).toBeInTheDocument();
-    expect(screen.getAllByText('- 2025/2026 과구리 개발')).toHaveLength(2);
+    expect(screen.getAllByText('- 2025/2026 과구리 개발')).toHaveLength(1);
+    expect(screen.getByText(/- 2026 과구리 리뉴얼/)).toBeInTheDocument();
   });
 
   it('restarts the eagle flight when the cheer is pressed again', async () => {

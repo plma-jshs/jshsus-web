@@ -79,7 +79,7 @@ describe('activity request presentation', () => {
     ).toEqual({
       advisorTeacherId: '담당 교사를 선택해 주세요.',
       location: '활동 장소를 입력해 주세요.',
-      purpose: '활동 목적을 입력해 주세요.',
+      purpose: '활동 내용을 입력해 주세요.',
       endsAt: '종료 일시는 시작 일시보다 늦어야 합니다.',
     });
   });

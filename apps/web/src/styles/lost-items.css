@@ -783,6 +783,10 @@
     flex-direction: column;
     gap: 5px;
   }
+
+  .lost-item-form__section:first-of-type .lost-item-form__field:last-child {
+    margin-top: 8px;
+  }
 }
 
 @media (max-width: 519px) {

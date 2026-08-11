@@ -2,7 +2,7 @@ import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ArrowLeft, CheckCircle2, Send } from 'lucide-react';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import {
   RichTextEditor,
   type RichTextEditorValue,
@@ -183,7 +183,6 @@ export function NewPetitionPage() {
             <ArrowLeft size={16} aria-hidden="true" /> 취소
           </Link>
           <button className="detail-primary-button" type="submit" disabled={mutation.isPending}>
-            <Send size={16} aria-hidden="true" />
             {mutation.isPending ? '등록 중' : '등록'}
           </button>
         </div>

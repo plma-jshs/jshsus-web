@@ -1,6 +1,7 @@
 import type { FormEvent, ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import type { AccountActivationIdentityType, StudentGender } from '@jshsus/types';
 import { ArrowLeft, Eye, EyeOff, LockKeyhole } from 'lucide-react';
 import {
@@ -9,6 +10,8 @@ import {
   lookupAccountActivation,
   requestAccountActivationEmailVerification,
   requestAccountActivationPhoneVerification,
+  verifyAccountActivationEmailVerification,
+  verifyAccountActivationPhoneVerification,
 } from './api';
 import { AuthLayout } from './AuthLayout';
 import { AuthSelect } from './AuthSelect';
@@ -20,6 +23,8 @@ function PasswordField(props: {
   autoComplete: string;
   placeholder: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
+  error?: string | null;
 }) {
   const [visible, setVisible] = useState(false);
 
@@ -33,6 +38,7 @@ function PasswordField(props: {
           type={visible ? 'text' : 'password'}
           value={props.value}
           onChange={(event) => props.onChange(event.target.value)}
+          onBlur={props.onBlur}
           autoComplete={props.autoComplete}
           placeholder={props.placeholder}
           required
@@ -46,6 +52,7 @@ function PasswordField(props: {
           {visible ? <EyeOff aria-hidden="true" size={18} /> : <Eye aria-hidden="true" size={18} />}
         </button>
       </div>
+      {props.error ? <p className="auth-field-error">{props.error}</p> : null}
     </div>
   );
 }
@@ -55,6 +62,113 @@ function FormMessage({ children, success = false }: { children: ReactNode; succe
     <p className={success ? 'auth-message auth-message-success' : 'auth-error'} role="status">
       {children}
     </p>
+  );
+}
+
+type VerificationTarget = 'email' | 'phone';
+
+function VerificationDialog({
+  target,
+  destination,
+  code,
+  expiresAt,
+  pending,
+  error,
+  onCodeChange,
+  onClose,
+  onResend,
+  onConfirm,
+}: {
+  target: VerificationTarget;
+  destination: string;
+  code: string;
+  expiresAt: number;
+  pending: boolean;
+  error: string | null;
+  onCodeChange: (value: string) => void;
+  onClose: () => void;
+  onResend: () => void;
+  onConfirm: () => void;
+}) {
+  const [remaining, setRemaining] = useState(() => Math.max(0, expiresAt - Date.now()));
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setRemaining(Math.max(0, expiresAt - Date.now()));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [expiresAt]);
+
+  const minutes = Math.floor(remaining / 60_000);
+  const seconds = Math.floor((remaining % 60_000) / 1_000)
+    .toString()
+    .padStart(2, '0');
+  const label = target === 'email' ? '이메일' : '전화번호';
+
+  return (
+    <div
+      className="auth-verification-modal"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        className="auth-verification-modal__sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-verification-title"
+      >
+        <header className="auth-verification-modal__header">
+          <div>
+            <p className="auth-verification-modal__eyebrow">{label} 인증</p>
+            <h2 id="auth-verification-title">인증번호를 입력해 주세요</h2>
+          </div>
+          <button type="button" className="auth-verification-modal__close" onClick={onClose}>
+            닫기
+          </button>
+        </header>
+        <p className="auth-verification-modal__description">
+          <strong>{destination}</strong>로 발송된 6자리 인증번호를 입력해 주세요.
+        </p>
+        <form
+          className="auth-verification-modal__form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onConfirm();
+          }}
+        >
+          <div className="auth-verification-modal__code-field">
+            <input
+              autoFocus
+              value={code}
+              onChange={(event) => onCodeChange(event.target.value.replace(/\D/g, '').slice(0, 6))}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              placeholder="인증번호 6자리"
+              aria-label={`${label} 인증번호`}
+            />
+            <span aria-live="polite">{remaining > 0 ? `${minutes}:${seconds}` : '만료됨'}</span>
+          </div>
+          {error ? <p className="auth-field-error">{error}</p> : null}
+          <button type="button" className="auth-verification-modal__resend" onClick={onResend}>
+            인증번호를 못 받으셨나요? <strong>재전송</strong>
+          </button>
+          <div className="auth-verification-modal__actions">
+            <button type="button" className="auth-verification-modal__cancel" onClick={onClose}>
+              취소
+            </button>
+            <button
+              type="submit"
+              className="auth-submit"
+              disabled={pending || remaining <= 0 || !/^\d{6}$/.test(code)}
+            >
+              {pending ? '확인 중' : '완료'}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
   );
 }
 
@@ -71,6 +185,7 @@ function initialReturnTo() {
 
 export function AccountActivationPage() {
   const loginReturnHref = initialReturnTo() ?? '/login';
+  const loginSearch = { returnTo: loginReturnHref === '/login' ? undefined : loginReturnHref };
   const [activationCode, setActivationCode] = useState('');
   const [identity, setIdentity] = useState<{
     identityType: AccountActivationIdentityType;
@@ -83,11 +198,17 @@ export function AccountActivationPage() {
   const [email, setEmail] = useState('');
   const [emailVerificationCode, setEmailVerificationCode] = useState('');
   const [emailCodeRequested, setEmailCodeRequested] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
   const [phone, setPhone] = useState('');
   const [phoneVerificationCode, setPhoneVerificationCode] = useState('');
   const [phoneCodeRequested, setPhoneCodeRequested] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [verificationTarget, setVerificationTarget] = useState<VerificationTarget | null>(null);
+  const [verificationExpiresAt, setVerificationExpiresAt] = useState(0);
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const lookupMutation = useMutation({
@@ -109,6 +230,9 @@ export function AccountActivationPage() {
     onSuccess: () => {
       setPhoneCodeRequested(true);
       setPhoneVerificationCode('');
+      setPhoneVerified(false);
+      setVerificationTarget('phone');
+      setVerificationExpiresAt(Date.now() + 300_000);
       setValidationError(null);
     },
   });
@@ -118,11 +242,28 @@ export function AccountActivationPage() {
     onSuccess: () => {
       setEmailCodeRequested(true);
       setEmailVerificationCode('');
+      setEmailVerified(false);
+      setVerificationTarget('email');
+      setVerificationExpiresAt(Date.now() + 300_000);
       setValidationError(null);
     },
   });
 
   const activationMutation = useMutation({ mutationFn: completeAccountActivation });
+  const phoneVerificationMutation = useMutation({
+    mutationFn: verifyAccountActivationPhoneVerification,
+    onSuccess: () => {
+      setPhoneVerified(true);
+      setVerificationTarget(null);
+    },
+  });
+  const emailVerificationMutation = useMutation({
+    mutationFn: verifyAccountActivationEmailVerification,
+    onSuccess: () => {
+      setEmailVerified(true);
+      setVerificationTarget(null);
+    },
+  });
 
   const submitLookup = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -150,9 +291,43 @@ export function AccountActivationPage() {
     emailMutation.mutate({ activationCode: activationCode.trim(), email: normalized });
   };
 
+  const verifyCode = () => {
+    if (
+      !verificationTarget ||
+      !/^\d{6}$/.test(
+        verificationTarget === 'email' ? emailVerificationCode : phoneVerificationCode,
+      )
+    ) {
+      return;
+    }
+    if (verificationTarget === 'email') {
+      emailVerificationMutation.mutate({
+        activationCode: activationCode.trim(),
+        email: email.trim().toLocaleLowerCase('en-US'),
+        verificationCode: emailVerificationCode,
+      });
+      return;
+    }
+    phoneVerificationMutation.mutate({
+      activationCode: activationCode.trim(),
+      phone: normalizedPhone(phone),
+      verificationCode: phoneVerificationCode,
+    });
+  };
+
+  const passwordPolicyError =
+    (passwordTouched || submitAttempted) && !/^(?=.*[A-Za-z])(?=.*\d).{8,256}$/.test(password)
+      ? '비밀번호는 8자 이상이며 영문과 숫자를 함께 사용해 주세요.'
+      : null;
+  const passwordConfirmError =
+    passwordConfirm.length > 0 && password !== passwordConfirm
+      ? '비밀번호가 서로 일치하지 않습니다.'
+      : null;
+
   const submitActivation = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!identity) return;
+    setSubmitAttempted(true);
     if (!gender) {
       setValidationError('성별을 선택해 주세요.');
       return;
@@ -161,16 +336,20 @@ export function AccountActivationPage() {
       setValidationError('이름을 입력해 주세요.');
       return;
     }
-    if (!phoneCodeRequested || !/^\d{6}$/.test(phoneVerificationCode)) {
+    if (!phoneVerified) {
       setValidationError('전화번호 인증을 완료해 주세요.');
       return;
     }
-    if (!emailCodeRequested || !/^\d{6}$/.test(emailVerificationCode)) {
+    if (!emailVerified) {
       setValidationError('이메일 인증을 완료해 주세요.');
       return;
     }
-    if (password !== passwordConfirm) {
-      setValidationError('비밀번호가 서로 일치하지 않습니다.');
+    if (passwordPolicyError) {
+      setValidationError(passwordPolicyError);
+      return;
+    }
+    if (passwordConfirmError) {
+      setValidationError(passwordConfirmError);
       return;
     }
 
@@ -192,8 +371,13 @@ export function AccountActivationPage() {
     setIdentity(null);
     setPhoneCodeRequested(false);
     setPhoneVerificationCode('');
+    setPhoneVerified(false);
     setEmailCodeRequested(false);
     setEmailVerificationCode('');
+    setEmailVerified(false);
+    setVerificationTarget(null);
+    setPasswordTouched(false);
+    setSubmitAttempted(false);
     setValidationError(null);
     lookupMutation.reset();
     phoneMutation.reset();
@@ -209,9 +393,19 @@ export function AccountActivationPage() {
         ? getAuthErrorMessage(phoneMutation.error, '전화번호 인증번호를 보내지 못했습니다.')
         : emailMutation.isError
           ? getAuthErrorMessage(emailMutation.error, '이메일 인증번호를 보내지 못했습니다.')
-          : activationMutation.isError
-            ? getAuthErrorMessage(activationMutation.error, '계정을 생성하지 못했습니다.')
-            : null);
+          : phoneVerificationMutation.isError
+            ? getAuthErrorMessage(
+                phoneVerificationMutation.error,
+                '전화번호 인증번호를 확인해 주세요.',
+              )
+            : emailVerificationMutation.isError
+              ? getAuthErrorMessage(
+                  emailVerificationMutation.error,
+                  '이메일 인증번호를 확인해 주세요.',
+                )
+              : activationMutation.isError
+                ? getAuthErrorMessage(activationMutation.error, '계정을 생성하지 못했습니다.')
+                : null);
 
   return (
     <AuthLayout active="activation" title="통합로그인 계정 생성">
@@ -220,9 +414,9 @@ export function AccountActivationPage() {
           <FormMessage success>
             계정을 만들었습니다. 학번 또는 교사번호와 설정한 비밀번호로 로그인해 주세요.
           </FormMessage>
-          <a className="auth-submit" href={loginReturnHref}>
+          <Link className="auth-submit" to="/login" search={loginSearch}>
             로그인하기
-          </a>
+          </Link>
         </div>
       ) : !identity ? (
         <form className="auth-form" onSubmit={submitLookup}>
@@ -242,13 +436,13 @@ export function AccountActivationPage() {
           <button className="auth-submit" type="submit" disabled={lookupMutation.isPending}>
             {lookupMutation.isPending ? '확인 중' : '다음'}
           </button>
-          <a className="auth-back-button" href={loginReturnHref}>
+          <Link className="auth-back-button" to="/login" search={loginSearch}>
             <ArrowLeft size={15} aria-hidden="true" /> 로그인으로 돌아가기
-          </a>
+          </Link>
         </form>
       ) : (
         <form className="auth-form" onSubmit={submitActivation}>
-          <div className="auth-form-grid two">
+          <div className="auth-form-grid three">
             <label htmlFor="activation-identity-number">
               <span>{identity.identityType === 'student' ? '학번' : '교사번호'}</span>
               <input
@@ -275,8 +469,6 @@ export function AccountActivationPage() {
                 required={identity.identityType === 'staff'}
               />
             </label>
-          </div>
-          <div className="auth-form-grid two">
             <label htmlFor="activation-gender">
               <span>성별</span>
               <AuthSelect
@@ -299,78 +491,72 @@ export function AccountActivationPage() {
                 id="activation-email"
                 type="email"
                 value={email}
+                disabled={emailVerified}
                 onChange={(event) => {
                   setEmail(event.target.value);
                   setEmailCodeRequested(false);
                   setEmailVerificationCode('');
+                  setEmailVerified(false);
                 }}
                 autoComplete="email"
                 placeholder="이메일을 입력해주세요."
                 required
               />
-              <button type="button" onClick={requestEmailCode} disabled={emailMutation.isPending}>
-                {emailMutation.isPending ? '전송 중' : emailCodeRequested ? '재전송' : '인증'}
+              <button
+                type="button"
+                onClick={requestEmailCode}
+                disabled={emailMutation.isPending || emailVerified}
+              >
+                {emailVerified
+                  ? '인증 완료'
+                  : emailMutation.isPending
+                    ? '전송 중'
+                    : emailCodeRequested
+                      ? '재전송'
+                      : '인증'}
               </button>
             </span>
           </label>
-          {emailCodeRequested ? (
-            <label htmlFor="activation-email-code">
-              <span>이메일 인증번호</span>
-              <input
-                id="activation-email-code"
-                value={emailVerificationCode}
-                onChange={(event) =>
-                  setEmailVerificationCode(event.target.value.replace(/\D/g, '').slice(0, 6))
-                }
-                autoComplete="one-time-code"
-                inputMode="numeric"
-                placeholder="이메일로 받은 6자리 인증번호를 입력해주세요."
-                required
-              />
-            </label>
-          ) : null}
           <label htmlFor="activation-phone">
             <span>전화번호</span>
             <span className="auth-verification-field">
               <input
                 id="activation-phone"
                 value={phone}
+                disabled={phoneVerified}
                 onChange={(event) => {
                   setPhone(event.target.value);
                   setPhoneCodeRequested(false);
                   setPhoneVerificationCode('');
+                  setPhoneVerified(false);
                 }}
                 autoComplete="tel"
                 inputMode="tel"
                 placeholder="전화번호를 입력해주세요."
                 required
               />
-              <button type="button" onClick={requestPhoneCode} disabled={phoneMutation.isPending}>
-                {phoneMutation.isPending ? '전송 중' : phoneCodeRequested ? '재전송' : '인증'}
+              <button
+                type="button"
+                onClick={requestPhoneCode}
+                disabled={phoneMutation.isPending || phoneVerified}
+              >
+                {phoneVerified
+                  ? '인증 완료'
+                  : phoneMutation.isPending
+                    ? '전송 중'
+                    : phoneCodeRequested
+                      ? '재전송'
+                      : '인증'}
               </button>
             </span>
           </label>
-          {phoneCodeRequested ? (
-            <label htmlFor="activation-phone-code">
-              <span>인증번호</span>
-              <input
-                id="activation-phone-code"
-                value={phoneVerificationCode}
-                onChange={(event) =>
-                  setPhoneVerificationCode(event.target.value.replace(/\D/g, '').slice(0, 6))
-                }
-                autoComplete="one-time-code"
-                inputMode="numeric"
-                placeholder="6자리 인증번호를 입력해주세요."
-                required
-              />
-            </label>
-          ) : null}
           <PasswordField
             id="activation-password"
             label="비밀번호"
             value={password}
             onChange={setPassword}
+            onBlur={() => setPasswordTouched(true)}
+            error={passwordPolicyError}
             autoComplete="new-password"
             placeholder="비밀번호를 입력해주세요."
           />
@@ -379,6 +565,7 @@ export function AccountActivationPage() {
             label="비밀번호 확인"
             value={passwordConfirm}
             onChange={setPasswordConfirm}
+            error={passwordConfirmError}
             autoComplete="new-password"
             placeholder="비밀번호를 다시 입력해주세요."
           />
@@ -387,10 +574,45 @@ export function AccountActivationPage() {
             {activationMutation.isPending ? '계정 생성 중' : '계정 만들기'}
           </button>
           <button className="auth-back-button" type="button" onClick={resetLookup}>
-            <ArrowLeft size={15} aria-hidden="true" /> 다른 인증코드 입력
+            <ArrowLeft size={15} aria-hidden="true" /> 이전으로
           </button>
         </form>
       )}
+      {verificationTarget ? (
+        <VerificationDialog
+          target={verificationTarget}
+          destination={verificationTarget === 'email' ? email : phone}
+          code={verificationTarget === 'email' ? emailVerificationCode : phoneVerificationCode}
+          expiresAt={verificationExpiresAt}
+          pending={
+            verificationTarget === 'email'
+              ? emailVerificationMutation.isPending
+              : phoneVerificationMutation.isPending
+          }
+          error={
+            verificationTarget === 'email'
+              ? emailVerificationMutation.isError
+                ? getAuthErrorMessage(
+                    emailVerificationMutation.error,
+                    '이메일 인증번호를 확인해 주세요.',
+                  )
+                : null
+              : phoneVerificationMutation.isError
+                ? getAuthErrorMessage(
+                    phoneVerificationMutation.error,
+                    '전화번호 인증번호를 확인해 주세요.',
+                  )
+                : null
+          }
+          onCodeChange={(value) => {
+            if (verificationTarget === 'email') setEmailVerificationCode(value);
+            else setPhoneVerificationCode(value);
+          }}
+          onClose={() => setVerificationTarget(null)}
+          onResend={verificationTarget === 'email' ? requestEmailCode : requestPhoneCode}
+          onConfirm={verifyCode}
+        />
+      ) : null}
     </AuthLayout>
   );
 }

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ImageOff, MapPin, PackagePlus } from 'lucide-react';
+import { ImageOff, MapPin } from 'lucide-react';
 import {
   FilterChips,
   PageScaffold,
@@ -47,7 +47,7 @@ export function LostItemsPage() {
       title="분실물"
       action={
         <Link className="detail-primary-button" to="/lost-items/new">
-          <PackagePlus size={16} aria-hidden="true" /> 등록하기
+          등록
         </Link>
       }
       width="reading"

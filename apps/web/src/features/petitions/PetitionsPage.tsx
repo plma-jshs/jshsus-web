@@ -89,7 +89,7 @@ export function PetitionsPage() {
       action={
         <Link
           aria-label="제안하기"
-          className="detail-primary-button content-compose-fab"
+          className="detail-primary-button content-compose-fab petition-compose-action"
           title="제안하기"
           to="/petitions/new"
         >

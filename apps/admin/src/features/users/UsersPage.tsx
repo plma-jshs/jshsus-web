@@ -195,13 +195,26 @@ function headerColumn(headers: ReadonlyMap<string, number>, aliases: string[]) {
 }
 
 function rosterCellText(cell: { text: string; value: unknown }) {
-  const text = cell.text.trim();
-  if (text) return text;
-  if (typeof cell.value === 'string' || typeof cell.value === 'number') {
-    return String(cell.value).trim();
+  let text = '';
+  let rawValue: unknown;
+  try {
+    text = String(cell.text ?? '').trim();
+  } catch {
+    // ExcelJS may throw while resolving the text getter for an empty/null cell.
+    // Fall back to the raw value below so a blank template cell is harmless.
   }
-  if (cell.value && typeof cell.value === 'object') {
-    const value = cell.value as {
+  if (text) return text;
+  try {
+    rawValue = cell.value;
+  } catch {
+    // Some styled blank cells expose a null-backed value getter in ExcelJS.
+    rawValue = undefined;
+  }
+  if (typeof rawValue === 'string' || typeof rawValue === 'number') {
+    return String(rawValue).trim();
+  }
+  if (rawValue && typeof rawValue === 'object') {
+    const value = rawValue as {
       richText?: Array<{ text?: unknown }>;
       result?: unknown;
       text?: unknown;
@@ -343,14 +356,14 @@ async function downloadRosterTemplate(targetYear: number, students: AdminStudent
   worksheet.mergeCells('A1:C1');
   worksheet.mergeCells('A2:C2');
   worksheet.getCell('A1').value =
-    `${targetYear}학년도 안내 · 신입생은 맨 아래 빈 행에 [${targetYear}년 학번]과 [이름]만 입력해 주세요. [기존 학번]은 비워 둡니다.\n재학생은 기존 학번과 이름이 미리 입력되어 있습니다. 진급 학생은 신규 학번을 입력하고, 졸업생은 해당 행을 삭제해 주세요.`;
-  worksheet.getRow(1).height = 58;
+    `${targetYear}학년도 안내\n신입생: 맨 아래 빈 행에 [신규 학번]과 [이름] 입력 ([기존 학번]은 빈칸)\n진급생: 기존 목록의 해당 학생 행에 [신규 학번] 입력\n졸업생: 해당 학생 행 전체 삭제`;
+  worksheet.getRow(1).height = 82;
   worksheet.getRow(2).height = 8;
   for (const rowNumber of [1]) {
     for (let columnNumber = 1; columnNumber <= 3; columnNumber += 1) {
       const cell = worksheet.getRow(rowNumber).getCell(columnNumber);
       cell.alignment = { vertical: 'middle', wrapText: true };
-      cell.font = { name: 'Pretendard', size: 11, bold: true, color: { argb: 'FF24333D' } };
+      cell.font = { name: '맑은 고딕', size: 11, bold: true, color: { argb: 'FF24333D' } };
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
@@ -366,7 +379,7 @@ async function downloadRosterTemplate(targetYear: number, students: AdminStudent
   header.height = 26;
   header.eachCell((cell) => {
     cell.alignment = { vertical: 'middle', horizontal: 'center' };
-    cell.font = { name: 'Pretendard', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.font = { name: '맑은 고딕', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF147D86' } };
   });
 
@@ -378,6 +391,9 @@ async function downloadRosterTemplate(targetYear: number, students: AdminStudent
   }
   worksheet.eachRow((row, rowNumber) => {
     if (rowNumber < 4) return;
+    row.eachCell((cell) => {
+      cell.font = { name: '맑은 고딕', size: 11, color: { argb: 'FF24333D' } };
+    });
     row.getCell(1).numFmt = '0';
     row.getCell(3).numFmt = '0';
   });

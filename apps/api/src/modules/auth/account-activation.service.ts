@@ -74,6 +74,20 @@ const emailVerificationRequestSchema = activationCodeSchema.extend({
   email: z.string().trim().email().max(255),
 });
 
+const phoneVerificationSchema = phoneVerificationRequestSchema.extend({
+  verificationCode: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/),
+});
+
+const emailVerificationSchema = emailVerificationRequestSchema.extend({
+  verificationCode: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/),
+});
+
 const completeActivationSchema = activationIdentitySchema.extend({
   activationCode: z.string().trim().min(6).max(32),
   name: z.string().trim().min(1).max(64).optional(),
@@ -90,7 +104,13 @@ const completeActivationSchema = activationIdentitySchema.extend({
     .string()
     .trim()
     .regex(/^\d{6}$/),
-  password: z.string().min(8).max(256),
+  password: z
+    .string()
+    .min(8)
+    .max(256)
+    .refine((value) => /[A-Za-z]/.test(value) && /\d/.test(value), {
+      message: 'Password must contain both letters and numbers.',
+    }),
 });
 
 type CompleteActivationInput = z.infer<typeof completeActivationSchema>;
@@ -521,6 +541,48 @@ export class AccountActivationService {
       throw error;
     }
 
+    return { ok: true };
+  }
+
+  async verifyPhoneVerification(body: unknown): Promise<{ ok: true }> {
+    const parsed = phoneVerificationSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException({
+        code: 'ACCOUNT_ACTIVATION_INVALID_INPUT',
+        message: '인증코드와 전화번호, 인증번호를 확인해 주세요.',
+      });
+    }
+
+    const activation = await this.findAvailableActivation(parsed.data.activationCode);
+    const phone = parsed.data.phone;
+    await this.assertPhoneVerification({
+      flowKey: this.phoneVerificationFlowKey(parsed.data.activationCode),
+      identityType: activation.identityType,
+      identityNumber: activation.identityNumber,
+      phone,
+      code: parsed.data.verificationCode,
+    });
+    return { ok: true };
+  }
+
+  async verifyEmailVerification(body: unknown): Promise<{ ok: true }> {
+    const parsed = emailVerificationSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException({
+        code: 'ACCOUNT_ACTIVATION_INVALID_INPUT',
+        message: '인증코드와 이메일 주소, 인증번호를 확인해 주세요.',
+      });
+    }
+
+    const activation = await this.findAvailableActivation(parsed.data.activationCode);
+    const email = parsed.data.email.toLocaleLowerCase('en-US');
+    await this.assertEmailVerification({
+      flowKey: this.emailVerificationFlowKey(parsed.data.activationCode),
+      identityType: activation.identityType,
+      identityNumber: activation.identityNumber,
+      email,
+      code: parsed.data.verificationCode,
+    });
     return { ok: true };
   }
 

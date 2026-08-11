@@ -1,6 +1,7 @@
 import type { FormEvent, ReactNode } from 'react';
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { ArrowLeft, Eye, EyeOff, KeyRound, LockKeyhole, UserRound } from 'lucide-react';
 import {
   confirmPasswordReset,
@@ -189,10 +190,14 @@ export function PasswordResetPage() {
           <button className="auth-submit" type="submit" disabled={requestMutation.isPending}>
             {requestMutation.isPending ? '전송 중' : '인증 코드 받기'}
           </button>
-          <a className="auth-back-button" href={loginReturnHref}>
+          <Link
+            className="auth-back-button"
+            to="/login"
+            search={{ returnTo: loginReturnHref === '/login' ? undefined : loginReturnHref }}
+          >
             <ArrowLeft size={15} aria-hidden="true" />{' '}
             {returnTo === '/my-status' ? '마이페이지로 돌아가기' : '로그인으로 돌아가기'}
-          </a>
+          </Link>
         </form>
       ) : null}
 

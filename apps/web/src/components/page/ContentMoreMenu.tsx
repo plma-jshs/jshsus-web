@@ -26,7 +26,11 @@ export function ContentMoreMenu({
     const shareTitle = document.title || '과구리';
 
     try {
-      if (navigator.share) {
+      const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+      if (isDesktop && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast({ title: '링크를 복사했습니다.', tone: 'success' });
+      } else if (navigator.share) {
         await navigator.share({ title: shareTitle, text: shareTitle, url: shareUrl });
       } else if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(shareUrl);

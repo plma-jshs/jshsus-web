@@ -536,6 +536,22 @@ export class AuthController {
     return this.accountActivationService.requestEmailVerification(body);
   }
 
+  @Post('account-activation/phone/verify')
+  @RateLimit({ max: 10, windowSeconds: 900 })
+  verifyAccountActivationPhoneCode(@Body() body: unknown, @Req() request: Request) {
+    assertTrustedCredentialRequest(request);
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
+    return this.accountActivationService.verifyPhoneVerification(body);
+  }
+
+  @Post('account-activation/email/verify')
+  @RateLimit({ max: 10, windowSeconds: 900 })
+  verifyAccountActivationEmailCode(@Body() body: unknown, @Req() request: Request) {
+    assertTrustedCredentialRequest(request);
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
+    return this.accountActivationService.verifyEmailVerification(body);
+  }
+
   private setSessionCookies(
     request: Request,
     response: Response,

@@ -1,7 +1,7 @@
 .dorm-page {
   display: grid;
   min-width: 0;
-  gap: 24px;
+  gap: 32px;
 }
 
 .dorm-section {

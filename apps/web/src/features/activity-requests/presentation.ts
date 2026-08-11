@@ -139,7 +139,7 @@ export function validateActivityRequestForm(form: ActivityRequestForm) {
     errors.endsAt = '종료 일시는 시작 일시보다 늦어야 합니다.';
   }
 
-  if (!purpose) errors.purpose = '활동 목적을 입력해 주세요.';
+  if (!purpose) errors.purpose = '활동 내용을 입력해 주세요.';
   else if (purpose.length > 500) errors.purpose = '활동 목적은 500자 이내로 입력해 주세요.';
 
   return errors;

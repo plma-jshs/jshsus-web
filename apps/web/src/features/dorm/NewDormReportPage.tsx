@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { FileText, Paperclip, Trash2 } from 'lucide-react';
+import { ArrowLeft, FileText, Paperclip, Trash2 } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import {
   plainTextToRichTextDocument,
@@ -196,6 +196,7 @@ export function NewDormReportPage() {
               onClick={() => void navigate({ to: '/dorm' })}
               type="button"
             >
+              <ArrowLeft size={16} aria-hidden="true" />
               취소
             </button>
             <button

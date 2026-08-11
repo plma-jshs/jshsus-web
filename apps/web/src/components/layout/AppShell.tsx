@@ -726,7 +726,9 @@ function PortalShell() {
           >
             사업자 정보 <ChevronDown aria-hidden="true" size={14} />
           </button>
-          <span className="portal-footer__copyright">Copyright © 2026 전남과학고등학교 IT부</span>
+          <span className="portal-footer__copyright">
+            Copyright © 전남과학고등학교 IT부. All rights reserved.
+          </span>
         </div>
       </footer>
       {isBusinessInfoOpen ? (

@@ -209,7 +209,7 @@ export function NewActivityRequestPage() {
                   {errors.purpose}
                 </span>
               ) : (
-                <span className="sr-only">활동 목적을 입력해 주세요.</span>
+                <span className="sr-only">활동 내용을 입력해 주세요.</span>
               )}
             </div>
           </div>

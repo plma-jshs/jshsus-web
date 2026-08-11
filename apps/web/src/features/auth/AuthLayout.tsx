@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
-import { ThemeToggle } from '../../components/layout/ThemeToggle';
 
 type AuthSection = 'login' | 'password' | 'activation';
 
@@ -22,9 +21,6 @@ export function AuthLayout({
       className={`auth-page${className ? ` ${className}` : ''}`}
       aria-labelledby="auth-page-title"
     >
-      <div className="auth-page__theme-toggle">
-        <ThemeToggle />
-      </div>
       <div className="auth-card">
         <aside className="auth-intro">
           <Link to="/" className="auth-brand" aria-label="과구리 홈으로 이동">
@@ -58,7 +54,7 @@ export function AuthLayout({
             ·
           </span>
           <span className="auth-page-footer__copyright">
-            Copyright © 2026 전남과학고등학교 IT부
+            Copyright © 전남과학고등학교 IT부. All rights reserved.
           </span>
         </nav>
       </footer>

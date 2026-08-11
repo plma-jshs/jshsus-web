@@ -212,6 +212,30 @@ export function requestAccountActivationEmailVerification(input: {
   });
 }
 
+export function verifyAccountActivationPhoneVerification(input: {
+  activationCode: string;
+  phone: string;
+  verificationCode: string;
+}) {
+  return request<{ ok: true }>('/api/auth/account-activation/phone/verify', {
+    method: 'POST',
+    body: input,
+    csrf: false,
+  });
+}
+
+export function verifyAccountActivationEmailVerification(input: {
+  activationCode: string;
+  email: string;
+  verificationCode: string;
+}) {
+  return request<{ ok: true }>('/api/auth/account-activation/email/verify', {
+    method: 'POST',
+    body: input,
+    csrf: false,
+  });
+}
+
 export function logout() {
   return request<{ ok: true }>('/api/auth/logout', { method: 'POST' }).then((result) => {
     clearCsrfToken();

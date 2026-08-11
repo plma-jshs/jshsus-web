@@ -349,3 +349,8 @@
 :root[data-theme='dark'] .cannon-range__separator {
   color: var(--j-color-text-muted);
 }
+
+/* The cannon scene is an illustration, not a surface. Keep it visible in dark mode. */
+:root[data-theme='dark'] .detail-page > .cannon-workspace {
+  background: #4dc8f2 url('/images/cannon-scene.png') center / cover no-repeat !important;
+}

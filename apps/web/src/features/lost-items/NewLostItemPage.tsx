@@ -2,7 +2,7 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, ImagePlus, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft, ImagePlus, Trash2 } from 'lucide-react';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { taskBreadcrumbs } from '../../components/page/pageHierarchy';
 import { uploadFile } from '../../shared/api/files';
@@ -249,8 +249,7 @@ export function NewLostItemPage() {
             <ArrowLeft size={16} aria-hidden="true" /> 취소
           </Link>
           <button className="detail-primary-button" type="submit" disabled={mutation.isPending}>
-            <Send size={16} aria-hidden="true" />
-            {mutation.isPending ? '등록 중' : '등록하기'}
+            {mutation.isPending ? '등록 중' : '등록'}
           </button>
         </div>
       </form>

@@ -456,6 +456,8 @@ function DeveloperIntroduce() {
             <>
               - 2025/2026 과구리 개발
               <br />
+              - 2026 과구리 리뉴얼
+              <br />
               <EagleCheer />
             </>
           }
