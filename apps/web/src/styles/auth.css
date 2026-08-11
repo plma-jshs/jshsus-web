@@ -52,7 +52,12 @@
   justify-content: flex-start;
   color: #fff;
   min-width: 0;
-  background: transparent;
+  background: linear-gradient(
+    180deg,
+    rgb(0 0 0 / 22%) 0%,
+    rgb(0 0 0 / 4%) 48%,
+    rgb(8 27 48 / 18%) 100%
+  );
   text-shadow: none;
 }
 
@@ -60,7 +65,7 @@
   position: absolute;
   z-index: -1;
   inset: 0;
-  box-shadow: 0 0 0 100vmax rgb(8 27 48 / 62%);
+  box-shadow: 0 0 0 100vmax rgb(8 27 48 / 48%);
   content: '';
   pointer-events: none;
 }
@@ -84,21 +89,10 @@
 }
 
 .auth-brand strong {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1.05;
-}
-
-.auth-intro__wordmark {
-  display: block;
-  margin-top: 18px;
-  color: rgb(255 255 255 / 68%);
-  font-size: 30px;
-  font-weight: 300;
-  letter-spacing: 0.1em;
-  line-height: 1;
-  text-shadow: none;
 }
 
 .auth-panel {
@@ -624,7 +618,7 @@
     min-height: 280px;
     padding: 26px clamp(20px, 7vw, 48px);
     background:
-      linear-gradient(180deg, rgb(8 27 48 / 46%), rgb(8 27 48 / 70%)),
+      linear-gradient(180deg, rgb(0 0 0 / 32%) 0%, rgb(8 27 48 / 64%) 100%),
       url('/images/auth-campus.png') center / auto 180% no-repeat;
   }
 
@@ -632,14 +626,9 @@
     display: none;
   }
 
-  .auth-brand,
-  .auth-intro__wordmark {
+  .auth-brand {
     position: relative;
     z-index: 1;
-  }
-
-  .auth-intro__wordmark {
-    display: none;
   }
 
   .auth-panel {
@@ -687,10 +676,6 @@
     height: 250px;
     min-height: 250px;
     padding: 22px 18px;
-  }
-
-  .auth-intro__wordmark {
-    display: none;
   }
 
   .auth-panel {

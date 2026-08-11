@@ -922,7 +922,7 @@
 .status-point-preview > div {
   display: grid;
   min-height: 43px;
-  grid-template-columns: 88px 48px minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 8px;
   border-bottom: 1px solid var(--j-color-border);
@@ -936,10 +936,31 @@
   color: var(--j-color-text-muted);
   font-variant-numeric: tabular-nums;
 }
-.status-point-preview > div > strong {
-  text-align: center;
+
+.status-point-preview__badge {
+  display: inline-flex;
+  min-height: 22px;
+  padding: 0 7px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
 }
-.status-point-preview > div > span {
+
+.status-point-preview__badge.is-positive {
+  color: var(--j-color-positive);
+  background: var(--j-color-positive-subtle);
+}
+
+.status-point-preview__badge.is-negative {
+  color: var(--j-color-danger);
+  background: var(--j-color-danger-subtle);
+}
+
+.status-point-preview__reason {
   min-width: 0;
   overflow: hidden;
   color: var(--j-color-text-secondary);
@@ -978,7 +999,7 @@
 
 .my-page .status-activity__row {
   min-height: 68px;
-  padding: 18px 6px 14px;
+  padding: 18px 6px 14px 16px;
   margin-inline: -6px;
   align-items: start;
   grid-template-columns: 1fr;
@@ -1260,7 +1281,17 @@
   }
 
   .status-point-preview > div {
-    grid-template-columns: 72px 42px minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    gap: 6px;
+  }
+
+  .status-point-preview__badge {
+    padding-inline: 6px;
+    font-size: 9px;
+  }
+
+  .status-point-preview__processor {
+    max-width: 60px;
   }
 
   .status-activity__meta {

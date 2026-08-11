@@ -28,9 +28,6 @@ export function AuthLayout({
             />
             <strong>과구리</strong>
           </Link>
-          <span className="auth-intro__wordmark" aria-hidden="true">
-            JSHSUS
-          </span>
         </aside>
 
         <section className="auth-panel">

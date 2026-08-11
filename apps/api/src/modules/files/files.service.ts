@@ -65,19 +65,20 @@ const uploadSchema = z.object({
   mimeType: z.string().min(1).max(120),
   bytes: z.instanceof(Buffer),
   visibility: z.enum(['public', 'private']).optional().default('private'),
-  targetType: z.enum(['notice', 'post', 'lost_item', 'profile']),
+  targetType: z.enum(['notice', 'post', 'lost_item', 'profile', 'dorm_report']),
   targetId: z.coerce.number().int().positive(),
 });
 
 const PROFILE_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 
-type ManagedContentTarget = 'notice' | 'post' | 'lost_item';
+type ManagedContentTarget = 'notice' | 'post' | 'lost_item' | 'dorm_report';
 
 const targetManagerPermission: Record<ManagedContentTarget, string> = {
   notice: 'notices.manage',
   post: 'community.manage',
   lost_item: 'lost_items.manage',
+  dorm_report: 'dorm.manage',
 };
 
 function canManageTarget(
@@ -865,6 +866,16 @@ export class FilesService {
       return;
     }
 
+    if (file.targetType === 'dorm_report') {
+      const [target] = await this.database.db
+        .select({ id: schema.dormReports.id })
+        .from(schema.dormReports)
+        .where(eq(schema.dormReports.id, file.targetId))
+        .limit(1);
+      if (!target) throw new NotFoundException('File was not found.');
+      return;
+    }
+
     if (file.targetType === 'notice') {
       const [target] = await this.database.db
         .select({
@@ -887,7 +898,7 @@ export class FilesService {
   }
 
   private async assertCanAttach(
-    targetType: 'notice' | 'post' | 'lost_item' | 'profile',
+    targetType: 'notice' | 'post' | 'lost_item' | 'profile' | 'dorm_report',
     targetId: number,
     session: AuthSession,
     visibility: 'public' | 'private',
@@ -923,6 +934,23 @@ export class FilesService {
       if (!target) throw new NotFoundException('Notice does not exist.');
       if (!canManageContent)
         throw new ForbiddenException('Only content managers can attach notice files.');
+      return;
+    }
+
+    if (targetType === 'dorm_report') {
+      if (visibility !== 'private') {
+        throw new BadRequestException('Dormitory report files must remain private.');
+      }
+      const query = db
+        .select({ authorId: schema.dormReports.userId })
+        .from(schema.dormReports)
+        .where(eq(schema.dormReports.id, targetId))
+        .limit(1);
+      const [target] = forUpdate ? await query.for('update') : await query;
+      if (!target) throw new NotFoundException('Attachment target does not exist.');
+      if (!canManageContent && target.authorId !== session.userId) {
+        throw new ForbiddenException('You cannot attach files to this dormitory report.');
+      }
       return;
     }
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { Link, useNavigate, useSearch } from '@tanstack/react-router';
+import { Link, useSearch } from '@tanstack/react-router';
 import { Eye, MessageCircle, PenLine } from 'lucide-react';
 import {
   DataTablePagination,
@@ -17,13 +17,12 @@ import './jbs.css';
 
 export function JbsPage() {
   const rawSearch = useSearch({ from: '/jbs' });
-  const search = {
+  const [search, setSearch] = useState(() => ({
     page: rawSearch.page ?? 1,
     pageSize: rawSearch.pageSize ?? 20,
     field: rawSearch.field ?? 'title_content',
     q: rawSearch.q ?? '',
-  } as const;
-  const navigate = useNavigate({ from: '/jbs' });
+  }));
   const postsQuery = useQuery({
     queryKey: ['jbs-posts', search.page, search.pageSize, search.field, search.q],
     queryFn: () => getJbsPosts(search),
@@ -72,7 +71,7 @@ export function JbsPage() {
       field: DataTableSearchField;
       q: string;
     }>,
-  ) => void navigate({ search: (current) => ({ ...current, ...next }), replace: true });
+  ) => setSearch((current) => ({ ...current, ...next }));
 
   return (
     <PageScaffold

@@ -30,12 +30,12 @@ export function BoardPage() {
     };
   }, [rulesOpen]);
   const rawSearch = useSearch({ from: '/boards/free' });
-  const search = {
+  const [search, setSearch] = useState(() => ({
     page: rawSearch.page ?? 1,
     pageSize: rawSearch.pageSize ?? 20,
     field: rawSearch.field ?? 'title_content',
     q: rawSearch.q ?? '',
-  } as const;
+  }));
   const navigate = useNavigate({ from: '/boards/free' });
   const postsQuery = useQuery({
     queryKey: ['board-posts', 'free', search.page, search.pageSize, search.field, search.q],
@@ -82,10 +82,7 @@ export function BoardPage() {
       q: string;
     }>,
   ) => {
-    void navigate({
-      search: (current) => ({ ...current, ...next }),
-      replace: true,
-    });
+    setSearch((current) => ({ ...current, ...next }));
   };
 
   return (
@@ -190,14 +187,29 @@ export function BoardPage() {
                 </thead>
                 <tbody>
                   {visiblePosts.map((post) => (
-                    <tr key={post.id}>
+                    <tr
+                      className="data-table__clickable-row"
+                      key={post.id}
+                      role="link"
+                      tabIndex={0}
+                      onClick={() =>
+                        void navigate({
+                          to: '/boards/free/$postId',
+                          params: { postId: String(post.id) },
+                        })
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key !== 'Enter' && event.key !== ' ') return;
+                        event.preventDefault();
+                        void navigate({
+                          to: '/boards/free/$postId',
+                          params: { postId: String(post.id) },
+                        });
+                      }}
+                    >
                       <td className="data-table__number">{post.publicNumber}</td>
                       <td className="data-table__title-cell">
-                        <Link
-                          className="data-table__title-link"
-                          to="/boards/free/$postId"
-                          params={{ postId: String(post.id) }}
-                        >
+                        <span className="data-table__row-title">
                           <span className="data-table__title-text">{post.title}</span>
                           {post.pinned ? <Pin size={13} aria-label="고정 게시글" /> : null}
                           {post.commentCount > 0 ? (
@@ -206,7 +218,7 @@ export function BoardPage() {
                             </span>
                           ) : null}
                           <ContentBadges createdAt={post.createdAt} />
-                        </Link>
+                        </span>
                       </td>
                       <td className="data-table__author">
                         {post.isAnonymous ? '익명' : (post.authorName ?? '작성자')}

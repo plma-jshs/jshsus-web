@@ -13,6 +13,7 @@ import { and, desc, eq, inArray, isNotNull, like, ne, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/mysql-core';
 import { z } from 'zod';
 import { DatabaseService, type AppDatabase } from '../database/database.service';
+import { FilesService } from '../files/files.service';
 import {
   dormNameForGender,
   generateDormDraw,
@@ -124,7 +125,10 @@ function parseTerm(input: Record<string, unknown>) {
 
 @Injectable()
 export class DormService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly filesService: FilesService,
+  ) {}
 
   async self(userId: number): Promise<DormSelfView> {
     const term = currentDormTerm();
@@ -220,6 +224,11 @@ export class DormService {
         .where(eq(schema.dormReports.userId, userId))
         .orderBy(desc(schema.dormReports.createdAt), desc(schema.dormReports.id))
         .limit(100);
+      const attachmentsByReport = await this.filesService.listForTargets(
+        'dorm_report',
+        reports.map((report) => report.id),
+        true,
+      );
 
       return {
         currentTerm: term,
@@ -232,6 +241,7 @@ export class DormService {
           imageUrl: report.imageUrl ?? undefined,
           comment: report.comment ?? undefined,
           createdAt: report.createdAt.toISOString(),
+          attachments: attachmentsByReport.get(report.id) ?? [],
         })),
       };
     });
@@ -462,12 +472,18 @@ export class DormService {
         .innerJoin(schema.students, eq(schema.dormReports.userId, schema.students.userId))
         .orderBy(desc(schema.dormReports.createdAt), desc(schema.dormReports.id))
         .limit(500);
+      const attachmentsByReport = await this.filesService.listForTargets(
+        'dorm_report',
+        rows.map((row) => row.id),
+        true,
+      );
 
       return rows.map((row) => ({
         ...row,
         imageUrl: row.imageUrl ?? undefined,
         comment: row.comment ?? undefined,
         createdAt: row.createdAt.toISOString(),
+        attachments: attachmentsByReport.get(row.id) ?? [],
       }));
     });
   }

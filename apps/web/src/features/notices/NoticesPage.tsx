@@ -29,12 +29,12 @@ const noticeMobileDateFormatter = createKoreanDateFormatter({
 export function NoticesPage() {
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
   const rawSearch = useSearch({ from: '/notices' });
-  const search = {
+  const [search, setSearch] = useState(() => ({
     page: rawSearch.page ?? 1,
     pageSize: rawSearch.pageSize ?? 20,
     field: rawSearch.field ?? 'title_content',
     q: rawSearch.q ?? '',
-  } as const;
+  }));
   const navigate = useNavigate({ from: '/notices' });
   const noticesQuery = useQuery({
     queryKey: ['notices', search.page, search.pageSize, search.field, search.q],
@@ -81,10 +81,7 @@ export function NoticesPage() {
       q: string;
     }>,
   ) => {
-    void navigate({
-      search: (current) => ({ ...current, ...next }),
-      replace: true,
-    });
+    setSearch((current) => ({ ...current, ...next }));
   };
 
   return (
@@ -181,17 +178,32 @@ export function NoticesPage() {
                 </thead>
                 <tbody>
                   {visibleNotices.map((notice) => (
-                    <tr className={notice.pinned ? 'is-pinned' : undefined} key={notice.id}>
+                    <tr
+                      className={`data-table__clickable-row${notice.pinned ? ' is-pinned' : ''}`}
+                      key={notice.id}
+                      role="link"
+                      tabIndex={0}
+                      onClick={() =>
+                        void navigate({
+                          to: '/notices/$noticeId',
+                          params: { noticeId: String(notice.id) },
+                        })
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key !== 'Enter' && event.key !== ' ') return;
+                        event.preventDefault();
+                        void navigate({
+                          to: '/notices/$noticeId',
+                          params: { noticeId: String(notice.id) },
+                        });
+                      }}
+                    >
                       <td className="data-table__number">{notice.publicNumber}</td>
                       <td className="data-table__title-cell">
-                        <Link
-                          className="data-table__title-link"
-                          to="/notices/$noticeId"
-                          params={{ noticeId: String(notice.id) }}
-                        >
+                        <span className="data-table__row-title">
                           <span className="data-table__title-text">{notice.title}</span>
                           <ContentBadges pinned={notice.pinned} createdAt={notice.publishedAt} />
-                        </Link>
+                        </span>
                       </td>
                       <td className="data-table__author">{notice.department}</td>
                       <td className="data-table__date">

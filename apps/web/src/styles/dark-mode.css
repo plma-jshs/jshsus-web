@@ -316,3 +316,36 @@
   input[type='range'].wake-song-timeline__range::-moz-range-thumb {
   background-color: var(--j-color-surface);
 }
+
+:root[data-theme='dark'] .cannon-workspace {
+  color: #172033;
+  border-color: transparent;
+  background: #4dc8f2 url('/images/cannon-scene.png') center / cover no-repeat;
+}
+
+:root[data-theme='dark'] .cannon-settings {
+  color: var(--j-color-text);
+  border-color: var(--j-color-border);
+  background: var(--j-color-surface);
+}
+
+:root[data-theme='dark'] .cannon-settings h2,
+:root[data-theme='dark'] .cannon-settings p,
+:root[data-theme='dark'] .cannon-range label,
+:root[data-theme='dark'] .cannon-exclusions {
+  color: var(--j-color-text);
+}
+
+:root[data-theme='dark'] .cannon-settings input {
+  border-color: var(--j-color-border-strong);
+  background: var(--j-color-surface-subtle);
+  color: var(--j-color-text);
+}
+
+:root[data-theme='dark'] .cannon-settings input::placeholder {
+  color: var(--j-color-text-muted);
+}
+
+:root[data-theme='dark'] .cannon-range__separator {
+  color: var(--j-color-text-muted);
+}

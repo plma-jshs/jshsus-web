@@ -630,14 +630,16 @@ export function MyStatusPage() {
           {status.points.records.length ? (
             status.points.records.slice(0, 3).map((record) => (
               <div key={record.id}>
+                <span
+                  className={`status-point-preview__badge ${record.point >= 0 ? 'is-positive' : 'is-negative'}`}
+                >
+                  {record.point >= 0 ? '상점' : '벌점'} {signedPoint(record.point)}
+                </span>
+                <span className="status-point-preview__reason">
+                  {record.comment || record.reason}
+                </span>
                 <time>{pointDateLabel(record.baseDate)}</time>
-                <strong className={record.point >= 0 ? 'is-positive' : 'is-negative'}>
-                  {signedPoint(record.point)}
-                </strong>
-                <span>{record.comment || record.reason}</span>
-                <small className="status-point-preview__processor">
-                  처리자 {record.teacherName}
-                </small>
+                <small className="status-point-preview__processor">{record.teacherName}</small>
               </div>
             ))
           ) : (

@@ -800,6 +800,7 @@ export type DormReport = {
   status: DormReportStatus;
   comment?: string;
   createdAt: string;
+  attachments?: UploadedFileSummary[];
 };
 
 export type DormSelfRoommate = Pick<

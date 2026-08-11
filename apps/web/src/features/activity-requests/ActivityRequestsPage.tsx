@@ -207,23 +207,6 @@ export function ActivityRequestsPage() {
             kind="empty"
             variant="table"
             title={requests.length ? '검색 결과가 없습니다.' : '신청한 탐구활동서가 없습니다.'}
-            action={
-              requests.length ? (
-                <button
-                  className="detail-secondary-button"
-                  type="button"
-                  onClick={() => {
-                    setFilter('all');
-                    setQuery('');
-                    setStartDate('');
-                    setEndDate('');
-                    setPage(1);
-                  }}
-                >
-                  검색 초기화
-                </button>
-              ) : undefined
-            }
           />
         ) : null}
 

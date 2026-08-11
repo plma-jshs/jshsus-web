@@ -28,7 +28,7 @@ export function DormPage() {
   const currentAssignment = data?.currentAssignment ?? null;
 
   return (
-    <PageScaffold breadcrumbs={listBreadcrumbs('dorm')} title="기숙사" width="wide">
+    <PageScaffold breadcrumbs={listBreadcrumbs('dorm')} title="기숙사" width="reading">
       {dormQuery.isLoading ? (
         <PageState kind="loading" variant="section" title="기숙사 정보를 불러오는 중입니다." />
       ) : null}
