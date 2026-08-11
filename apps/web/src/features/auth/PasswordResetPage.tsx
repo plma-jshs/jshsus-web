@@ -10,7 +10,7 @@ import {
 } from './api';
 import { AuthLayout } from './AuthLayout';
 
-type ResetStep = 'request' | 'confirm' | 'done';
+type ResetStep = 'request' | 'confirm';
 
 function PasswordField(props: {
   id: string;
@@ -100,8 +100,8 @@ export function PasswordResetPage() {
       setValidationError(null);
       setNotice(
         delivery === 'phone'
-          ? '계정에 등록된 전화번호로 인증 코드를 보냈습니다.'
-          : '계정에 등록되고 확인된 이메일로 인증 코드를 보냈습니다.',
+          ? '등록된 전화번호로 인증 코드를 보냈습니다'
+          : '등록된 이메일로 인증 코드를 보냈습니다',
       );
     },
   });
@@ -109,12 +109,8 @@ export function PasswordResetPage() {
   const confirmMutation = useMutation({
     mutationFn: confirmPasswordReset,
     onSuccess: () => {
-      setStep('done');
-      setConfirmationCode('');
-      setNewPassword('');
-      setNewPasswordConfirm('');
-      setValidationError(null);
-      setNotice('비밀번호를 변경했습니다. 새 비밀번호로 로그인해 주세요.');
+      window.alert('비밀번호가 정상적으로 변경되었습니다');
+      window.location.assign('/login');
     },
   });
 
@@ -148,7 +144,7 @@ export function PasswordResetPage() {
         : null);
 
   return (
-    <AuthLayout active="password" title={step === 'done' ? '비밀번호 변경 완료' : '비밀번호 찾기'}>
+    <AuthLayout active="password" title="비밀번호 찾기">
       {step === 'request' ? (
         <form className="auth-form" onSubmit={submitRequest}>
           <label htmlFor="forgot-username">
@@ -241,7 +237,7 @@ export function PasswordResetPage() {
           {activeError ? <FormMessage>{activeError}</FormMessage> : null}
           <div className="auth-inline-actions">
             <button
-              className="auth-link-button"
+              className="auth-link-button auth-resend-button"
               type="button"
               disabled={requestMutation.isPending}
               onClick={() => requestMutation.mutate({ username: username.trim(), delivery })}
@@ -261,18 +257,9 @@ export function PasswordResetPage() {
               setValidationError(null);
             }}
           >
-            <ArrowLeft size={15} aria-hidden="true" /> 계정 다시 입력
+            <ArrowLeft size={15} aria-hidden="true" /> 비밀번호 찾기로 돌아가기
           </button>
         </form>
-      ) : null}
-
-      {step === 'done' ? (
-        <div className="auth-form">
-          {notice ? <FormMessage success>{notice}</FormMessage> : null}
-          <a className="auth-submit" href={loginReturnHref}>
-            {returnTo === '/my-status' ? '마이페이지로 돌아가기' : '로그인하기'}
-          </a>
-        </div>
       ) : null}
     </AuthLayout>
   );

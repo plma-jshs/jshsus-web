@@ -61,6 +61,7 @@ type ContactDraft = {
   value: string;
   verificationCode: string;
   verificationRequested: boolean;
+  currentPassword: string;
 };
 
 const activitySlotLabels: Record<string, string> = {
@@ -236,7 +237,7 @@ export function MyStatusPage() {
 
   const contactMutation = useMutation({
     mutationFn: (draft: ContactDraft) =>
-      updateMyContact(draft.field, draft.value, draft.verificationCode || undefined),
+      updateMyContact(draft.field, draft.value, draft.verificationCode, draft.currentPassword),
     onSuccess: async (_, draft) => {
       await queryClient.invalidateQueries({ queryKey: ['my-status'] });
       setContactDraft(null);
@@ -245,7 +246,18 @@ export function MyStatusPage() {
         tone: 'success',
       });
     },
-    onError: () => showToast({ title: '연락처를 변경하지 못했습니다.', tone: 'danger' }),
+    onError: (error) =>
+      showToast({
+        title:
+          error instanceof ApiError &&
+          typeof error.payload === 'object' &&
+          error.payload !== null &&
+          'message' in error.payload &&
+          typeof error.payload.message === 'string'
+            ? error.payload.message
+            : '연락처를 변경하지 못했습니다.',
+        tone: 'danger',
+      }),
   });
 
   const contactVerificationMutation = useMutation({
@@ -552,6 +564,7 @@ export function MyStatusPage() {
                     value: '',
                     verificationCode: '',
                     verificationRequested: false,
+                    currentPassword: '',
                   });
                 }}
               >
@@ -570,6 +583,7 @@ export function MyStatusPage() {
                     value: '',
                     verificationCode: '',
                     verificationRequested: false,
+                    currentPassword: '',
                   });
                 }}
               >
@@ -853,6 +867,10 @@ export function MyStatusPage() {
                   });
                   return;
                 }
+                if (!contactDraft.currentPassword) {
+                  showToast({ title: '현재 비밀번호를 입력해 주세요.', tone: 'danger' });
+                  return;
+                }
                 if (!contactMutation.isPending) contactMutation.mutate(contactDraft);
               }}
             >
@@ -940,6 +958,22 @@ export function MyStatusPage() {
                   />
                 </>
               ) : null}
+              <label className="status-contact-password-field" htmlFor="status-contact-password">
+                <span>현재 비밀번호</span>
+                <input
+                  id="status-contact-password"
+                  autoComplete="current-password"
+                  type="password"
+                  value={contactDraft.currentPassword}
+                  onChange={(event) =>
+                    setContactDraft((current) =>
+                      current ? { ...current, currentPassword: event.target.value } : current,
+                    )
+                  }
+                  placeholder="현재 비밀번호를 입력해주세요."
+                  required
+                />
+              </label>
               <div className="status-contact-modal__actions">
                 <button type="button" onClick={() => contactSheet.requestClose()}>
                   취소

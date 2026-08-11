@@ -60,7 +60,7 @@
   border: 1px solid rgb(0 0 0 / 6%);
   border-radius: 16px;
   background: #fff;
-  box-shadow: var(--j-shadow-card);
+  box-shadow: none;
 }
 
 .home-primary-grid .home-card {
@@ -598,7 +598,7 @@
   border-radius: 8px;
   color: var(--j-color-text-secondary);
   background: var(--j-color-surface);
-  box-shadow: var(--j-shadow-overlay);
+  box-shadow: var(--j-shadow-dropdown);
   opacity: 0;
   pointer-events: none;
   text-align: left;

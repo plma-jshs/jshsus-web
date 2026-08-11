@@ -412,6 +412,11 @@
   opacity: 0.55;
 }
 
+.auth-resend-button {
+  font-size: var(--j-text-sm);
+  font-weight: var(--j-weight-bold);
+}
+
 .auth-remember {
   display: inline-flex;
   align-items: center;

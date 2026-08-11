@@ -15,11 +15,12 @@ export function updateMyProfile(nickname: string) {
 export function updateMyContact(
   field: 'email' | 'phone',
   value: string,
-  verificationCode?: string,
+  verificationCode: string,
+  currentPassword: string,
 ) {
   return request<{ ok: true; field: 'email' | 'phone' }>('/api/me/contact', {
     method: 'PATCH',
-    body: { field, value, verificationCode },
+    body: { field, value, verificationCode, currentPassword },
   });
 }
 

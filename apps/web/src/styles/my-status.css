@@ -1117,6 +1117,14 @@
   box-shadow: 0 0 0 3px rgb(9 105 218 / 11%);
 }
 
+.status-contact-password-field {
+  display: grid;
+  gap: 6px;
+  color: var(--j-color-text-secondary);
+  font-size: 12px;
+  font-weight: 550;
+}
+
 .status-contact-verification {
   position: relative;
 }

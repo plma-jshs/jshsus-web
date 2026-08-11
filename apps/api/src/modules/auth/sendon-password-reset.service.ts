@@ -98,6 +98,33 @@ export class SendonPasswordResetService {
     });
   }
 
+  async sendContactChangedNotice(input: {
+    phone: string;
+    field: 'email' | 'phone';
+  }): Promise<void> {
+    const phone = normalizeKoreanMobilePhone(input.phone);
+    if (!phone || !env.SENDON_ACCOUNT_ID || !env.SENDON_API_KEY) {
+      throw new ServiceUnavailableException({
+        code: 'CONTACT_NOTIFICATION_UNAVAILABLE',
+        message: '전화번호 변경 알림 발송 설정을 확인해 주세요.',
+      });
+    }
+
+    const message = this.contactChangedMessage(input.field);
+    if (env.SENDON_KAKAO_SEND_PROFILE_ID && env.SENDON_CONTACT_CHANGED_TEMPLATE_ID) {
+      await this.sendContactChangedAlimTalk(phone, message);
+      return;
+    }
+    if (env.SENDON_SMS_SENDER_NUMBER) {
+      await this.sendNoticeSms(phone, message);
+      return;
+    }
+    throw new ServiceUnavailableException({
+      code: 'CONTACT_NOTIFICATION_UNAVAILABLE',
+      message: '전화번호 변경 알림 발송 채널을 확인해 주세요.',
+    });
+  }
+
   private async sendAlimTalk(phone: string, code: string): Promise<void> {
     await this.send('/v2/messages/kakao/alim-talk', {
       sendProfileId: env.SENDON_KAKAO_SEND_PROFILE_ID,
@@ -149,11 +176,42 @@ export class SendonPasswordResetService {
     });
   }
 
+  private async sendContactChangedAlimTalk(phone: string, message: string): Promise<void> {
+    await this.send('/v2/messages/kakao/alim-talk', {
+      sendProfileId: env.SENDON_KAKAO_SEND_PROFILE_ID,
+      templateId: env.SENDON_CONTACT_CHANGED_TEMPLATE_ID,
+      to: [{ phone, variables: {} }],
+      fallback: env.SENDON_SMS_SENDER_NUMBER
+        ? {
+            fallbackType: 'CUSTOM',
+            custom: {
+              type: 'SMS',
+              senderNumber: env.SENDON_SMS_SENDER_NUMBER,
+              message,
+              isAd: false,
+            },
+          }
+        : { fallbackType: 'NONE' },
+      useCredit: true,
+    });
+  }
+
   private async sendSms(
     phone: string,
     code: string,
     message = this.passwordResetMessage(code),
   ): Promise<void> {
+    await this.send('/v2/messages/sms', {
+      type: 'SMS',
+      from: env.SENDON_SMS_SENDER_NUMBER,
+      to: [phone],
+      message,
+      isAd: false,
+      useCredit: true,
+    });
+  }
+
+  private async sendNoticeSms(phone: string, message: string): Promise<void> {
     await this.send('/v2/messages/sms', {
       type: 'SMS',
       from: env.SENDON_SMS_SENDER_NUMBER,
@@ -170,6 +228,11 @@ export class SendonPasswordResetService {
 
   private verificationMessage(code: string): string {
     return `[전남과학고등학교 전산시스템] 전화번호 인증번호는 ${code}입니다.`;
+  }
+
+  private contactChangedMessage(field: 'email' | 'phone'): string {
+    const label = field === 'email' ? '이메일' : '전화번호';
+    return `[전남과학고등학교 전산시스템] 등록된 ${label}가 변경되었습니다. 본인이 변경하지 않았다면 학교 담당자에게 문의해 주세요.`;
   }
 
   private async send(path: string, body: unknown): Promise<void> {

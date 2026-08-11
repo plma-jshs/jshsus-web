@@ -1,11 +1,17 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as schema from '@jshsus/db';
 import type { ActivityRequestSummary, PointRecord, StudentSelfStatus } from '@jshsus/types';
 import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
 import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
-import type { AuthSession } from '../auth/auth.service';
-import { CognitoAuthService } from '../auth/cognito-auth.service';
+import { AuthService, type AuthSession } from '../auth/auth.service';
+import { CognitoAuthError, CognitoAuthService } from '../auth/cognito-auth.service';
 import { SendonPasswordResetService } from '../auth/sendon-password-reset.service';
 import { EmailVerificationService } from '../auth/email-verification.service';
 import { DatabaseService } from '../database/database.service';
@@ -73,6 +79,7 @@ const contactUpdateSchema = z.discriminatedUnion('field', [
   z.object({
     field: z.literal('email'),
     value: z.string().trim().email().max(255),
+    currentPassword: z.string().min(1).max(128),
     verificationCode: z
       .string()
       .trim()
@@ -88,6 +95,7 @@ const contactUpdateSchema = z.discriminatedUnion('field', [
       .string()
       .trim()
       .regex(/^\d{6}$/),
+    currentPassword: z.string().min(1).max(128),
   }),
 ]);
 
@@ -104,8 +112,11 @@ const contactVerificationRequestSchema = z.discriminatedUnion('field', [
 
 @Injectable()
 export class MeService {
+  private readonly logger = new Logger(MeService.name);
+
   constructor(
     private readonly database: DatabaseService,
+    private readonly auth: AuthService,
     private readonly cognito: CognitoAuthService,
     private readonly redis: RedisService,
     private readonly sendon: SendonPasswordResetService,
@@ -397,6 +408,15 @@ export class MeService {
         ),
       )
       .limit(1);
+    const [currentContact] = await this.database.db
+      .select({ email: schema.users.email, phone: schema.users.phone })
+      .from(schema.users)
+      .where(eq(schema.users.id, session.userId))
+      .limit(1);
+
+    if (!currentContact) {
+      throw new UnauthorizedException('The current student account could not be found.');
+    }
 
     const value =
       parsed.data.field === 'email'
@@ -408,14 +428,25 @@ export class MeService {
       value,
       parsed.data.verificationCode,
     );
+    await this.auth.verifyCurrentPassword(session, parsed.data.currentPassword);
     if (cognitoAccount?.subject) {
-      await this.cognito.updateContactAttributes({
-        subject: cognitoAccount.subject,
-        fallbackUsername: session.identifier ?? String(session.stuid ?? ''),
-        ...(parsed.data.field === 'email'
-          ? { email: value, emailVerified: true }
-          : { phone: value }),
-      });
+      try {
+        await this.cognito.updateContactAttributes({
+          subject: cognitoAccount.subject,
+          fallbackUsername: session.identifier ?? String(session.stuid ?? ''),
+          ...(parsed.data.field === 'email'
+            ? { email: value, emailVerified: true }
+            : { phone: value }),
+        });
+      } catch (error) {
+        if (error instanceof CognitoAuthError) {
+          throw new ServiceUnavailableException({
+            code: 'CONTACT_PROVIDER_UPDATE_FAILED',
+            message: '통합로그인 연락처를 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          });
+        }
+        throw error;
+      }
     }
 
     await this.database.db
@@ -431,7 +462,41 @@ export class MeService {
 
     await this.redis.delete(this.contactVerificationFlowKey(session.userId, parsed.data.field));
 
+    await this.sendContactChangedNotification(
+      parsed.data.field,
+      parsed.data.field === 'email' ? currentContact.email : currentContact.phone,
+    );
+
     return { ok: true as const, field: parsed.data.field };
+  }
+
+  private async sendContactChangedNotification(
+    field: 'email' | 'phone',
+    previousValue: string | null,
+  ) {
+    if (!previousValue) return;
+
+    try {
+      if (field === 'email') {
+        await this.emailVerification.sendContactChangedNotice({
+          email: previousValue,
+          field,
+        });
+      } else {
+        await this.sendon.sendContactChangedNotice({
+          phone: previousValue,
+          field,
+        });
+      }
+    } catch (error) {
+      // The contact update has already succeeded. A delivery outage must not
+      // turn a successful update into a misleading 500 response.
+      this.logger.warn(
+        `Previous contact notification failed: field=${field} cause=${
+          error instanceof Error ? error.message : 'unknown'
+        }`,
+      );
+    }
   }
 
   async requestContactVerification(session: AuthSession | undefined, body: unknown) {

@@ -4,6 +4,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  Logger,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -141,6 +142,8 @@ export function resolveSessionIdentity(input: {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly redis: RedisService,
     private readonly database: DatabaseService,
@@ -212,6 +215,64 @@ export class AuthService {
   }): Promise<AuthLoginResult> {
     await this.assertAccountRateLimit('login', input.username, 15, 300);
     return this.loginWithCognito(input);
+  }
+
+  async verifyCurrentPassword(session: AuthSession | undefined, password: string): Promise<void> {
+    if (!session?.userId || session.userId <= 0) {
+      throw new UnauthorizedException('A persisted student session is required.');
+    }
+
+    // Development sessions intentionally bypass Cognito and therefore do not
+    // have a password that can be re-authenticated against a provider.
+    if (env.NODE_ENV === 'development' && env.DEV_AUTH_BYPASS) return;
+
+    const username = (session.identifier ?? String(session.stuid ?? '')).trim();
+    if (!username) {
+      throw new UnauthorizedException({
+        code: 'AUTH_CURRENT_PASSWORD_INVALID',
+        message: '현재 비밀번호를 확인해 주세요.',
+      });
+    }
+
+    const [account] = await this.database.db
+      .select({ subject: schema.authAccounts.providerAccountId })
+      .from(schema.authAccounts)
+      .where(
+        and(
+          eq(schema.authAccounts.userId, session.userId),
+          eq(schema.authAccounts.provider, 'cognito'),
+        ),
+      )
+      .limit(1);
+
+    if (!account?.subject) {
+      throw new ServiceUnavailableException({
+        code: 'AUTH_ACCOUNT_LINK_UNAVAILABLE',
+        message: '통합로그인 계정 연결을 확인해 주세요.',
+      });
+    }
+
+    try {
+      const result = await this.cognito.authenticate(username, password, 'web');
+      if (result.kind !== 'authenticated' || result.subject !== account.subject) {
+        throw new UnauthorizedException({
+          code: 'AUTH_CURRENT_PASSWORD_INVALID',
+          message: '현재 비밀번호를 확인해 주세요.',
+        });
+      }
+    } catch (error) {
+      if (
+        error instanceof CognitoAuthError &&
+        ['AUTH_INVALID_CREDENTIALS', 'AUTH_PASSWORD_RESET_REQUIRED'].includes(error.code)
+      ) {
+        throw new UnauthorizedException({
+          code: 'AUTH_CURRENT_PASSWORD_INVALID',
+          message: '현재 비밀번호를 확인해 주세요.',
+        });
+      }
+      if (error instanceof UnauthorizedException) throw error;
+      this.throwMappedCognitoError(error);
+    }
   }
 
   async issueDevelopmentSession(): Promise<Extract<AuthLoginResult, { status: 'AUTHENTICATED' }>> {
@@ -452,6 +513,11 @@ export class AuthService {
       (delivery === 'phone' && (!target.phone || !this.sendonPasswordReset)) ||
       (delivery === 'email' && !target.email)
     ) {
+      if (target && target.status === 'active' && delivery === 'email') {
+        this.logger.warn(
+          `Password reset email unavailable: userId=${target.userId} hasEmail=${Boolean(target.email)} hasCognitoLink=${Boolean(target.cognitoSubject)}`,
+        );
+      }
       // Unknown or unrecoverable accounts intentionally receive the same
       // response as existing accounts so this endpoint cannot enumerate IDs.
       return { ok: true };
@@ -485,6 +551,9 @@ export class AuthService {
           error instanceof CognitoAuthError &&
           ['AUTH_INVALID_CREDENTIALS', 'AUTH_RECOVERY_UNAVAILABLE'].includes(error.code)
         ) {
+          this.logger.warn(
+            `Password reset email was not sent: userId=${target.userId} code=${error.code} cause=${error.causeName ?? 'unknown'}`,
+          );
           return { ok: true };
         }
         this.throwMappedCognitoError(error);

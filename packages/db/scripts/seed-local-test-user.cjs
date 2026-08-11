@@ -29,6 +29,9 @@ async function seedLocalTestUser(environment = process.env) {
   const grade = positiveInteger(environment.TEST_USER_GRADE, 3, 'TEST_USER_GRADE');
   const classNo = positiveInteger(environment.TEST_USER_CLASS_NO, 9, 'TEST_USER_CLASS_NO');
   const number = positiveInteger(environment.TEST_USER_NUMBER, 99, 'TEST_USER_NUMBER');
+  // Keep contact data opt-in for the local bypass account. A development
+  // seed must not invent or overwrite a real recovery address.
+  const email = String(environment.TEST_USER_EMAIL ?? '').trim();
 
   const connection = await mysql.createConnection(seedConnectionOptions(databaseUrl, environment));
   try {
@@ -36,16 +39,17 @@ async function seedLocalTestUser(environment = process.env) {
 
     await connection.execute(
       `INSERT INTO users
-        (student_no, name, grade, class_no, number, user_status)
-       VALUES (?, ?, ?, ?, ?, 'active')
+        (student_no, name, grade, class_no, number, email, user_status)
+       VALUES (?, ?, ?, ?, ?, ?, 'active')
        ON DUPLICATE KEY UPDATE
          name = VALUES(name),
          grade = VALUES(grade),
          class_no = VALUES(class_no),
          number = VALUES(number),
+         email = COALESCE(VALUES(email), email),
          user_status = 'active',
          updated_at = now(3)`,
-      [studentNo, name, grade, classNo, number],
+      [studentNo, name, grade, classNo, number, email || null],
     );
 
     const user = await selectOne(connection, 'SELECT id FROM users WHERE student_no = ? LIMIT 1', [

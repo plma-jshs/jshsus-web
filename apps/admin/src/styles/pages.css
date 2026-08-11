@@ -357,7 +357,7 @@
   border: 1px solid rgb(0 0 0 / 5%);
   border-radius: 16px;
   background: #fff;
-  box-shadow: var(--j-shadow-overlay);
+  box-shadow: var(--j-shadow-dropdown);
 }
 
 .admin-profile-menu__dropdown > span {

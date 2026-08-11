@@ -137,7 +137,7 @@
   border-top: 1px solid var(--j-color-border);
   border-bottom: 1px solid var(--j-color-border);
   background: rgb(255 255 255 / 99%);
-  box-shadow: var(--j-shadow-overlay);
+  box-shadow: var(--j-shadow-dropdown);
   opacity: 0;
   pointer-events: none;
   transition:
@@ -315,7 +315,7 @@
   border: 1px solid rgb(0 0 0 / 5%);
   border-radius: 16px;
   background: #fff;
-  box-shadow: var(--j-shadow-overlay);
+  box-shadow: var(--j-shadow-dropdown);
 }
 
 .header-user-dropdown a,

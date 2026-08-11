@@ -60,6 +60,104 @@ describe('Cognito authentication routing', () => {
     expect(cognito.authenticate).toHaveBeenCalledWith('9999', 'wrong', 'web');
   });
 
+  it('re-authenticates the current password against the linked Cognito subject', async () => {
+    const authenticate = vi.fn().mockResolvedValue({
+      kind: 'authenticated',
+      subject: 'sub-1',
+      username: '9999',
+    });
+    const database = {
+      db: {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn().mockResolvedValue([{ subject: 'sub-1' }]),
+            })),
+          })),
+        })),
+      },
+    };
+    const service = new AuthService({} as never, database as never, { authenticate } as never);
+
+    await expect(
+      service.verifyCurrentPassword(
+        { userId: 1, identifier: '9999', isLogined: true } as never,
+        'current-password',
+      ),
+    ).resolves.toBeUndefined();
+    expect(authenticate).toHaveBeenCalledWith('9999', 'current-password', 'web');
+  });
+
+  it('rejects a current password when Cognito returns a different subject', async () => {
+    const database = {
+      db: {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn().mockResolvedValue([{ subject: 'sub-1' }]),
+            })),
+          })),
+        })),
+      },
+    };
+    const service = new AuthService(
+      {} as never,
+      database as never,
+      {
+        authenticate: vi.fn().mockResolvedValue({
+          kind: 'authenticated',
+          subject: 'sub-2',
+          username: '9999',
+        }),
+      } as never,
+    );
+
+    await expect(
+      service.verifyCurrentPassword(
+        { userId: 1, identifier: '9999', isLogined: true } as never,
+        'current-password',
+      ),
+    ).rejects.toMatchObject({
+      status: 401,
+      response: { code: 'AUTH_CURRENT_PASSWORD_INVALID' },
+    });
+  });
+
+  it('maps an invalid current password to a safe 401 response', async () => {
+    const database = {
+      db: {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn().mockResolvedValue([{ subject: 'sub-1' }]),
+            })),
+          })),
+        })),
+      },
+    };
+    const service = new AuthService(
+      {} as never,
+      database as never,
+      {
+        authenticate: vi
+          .fn()
+          .mockRejectedValue(
+            new CognitoAuthError('AUTH_INVALID_CREDENTIALS', 'invalid credentials'),
+          ),
+      } as never,
+    );
+
+    await expect(
+      service.verifyCurrentPassword(
+        { userId: 1, identifier: '9999', isLogined: true } as never,
+        'wrong-password',
+      ),
+    ).rejects.toMatchObject({
+      status: 401,
+      response: { code: 'AUTH_CURRENT_PASSWORD_INVALID' },
+    });
+  });
+
   it('hides unknown password recovery accounts without sending a code', async () => {
     const sendon = { sendPasswordResetCode: vi.fn() };
     const service = new AuthService(
