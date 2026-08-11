@@ -58,6 +58,7 @@ export type CognitoAuthErrorCode =
   | 'AUTH_UNSUPPORTED_CHALLENGE'
   | 'AUTH_ACCOUNT_ATTRIBUTES_REQUIRED'
   | 'AUTH_RECOVERY_UNAVAILABLE'
+  | 'AUTH_CONTACT_ALREADY_IN_USE'
   | 'AUTH_PASSWORD_CHANGED_RELOGIN_REQUIRED'
   | 'AUTH_PROVIDER_UNAVAILABLE';
 
@@ -570,6 +571,16 @@ export class CognitoAuthService {
     subject: string,
     fallbackUsername: string,
   ): Promise<string | null> {
+    if (fallbackUsername) {
+      const fallback = await this.getAdminUser(fallbackUsername);
+      if (fallback) {
+        const fallbackSubject = fallback.UserAttributes?.find(
+          (attribute) => attribute.Name === 'sub',
+        )?.Value;
+        if (fallbackSubject === subject) return fallback.Username ?? fallbackUsername;
+      }
+    }
+
     const escapedSubject = subject.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
     const result = await this.getAdminClient()
       .send(
@@ -670,6 +681,12 @@ export class CognitoAuthService {
         return new CognitoAuthError(
           'AUTH_PROVIDER_UNAVAILABLE',
           '인증 서버에서 요청을 처리하지 못했습니다.',
+          causeName,
+        );
+      case 'AliasExistsException':
+        return new CognitoAuthError(
+          'AUTH_CONTACT_ALREADY_IN_USE',
+          '이미 다른 통합로그인 계정에서 사용 중인 연락처입니다.',
           causeName,
         );
       case 'LimitExceededException':

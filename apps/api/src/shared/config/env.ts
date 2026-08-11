@@ -76,7 +76,6 @@ const envSchema = z
     SENDON_PASSWORD_RESET_TEMPLATE_ID: z.string().trim().default(''),
     SENDON_ACCOUNT_ACTIVATION_TEMPLATE_ID: z.string().trim().default(''),
     SENDON_CONTACT_VERIFICATION_TEMPLATE_ID: z.string().trim().default(''),
-    SENDON_CONTACT_CHANGED_TEMPLATE_ID: z.string().trim().default(''),
     SENDON_SMS_SENDER_NUMBER: z.string().trim().default(''),
     SENDON_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(15_000).default(5_000),
     SES_REGION: z.string().trim().default('ap-northeast-2'),

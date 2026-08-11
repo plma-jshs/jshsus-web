@@ -776,6 +776,7 @@ export class AuthService {
       case 'AUTH_USER_NOT_CONFIRMED':
       case 'AUTH_PASSWORD_CHANGED_RELOGIN_REQUIRED':
       case 'AUTH_ACCOUNT_ATTRIBUTES_REQUIRED':
+      case 'AUTH_CONTACT_ALREADY_IN_USE':
         throw new ConflictException(payload);
       case 'AUTH_CODE_MISMATCH':
       case 'AUTH_CODE_EXPIRED':

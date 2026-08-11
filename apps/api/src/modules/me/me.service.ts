@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   ServiceUnavailableException,
@@ -440,6 +441,17 @@ export class MeService {
         });
       } catch (error) {
         if (error instanceof CognitoAuthError) {
+          if (error.code === 'AUTH_CONTACT_ALREADY_IN_USE') {
+            throw new ConflictException({
+              code: 'CONTACT_ALREADY_IN_USE',
+              message: '이미 다른 통합로그인 계정에서 사용 중인 연락처입니다.',
+            });
+          }
+          this.logger.warn(
+            `Contact provider update failed: field=${parsed.data.field} cause=${
+              error.causeName ?? 'unknown'
+            }`,
+          );
           throw new ServiceUnavailableException({
             code: 'CONTACT_PROVIDER_UPDATE_FAILED',
             message: '통합로그인 연락처를 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.',
@@ -462,32 +474,22 @@ export class MeService {
 
     await this.redis.delete(this.contactVerificationFlowKey(session.userId, parsed.data.field));
 
-    await this.sendContactChangedNotification(
-      parsed.data.field,
-      parsed.data.field === 'email' ? currentContact.email : currentContact.phone,
-    );
+    await this.sendContactChangedNotification(parsed.data.field, currentContact.email);
 
     return { ok: true as const, field: parsed.data.field };
   }
 
   private async sendContactChangedNotification(
     field: 'email' | 'phone',
-    previousValue: string | null,
+    previousEmail: string | null,
   ) {
-    if (!previousValue) return;
+    if (!previousEmail) return;
 
     try {
-      if (field === 'email') {
-        await this.emailVerification.sendContactChangedNotice({
-          email: previousValue,
-          field,
-        });
-      } else {
-        await this.sendon.sendContactChangedNotice({
-          phone: previousValue,
-          field,
-        });
-      }
+      await this.emailVerification.sendContactChangedNotice({
+        email: previousEmail,
+        field,
+      });
     } catch (error) {
       // The contact update has already succeeded. A delivery outage must not
       // turn a successful update into a misleading 500 response.

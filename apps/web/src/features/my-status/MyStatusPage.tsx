@@ -878,6 +878,22 @@ export function MyStatusPage() {
                 <strong>{status.student.name}</strong>님의{' '}
                 <em>{contactDraft.field === 'email' ? '이메일' : '전화번호'}</em>를 변경합니다.
               </p>
+              <label className="status-contact-password-field" htmlFor="status-contact-password">
+                <span>현재 비밀번호</span>
+                <input
+                  id="status-contact-password"
+                  autoComplete="current-password"
+                  type="password"
+                  value={contactDraft.currentPassword}
+                  onChange={(event) =>
+                    setContactDraft((current) =>
+                      current ? { ...current, currentPassword: event.target.value } : current,
+                    )
+                  }
+                  placeholder="현재 비밀번호를 입력해주세요."
+                  required
+                />
+              </label>
               <div className="status-contact-current">
                 {contactDraft.field === 'email' ? (
                   <Mail size={17} aria-hidden="true" />
@@ -958,22 +974,6 @@ export function MyStatusPage() {
                   />
                 </>
               ) : null}
-              <label className="status-contact-password-field" htmlFor="status-contact-password">
-                <span>현재 비밀번호</span>
-                <input
-                  id="status-contact-password"
-                  autoComplete="current-password"
-                  type="password"
-                  value={contactDraft.currentPassword}
-                  onChange={(event) =>
-                    setContactDraft((current) =>
-                      current ? { ...current, currentPassword: event.target.value } : current,
-                    )
-                  }
-                  placeholder="현재 비밀번호를 입력해주세요."
-                  required
-                />
-              </label>
               <div className="status-contact-modal__actions">
                 <button type="button" onClick={() => contactSheet.requestClose()}>
                   취소
