@@ -2,7 +2,7 @@ body,
 #root,
 .app-shell,
 .main-panel {
-  background: #fff;
+  background: var(--j-color-surface);
 }
 
 body
@@ -32,7 +32,7 @@ body .points-card > .status-records,
 body .thanks-page :is(.thanks-summary, .thanks-messages) {
   border-inline: 0;
   border-radius: 0;
-  background: #fff;
+  background: var(--j-color-surface);
   box-shadow: none;
 }
 

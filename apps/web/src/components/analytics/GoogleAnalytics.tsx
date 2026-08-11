@@ -48,7 +48,7 @@ export function GoogleAnalytics() {
     gtag('event', 'page_view', {
       page_title: document.title,
       page_location: window.location.href,
-      page_path: `${pathname}${search}${hash}`,
+      page_path: `${pathname}${window.location.search}${window.location.hash}`,
     });
   }, [hash, pathname, search]);
 

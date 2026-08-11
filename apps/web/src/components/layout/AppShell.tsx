@@ -124,7 +124,8 @@ function isMobileEditorRoute(pathname: string) {
     normalizedPathname === '/jbs/new' ||
     /^\/jbs\/[^/]+\/edit$/.test(normalizedPathname) ||
     normalizedPathname === '/activity-requests/new' ||
-    /^\/activity-requests\/[^/]+\/edit$/.test(normalizedPathname)
+    /^\/activity-requests\/[^/]+\/edit$/.test(normalizedPathname) ||
+    normalizedPathname === '/dorm/reports/new'
   );
 }
 
@@ -495,6 +496,7 @@ function PortalShell() {
   const normalizedPathname = pathname.replace(/\/+$/, '') || '/';
   const mobilePortalHeaderTitle = getMobilePortalHeaderTitle(pathname);
   const mobileEditorRoute = isMobileEditorRoute(pathname);
+  const mobileEditorActionLabel = normalizedPathname === '/dorm/reports/new' ? '등록' : '게시';
   const mobileFooterVisible = normalizedPathname === '/' || normalizedPathname === '/my-status';
   const [routeLabel, setRouteLabel] = useState('페이지를 이동했습니다.');
   const [isBusinessInfoOpen, setIsBusinessInfoOpen] = useState(false);
@@ -648,12 +650,12 @@ function PortalShell() {
             </div>
             {mobileEditorRoute ? (
               <button
-                aria-label="게시"
+                aria-label={mobileEditorActionLabel}
                 className="portal-header__editor-action"
                 form="editor-form"
                 type="submit"
               >
-                게시
+                {mobileEditorActionLabel}
               </button>
             ) : null}
           </div>

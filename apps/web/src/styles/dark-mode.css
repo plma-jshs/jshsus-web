@@ -1,0 +1,318 @@
+/*
+ * Some legacy page styles intentionally keep a light flat surface and a few
+ * calendar/editor controls use literal light colors. Keep those exceptions
+ * in one theme layer so switching themes cannot leave a white page behind.
+ */
+:root[data-theme='dark'] body,
+:root[data-theme='dark'] #root {
+  color: var(--j-color-text);
+  background: var(--j-color-canvas);
+}
+
+:root[data-theme='dark'] .app-shell,
+:root[data-theme='dark'] .main-panel,
+:root[data-theme='dark'] .portal-footer,
+:root[data-theme='dark'] .mobile-tabbar {
+  background: var(--j-color-surface);
+}
+
+:root[data-theme='dark'] .detail-page,
+:root[data-theme='dark'] .detail-page-header,
+:root[data-theme='dark'] .home-dashboard,
+:root[data-theme='dark'] .my-page,
+:root[data-theme='dark'] .points-card,
+:root[data-theme='dark'] .thanks-page {
+  color: var(--j-color-text);
+  background: var(--j-color-surface);
+}
+
+:root[data-theme='dark']
+  :where(input:not([type='checkbox']):not([type='radio']):not([type='file']), select, textarea) {
+  border-color: var(--j-color-border-strong);
+  color: var(--j-color-text);
+  background-color: var(--j-color-surface-raised);
+}
+
+:root[data-theme='dark'] :where(input, select, textarea)::placeholder {
+  color: var(--j-color-text-muted);
+}
+
+:root[data-theme='dark'] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2393a6ab' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+:root[data-theme='dark']
+  :where(
+    .data-table-toolbar,
+    .page-toolbar,
+    .workflow-table-section .page-toolbar,
+    .lost-items-view .page-toolbar,
+    .detail-page-header
+  ) {
+  border-color: var(--j-color-border);
+  color: var(--j-color-text);
+  background: var(--j-color-surface);
+}
+
+:root[data-theme='dark']
+  :where(
+    .data-table,
+    .workflow-table,
+    .status-records table,
+    .dorm-table,
+    .data-table-viewport,
+    .workflow-table-viewport,
+    .dorm-table-wrap
+  ) {
+  color: var(--j-color-text);
+  background: var(--j-color-surface);
+}
+
+:root[data-theme='dark']
+  :where(
+    .data-table th,
+    .data-table td,
+    .workflow-table th,
+    .workflow-table td,
+    .status-records th,
+    .status-records td,
+    .dorm-table th,
+    .dorm-table td
+  ) {
+  border-color: var(--j-color-border);
+  color: var(--j-color-text-secondary);
+  background: var(--j-color-surface);
+}
+
+:root[data-theme='dark']
+  :where(.data-table th, .workflow-table th, .status-records th, .dorm-table th) {
+  color: var(--j-color-text);
+  background: var(--j-color-surface-subtle);
+}
+
+:root[data-theme='dark'] .data-table tbody tr.is-pinned td {
+  background: var(--j-color-info-subtle);
+}
+
+:root[data-theme='dark']
+  :where(
+    .data-table tbody tr:hover td,
+    .workflow-table tbody tr:hover td,
+    .status-records tbody tr:hover td
+  ) {
+  background: var(--j-color-surface-hover);
+}
+
+:root[data-theme='dark']
+  :where(
+    .header-user-dropdown,
+    .notification-popover,
+    .content-more-menu__dropdown,
+    .data-table-toolbar-select__menu,
+    .page-toolbar__filters-content,
+    .rich-text-link-modal__dialog,
+    .editor-resume-modal__dialog,
+    .status-crop-modal,
+    .status-contact-modal,
+    .calendar-mobile-modal__dialog,
+    .portal-footer__business-dialog
+  ) {
+  border-color: var(--j-color-border);
+  color: var(--j-color-text);
+  background: var(--j-color-surface-raised);
+}
+
+:root[data-theme='dark']
+  :where(
+    .header-user-dropdown a,
+    .header-user-dropdown button,
+    .content-more-menu__dropdown button,
+    .data-table-toolbar-select__menu button
+  ) {
+  color: var(--j-color-text-secondary);
+}
+
+:root[data-theme='dark']
+  :where(
+    .header-user-dropdown a:hover,
+    .content-more-menu__dropdown button:hover,
+    .data-table-toolbar-select__menu button:hover,
+    .data-table-toolbar-select__menu button:focus-visible
+  ) {
+  background: var(--j-color-surface-hover);
+}
+
+:root[data-theme='dark']
+  :where(
+    .home-dashboard + .state-message,
+    .main-panel > .state-message,
+    .route-pending,
+    .page-state--page
+  ) {
+  color: var(--j-color-text);
+  border-color: var(--j-color-border);
+  background: var(--j-color-surface);
+}
+
+:root[data-theme='dark']
+  :where(
+    .calendar-toolbar,
+    .calendar-toolbar__agenda,
+    .calendar-availability-note,
+    .calendar-agenda,
+    .calendar-agenda__list,
+    .calendar-agenda__empty
+  ) {
+  border-color: var(--j-color-border);
+  color: var(--j-color-text);
+  background: var(--j-color-surface);
+}
+
+:root[data-theme='dark']
+  :where(
+    .rich-text-editor,
+    .rich-text-editor__content,
+    .rich-text-toolbar,
+    .activity-form-section,
+    .status-contact-modal input,
+    .status-crop-modal input,
+    .not-found-page
+  ) {
+  border-color: var(--j-color-border-strong);
+  color: var(--j-color-text);
+  background: var(--j-color-surface);
+}
+
+:root[data-theme='dark'] .status-contact-modal input,
+:root[data-theme='dark'] .status-crop-modal input {
+  background: var(--j-color-surface-raised);
+}
+
+:root[data-theme='dark']
+  .detail-page
+  > :is(
+    .data-table-section,
+    .workflow-table-section,
+    .reading-surface,
+    .comment-surface,
+    .editor-surface,
+    .jbs-form,
+    .jbs-detail,
+    .calendar-workspace,
+    .lost-items-view,
+    .lost-item-detail,
+    .lost-item-form,
+    .static-document,
+    .wake-song-builder,
+    .activity-document,
+    .activity-form,
+    .byte-calculator,
+    .cannon-workspace,
+    .page-state--page
+  ),
+:root[data-theme='dark'] .my-page > :is(.status-profile-card, .status-overview, .status-activity),
+:root[data-theme='dark'] .points-card > .status-records,
+:root[data-theme='dark'] .thanks-page :is(.thanks-summary, .thanks-messages),
+:root[data-theme='dark'] .home-card {
+  color: var(--j-color-text);
+  border-color: var(--j-color-border);
+  background: var(--j-color-surface);
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .home-card,
+:root[data-theme='dark'] .page-state--page {
+  border: 1px solid var(--j-color-border);
+}
+
+:root[data-theme='dark'] .filter-chips {
+  background: var(--j-color-surface-subtle);
+}
+
+:root[data-theme='dark'] .filter-chips button {
+  color: var(--j-color-text-muted);
+}
+
+:root[data-theme='dark'] .filter-chips button.is-active {
+  color: var(--j-color-brand-strong);
+  background: var(--j-color-surface);
+}
+
+:root[data-theme='dark'] .notification-item.is-unread:hover {
+  background: var(--j-color-info-subtle);
+}
+
+:root[data-theme='dark'] .full-calendar__week-days > button {
+  border-color: var(--j-color-border);
+  background: var(--j-color-surface);
+}
+
+:root[data-theme='dark'] .full-calendar__week-days > button.is-outside-month,
+:root[data-theme='dark'] .full-calendar__week-days > button.is-outside-month:hover {
+  background: var(--j-color-surface-subtle);
+}
+
+:root[data-theme='dark'] .full-calendar__week-days > button:hover {
+  background: var(--j-color-surface-hover);
+}
+
+:root[data-theme='dark'] .full-calendar__week-days > button.is-selected {
+  background: var(--j-color-surface-selected);
+  box-shadow: inset 0 0 0 1.5px var(--j-color-brand);
+}
+
+:root[data-theme='dark'] .full-calendar__weekdays span,
+:root[data-theme='dark'] .full-calendar__date {
+  color: var(--j-color-text);
+}
+
+:root[data-theme='dark'] .full-calendar__weekdays span:first-child,
+:root[data-theme='dark'] .full-calendar__week-days > button:nth-child(7n + 1) .full-calendar__date,
+:root[data-theme='dark'] .full-calendar__week-days > button.is-holiday-date .full-calendar__date {
+  color: var(--j-color-danger);
+}
+
+:root[data-theme='dark'] .full-calendar__weekdays span:last-child,
+:root[data-theme='dark'] .full-calendar__week-days > button:nth-child(7n) .full-calendar__date {
+  color: var(--j-color-info);
+}
+
+:root[data-theme='dark'] .full-calendar__week-days > button.is-outside-month .full-calendar__date {
+  color: var(--j-color-text-muted);
+  opacity: 0.55;
+}
+
+:root[data-theme='dark'] .full-calendar__week-days > button.is-today .full-calendar__date,
+:root[data-theme='dark']
+  .full-calendar__week-days
+  > button.is-today.is-selected
+  .full-calendar__date {
+  color: var(--j-color-text-inverse);
+  background: var(--j-color-text);
+}
+
+:root[data-theme='dark'] .full-calendar__event-bar.is-inline,
+:root[data-theme='dark'] .full-calendar__event-bar.is-observance {
+  color: var(--j-color-text-muted);
+  background: var(--j-color-surface-subtle);
+}
+
+:root[data-theme='dark'] .mobile-tabbar {
+  background: rgb(18 28 32 / 98%);
+}
+
+:root[data-theme='dark'] .portal-header--editor .portal-brand--back svg {
+  color: var(--j-color-text);
+}
+
+:root[data-theme='dark'] .byte-calculator__toolbar,
+:root[data-theme='dark'] .editor-surface,
+:root[data-theme='dark'] .jbs-form,
+:root[data-theme='dark']
+  .wake-song-form
+  input[type='range'].wake-song-timeline__range::-webkit-slider-thumb,
+:root[data-theme='dark']
+  .wake-song-form
+  input[type='range'].wake-song-timeline__range::-moz-range-thumb {
+  background-color: var(--j-color-surface);
+}

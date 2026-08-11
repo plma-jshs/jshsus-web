@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { BedDouble, CalendarDays, ChevronRight, UsersRound } from 'lucide-react';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
@@ -29,16 +28,7 @@ export function DormPage() {
   const currentAssignment = data?.currentAssignment ?? null;
 
   return (
-    <PageScaffold
-      breadcrumbs={listBreadcrumbs('dorm')}
-      title="기숙사"
-      width="wide"
-      action={
-        <Link className="detail-primary-button" to="/dorm/reports/new">
-          민원 등록
-        </Link>
-      }
-    >
+    <PageScaffold breadcrumbs={listBreadcrumbs('dorm')} title="기숙사" width="wide">
       {dormQuery.isLoading ? (
         <PageState kind="loading" variant="section" title="기숙사 정보를 불러오는 중입니다." />
       ) : null}
@@ -61,32 +51,9 @@ export function DormPage() {
       ) : null}
       {data ? (
         <div className="dorm-page">
-          <section className="dorm-overview" aria-labelledby="dorm-overview-title">
-            <div className="dorm-overview__icon" aria-hidden="true">
-              <BedDouble size={25} />
-            </div>
-            <div className="dorm-overview__copy">
-              <p>{termLabel(data.currentTerm.year, data.currentTerm.semester)}</p>
-              <h2 id="dorm-overview-title">
-                {data.student.studentName} <span>({data.student.studentNo})</span>
-              </h2>
-              <strong>{roomLabel(currentAssignment)}</strong>
-              {currentAssignment ? (
-                <small>{currentAssignment.bedPosition}번 침대 · 현재 배정</small>
-              ) : (
-                <small>현재 학기 배정 정보가 없습니다.</small>
-              )}
-            </div>
-            <ChevronRight className="dorm-overview__chevron" aria-hidden="true" size={20} />
-          </section>
-
           <section className="dorm-section" aria-labelledby="dorm-assignment-title">
             <div className="dorm-section__heading">
-              <div>
-                <p className="dorm-section__eyebrow">현재 배정</p>
-                <h2 id="dorm-assignment-title">기숙사 배정현황</h2>
-              </div>
-              <CalendarDays aria-hidden="true" size={20} />
+              <h2 id="dorm-assignment-title">기숙사 배정현황</h2>
             </div>
             {currentAssignment ? (
               <div className="dorm-table-wrap">
@@ -97,7 +64,6 @@ export function DormPage() {
                       <th scope="col">이름(학번)</th>
                       <th scope="col">배정호실</th>
                       <th scope="col">침대</th>
-                      <th scope="col">학년·반</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -109,25 +75,18 @@ export function DormPage() {
                       </td>
                       <td>{roomLabel(currentAssignment)}</td>
                       <td>{currentAssignment.bedPosition}번</td>
-                      <td>
-                        {currentAssignment.grade}학년 {currentAssignment.classNo}반
-                      </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             ) : (
-              <PageState kind="empty" variant="inline" title="현재 학기 배정 정보가 없습니다." />
+              <p className="dorm-empty-text">현재 학기 배정 정보가 없습니다.</p>
             )}
           </section>
 
           <section className="dorm-section" aria-labelledby="dorm-roommates-title">
             <div className="dorm-section__heading">
-              <div>
-                <p className="dorm-section__eyebrow">같은 방</p>
-                <h2 id="dorm-roommates-title">룸메이트</h2>
-              </div>
-              <UsersRound aria-hidden="true" size={20} />
+              <h2 id="dorm-roommates-title">룸메이트</h2>
             </div>
             {data.roommates.length ? (
               <div className="dorm-table-wrap">
@@ -135,7 +94,6 @@ export function DormPage() {
                   <thead>
                     <tr>
                       <th scope="col">이름(학번)</th>
-                      <th scope="col">학년·반</th>
                       <th scope="col">침대</th>
                     </tr>
                   </thead>
@@ -145,9 +103,6 @@ export function DormPage() {
                         <td>
                           <strong>{roommate.studentName}</strong> ({roommate.studentNo})
                         </td>
-                        <td>
-                          {roommate.grade}학년 {roommate.classNo}반
-                        </td>
                         <td>{roommate.bedPosition}번</td>
                       </tr>
                     ))}
@@ -155,16 +110,13 @@ export function DormPage() {
                 </table>
               </div>
             ) : (
-              <PageState kind="empty" variant="inline" title="등록된 룸메이트가 없습니다." />
+              <p className="dorm-empty-text">등록된 룸메이트가 없습니다.</p>
             )}
           </section>
 
           <section className="dorm-section" aria-labelledby="dorm-history-title">
             <div className="dorm-section__heading">
-              <div>
-                <p className="dorm-section__eyebrow">지난 기록</p>
-                <h2 id="dorm-history-title">배정이력</h2>
-              </div>
+              <h2 id="dorm-history-title">배정이력</h2>
             </div>
             {data.assignmentHistory.length ? (
               <div className="dorm-table-wrap">
@@ -172,26 +124,21 @@ export function DormPage() {
                   <thead>
                     <tr>
                       <th scope="col">학기</th>
+                      <th scope="col">이름(학번)</th>
                       <th scope="col">배정호실</th>
                       <th scope="col">침대</th>
-                      <th scope="col">상태</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.assignmentHistory.map((assignment) => {
-                      const isCurrent =
-                        assignment.year === data.currentTerm.year &&
-                        assignment.semester === data.currentTerm.semester;
                       return (
                         <tr key={assignment.id}>
                           <td>{termLabel(assignment.year, assignment.semester)}</td>
+                          <td>
+                            <strong>{assignment.studentName}</strong> ({assignment.studentNo})
+                          </td>
                           <td>{roomLabel(assignment)}</td>
                           <td>{assignment.bedPosition}번</td>
-                          <td>
-                            <span className={`dorm-status${isCurrent ? ' is-current' : ''}`}>
-                              {isCurrent ? '현재' : '지난 배정'}
-                            </span>
-                          </td>
                         </tr>
                       );
                     })}
@@ -199,17 +146,14 @@ export function DormPage() {
                 </table>
               </div>
             ) : (
-              <PageState kind="empty" variant="inline" title="배정이력이 없습니다." />
+              <p className="dorm-empty-text">배정이력이 없습니다.</p>
             )}
           </section>
 
           <section className="dorm-section" aria-labelledby="dorm-reports-title">
             <div className="dorm-section__heading">
-              <div>
-                <p className="dorm-section__eyebrow">문의 및 요청</p>
-                <h2 id="dorm-reports-title">민원 현황</h2>
-              </div>
-              <Link className="dorm-section__action" to="/dorm/reports/new">
+              <h2 id="dorm-reports-title">민원 현황</h2>
+              <Link className="dorm-section__action detail-primary-button" to="/dorm/reports/new">
                 등록
               </Link>
             </div>
@@ -245,7 +189,7 @@ export function DormPage() {
                 </table>
               </div>
             ) : (
-              <PageState kind="empty" variant="inline" title="등록한 민원이 없습니다." />
+              <p className="dorm-empty-text">등록한 민원이 없습니다.</p>
             )}
           </section>
         </div>
