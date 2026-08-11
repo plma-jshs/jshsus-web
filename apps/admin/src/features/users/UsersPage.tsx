@@ -1577,6 +1577,31 @@ function IdentityActions({
   const nextStatus: AdminUserStatus = identity.kind === 'student' ? 'graduated' : 'deleted';
   const deactivateLabel = identity.kind === 'student' ? '학적 종료' : '전근·퇴직 처리';
 
+  const openActivation = () => {
+    setMenuOpen(false);
+    onOpenActivation(identity);
+  };
+
+  const openRoles = () => {
+    setMenuOpen(false);
+    onOpen({ type: 'roles', identity });
+  };
+
+  const requestStatusChange = () => {
+    const subject =
+      identity.kind === 'student'
+        ? `${identity.value.studentNo} ${identity.value.name}`
+        : `${identity.value.staffNo} ${identity.value.name}`;
+    if (
+      window.confirm(
+        `${subject} 계정을 비활성화하고 연락처·프로필·인증정보를 즉시 파기하시겠습니까?`,
+      )
+    ) {
+      setMenuOpen(false);
+      onUpdateStatus(identity, nextStatus);
+    }
+  };
+
   useEffect(() => {
     if (!menuOpen) return;
     const close = (event: PointerEvent) => {
@@ -1587,7 +1612,41 @@ function IdentityActions({
   }, [menuOpen]);
 
   return (
-    <RowActions className="identity-row-actions">
+    <RowActions
+      className="identity-row-actions"
+      mobileChildren={
+        <>
+          <RowActionButton
+            icon={<Pencil aria-hidden="true" />}
+            label="정보 수정"
+            onClick={() => onOpen({ type: 'edit', identity })}
+          />
+          <RowActionButton
+            icon={<KeyRound aria-hidden="true" />}
+            label="인증코드 발급"
+            onClick={openActivation}
+          />
+          {canManageRoles ? (
+            <RowActionButton
+              icon={<ShieldCheck aria-hidden="true" />}
+              label="역할 수정"
+              disabled={disabled}
+              onClick={openRoles}
+            />
+          ) : null}
+          {canManageStatus && !inactive ? (
+            <RowActionButton
+              className="is-danger"
+              icon={<ShieldAlert aria-hidden="true" />}
+              label={deactivateLabel}
+              variant="danger"
+              disabled={disabled || statusPending}
+              onClick={requestStatusChange}
+            />
+          ) : null}
+        </>
+      }
+    >
       <RowActionButton
         icon={<Pencil aria-hidden="true" />}
         label="정보 수정"
@@ -1601,26 +1660,11 @@ function IdentityActions({
         />
         {menuOpen ? (
           <div className="identity-more-actions__menu" role="menu">
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setMenuOpen(false);
-                onOpenActivation(identity);
-              }}
-            >
+            <button type="button" role="menuitem" onClick={openActivation}>
               <KeyRound aria-hidden="true" /> 인증코드 발급
             </button>
             {canManageRoles ? (
-              <button
-                type="button"
-                role="menuitem"
-                disabled={disabled}
-                onClick={() => {
-                  setMenuOpen(false);
-                  onOpen({ type: 'roles', identity });
-                }}
-              >
+              <button type="button" role="menuitem" disabled={disabled} onClick={openRoles}>
                 <ShieldCheck aria-hidden="true" /> 역할 수정
               </button>
             ) : null}
@@ -1630,20 +1674,7 @@ function IdentityActions({
                 type="button"
                 role="menuitem"
                 disabled={disabled || statusPending}
-                onClick={() => {
-                  const subject =
-                    identity.kind === 'student'
-                      ? `${identity.value.studentNo} ${identity.value.name}`
-                      : `${identity.value.staffNo} ${identity.value.name}`;
-                  if (
-                    window.confirm(
-                      `${subject} 계정을 비활성화하고 연락처·프로필·인증정보를 즉시 파기하시겠습니까?`,
-                    )
-                  ) {
-                    setMenuOpen(false);
-                    onUpdateStatus(identity, nextStatus);
-                  }
-                }}
+                onClick={requestStatusChange}
               >
                 <ShieldAlert aria-hidden="true" /> {deactivateLabel}
               </button>
