@@ -223,6 +223,10 @@ export function LoginPage() {
   };
 
   const title = mode === 'login' ? '전남과학고 통합로그인' : '새 비밀번호 설정';
+  const serviceName =
+    mode === 'login'
+      ? (requestQuery.data?.serviceName ?? (ssoRequestId ? undefined : '과구리'))
+      : undefined;
   const normalizedUsername = username.trim();
   const forgotPasswordSearch = {
     username: normalizedUsername || undefined,
@@ -277,6 +281,7 @@ export function LoginPage() {
     <AuthLayout
       active="login"
       title={title}
+      serviceName={serviceName}
       description={
         mode === 'new-password' ? '처음 로그인하는 계정의 비밀번호를 변경해 주세요.' : undefined
       }

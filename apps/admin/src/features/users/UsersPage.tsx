@@ -23,6 +23,7 @@ import type {
   StudentGender,
 } from '@jshsus/types';
 import {
+  Copy,
   Download,
   FileSpreadsheet,
   KeyRound,
@@ -1512,14 +1513,28 @@ export function UsersPage() {
           onClose={() => setDialog(null)}
         >
           <div className="identity-dialog-form">
-            <p className="identity-field-note">
-              발급된 코드는 한 번만 표시됩니다. 학생 또는 교직원에게 직접 전달한 뒤 계정 만들기
-              화면에서 사용하게 해 주세요.
-            </p>
+            <p className="identity-field-note">발급된 코드는 한 번만 표시됩니다.</p>
             {issuedActivation ? (
               <div className="identity-activation-code" role="status">
                 <span>인증코드</span>
-                <strong>{issuedActivation.code}</strong>
+                <div className="identity-activation-code__value">
+                  <strong>{issuedActivation.code}</strong>
+                  <button
+                    type="button"
+                    aria-label="인증코드 복사"
+                    title="인증코드 복사"
+                    onClick={() => {
+                      if (!navigator.clipboard) return;
+                      void navigator.clipboard
+                        .writeText(issuedActivation.code)
+                        .then(() =>
+                          showToast({ title: '인증코드를 복사했습니다.', tone: 'success' }),
+                        );
+                    }}
+                  >
+                    <Copy size={16} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
             ) : null}
             {issueActivation.isError ? (

@@ -35,6 +35,7 @@ function PasswordField(props: {
         <LockKeyhole className="auth-field-icon" size={17} aria-hidden="true" />
         <input
           id={props.id}
+          className={props.error ? 'auth-input-invalid' : undefined}
           type={visible ? 'text' : 'password'}
           value={props.value}
           onChange={(event) => props.onChange(event.target.value)}
@@ -42,6 +43,7 @@ function PasswordField(props: {
           autoComplete={props.autoComplete}
           placeholder={props.placeholder}
           required
+          aria-invalid={Boolean(props.error)}
         />
         <button
           type="button"
@@ -52,8 +54,20 @@ function PasswordField(props: {
           {visible ? <EyeOff aria-hidden="true" size={18} /> : <Eye aria-hidden="true" size={18} />}
         </button>
       </div>
-      {props.error ? <p className="auth-field-error">{props.error}</p> : null}
+      <FieldError message={props.error} />
     </div>
+  );
+}
+
+function FieldError({ message }: { message?: string | null }) {
+  return (
+    <p
+      className={`auth-field-error${message ? ' is-visible' : ''}`}
+      role={message ? 'alert' : undefined}
+      aria-live="polite"
+    >
+      {message ?? '\u00a0'}
+    </p>
   );
 }
 
@@ -146,16 +160,18 @@ function VerificationDialog({
           <div className="auth-verification-modal__code-field">
             <input
               autoFocus
+              className={error ? 'auth-input-invalid' : undefined}
               value={code}
               onChange={(event) => onCodeChange(event.target.value.replace(/\D/g, '').slice(0, 6))}
               inputMode="numeric"
               autoComplete="one-time-code"
               placeholder="인증번호 6자리"
               aria-label={`${label} 인증번호`}
+              aria-invalid={Boolean(error)}
             />
             <span aria-live="polite">{remaining > 0 ? `${minutes}:${seconds}` : '만료됨'}</span>
           </div>
-          {error ? <p className="auth-field-error">{error}</p> : null}
+          <FieldError message={error} />
           <button type="button" className="auth-verification-modal__resend" onClick={onResend}>
             인증번호를 못 받으셨나요? <strong>재전송</strong>
           </button>
@@ -210,6 +226,7 @@ export function AccountActivationPage() {
   const [phoneFieldError, setPhoneFieldError] = useState<string | null>(null);
   const [verificationTarget, setVerificationTarget] = useState<VerificationTarget | null>(null);
   const [verificationExpiresAt, setVerificationExpiresAt] = useState(0);
+  const [verificationToast, setVerificationToast] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [passwordTouched, setPasswordTouched] = useState(false);
@@ -259,16 +276,26 @@ export function AccountActivationPage() {
     mutationFn: verifyAccountActivationPhoneVerification,
     onSuccess: () => {
       setPhoneVerified(true);
+      setPhoneFieldError(null);
       setVerificationTarget(null);
+      setVerificationToast('전화번호 인증이 완료되었습니다.');
     },
   });
   const emailVerificationMutation = useMutation({
     mutationFn: verifyAccountActivationEmailVerification,
     onSuccess: () => {
       setEmailVerified(true);
+      setEmailFieldError(null);
       setVerificationTarget(null);
+      setVerificationToast('이메일 인증이 완료되었습니다.');
     },
   });
+
+  useEffect(() => {
+    if (!verificationToast) return;
+    const timer = window.setTimeout(() => setVerificationToast(null), 2_400);
+    return () => window.clearTimeout(timer);
+  }, [verificationToast]);
 
   const submitLookup = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -402,6 +429,8 @@ export function AccountActivationPage() {
   const phoneRequestError = phoneMutation.isError
     ? getAuthErrorMessage(phoneMutation.error, '전화번호 인증번호를 보내지 못했습니다.')
     : null;
+  const emailError = emailFieldError ?? emailRequestError;
+  const phoneError = phoneFieldError ?? phoneRequestError;
   const error =
     validationError ??
     (lookupMutation.isError
@@ -493,6 +522,7 @@ export function AccountActivationPage() {
               <input
                 id="activation-email"
                 type="email"
+                className={emailError ? 'auth-input-invalid' : undefined}
                 value={email}
                 disabled={emailVerified}
                 onChange={(event) => {
@@ -504,24 +534,24 @@ export function AccountActivationPage() {
                 autoComplete="email"
                 placeholder="이메일을 입력해주세요."
                 required
+                aria-invalid={Boolean(emailError)}
               />
               <button
                 type="button"
                 onClick={requestEmailCode}
                 disabled={emailMutation.isPending || emailVerified}
               >
-                {emailMutation.isPending ? '전송 중' : '인증'}
+                인증
               </button>
             </span>
-            {emailFieldError || emailRequestError ? (
-              <p className="auth-field-error">{emailFieldError ?? emailRequestError}</p>
-            ) : null}
+            <FieldError message={emailError} />
           </label>
           <label htmlFor="activation-phone">
             <span>전화번호</span>
             <span className="auth-verification-field">
               <input
                 id="activation-phone"
+                className={phoneError ? 'auth-input-invalid' : undefined}
                 value={phone}
                 disabled={phoneVerified}
                 onChange={(event) => {
@@ -534,18 +564,17 @@ export function AccountActivationPage() {
                 inputMode="tel"
                 placeholder="전화번호를 입력해주세요."
                 required
+                aria-invalid={Boolean(phoneError)}
               />
               <button
                 type="button"
                 onClick={requestPhoneCode}
                 disabled={phoneMutation.isPending || phoneVerified}
               >
-                {phoneMutation.isPending ? '전송 중' : '인증'}
+                인증
               </button>
             </span>
-            {phoneFieldError || phoneRequestError ? (
-              <p className="auth-field-error">{phoneFieldError ?? phoneRequestError}</p>
-            ) : null}
+            <FieldError message={phoneError} />
           </label>
           <PasswordField
             id="activation-password"
@@ -609,6 +638,11 @@ export function AccountActivationPage() {
           onResend={verificationTarget === 'email' ? requestEmailCode : requestPhoneCode}
           onConfirm={verifyCode}
         />
+      ) : null}
+      {verificationToast ? (
+        <div className="auth-toast" role="status">
+          {verificationToast}
+        </div>
       ) : null}
     </AuthLayout>
   );

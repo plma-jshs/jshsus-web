@@ -92,7 +92,7 @@ export class SsoService {
     const request = await this.readRequest(requestId, false);
     return {
       client: request.client,
-      serviceName: request.client === 'admin' ? '학생부 전산망' : '과구리',
+      serviceName: request.client === 'admin' ? '학생부 전산시스템' : '과구리',
     };
   }
 

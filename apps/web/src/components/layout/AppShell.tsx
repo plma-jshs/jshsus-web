@@ -598,11 +598,11 @@ function PortalShell() {
 
           <div className="portal-header__actions">
             <div className="portal-header__standard-actions">
+              <ThemeToggle />
               {sessionQuery.isLoading ? (
                 <span className="header-session-skeleton" aria-hidden="true" />
               ) : session?.isLogined ? (
                 <>
-                  <ThemeToggle />
                   <NotificationMenu />
                   <UserMenu
                     displayName={sessionDisplayName}

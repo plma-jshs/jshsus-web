@@ -6,12 +6,14 @@ type AuthSection = 'login' | 'password' | 'activation';
 export function AuthLayout({
   active: _active,
   title,
+  serviceName,
   description,
   children,
   className,
 }: {
   active: AuthSection;
   title: string;
+  serviceName?: string;
   description?: string;
   children: ReactNode;
   className?: string;
@@ -23,21 +25,22 @@ export function AuthLayout({
     >
       <div className="auth-card">
         <aside className="auth-intro">
-          <Link to="/" className="auth-brand" aria-label="과구리 홈으로 이동">
+          <Link to="/" className="auth-brand" aria-label="전남과학고 통합로그인">
             <img
               className="auth-brand-mark"
-              src="/assets/lIcon.png"
-              alt=""
-              width="32"
-              height="32"
+              src="/assets/school-emblem.svg"
+              alt="전남과학고등학교 로고"
+              width="38"
+              height="38"
             />
-            <strong>과구리</strong>
+            <strong>전남과학고 통합로그인</strong>
           </Link>
         </aside>
 
         <section className="auth-panel">
-          <header className="auth-heading">
+          <header className={`auth-heading${serviceName ? ' auth-heading--service' : ''}`}>
             <h1 id="auth-page-title">{title}</h1>
+            {serviceName ? <p className="auth-heading__service">{serviceName}</p> : null}
             {description ? <p>{description}</p> : null}
           </header>
           {children}
