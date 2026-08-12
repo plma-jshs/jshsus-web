@@ -484,6 +484,7 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
   validateSearch: (search: Record<string, unknown>) => ({
+    ...(typeof search.sso === 'string' ? { sso: search.sso } : {}),
     returnTo: typeof search.returnTo === 'string' ? search.returnTo : undefined,
   }),
   component: LoginPage,

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { formatKoreanContentDateTime } from '../../shared/lib/date';
 import { UserAvatar } from './UserAvatar';
+import { ContentShareButton } from './ContentMoreMenu';
 
 export function ContentDetailHeader({
   title,
@@ -23,7 +24,10 @@ export function ContentDetailHeader({
     <header className="content-detail-header">
       <div className="content-detail-header__top">
         <h1>{title}</h1>
-        {actions ? <div className="content-detail-header__actions">{actions}</div> : null}
+        <div className="content-detail-header__actions">
+          <ContentShareButton />
+          {actions}
+        </div>
       </div>
       <div className="content-detail-header__meta">
         <span className="content-detail-header__author">

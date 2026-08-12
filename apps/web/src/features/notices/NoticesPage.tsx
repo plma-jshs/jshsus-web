@@ -158,7 +158,7 @@ export function NoticesPage() {
                   <col className="data-table__number-column" style={{ width: 76 }} />
                   <col />
                   <col className="data-table__author-column" style={{ width: 190 }} />
-                  <col className="data-table__date-column" style={{ width: 140 }} />
+                  <col className="data-table__date-column" style={{ width: 124 }} />
                   <col className="data-table__views-column" style={{ width: 86 }} />
                 </colgroup>
                 <thead>

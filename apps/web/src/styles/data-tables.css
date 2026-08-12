@@ -1130,10 +1130,19 @@
   .data-table-pagination .data-table-pagination__load-more > svg {
     display: block;
     flex: 0 0 auto;
-    width: 17px;
-    height: 17px;
     margin: 0;
     align-self: center;
+  }
+
+  .data-table-pagination .data-table-pagination__load-more > span {
+    width: auto;
+    height: auto;
+    font-size: var(--j-text-sm);
+  }
+
+  .data-table-pagination .data-table-pagination__load-more > svg {
+    width: 17px;
+    height: 17px;
   }
 
   .data-table-pagination .data-table-pagination__load-more:disabled {

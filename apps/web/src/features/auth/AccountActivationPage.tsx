@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type { AccountActivationIdentityType, StudentGender } from '@jshsus/types';
 import { ArrowLeft, Eye, EyeOff, LockKeyhole, X } from 'lucide-react';
+import { useToast } from '../../components/feedback/Toast';
 import {
   completeAccountActivation,
   getAuthErrorMessage,
@@ -205,6 +206,7 @@ function initialReturnTo() {
 }
 
 export function AccountActivationPage() {
+  const { showToast } = useToast();
   const loginReturnHref = initialReturnTo() ?? '/login';
   const loginSearch = { returnTo: loginReturnHref === '/login' ? undefined : loginReturnHref };
   const [activationCode, setActivationCode] = useState('');
@@ -226,7 +228,6 @@ export function AccountActivationPage() {
   const [phoneFieldError, setPhoneFieldError] = useState<string | null>(null);
   const [verificationTarget, setVerificationTarget] = useState<VerificationTarget | null>(null);
   const [verificationExpiresAt, setVerificationExpiresAt] = useState(0);
-  const [verificationToast, setVerificationToast] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [passwordTouched, setPasswordTouched] = useState(false);
@@ -278,7 +279,7 @@ export function AccountActivationPage() {
       setPhoneVerified(true);
       setPhoneFieldError(null);
       setVerificationTarget(null);
-      setVerificationToast('전화번호 인증이 완료되었습니다.');
+      showToast({ title: '전화번호 인증이 완료되었습니다.', tone: 'success' });
     },
   });
   const emailVerificationMutation = useMutation({
@@ -287,15 +288,9 @@ export function AccountActivationPage() {
       setEmailVerified(true);
       setEmailFieldError(null);
       setVerificationTarget(null);
-      setVerificationToast('이메일 인증이 완료되었습니다.');
+      showToast({ title: '이메일 인증이 완료되었습니다.', tone: 'success' });
     },
   });
-
-  useEffect(() => {
-    if (!verificationToast) return;
-    const timer = window.setTimeout(() => setVerificationToast(null), 2_400);
-    return () => window.clearTimeout(timer);
-  }, [verificationToast]);
 
   const submitLookup = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -443,10 +438,12 @@ export function AccountActivationPage() {
     <AuthLayout active="activation" title="통합로그인 계정 생성">
       {activationMutation.isSuccess ? (
         <div className="auth-form">
-          <FormMessage success>
-            계정을 만들었습니다. 학번 또는 교사번호와 설정한 비밀번호로 로그인해 주세요.
-          </FormMessage>
-          <Link className="auth-submit" to="/login" search={loginSearch}>
+          <FormMessage success>계정이 생성되었습니다. 설정하신 정보로 로그인해 주세요.</FormMessage>
+          <Link
+            className="auth-submit"
+            to="/login"
+            search={{ sso: undefined, returnTo: undefined }}
+          >
             로그인하기
           </Link>
         </div>
@@ -638,11 +635,6 @@ export function AccountActivationPage() {
           onResend={verificationTarget === 'email' ? requestEmailCode : requestPhoneCode}
           onConfirm={verifyCode}
         />
-      ) : null}
-      {verificationToast ? (
-        <div className="auth-toast" role="status">
-          {verificationToast}
-        </div>
       ) : null}
     </AuthLayout>
   );

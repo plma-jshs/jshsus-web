@@ -1,7 +1,7 @@
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, Eye, EyeOff, LoaderCircle, LockKeyhole, UserRound } from 'lucide-react';
 import { safeInternalReturnTo } from '../../shared/lib/route';
 import {
@@ -67,6 +67,7 @@ function FormMessage({ children, success = false }: { children: ReactNode; succe
 
 export function LoginPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const searchParams = new URLSearchParams(window.location.search);
   const ssoRequestId = searchParams.get('sso');
   const requestedReturnTo = searchParams.get('returnTo') ?? '/';
@@ -222,11 +223,11 @@ export function LoginPage() {
     newPasswordMutation.mutate({ flowId, newPassword });
   };
 
-  const title = mode === 'login' ? '전남과학고 통합로그인' : '새 비밀번호 설정';
   const serviceName =
     mode === 'login'
       ? (requestQuery.data?.serviceName ?? (ssoRequestId ? undefined : '과구리'))
       : undefined;
+  const title = mode === 'login' ? (serviceName ?? '전남과학고 통합로그인') : '새 비밀번호 설정';
   const normalizedUsername = username.trim();
   const forgotPasswordSearch = {
     username: normalizedUsername || undefined,
@@ -269,9 +270,19 @@ export function LoginPage() {
             <br />
             아래 버튼을 눌러 다시 시도해 주세요
           </FormMessage>
-          <Link className="auth-submit" to="/login" search={{ returnTo: undefined }}>
+          <button
+            className="auth-submit"
+            type="button"
+            onClick={() =>
+              void navigate({
+                to: '/login',
+                search: { sso: undefined, returnTo: undefined },
+                replace: true,
+              })
+            }
+          >
             다시 로그인하기
-          </Link>
+          </button>
         </div>
       </AuthLayout>
     );
@@ -281,7 +292,6 @@ export function LoginPage() {
     <AuthLayout
       active="login"
       title={title}
-      serviceName={serviceName}
       description={
         mode === 'new-password' ? '처음 로그인하는 계정의 비밀번호를 변경해 주세요.' : undefined
       }

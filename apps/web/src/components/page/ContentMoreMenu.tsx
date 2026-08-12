@@ -19,32 +19,6 @@ export function ContentMoreMenu({
   const [open, setOpen] = useState(false);
   const { isClosing, requestClose, resetClosing } = useBottomSheetClose(() => setOpen(false));
   const menuRef = useRef<HTMLDivElement>(null);
-  const { showToast } = useToast();
-
-  const shareCurrentPage = async () => {
-    const shareUrl = window.location.href;
-    const shareTitle = document.title || '과구리';
-
-    try {
-      const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
-      if (isDesktop && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareUrl);
-        showToast({ title: '링크를 복사했습니다.', tone: 'success' });
-      } else if (navigator.share) {
-        await navigator.share({ title: shareTitle, text: shareTitle, url: shareUrl });
-      } else if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareUrl);
-        showToast({ title: '링크를 복사했습니다.', tone: 'success' });
-      } else {
-        throw new Error('share-unavailable');
-      }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-      showToast({ title: '공유 링크를 복사하지 못했습니다.', tone: 'danger' });
-    } finally {
-      requestClose();
-    }
-  };
 
   useEffect(() => {
     if (!open) return undefined;
@@ -79,16 +53,6 @@ export function ContentMoreMenu({
         <div className={`content-more-menu__dropdown${isClosing ? ' is-closing' : ''}`} role="menu">
           <button
             onClick={() => {
-              void shareCurrentPage();
-            }}
-            role="menuitem"
-            type="button"
-          >
-            <Share2 size={15} aria-hidden="true" />
-            공유
-          </button>
-          <button
-            onClick={() => {
               requestClose(onEdit);
             }}
             role="menuitem"
@@ -112,5 +76,44 @@ export function ContentMoreMenu({
         </div>
       ) : null}
     </div>
+  );
+}
+
+export function ContentShareButton() {
+  const { showToast } = useToast();
+
+  const shareCurrentPage = async () => {
+    const shareUrl = window.location.href;
+    const shareTitle = document.title || '과구리';
+
+    try {
+      const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+      if (isDesktop && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast({ title: '링크를 복사했습니다.', tone: 'success' });
+      } else if (navigator.share) {
+        await navigator.share({ title: shareTitle, text: shareTitle, url: shareUrl });
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast({ title: '링크를 복사했습니다.', tone: 'success' });
+      } else {
+        throw new Error('share-unavailable');
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      showToast({ title: '공유 링크를 복사하지 못했습니다.', tone: 'danger' });
+    }
+  };
+
+  return (
+    <button
+      aria-label="공유"
+      className="content-share-button"
+      onClick={() => void shareCurrentPage()}
+      title="공유"
+      type="button"
+    >
+      <Share2 size={17} aria-hidden="true" />
+    </button>
   );
 }

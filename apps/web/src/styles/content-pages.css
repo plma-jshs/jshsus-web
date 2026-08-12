@@ -33,8 +33,33 @@
 
 .content-detail-header__actions {
   display: flex;
+  gap: 4px;
   align-items: center;
   justify-content: flex-end;
+}
+
+.content-share-button {
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--j-radius-md);
+  color: var(--j-color-text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+}
+
+.content-share-button:hover,
+.content-share-button:focus-visible {
+  border-color: var(--j-color-border);
+  color: var(--j-color-text);
+  background: var(--j-color-surface-subtle);
 }
 
 .content-detail-header__meta {

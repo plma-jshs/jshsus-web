@@ -6,14 +6,12 @@ type AuthSection = 'login' | 'password' | 'activation';
 export function AuthLayout({
   active: _active,
   title,
-  serviceName,
   description,
   children,
   className,
 }: {
   active: AuthSection;
   title: string;
-  serviceName?: string;
   description?: string;
   children: ReactNode;
   className?: string;
@@ -38,9 +36,8 @@ export function AuthLayout({
         </aside>
 
         <section className="auth-panel">
-          <header className={`auth-heading${serviceName ? ' auth-heading--service' : ''}`}>
+          <header className="auth-heading">
             <h1 id="auth-page-title">{title}</h1>
-            {serviceName ? <p className="auth-heading__service">{serviceName}</p> : null}
             {description ? <p>{description}</p> : null}
           </header>
           {children}
