@@ -146,7 +146,7 @@
 .auth-form-grid > label {
   display: grid;
   min-width: 0;
-  gap: 6px;
+  gap: 8px;
 }
 
 .auth-form > label > span:not(.auth-input-shell, .auth-verification-field),
@@ -419,14 +419,23 @@
 }
 
 .auth-verification-modal__close {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  margin: -4px -4px 0 0;
   flex: none;
   padding: 0;
   border: 0;
   color: var(--j-color-text-muted);
   background: transparent;
-  font: inherit;
-  font-size: 11px;
   cursor: pointer;
+}
+
+.auth-verification-modal__close:hover {
+  color: var(--j-color-text);
+  background: #f3f5f7;
+  border-radius: 50%;
 }
 
 .auth-verification-modal__description {
@@ -498,6 +507,11 @@
 .auth-verification-modal__resend strong {
   color: #087f88;
   font-weight: 600;
+}
+
+.auth-verification-modal__resend:hover:not(:disabled) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .auth-verification-modal__actions {

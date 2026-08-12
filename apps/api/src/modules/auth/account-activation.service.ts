@@ -561,6 +561,7 @@ export class AccountActivationService {
       identityNumber: activation.identityNumber,
       phone,
       code: parsed.data.verificationCode,
+      markVerified: true,
     });
     return { ok: true };
   }
@@ -582,6 +583,7 @@ export class AccountActivationService {
       identityNumber: activation.identityNumber,
       email,
       code: parsed.data.verificationCode,
+      markVerified: true,
     });
     return { ok: true };
   }
@@ -618,6 +620,7 @@ export class AccountActivationService {
       identityNumber: input.identityNumber,
       phone: input.phone,
       code: input.phoneVerificationCode,
+      allowVerified: true,
     });
     const emailFlowKey = this.emailVerificationFlowKey(input.activationCode);
     await this.assertEmailVerification({
@@ -626,6 +629,7 @@ export class AccountActivationService {
       identityNumber: input.identityNumber,
       email: input.email,
       code: input.emailVerificationCode,
+      allowVerified: true,
     });
 
     try {
@@ -917,6 +921,8 @@ export class AccountActivationService {
     identityNumber: number;
     phone: string;
     code: string;
+    allowVerified?: boolean;
+    markVerified?: boolean;
   }) {
     const rawFlow = await this.redis.get(input.flowKey);
     const flowSchema = z.object({
@@ -925,6 +931,7 @@ export class AccountActivationService {
       phone: z.string(),
       codeHash: z.string(),
       attemptCount: z.number().int().nonnegative(),
+      verified: z.boolean().optional(),
     });
     const decodedFlow: unknown = (() => {
       try {
@@ -946,6 +953,8 @@ export class AccountActivationService {
       });
     }
 
+    if (flow.data.verified && input.allowVerified) return;
+
     const expectedHash = this.hashPhoneVerificationCode(input.flowKey, input.phone, input.code);
     if (!safeCompareHex(flow.data.codeHash, expectedHash)) {
       const attemptCount = flow.data.attemptCount + 1;
@@ -963,6 +972,14 @@ export class AccountActivationService {
         message: '전화번호 인증번호를 확인해 주세요.',
       });
     }
+
+    if (input.markVerified) {
+      await this.redis.setJson(
+        input.flowKey,
+        { ...flow.data, verified: true },
+        PHONE_VERIFICATION_TTL_SECONDS,
+      );
+    }
   }
 
   private async assertEmailVerification(input: {
@@ -971,6 +988,8 @@ export class AccountActivationService {
     identityNumber: number;
     email: string;
     code: string;
+    allowVerified?: boolean;
+    markVerified?: boolean;
   }) {
     const rawFlow = await this.redis.get(input.flowKey);
     const flowSchema = z.object({
@@ -979,6 +998,7 @@ export class AccountActivationService {
       email: z.string().email(),
       codeHash: z.string(),
       attemptCount: z.number().int().nonnegative(),
+      verified: z.boolean().optional(),
     });
     const decodedFlow: unknown = (() => {
       try {
@@ -1000,6 +1020,8 @@ export class AccountActivationService {
       });
     }
 
+    if (flow.data.verified && input.allowVerified) return;
+
     const expectedHash = this.hashVerificationCode(input.flowKey, input.email, input.code);
     if (!safeCompareHex(flow.data.codeHash, expectedHash)) {
       const attemptCount = flow.data.attemptCount + 1;
@@ -1016,6 +1038,14 @@ export class AccountActivationService {
         code: 'AUTH_CODE_MISMATCH',
         message: '이메일 인증번호를 확인해 주세요.',
       });
+    }
+
+    if (input.markVerified) {
+      await this.redis.setJson(
+        input.flowKey,
+        { ...flow.data, verified: true },
+        EMAIL_VERIFICATION_TTL_SECONDS,
+      );
     }
   }
 

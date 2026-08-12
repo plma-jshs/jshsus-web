@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type { AccountActivationIdentityType, StudentGender } from '@jshsus/types';
-import { ArrowLeft, Eye, EyeOff, LockKeyhole } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, LockKeyhole, X } from 'lucide-react';
 import {
   completeAccountActivation,
   getAuthErrorMessage,
@@ -124,8 +124,13 @@ function VerificationDialog({
             <p className="auth-verification-modal__eyebrow">{label} 인증</p>
             <h2 id="auth-verification-title">인증번호를 입력해 주세요</h2>
           </div>
-          <button type="button" className="auth-verification-modal__close" onClick={onClose}>
-            닫기
+          <button
+            type="button"
+            className="auth-verification-modal__close"
+            aria-label="닫기"
+            onClick={onClose}
+          >
+            <X size={20} strokeWidth={1.8} aria-hidden="true" />
           </button>
         </header>
         <p className="auth-verification-modal__description">
@@ -197,12 +202,12 @@ export function AccountActivationPage() {
   const [gender, setGender] = useState<StudentGender | ''>('');
   const [email, setEmail] = useState('');
   const [emailVerificationCode, setEmailVerificationCode] = useState('');
-  const [emailCodeRequested, setEmailCodeRequested] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [emailFieldError, setEmailFieldError] = useState<string | null>(null);
   const [phone, setPhone] = useState('');
   const [phoneVerificationCode, setPhoneVerificationCode] = useState('');
-  const [phoneCodeRequested, setPhoneCodeRequested] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneFieldError, setPhoneFieldError] = useState<string | null>(null);
   const [verificationTarget, setVerificationTarget] = useState<VerificationTarget | null>(null);
   const [verificationExpiresAt, setVerificationExpiresAt] = useState(0);
   const [password, setPassword] = useState('');
@@ -228,11 +233,11 @@ export function AccountActivationPage() {
   const phoneMutation = useMutation({
     mutationFn: requestAccountActivationPhoneVerification,
     onSuccess: () => {
-      setPhoneCodeRequested(true);
       setPhoneVerificationCode('');
       setPhoneVerified(false);
       setVerificationTarget('phone');
       setVerificationExpiresAt(Date.now() + 300_000);
+      setPhoneFieldError(null);
       setValidationError(null);
     },
   });
@@ -240,11 +245,11 @@ export function AccountActivationPage() {
   const emailMutation = useMutation({
     mutationFn: requestAccountActivationEmailVerification,
     onSuccess: () => {
-      setEmailCodeRequested(true);
       setEmailVerificationCode('');
       setEmailVerified(false);
       setVerificationTarget('email');
       setVerificationExpiresAt(Date.now() + 300_000);
+      setEmailFieldError(null);
       setValidationError(null);
     },
   });
@@ -274,9 +279,11 @@ export function AccountActivationPage() {
   const requestPhoneCode = () => {
     const normalized = normalizedPhone(phone);
     if (!/^010\d{8}$/.test(normalized)) {
-      setValidationError('전화번호를 확인해 주세요.');
+      setPhoneFieldError('전화번호를 확인해 주세요.');
+      setValidationError(null);
       return;
     }
+    setPhoneFieldError(null);
     setValidationError(null);
     phoneMutation.mutate({ activationCode: activationCode.trim(), phone: normalized });
   };
@@ -284,9 +291,11 @@ export function AccountActivationPage() {
   const requestEmailCode = () => {
     const normalized = email.trim().toLocaleLowerCase('en-US');
     if (!/^\S+@\S+\.\S+$/.test(normalized)) {
-      setValidationError('이메일 주소를 확인해 주세요.');
+      setEmailFieldError('이메일 주소를 확인해 주세요.');
+      setValidationError(null);
       return;
     }
+    setEmailFieldError(null);
     setValidationError(null);
     emailMutation.mutate({ activationCode: activationCode.trim(), email: normalized });
   };
@@ -317,11 +326,11 @@ export function AccountActivationPage() {
 
   const passwordPolicyError =
     (passwordTouched || submitAttempted) && !/^(?=.*[A-Za-z])(?=.*\d).{8,256}$/.test(password)
-      ? '비밀번호는 8자 이상이며 영문과 숫자를 함께 사용해 주세요.'
+      ? '영문, 숫자 포함 8자 이상 입력해 주세요.'
       : null;
   const passwordConfirmError =
     passwordConfirm.length > 0 && password !== passwordConfirm
-      ? '비밀번호가 서로 일치하지 않습니다.'
+      ? '비밀번호가 일치하지 않습니다.'
       : null;
 
   const submitActivation = (event: FormEvent<HTMLFormElement>) => {
@@ -337,11 +346,13 @@ export function AccountActivationPage() {
       return;
     }
     if (!phoneVerified) {
-      setValidationError('전화번호 인증을 완료해 주세요.');
+      setPhoneFieldError('전화번호 인증을 완료해 주세요.');
+      setValidationError(null);
       return;
     }
     if (!emailVerified) {
-      setValidationError('이메일 인증을 완료해 주세요.');
+      setEmailFieldError('이메일 인증을 완료해 주세요.');
+      setValidationError(null);
       return;
     }
     if (passwordPolicyError) {
@@ -369,12 +380,12 @@ export function AccountActivationPage() {
 
   const resetLookup = () => {
     setIdentity(null);
-    setPhoneCodeRequested(false);
     setPhoneVerificationCode('');
     setPhoneVerified(false);
-    setEmailCodeRequested(false);
+    setPhoneFieldError(null);
     setEmailVerificationCode('');
     setEmailVerified(false);
+    setEmailFieldError(null);
     setVerificationTarget(null);
     setPasswordTouched(false);
     setSubmitAttempted(false);
@@ -385,27 +396,19 @@ export function AccountActivationPage() {
     activationMutation.reset();
   };
 
+  const emailRequestError = emailMutation.isError
+    ? getAuthErrorMessage(emailMutation.error, '이메일 인증번호를 보내지 못했습니다.')
+    : null;
+  const phoneRequestError = phoneMutation.isError
+    ? getAuthErrorMessage(phoneMutation.error, '전화번호 인증번호를 보내지 못했습니다.')
+    : null;
   const error =
     validationError ??
     (lookupMutation.isError
       ? getAuthErrorMessage(lookupMutation.error, '인증코드를 확인해 주세요.')
-      : phoneMutation.isError
-        ? getAuthErrorMessage(phoneMutation.error, '전화번호 인증번호를 보내지 못했습니다.')
-        : emailMutation.isError
-          ? getAuthErrorMessage(emailMutation.error, '이메일 인증번호를 보내지 못했습니다.')
-          : phoneVerificationMutation.isError
-            ? getAuthErrorMessage(
-                phoneVerificationMutation.error,
-                '전화번호 인증번호를 확인해 주세요.',
-              )
-            : emailVerificationMutation.isError
-              ? getAuthErrorMessage(
-                  emailVerificationMutation.error,
-                  '이메일 인증번호를 확인해 주세요.',
-                )
-              : activationMutation.isError
-                ? getAuthErrorMessage(activationMutation.error, '계정을 생성하지 못했습니다.')
-                : null);
+      : activationMutation.isError
+        ? getAuthErrorMessage(activationMutation.error, '계정을 생성하지 못했습니다.')
+        : null);
 
   return (
     <AuthLayout active="activation" title="통합로그인 계정 생성">
@@ -494,9 +497,9 @@ export function AccountActivationPage() {
                 disabled={emailVerified}
                 onChange={(event) => {
                   setEmail(event.target.value);
-                  setEmailCodeRequested(false);
                   setEmailVerificationCode('');
                   setEmailVerified(false);
+                  setEmailFieldError(null);
                 }}
                 autoComplete="email"
                 placeholder="이메일을 입력해주세요."
@@ -507,15 +510,12 @@ export function AccountActivationPage() {
                 onClick={requestEmailCode}
                 disabled={emailMutation.isPending || emailVerified}
               >
-                {emailVerified
-                  ? '인증 완료'
-                  : emailMutation.isPending
-                    ? '전송 중'
-                    : emailCodeRequested
-                      ? '재전송'
-                      : '인증'}
+                {emailMutation.isPending ? '전송 중' : '인증'}
               </button>
             </span>
+            {emailFieldError || emailRequestError ? (
+              <p className="auth-field-error">{emailFieldError ?? emailRequestError}</p>
+            ) : null}
           </label>
           <label htmlFor="activation-phone">
             <span>전화번호</span>
@@ -526,9 +526,9 @@ export function AccountActivationPage() {
                 disabled={phoneVerified}
                 onChange={(event) => {
                   setPhone(event.target.value);
-                  setPhoneCodeRequested(false);
                   setPhoneVerificationCode('');
                   setPhoneVerified(false);
+                  setPhoneFieldError(null);
                 }}
                 autoComplete="tel"
                 inputMode="tel"
@@ -540,15 +540,12 @@ export function AccountActivationPage() {
                 onClick={requestPhoneCode}
                 disabled={phoneMutation.isPending || phoneVerified}
               >
-                {phoneVerified
-                  ? '인증 완료'
-                  : phoneMutation.isPending
-                    ? '전송 중'
-                    : phoneCodeRequested
-                      ? '재전송'
-                      : '인증'}
+                {phoneMutation.isPending ? '전송 중' : '인증'}
               </button>
             </span>
+            {phoneFieldError || phoneRequestError ? (
+              <p className="auth-field-error">{phoneFieldError ?? phoneRequestError}</p>
+            ) : null}
           </label>
           <PasswordField
             id="activation-password"
