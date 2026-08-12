@@ -43,8 +43,13 @@ const forgotPasswordSchema = z.object({
 
 const confirmPasswordSchema = z.object({
   username: z.string().trim().min(1).max(128),
-  code: z.string().trim().min(4).max(16),
+  resetToken: z.string().trim().min(32).max(256),
   newPassword: z.string().min(8).max(256),
+});
+
+const verifyPasswordResetSchema = z.object({
+  username: z.string().trim().min(1).max(128),
+  code: z.string().trim().min(4).max(16),
 });
 
 const ssoStartSchema = z.object({
@@ -499,6 +504,18 @@ export class AuthController {
     this.ssoService.assertAuthOrigin(requestOrigin(request));
     const input = parseBody(confirmPasswordSchema, body);
     return this.authService.confirmPasswordReset({
+      ...input,
+      surface: inferCognitoSurface(request),
+    });
+  }
+
+  @Post('password/verify')
+  @RateLimit({ max: 10, windowSeconds: 900 })
+  verifyPassword(@Body() body: unknown, @Req() request: Request) {
+    assertTrustedCredentialRequest(request);
+    this.ssoService.assertAuthOrigin(requestOrigin(request));
+    const input = parseBody(verifyPasswordResetSchema, body);
+    return this.authService.verifyPasswordResetCode({
       ...input,
       surface: inferCognitoSurface(request),
     });

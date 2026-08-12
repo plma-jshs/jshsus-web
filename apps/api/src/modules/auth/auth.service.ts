@@ -574,12 +574,65 @@ export class AuthService {
 
   async confirmPasswordReset(input: {
     username: string;
-    code: string;
+    resetToken: string;
     newPassword: string;
     surface: CognitoSurface;
   }): Promise<{ ok: true }> {
     const normalizedUsername = input.username.trim();
     await this.assertAccountRateLimit('confirm', normalizedUsername, 10, 900);
+    const tokenKey = this.passwordResetTokenKey(input.resetToken);
+    const rawFlow = await this.redis.take(tokenKey);
+
+    if (!rawFlow) {
+      throw new BadRequestException({
+        code: 'AUTH_RESET_TOKEN_INVALID',
+        message: '비밀번호 재설정 인증이 만료되었습니다. 인증 코드를 다시 확인해 주세요.',
+      });
+    }
+
+    let decodedFlow: unknown;
+    try {
+      decodedFlow = JSON.parse(rawFlow);
+    } catch {
+      decodedFlow = null;
+    }
+
+    const parsedFlow = passwordResetFlowSchema.safeParse(decodedFlow);
+    if (
+      !parsedFlow.success ||
+      parsedFlow.data.username !== normalizedUsername ||
+      (parsedFlow.data.surface !== undefined && parsedFlow.data.surface !== input.surface)
+    ) {
+      throw new BadRequestException({
+        code: 'AUTH_RESET_TOKEN_INVALID',
+        message: '비밀번호 재설정 인증이 만료되었습니다. 인증 코드를 다시 확인해 주세요.',
+      });
+    }
+
+    try {
+      await this.cognito.setPermanentPassword(parsedFlow.data.username, input.newPassword);
+    } catch (error) {
+      this.throwMappedCognitoError(error);
+    }
+
+    await this.invalidateUserSessions(parsedFlow.data.userId);
+    await this.database.writeAudit({
+      actorId: parsedFlow.data.userId,
+      action: 'auth.password_reset.confirm',
+      targetType: 'users',
+      targetId: parsedFlow.data.userId,
+    });
+
+    return { ok: true };
+  }
+
+  async verifyPasswordResetCode(input: {
+    username: string;
+    code: string;
+    surface: CognitoSurface;
+  }): Promise<{ resetToken: string }> {
+    const normalizedUsername = input.username.trim();
+    await this.assertAccountRateLimit('verify-password-reset', normalizedUsername, 10, 900);
     const flowKey = this.passwordResetFlowKey(normalizedUsername);
     const rawFlow = await this.redis.get(flowKey);
 
@@ -628,22 +681,15 @@ export class AuthService {
       });
     }
 
-    try {
-      await this.cognito.setPermanentPassword(parsedFlow.data.username, input.newPassword);
-    } catch (error) {
-      this.throwMappedCognitoError(error);
-    }
-
+    const resetToken = randomUUID();
+    await this.redis.setJson(
+      this.passwordResetTokenKey(resetToken),
+      parsedFlow.data,
+      env.PASSWORD_RESET_CODE_TTL_SECONDS,
+    );
     await this.redis.delete(flowKey);
-    await this.invalidateUserSessions(parsedFlow.data.userId);
-    await this.database.writeAudit({
-      actorId: parsedFlow.data.userId,
-      action: 'auth.password_reset.confirm',
-      targetType: 'users',
-      targetId: parsedFlow.data.userId,
-    });
 
-    return { ok: true };
+    return { resetToken };
   }
 
   private async createCognitoSession(input: {
@@ -707,6 +753,11 @@ export class AuthService {
       .update(username.trim().toLocaleLowerCase('en-US'))
       .digest('hex');
     return `auth:password-reset:${digest}`;
+  }
+
+  private passwordResetTokenKey(token: string): string {
+    const digest = createHash('sha256').update(token.trim()).digest('hex');
+    return `auth:password-reset-token:${digest}`;
   }
 
   private hashPasswordResetCode(username: string, code: string): string {

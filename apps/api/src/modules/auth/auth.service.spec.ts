@@ -259,7 +259,7 @@ describe('Cognito authentication routing', () => {
     );
   });
 
-  it('rejects invalid password reset codes before changing the Cognito password', async () => {
+  it('rejects invalid password reset codes before issuing a reset token', async () => {
     const redis = {
       incrementWithTtl: vi.fn().mockResolvedValue(1),
       get: vi.fn().mockResolvedValue(
@@ -273,31 +273,62 @@ describe('Cognito authentication routing', () => {
       setJson: vi.fn().mockResolvedValue(undefined),
       delete: vi.fn().mockResolvedValue(undefined),
     };
-    const cognito = { setPermanentPassword: vi.fn() };
-    const service = new AuthService(
-      redis as never,
-      { writeAudit: vi.fn() } as never,
-      cognito as never,
-    );
+    const service = new AuthService(redis as never, { writeAudit: vi.fn() } as never, {} as never);
 
     await expect(
-      service.confirmPasswordReset({
+      service.verifyPasswordResetCode({
         username: '9999',
         code: '123456',
-        newPassword: 'NewPassword1!',
         surface: 'web',
       }),
     ).rejects.toMatchObject({
       status: 400,
       response: { code: 'AUTH_CODE_MISMATCH' },
     });
-    expect(cognito.setPermanentPassword).not.toHaveBeenCalled();
+    expect(redis.delete).not.toHaveBeenCalled();
+  });
+
+  it('exchanges a valid password reset code for a one-time reset token', async () => {
+    const redis = {
+      incrementWithTtl: vi.fn().mockResolvedValue(1),
+      get: vi.fn(),
+      setJson: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+    };
+    const service = new AuthService(redis as never, { writeAudit: vi.fn() } as never, {} as never);
+    const internal = service as unknown as {
+      hashPasswordResetCode: (username: string, code: string) => string;
+    };
+    redis.get.mockResolvedValue(
+      JSON.stringify({
+        username: '9999',
+        userId: 1,
+        delivery: 'phone',
+        surface: 'web',
+        codeHash: internal.hashPasswordResetCode('9999', '123456'),
+        attemptCount: 0,
+      }),
+    );
+
+    const result = await service.verifyPasswordResetCode({
+      username: '9999',
+      code: '123456',
+      surface: 'web',
+    });
+
+    expect(result.resetToken).toMatch(/^[0-9a-f-]{36}$/);
+    expect(redis.setJson).toHaveBeenCalledWith(
+      expect.stringMatching(/^auth:password-reset-token:/),
+      expect.objectContaining({ username: '9999', userId: 1 }),
+      expect.any(Number),
+    );
+    expect(redis.delete).toHaveBeenCalledWith(expect.stringMatching(/^auth:password-reset:/));
   });
 
   it('changes the Cognito password after a valid Sendon reset code', async () => {
     const redis = {
       incrementWithTtl: vi.fn().mockResolvedValue(1),
-      get: vi.fn(),
+      take: vi.fn(),
       delete: vi.fn().mockResolvedValue(undefined),
       setMembers: vi.fn().mockResolvedValue([]),
       deleteMany: vi.fn().mockResolvedValue(undefined),
@@ -311,7 +342,8 @@ describe('Cognito authentication routing', () => {
     const internal = service as unknown as {
       hashPasswordResetCode: (username: string, code: string) => string;
     };
-    redis.get.mockResolvedValue(
+    const resetToken = 'a68b1ca2-cc56-4ce2-8e35-39d290ba57ad';
+    redis.take.mockResolvedValueOnce(
       JSON.stringify({
         username: '9999',
         userId: 1,
@@ -323,18 +355,30 @@ describe('Cognito authentication routing', () => {
     await expect(
       service.confirmPasswordReset({
         username: '9999',
-        code: '123456',
+        resetToken,
         newPassword: 'NewPassword1!',
         surface: 'web',
       }),
     ).resolves.toEqual({ ok: true });
     expect(cognito.setPermanentPassword).toHaveBeenCalledWith('9999', 'NewPassword1!');
+
+    await expect(
+      service.confirmPasswordReset({
+        username: '9999',
+        resetToken,
+        newPassword: 'NewPassword1!',
+        surface: 'web',
+      }),
+    ).rejects.toMatchObject({
+      status: 400,
+      response: { code: 'AUTH_RESET_TOKEN_INVALID' },
+    });
   });
 
   it('confirms an email-delivered reset code before changing the Cognito password', async () => {
     const redis = {
       incrementWithTtl: vi.fn().mockResolvedValue(1),
-      get: vi.fn().mockResolvedValue(
+      take: vi.fn().mockResolvedValue(
         JSON.stringify({
           username: '9999',
           userId: 1,
@@ -358,7 +402,8 @@ describe('Cognito authentication routing', () => {
     const internal = service as unknown as {
       hashPasswordResetCode: (username: string, code: string) => string;
     };
-    redis.get.mockResolvedValue(
+    const resetToken = 'c4fa7f3e-7d9e-4ab8-b3cc-65c1c4f5b7aa';
+    redis.take.mockResolvedValue(
       JSON.stringify({
         username: '9999',
         userId: 1,
@@ -372,7 +417,7 @@ describe('Cognito authentication routing', () => {
     await expect(
       service.confirmPasswordReset({
         username: '9999',
-        code: '123456',
+        resetToken,
         newPassword: 'NewPassword1!',
         surface: 'web',
       }),

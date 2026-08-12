@@ -628,6 +628,43 @@
   margin-bottom: 18px;
 }
 
+.auth-page--password-reset .auth-card {
+  height: 550px;
+}
+
+.auth-page--password-reset .auth-panel {
+  overflow: hidden;
+}
+
+.auth-password-reset-stage {
+  min-height: 350px;
+}
+
+.auth-password-reset-stage > .auth-form {
+  animation: auth-reset-step-in 180ms ease-out both;
+}
+
+.auth-password-reset-message-slot {
+  display: flex;
+  min-height: 42px;
+  align-items: flex-start;
+}
+
+.auth-password-reset-message-slot > :first-child {
+  width: 100%;
+}
+
+@keyframes auth-reset-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .auth-expired-state {
   display: grid;
   gap: 14px;
@@ -840,6 +877,11 @@
     box-shadow: none;
   }
 
+  .auth-page--password-reset .auth-card {
+    height: 100%;
+    min-height: 0;
+  }
+
   .auth-intro {
     height: 280px;
     min-height: 280px;
@@ -888,6 +930,10 @@
 
   .auth-page-footer__separator {
     display: inline;
+  }
+
+  .auth-password-reset-stage {
+    min-height: 0;
   }
 }
 

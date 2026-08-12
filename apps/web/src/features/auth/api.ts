@@ -153,10 +153,18 @@ export function requestPasswordReset(input: { username: string; delivery: Passwo
 
 export function confirmPasswordReset(input: {
   username: string;
-  code: string;
+  resetToken: string;
   newPassword: string;
 }) {
   return request<{ ok: true }>('/api/auth/password/confirm', {
+    method: 'POST',
+    body: input,
+    csrf: false,
+  });
+}
+
+export function verifyPasswordResetCode(input: { username: string; code: string }) {
+  return request<{ resetToken: string }>('/api/auth/password/verify', {
     method: 'POST',
     body: input,
     csrf: false,
