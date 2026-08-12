@@ -22,5 +22,6 @@ export function getPasswordResetHref(
   const normalizedUsername = username.trim().replace(/^"+|"+$/g, '');
   if (normalizedUsername) target.searchParams.set('username', normalizedUsername);
   target.searchParams.set('returnTo', returnTo);
+  target.searchParams.set('returnOrigin', location.origin);
   return target.toString();
 }

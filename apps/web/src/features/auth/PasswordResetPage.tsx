@@ -79,9 +79,30 @@ function initialReturnTo() {
   return value?.startsWith('/') && !value.startsWith('//') ? value : undefined;
 }
 
+function initialReturnOrigin() {
+  if (typeof window === 'undefined') return undefined;
+  const value = new URLSearchParams(window.location.search).get('returnOrigin');
+  if (!value) return undefined;
+
+  try {
+    const url = new URL(value);
+    const isLocalHost =
+      url.hostname === 'localhost' ||
+      url.hostname === '127.0.0.1' ||
+      url.hostname.endsWith('.localhost');
+    const isJshsusHost = url.hostname === 'jshsus.kr' || url.hostname.endsWith('.jshsus.kr');
+    return isLocalHost || isJshsusHost ? url.origin : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function PasswordResetPage() {
   const returnTo = initialReturnTo();
+  const returnOrigin = initialReturnOrigin();
   const loginReturnHref = returnTo ?? '/login';
+  const returnHref =
+    returnTo && returnOrigin ? new URL(returnTo, returnOrigin).toString() : undefined;
   const [step, setStep] = useState<ResetStep>('request');
   const [username, setUsername] = useState(initialUsername);
   const [delivery, setDelivery] = useState<PasswordResetDelivery>('phone');
@@ -190,14 +211,19 @@ export function PasswordResetPage() {
           <button className="auth-submit" type="submit" disabled={requestMutation.isPending}>
             {requestMutation.isPending ? '전송 중' : '인증 코드 받기'}
           </button>
-          <Link
-            className="auth-back-button"
-            to="/login"
-            search={{ returnTo: loginReturnHref === '/login' ? undefined : loginReturnHref }}
-          >
-            <ArrowLeft size={15} aria-hidden="true" />{' '}
-            {returnTo === '/my-status' ? '마이페이지로 돌아가기' : '로그인으로 돌아가기'}
-          </Link>
+          {returnTo === '/my-status' && returnHref ? (
+            <a className="auth-back-button" href={returnHref}>
+              <ArrowLeft size={15} aria-hidden="true" /> 마이페이지로 돌아가기
+            </a>
+          ) : (
+            <Link
+              className="auth-back-button"
+              to="/login"
+              search={{ returnTo: loginReturnHref === '/login' ? undefined : loginReturnHref }}
+            >
+              <ArrowLeft size={15} aria-hidden="true" /> 로그인으로 돌아가기
+            </Link>
+          )}
         </form>
       ) : null}
 

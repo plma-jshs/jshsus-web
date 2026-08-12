@@ -462,6 +462,7 @@
 }
 .identity-roster-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -472,6 +473,41 @@
   text-align: left;
   vertical-align: top;
 }
+
+.identity-roster-table th:first-child,
+.identity-roster-table td:first-child {
+  width: 64px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.identity-roster-table th:nth-child(2),
+.identity-roster-table td:nth-child(2) {
+  width: 96px;
+  text-align: center;
+}
+
+.identity-roster-table th:nth-child(3),
+.identity-roster-table td:nth-child(3),
+.identity-roster-table th:nth-child(4),
+.identity-roster-table td:nth-child(4) {
+  width: 116px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.identity-roster-table th:nth-child(5),
+.identity-roster-table td:nth-child(5) {
+  width: 132px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.identity-roster-table th:nth-child(6),
+.identity-roster-table td:nth-child(6) {
+  text-align: left;
+  overflow-wrap: anywhere;
+}
 .identity-roster-table th {
   position: sticky;
   top: 0;
@@ -480,13 +516,6 @@
   font-size: 12px;
   font-weight: 750;
 }
-.identity-roster-table td:first-child,
-.identity-roster-table td:nth-child(3) {
-  width: 76px;
-  text-align: center;
-  white-space: nowrap;
-}
-
 @media (min-width: 641px) {
   .identity-panel > .admin-table-toolbar .admin-table-toolbar__controls {
     flex: 1 1 auto;

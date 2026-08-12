@@ -32,6 +32,10 @@
   height: 26px;
 }
 
+.petition-compose-inline {
+  flex: 0 0 auto;
+}
+
 .petition-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 168px;
@@ -557,6 +561,10 @@
 
   .petition-search-controls .page-search-field {
     width: 100%;
+  }
+
+  .petition-compose-inline {
+    display: none;
   }
 
   .petition-card {

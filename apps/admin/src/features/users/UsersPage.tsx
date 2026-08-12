@@ -713,7 +713,7 @@ export function UsersPage() {
       cell: ({ row }) => (
         <IdentityActions
           identity={{ kind: 'student', value: row.original }}
-          isLastRow={row.index === (studentsQuery.data?.items.length ?? 0) - 1}
+          isLastRow={row.index >= Math.max((studentsQuery.data?.items.length ?? 0) - 2, 0)}
           canManageRoles={canManageRoles}
           canManageStatus={canManageUsers}
           statusPending={updateUserStatus.isPending}
@@ -796,7 +796,7 @@ export function UsersPage() {
       cell: ({ row }) => (
         <IdentityActions
           identity={{ kind: 'staff', value: row.original }}
-          isLastRow={row.index === (staffQuery.data?.items.length ?? 0) - 1}
+          isLastRow={row.index >= Math.max((staffQuery.data?.items.length ?? 0) - 2, 0)}
           canManageRoles={canManageRoles}
           canManageStatus={canManageUsers}
           statusPending={updateUserStatus.isPending}
@@ -1321,8 +1321,7 @@ export function UsersPage() {
                 })}
                 {rosterPreview.rows.length > 120 ? (
                   <p className="identity-field-note">
-                    화면에는 처음 120행과 오류 행을 표시합니다. 전체 {rosterPreview.rows.length}개
-                    행이 검증되었습니다.
+                    전체 {rosterPreview.rows.length}개 행이 검증되었습니다.
                   </p>
                 ) : null}
               </div>
@@ -1458,9 +1457,7 @@ export function UsersPage() {
             }}
           >
             <div className="identity-role-grid">
-              {rolesQuery.isPending || userRolesQuery.isPending ? (
-                <p className="identity-field-note">역할 목록을 불러오는 중입니다.</p>
-              ) : rolesQuery.isError || userRolesQuery.isError ? (
+              {rolesQuery.isError || userRolesQuery.isError ? (
                 <p className="identity-form-error">
                   역할 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
                 </p>
@@ -1550,7 +1547,7 @@ export function UsersPage() {
                       dialog.identity.kind === 'student'
                         ? dialog.identity.value.schoolYear
                         : undefined,
-                    force: Boolean(issuedActivation),
+                    force: true,
                   })
                 }
               >

@@ -11,7 +11,7 @@ describe('authSiteHref', () => {
 
     expect(getAuthSiteOrigin(location)).toBe('https://auth.jshsus.kr');
     expect(getPasswordResetHref('"9999"', '/my-status', location)).toBe(
-      'https://auth.jshsus.kr/forgot-password?username=9999&returnTo=%2Fmy-status',
+      'https://auth.jshsus.kr/forgot-password?username=9999&returnTo=%2Fmy-status&returnOrigin=https%3A%2F%2Fv26.jshsus.kr',
     );
   });
 

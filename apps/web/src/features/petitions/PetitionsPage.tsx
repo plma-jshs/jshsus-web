@@ -135,6 +135,12 @@ export function PetitionsPage() {
                 label="청원 검색"
                 placeholder="검색어를 입력하세요"
               />
+              <Link
+                className="detail-primary-button data-table-toolbar__create petition-compose-inline"
+                to="/petitions/new"
+              >
+                작성
+              </Link>
             </div>
           }
         />
