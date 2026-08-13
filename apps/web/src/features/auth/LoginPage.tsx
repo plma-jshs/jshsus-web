@@ -216,7 +216,7 @@ export function LoginPage() {
       return;
     }
     if (newPassword !== newPasswordConfirm) {
-      setValidationError('새 비밀번호가 서로 일치하지 않습니다.');
+      setValidationError('비밀번호가 일치하지 않습니다.');
       return;
     }
     setValidationError(null);

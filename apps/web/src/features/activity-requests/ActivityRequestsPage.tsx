@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type KeyboardEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useSearch } from '@tanstack/react-router';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { CalendarDays, MapPin, PenLine, UserRound, Users } from 'lucide-react';
 import {
   DataTablePagination,
@@ -32,6 +32,7 @@ const activityDayFormatter = createKoreanDateFormatter({
 });
 
 export function ActivityRequestsPage() {
+  const navigate = useNavigate();
   const routeSearch = useSearch({ from: '/activity-requests' });
   const requestsQuery = useQuery({
     queryKey: ['activity-requests', 'me'],
@@ -69,6 +70,17 @@ export function ActivityRequestsPage() {
   const mobileVisibleCount =
     mobileVisibleState.key === mobileVisibleKey ? mobileVisibleState.count : pageSize;
   const mobileVisibleRequests = filtered.slice(0, mobileVisibleCount);
+  const openRequest = (requestId: number) => {
+    void navigate({
+      to: '/activity-requests/$requestId',
+      params: { requestId: String(requestId) },
+    });
+  };
+  const handleRequestKeyDown = (event: KeyboardEvent, requestId: number) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    openRequest(requestId);
+  };
 
   return (
     <PageScaffold
@@ -237,7 +249,13 @@ export function ActivityRequestsPage() {
                 {visibleRequests.map((request) => {
                   const participantCount = Math.max(1, request.participants?.length ?? 0);
                   return (
-                    <tr key={request.id}>
+                    <tr
+                      key={request.id}
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => openRequest(request.id)}
+                      onKeyDown={(event) => handleRequestKeyDown(event, request.id)}
+                    >
                       <td className="activity-table__day" data-label="날짜">
                         <time dateTime={request.startsAt}>
                           {activityDayFormatter.format(new Date(request.startsAt))}
@@ -265,12 +283,7 @@ export function ActivityRequestsPage() {
                         {request.location}
                       </td>
                       <td className="activity-table__purpose" data-label="내용">
-                        <Link
-                          to="/activity-requests/$requestId"
-                          params={{ requestId: String(request.id) }}
-                        >
-                          {request.purpose}
-                        </Link>
+                        <span>{request.purpose}</span>
                       </td>
                       <td
                         className={`activity-table__participants${
@@ -310,18 +323,20 @@ export function ActivityRequestsPage() {
                 request.startsAt,
                 request.endsAt,
                 request.activitySlotIds,
-              ).replaceAll('~', ' – ');
+              );
               const participants = formatActivityParticipants(request.participants, request);
 
               return (
-                <article className="activity-request-card" key={request.id}>
+                <article
+                  className="activity-request-card"
+                  key={request.id}
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => openRequest(request.id)}
+                  onKeyDown={(event) => handleRequestKeyDown(event, request.id)}
+                >
                   <div className="activity-request-card__heading">
-                    <Link
-                      to="/activity-requests/$requestId"
-                      params={{ requestId: String(request.id) }}
-                    >
-                      {request.purpose}
-                    </Link>
+                    <span className="activity-request-card__title">{request.purpose}</span>
                     <span className={`activity-status is-${request.status}`}>
                       {activityStatusLabels[request.status]}
                     </span>
@@ -329,9 +344,11 @@ export function ActivityRequestsPage() {
                   <div className="activity-request-card__details">
                     <div className="activity-request-card__detail activity-request-card__detail--schedule">
                       <CalendarDays size={15} aria-hidden="true" />
-                      <span>
-                        {date} <strong>({period}</strong>
-                        <em> / {timeRanges})</em>
+                      <span className="activity-request-card__schedule-text">
+                        <strong>
+                          {date} ({period})
+                        </strong>
+                        <em>{timeRanges}</em>
                       </span>
                     </div>
                     <div className="activity-request-card__detail">

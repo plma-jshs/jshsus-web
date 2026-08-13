@@ -586,7 +586,7 @@ export class AuthService {
     if (!rawFlow) {
       throw new BadRequestException({
         code: 'AUTH_RESET_TOKEN_INVALID',
-        message: '비밀번호 재설정 인증이 만료되었습니다. 인증 코드를 다시 확인해 주세요.',
+        message: '비밀번호 재설정 인증번호가 만료되었습니다. 인증 코드를 다시 확인해 주세요.',
       });
     }
 
@@ -605,7 +605,7 @@ export class AuthService {
     ) {
       throw new BadRequestException({
         code: 'AUTH_RESET_TOKEN_INVALID',
-        message: '비밀번호 재설정 인증이 만료되었습니다. 인증 코드를 다시 확인해 주세요.',
+        message: '비밀번호 재설정 인증번호가 만료되었습니다. 인증 코드를 다시 확인해 주세요.',
       });
     }
 

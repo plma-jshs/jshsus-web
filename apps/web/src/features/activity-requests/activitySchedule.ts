@@ -10,6 +10,15 @@ export const activityTimeSlots = [
 
 export type ActivityTimeSlotId = (typeof activityTimeSlots)[number]['id'];
 
+const activityTimeGroups = [
+  { prefix: '오전', slotIds: ['morning-1', 'morning-2'] },
+  { prefix: '오후', slotIds: ['afternoon-1', 'afternoon-2'] },
+  { prefix: '저녁', slotIds: ['evening-1', 'evening-2', 'evening-3'] },
+] as const satisfies ReadonlyArray<{
+  prefix: string;
+  slotIds: readonly ActivityTimeSlotId[];
+}>;
+
 export function koreaDateInput(date = new Date()) {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Seoul',
@@ -47,15 +56,34 @@ export function activitySlotDateTimes(date: string, slotId: ActivityTimeSlotId) 
   return activitySlotsDateTimes(date, [slotId]);
 }
 
-function slotLabel(slotId: ActivityTimeSlotId, selectedSlotIds: ActivityTimeSlotId[]) {
-  const slot = activityTimeSlots.find((item) => item.id === slotId);
-  if (!slot) return null;
-  const simpleLabel = slot.label.replace(/^(오전|오후|저녁)\s*/, '');
-  const duplicateSimpleLabels = activityTimeSlots
-    .filter((item) => selectedSlotIds.includes(item.id))
-    .map((item) => item.label.replace(/^(오전|오후|저녁)\s*/, ''))
-    .filter((label, index, labels) => labels.indexOf(label) !== index);
-  return duplicateSimpleLabels.includes(simpleLabel) ? slot.label : simpleLabel;
+function groupedActivityTimeSlots(slotIds: ActivityTimeSlotId[]) {
+  const selectedIds = new Set(slotIds);
+
+  return activityTimeGroups.flatMap((group) => {
+    const selected = group.slotIds
+      .filter((slotId) => selectedIds.has(slotId))
+      .map((slotId) => activityTimeSlots.find((slot) => slot.id === slotId))
+      .filter((slot): slot is (typeof activityTimeSlots)[number] => Boolean(slot));
+
+    if (!selected.length) return [];
+
+    if (selected.length !== group.slotIds.length) {
+      return selected.map((slot) => ({
+        label: slot.label,
+        startsAt: slot.startsAt,
+        endsAt: slot.endsAt,
+      }));
+    }
+
+    const periodNumbers = selected.map((slot) => slot.label.match(/\d+/)?.[0]).filter(Boolean);
+    return [
+      {
+        label: `${group.prefix} ${periodNumbers.join('·')}면학`,
+        startsAt: selected[0].startsAt,
+        endsAt: selected.at(-1)!.endsAt,
+      },
+    ];
+  });
 }
 
 const timeFormatter = new Intl.DateTimeFormat('ko-KR', {
@@ -76,10 +104,9 @@ export function formatActivityTimeRanges(
   savedSlotIds?: ActivityTimeSlotId[],
 ) {
   const slotIds = inferActivityTimeSlotIds(date, startsAt, endsAt, savedSlotIds);
-  const ranges = slotIds
-    .map((slotId) => activityTimeSlots.find((slot) => slot.id === slotId))
-    .filter((slot): slot is (typeof activityTimeSlots)[number] => Boolean(slot))
-    .map((slot) => `${slot.startsAt}~${slot.endsAt}`);
+  const ranges = groupedActivityTimeSlots(slotIds).map(
+    (group) => `${group.startsAt}~${group.endsAt}`,
+  );
   return ranges.length ? ranges.join(', ') : formatActivityTimeRange(startsAt, endsAt);
 }
 
@@ -91,9 +118,8 @@ export function formatActivityPeriodLabel(
 ) {
   const slotIds = inferActivityTimeSlotIds(date, startsAt, endsAt, savedSlotIds);
   if (!slotIds.length) return '직접 입력';
-  return slotIds
-    .map((slotId) => slotLabel(slotId, slotIds))
-    .filter((label): label is string => Boolean(label))
+  return groupedActivityTimeSlots(slotIds)
+    .map((group) => group.label)
     .join(', ');
 }
 

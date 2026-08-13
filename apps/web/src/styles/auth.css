@@ -644,16 +644,6 @@
   animation: auth-reset-step-in 180ms ease-out both;
 }
 
-.auth-password-reset-message-slot {
-  display: flex;
-  min-height: 42px;
-  align-items: flex-start;
-}
-
-.auth-password-reset-message-slot > :first-child {
-  width: 100%;
-}
-
 @keyframes auth-reset-step-in {
   from {
     opacity: 0;

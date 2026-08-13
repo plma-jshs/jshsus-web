@@ -61,18 +61,6 @@ function FormMessage({ children, success = false }: { children: ReactNode; succe
   );
 }
 
-function ResetMessageSlot({ error, notice }: { error?: string | null; notice?: string | null }) {
-  return (
-    <div className="auth-password-reset-message-slot">
-      {error ? (
-        <FormMessage>{error}</FormMessage>
-      ) : notice ? (
-        <FormMessage success>{notice}</FormMessage>
-      ) : null}
-    </div>
-  );
-}
-
 function initialUsername() {
   if (typeof window === 'undefined') return '';
   const value = new URLSearchParams(window.location.search).get('username')?.trim() ?? '';
@@ -249,7 +237,7 @@ export function PasswordResetPage() {
                 <span>이메일</span>
               </label>
             </fieldset>
-            <ResetMessageSlot error={activeError} />
+            {activeError ? <FormMessage>{activeError}</FormMessage> : null}
             <button className="auth-submit" type="submit" disabled={requestMutation.isPending}>
               {requestMutation.isPending ? '전송 중' : '인증 코드 받기'}
             </button>
@@ -271,7 +259,8 @@ export function PasswordResetPage() {
 
         {step === 'verify' ? (
           <form key="verify" className="auth-form auth-password-reset-form" onSubmit={submitVerify}>
-            <ResetMessageSlot notice={notice} error={activeError} />
+            {notice ? <FormMessage success>{notice}</FormMessage> : null}
+            {activeError ? <FormMessage>{activeError}</FormMessage> : null}
             <label htmlFor="confirmation-code">
               <span className="sr-only">인증 코드</span>
               <span className="auth-input-shell">
@@ -323,7 +312,8 @@ export function PasswordResetPage() {
 
         {step === 'confirm' ? (
           <form key="confirm" className="auth-form" onSubmit={submitConfirm}>
-            <ResetMessageSlot notice={notice} error={activeError} />
+            {notice ? <FormMessage success>{notice}</FormMessage> : null}
+            {activeError ? <FormMessage>{activeError}</FormMessage> : null}
             <PasswordField
               id="reset-password"
               label="새 비밀번호"

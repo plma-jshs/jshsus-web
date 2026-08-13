@@ -103,7 +103,6 @@ export function ActivityRequestDetailPage() {
     return (
       <PageScaffold
         breadcrumbs={detailBreadcrumbs('activityRequests')}
-        title="탐구활동서"
         width="reading"
         variant="document"
       >
@@ -116,7 +115,6 @@ export function ActivityRequestDetailPage() {
     return (
       <PageScaffold
         breadcrumbs={detailBreadcrumbs('activityRequests')}
-        title="탐구활동서"
         width="reading"
         variant="document"
       >
@@ -130,7 +128,6 @@ export function ActivityRequestDetailPage() {
     return (
       <PageScaffold
         breadcrumbs={detailBreadcrumbs('activityRequests')}
-        title="탐구활동서"
         width="reading"
         variant="document"
       >

@@ -183,6 +183,12 @@
   border: 1px solid var(--j-color-border);
   border-radius: var(--j-radius-md);
   background: var(--j-color-surface);
+  cursor: pointer;
+}
+
+.activity-request-card:focus-visible {
+  outline: 2px solid var(--j-color-brand-strong);
+  outline-offset: 2px;
 }
 
 .activity-request-card__heading {
@@ -193,7 +199,8 @@
   gap: 12px;
 }
 
-.activity-request-card__heading > a {
+.activity-request-card__heading > a,
+.activity-request-card__title {
   min-width: 0;
   overflow: hidden;
   color: var(--j-color-text);
@@ -246,12 +253,27 @@
   font-size: 11px;
 }
 
+.activity-request-card__schedule-text {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.activity-request-card__schedule-text > strong,
+.activity-request-card__schedule-text > em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .activity-table__purpose {
   overflow: hidden;
   text-align: left !important;
 }
 
-.activity-table__purpose a {
+.activity-table__purpose a,
+.activity-table__purpose span {
   display: block;
   overflow: hidden;
   color: var(--j-color-text);
@@ -261,10 +283,17 @@
   white-space: nowrap;
 }
 
-.activity-table tbody tr:hover .activity-table__purpose a,
-.activity-table__purpose a:focus-visible {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.activity-table tbody tr {
+  cursor: pointer;
+}
+
+.activity-table tbody tr:focus-visible {
+  outline: 2px solid var(--j-color-brand-strong);
+  outline-offset: -2px;
+}
+
+.activity-table__purpose span {
+  text-decoration: none;
 }
 
 .activity-table__location {
@@ -307,7 +336,7 @@
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   line-height: 1.35;
-  white-space: normal;
+  white-space: nowrap;
 }
 
 .activity-table__period strong {

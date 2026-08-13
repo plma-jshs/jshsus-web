@@ -208,9 +208,7 @@ export function NewActivityRequestPage() {
                 <span className="activity-form-field__error" id="activity-purpose-error">
                   {errors.purpose}
                 </span>
-              ) : (
-                <span className="sr-only">활동 내용을 입력해 주세요.</span>
-              )}
+              ) : null}
             </div>
           </div>
         </section>

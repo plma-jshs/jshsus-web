@@ -3,6 +3,7 @@ import {
   activitySlotDateTimes,
   activitySlotsDateTimes,
   availableActivityTimeSlots,
+  formatActivityPeriodLabel,
   formatActivityTimeRanges,
 } from './activitySchedule';
 
@@ -40,7 +41,26 @@ describe('activity schedule options', () => {
     });
   });
 
-  it('formats non-contiguous periods as separate time ranges', () => {
+  it('groups selected periods into compact period and time ranges', () => {
+    expect(
+      formatActivityPeriodLabel(
+        '2026-07-15',
+        '2026-07-15T00:00:00.000Z',
+        '2026-07-15T03:00:00.000Z',
+        ['morning-1', 'morning-2'],
+      ),
+    ).toBe('오전 1·2면학');
+    expect(
+      formatActivityTimeRanges(
+        '2026-07-15',
+        '2026-07-15T00:00:00.000Z',
+        '2026-07-15T03:00:00.000Z',
+        ['morning-1', 'morning-2'],
+      ),
+    ).toBe('09:00~12:00');
+  });
+
+  it('keeps non-contiguous periods as separate compact ranges', () => {
     expect(
       formatActivityTimeRanges(
         '2026-07-15',

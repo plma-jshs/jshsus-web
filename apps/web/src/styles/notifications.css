@@ -38,7 +38,7 @@
   padding: 0;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--j-color-surface);
+  border: 0;
   border-radius: 999px;
   color: var(--j-color-text-inverse);
   background: var(--j-color-danger);

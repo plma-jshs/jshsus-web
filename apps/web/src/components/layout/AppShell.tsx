@@ -378,11 +378,13 @@ function BusinessInfoModal({ onClose }: { onClose: () => void }) {
 function UserMenu({
   displayName,
   profileImageUrl,
+  canUseAdmin,
   loggingOut,
   onLogout,
 }: {
   displayName: string;
   profileImageUrl?: string;
+  canUseAdmin: boolean;
   loggingOut: boolean;
   onLogout: () => void;
 }) {
@@ -425,16 +427,18 @@ function UserMenu({
             <User aria-hidden="true" size={16} />
             마이페이지
           </Link>
-          <a
-            href={getAdminSiteHref()}
-            target="_blank"
-            rel="noreferrer"
-            role="menuitem"
-            onClick={() => setIsOpen(false)}
-          >
-            <ShieldCheck aria-hidden="true" size={16} />
-            학생부 전산시스템
-          </a>
+          {canUseAdmin ? (
+            <a
+              href={getAdminSiteHref()}
+              target="_blank"
+              rel="noreferrer"
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+            >
+              <ShieldCheck aria-hidden="true" size={16} />
+              학생부 전산시스템
+            </a>
+          ) : null}
           <button
             className="header-user-dropdown__logout"
             type="button"
@@ -607,6 +611,7 @@ function PortalShell() {
                   <UserMenu
                     displayName={sessionDisplayName}
                     profileImageUrl={myStatusQuery.data?.student.profileImageUrl}
+                    canUseAdmin={canUseAdmin}
                     loggingOut={logoutMutation.isPending}
                     onLogout={() => logoutMutation.mutate()}
                   />
