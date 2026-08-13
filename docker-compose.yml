@@ -40,11 +40,11 @@ services:
       DATABASE_URL: ${COMPOSE_DATABASE_URL:-mysql://${MYSQL_USER:-jshs_web}:${MYSQL_PASSWORD:-local_mysql_password}@mysql:3306/jshsus}
       DATABASE_SSL_MODE: disabled
       REDIS_URL: redis://:${REDIS_PASSWORD:-local_redis_password}@redis:6379/0
-      S3_BUCKET: ''
-      S3_PUBLIC_BASE_URL: ''
-      S3_ENDPOINT: ''
-      AWS_ACCESS_KEY_ID: ''
-      AWS_SECRET_ACCESS_KEY: ''
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_PUBLIC_BASE_URL: ${S3_PUBLIC_BASE_URL:-}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
     ports:
       - '${API_PORT:-4000}:4000'
     depends_on:
