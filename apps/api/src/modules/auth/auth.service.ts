@@ -476,6 +476,10 @@ export class AuthService {
         });
       }
 
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       this.throwMappedCognitoError(error);
     }
 

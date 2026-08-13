@@ -29,7 +29,7 @@ export class NoticesController {
 
   @Get('notices/:id')
   notice(@Param('id') id: string) {
-    return this.noticesService.getDetail(Number(id));
+    return this.noticesService.getDetail(Number(id), 'anonymous');
   }
 
   @Get('admin/notices')

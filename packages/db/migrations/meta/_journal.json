@@ -85,6 +85,20 @@
       "when": 1786336579180,
       "tag": "0011_kind_supreme_intelligence",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1786616454413,
+      "tag": "0012_lumpy_sauron",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1786619511097,
+      "tag": "0013_spotty_sphinx",
+      "breakpoints": true
     }
   ]
 }

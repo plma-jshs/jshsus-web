@@ -70,6 +70,17 @@ describe('SsoService', () => {
     expect(JSON.stringify(stored)).not.toContain(started.browserBinding);
   });
 
+  it('rejects backslash-based protocol-relative return paths', async () => {
+    const { service, redis } = createFixture();
+    const started = await service.start('http://localhost:5173', '/\\evil.example');
+    const requestId = new URL(started.authorizationUrl).searchParams.get('sso');
+    const stored = JSON.parse((await redis.get(`sso:request:${requestId}`)) ?? '{}') as {
+      returnTo?: string;
+    };
+
+    expect(stored.returnTo).toBe('/');
+  });
+
   it('exchanges a browser-bound code exactly once for a service-specific session', async () => {
     const { service, authService, delegated } = createFixture();
     const started = await service.start('http://localhost:5173', '/boards/free');

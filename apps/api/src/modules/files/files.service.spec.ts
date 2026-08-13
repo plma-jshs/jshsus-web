@@ -3,11 +3,13 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  PayloadTooLargeException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthSession } from '../auth/auth.service';
 import type { DatabaseService } from '../database/database.service';
+import { env } from '../../shared/config/env';
 import { FilesService } from './files.service';
 
 const privateFile: UploadedFileSummary = {
@@ -32,6 +34,7 @@ const memberSession: AuthSession = {
 
 type FilesServiceInternals = {
   assertCanAttach: (...args: unknown[]) => Promise<void>;
+  assertWithinStorageQuota: (...args: unknown[]) => Promise<void>;
   store: (...args: unknown[]) => Promise<void>;
   queueUploadCompensation: (
     input: {
@@ -120,6 +123,117 @@ describe('FilesService access policy', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('rejects an upload before storage when it would exceed the account quota', async () => {
+    const originalQuotaMb = env.FILE_USER_STORAGE_QUOTA_MB;
+    env.FILE_USER_STORAGE_QUOTA_MB = 1;
+    const usageQuery = {
+      from: vi.fn(),
+      where: vi.fn().mockResolvedValue([{ totalBytes: 1024 * 1024 - 1 }]),
+    };
+    usageQuery.from.mockReturnValue(usageQuery);
+    const service = new FilesService({
+      db: { select: vi.fn().mockReturnValue(usageQuery) },
+    } as unknown as DatabaseService);
+    vi.spyOn(internals(service), 'assertCanAttach').mockResolvedValue(undefined);
+    const store = vi.spyOn(internals(service), 'store').mockResolvedValue(undefined);
+
+    try {
+      await expect(
+        service.upload(
+          {
+            originalName: 'document.pdf',
+            mimeType: 'application/pdf',
+            bytes: Buffer.from('pdf'),
+            targetType: 'post',
+            targetId: 41,
+          },
+          memberSession,
+        ),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'FILE_STORAGE_QUOTA_EXCEEDED' }),
+      });
+      expect(store).not.toHaveBeenCalled();
+    } finally {
+      env.FILE_USER_STORAGE_QUOTA_MB = originalQuotaMb;
+    }
+  });
+
+  it('allows a legitimate upload that remains within the account quota', async () => {
+    const usageQuery = {
+      from: vi.fn(),
+      where: vi.fn().mockResolvedValue([{ totalBytes: 1024 }]),
+    };
+    usageQuery.from.mockReturnValue(usageQuery);
+    const service = new FilesService({
+      db: { select: vi.fn().mockReturnValue(usageQuery) },
+    } as unknown as DatabaseService);
+
+    await expect(
+      internals(service).assertWithinStorageQuota(1, 1024, memberSession, 'post'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('uses the bounded manager quota for an authorized content manager', async () => {
+    const originalMemberQuotaMb = env.FILE_USER_STORAGE_QUOTA_MB;
+    const originalManagerQuotaMb = env.FILE_MANAGER_STORAGE_QUOTA_MB;
+    env.FILE_USER_STORAGE_QUOTA_MB = 1;
+    env.FILE_MANAGER_STORAGE_QUOTA_MB = 2;
+    const usageQuery = {
+      from: vi.fn(),
+      where: vi.fn().mockResolvedValue([{ totalBytes: 1024 * 1024 }]),
+    };
+    usageQuery.from.mockReturnValue(usageQuery);
+    const service = new FilesService({
+      db: { select: vi.fn().mockReturnValue(usageQuery) },
+    } as unknown as DatabaseService);
+
+    try {
+      await expect(
+        internals(service).assertWithinStorageQuota(
+          1,
+          1,
+          { ...memberSession, permissions: ['notices.manage'] },
+          'notice',
+        ),
+      ).resolves.toBeUndefined();
+    } finally {
+      env.FILE_USER_STORAGE_QUOTA_MB = originalMemberQuotaMb;
+      env.FILE_MANAGER_STORAGE_QUOTA_MB = originalManagerQuotaMb;
+    }
+  });
+
+  it('locks the uploader before the final transactional quota check', async () => {
+    const originalQuotaMb = env.FILE_USER_STORAGE_QUOTA_MB;
+    env.FILE_USER_STORAGE_QUOTA_MB = 1;
+    const ownerQuery = {
+      from: vi.fn(),
+      where: vi.fn(),
+      limit: vi.fn(),
+      for: vi.fn().mockResolvedValue([{ id: memberSession.userId }]),
+    };
+    ownerQuery.from.mockReturnValue(ownerQuery);
+    ownerQuery.where.mockReturnValue(ownerQuery);
+    ownerQuery.limit.mockReturnValue(ownerQuery);
+    const usageQuery = {
+      from: vi.fn(),
+      where: vi.fn().mockResolvedValue([{ totalBytes: 1024 * 1024 }]),
+    };
+    usageQuery.from.mockReturnValue(usageQuery);
+    const database = {
+      select: vi.fn().mockReturnValueOnce(ownerQuery).mockReturnValueOnce(usageQuery),
+    };
+    const service = new FilesService({ db: database } as unknown as DatabaseService);
+
+    try {
+      await expect(
+        internals(service).assertWithinStorageQuota(1, 1, memberSession, 'post', database, true),
+      ).rejects.toBeInstanceOf(PayloadTooLargeException);
+      expect(ownerQuery.for).toHaveBeenCalledWith('update');
+    } finally {
+      env.FILE_USER_STORAGE_QUOTA_MB = originalQuotaMb;
+    }
+  });
+
   it('rejects anonymous access to private files', async () => {
     const service = new FilesService({} as DatabaseService);
     vi.spyOn(service, 'getById').mockResolvedValue(privateFile);
@@ -197,6 +311,45 @@ describe('FilesService access policy', () => {
         ...memberSession,
         roles: ['teacher'],
         permissions: ['community.manage'],
+      }),
+    ).resolves.toEqual(file);
+  });
+
+  it('does not expose a dormitory report attachment to another student', async () => {
+    const file = {
+      ...privateFile,
+      targetType: 'dorm_report',
+      targetId: 61,
+    };
+    const database = {
+      db: { select: vi.fn().mockReturnValue(selectChain([{ authorId: 2 }])) },
+    } as unknown as DatabaseService;
+    const service = new FilesService(database);
+    vi.spyOn(service, 'getById').mockResolvedValue(file);
+
+    await expect(service.getAccessibleById(file.id, memberSession)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it('allows a dormitory manager to inspect a dormitory report attachment', async () => {
+    const file = {
+      ...privateFile,
+      targetType: 'dorm_report',
+      targetId: 61,
+    };
+    const database = {
+      db: { select: vi.fn().mockReturnValue(selectChain([{ authorId: 2 }])) },
+    } as unknown as DatabaseService;
+    const service = new FilesService(database);
+    vi.spyOn(service, 'getById').mockResolvedValue(file);
+    vi.spyOn(service, 'getAccessOwnerId').mockResolvedValue(2);
+
+    await expect(
+      service.getAccessibleById(file.id, {
+        ...memberSession,
+        roles: ['teacher'],
+        permissions: ['dorm.manage'],
       }),
     ).resolves.toEqual(file);
   });
@@ -401,6 +554,9 @@ describe('FilesService access policy', () => {
     const assertCanAttach = vi
       .spyOn(internals(service), 'assertCanAttach')
       .mockResolvedValue(undefined);
+    const assertWithinStorageQuota = vi
+      .spyOn(internals(service), 'assertWithinStorageQuota')
+      .mockResolvedValue(undefined);
     vi.spyOn(internals(service), 'store').mockResolvedValue(undefined);
     const queueCompensation = vi
       .spyOn(internals(service), 'queueUploadCompensation')
@@ -425,6 +581,8 @@ describe('FilesService access policy', () => {
     expect(transaction).toHaveBeenCalledOnce();
     expect(assertCanAttach).toHaveBeenCalledTimes(2);
     expect(assertCanAttach.mock.calls[1]?.at(-1)).toBe(true);
+    expect(assertWithinStorageQuota).toHaveBeenCalledTimes(2);
+    expect(assertWithinStorageQuota.mock.calls[1]?.at(-1)).toBe(true);
     expect(auditInsert.values).toHaveBeenCalledOnce();
     expect(queueCompensation).toHaveBeenCalledWith(
       {
@@ -438,7 +596,7 @@ describe('FilesService access policy', () => {
     expect(deleteObject).not.toHaveBeenCalled();
   });
 
-  it('uses a public object URL for public files and the API for private files', async () => {
+  it('keeps content files behind the authorized API redirect', async () => {
     const database = {
       db: {
         select: vi.fn().mockReturnValue(
@@ -460,8 +618,46 @@ describe('FilesService access policy', () => {
     } as unknown as DatabaseService;
 
     const summary = await new FilesService(database).getById(7);
-    expect(summary.url).toMatch(/^https?:\/\//);
-    expect(summary.inlineUrl).toBe(summary.url);
+    expect(summary.url).toBe('/api/files/7/download');
+    expect(summary.inlineUrl).toBe('/api/files/7/content');
+  });
+
+  it('keeps public profile images on the configured public object URL', async () => {
+    const originalBucket = env.S3_BUCKET;
+    const originalPublicBaseUrl = env.S3_PUBLIC_BASE_URL;
+    env.S3_BUCKET = 'jshsus-test-public-assets';
+    env.S3_PUBLIC_BASE_URL = '';
+
+    const database = {
+      db: {
+        select: vi.fn().mockReturnValue(
+          selectChain([
+            {
+              id: 8,
+              originalName: 'profile.png',
+              objectKey: 'profile/8.png',
+              mimeType: 'image/png',
+              sizeBytes: 100,
+              visibility: 'public',
+              targetType: 'profile',
+              targetId: 41,
+              uploadedAt: new Date(0),
+            },
+          ]),
+        ),
+      },
+    } as unknown as DatabaseService;
+
+    try {
+      const summary = await new FilesService(database).getById(8);
+      expect(summary.url).toBe(
+        `https://s3.${env.AWS_REGION}.amazonaws.com/jshsus-test-public-assets/profile/8.png`,
+      );
+      expect(summary.inlineUrl).toBe(summary.url);
+    } finally {
+      env.S3_BUCKET = originalBucket;
+      env.S3_PUBLIC_BASE_URL = originalPublicBaseUrl;
+    }
   });
 });
 

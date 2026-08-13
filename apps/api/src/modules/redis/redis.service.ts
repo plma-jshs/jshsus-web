@@ -49,6 +49,45 @@ export class RedisService implements OnModuleInit, OnApplicationShutdown {
     });
   }
 
+  async claimWithinBudget(options: {
+    dedupeKey: string;
+    dedupeTtlSeconds: number;
+    budgetKey: string;
+    budgetTtlSeconds: number;
+    maxClaims: number;
+  }): Promise<boolean> {
+    if (!this.client) {
+      return false;
+    }
+
+    const result = await this.client.eval(
+      `
+        if redis.call('EXISTS', KEYS[1]) == 1 then
+          return 0
+        end
+        local count = tonumber(redis.call('GET', KEYS[2]) or '0')
+        if count >= tonumber(ARGV[3]) then
+          return 0
+        end
+        redis.call('SET', KEYS[1], '1', 'EX', ARGV[1])
+        count = redis.call('INCR', KEYS[2])
+        if count == 1 then
+          redis.call('EXPIRE', KEYS[2], ARGV[2])
+        end
+        return 1
+      `,
+      {
+        keys: [options.dedupeKey, options.budgetKey],
+        arguments: [
+          String(options.dedupeTtlSeconds),
+          String(options.budgetTtlSeconds),
+          String(options.maxClaims),
+        ],
+      },
+    );
+    return Number(result) === 1;
+  }
+
   async delete(key: string): Promise<void> {
     if (!this.client) {
       return;

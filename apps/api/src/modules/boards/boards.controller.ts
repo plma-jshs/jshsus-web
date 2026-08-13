@@ -52,7 +52,9 @@ export class BoardsController {
     @Param('id') id: string,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.boardsService.getPost(slug, Number(id), request.authSession?.userId);
+    const actorId = request.authSession?.userId;
+    const viewerKey = actorId ? `user:${actorId}` : 'anonymous';
+    return this.boardsService.getPost(slug, Number(id), actorId, viewerKey);
   }
 
   @Get('admin/boards/:slug/posts')

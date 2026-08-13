@@ -12,6 +12,7 @@ import type { AuthSession } from '../auth/auth.service';
 import { BoardsService } from '../boards/boards.service';
 import { auditValues, DatabaseService, type AppDatabase } from '../database/database.service';
 import { YouTubeDataApiService } from '../youtube/youtube-data-api.service';
+import { ViewCountService } from '../redis/view-count.service';
 
 const JBS_BOARD_SLUG = 'jbs';
 
@@ -55,6 +56,7 @@ export class JbsService {
     private readonly database: DatabaseService,
     private readonly boardsService: BoardsService,
     private readonly youtube: YouTubeDataApiService,
+    private readonly viewCounts: ViewCountService,
   ) {}
 
   async preview(rawUrl: string) {
@@ -129,7 +131,11 @@ export class JbsService {
     });
   }
 
-  async getPost(id: number, actorId?: number | null): Promise<JbsPostListItem> {
+  async getPost(
+    id: number,
+    actorId: number | null | undefined,
+    viewerKey: string,
+  ): Promise<JbsPostListItem> {
     this.assertPostId(id);
 
     return this.database.query('jbs.posts.detail', async (db) => {
@@ -175,13 +181,16 @@ export class JbsService {
         .limit(1);
       if (!row) throw new NotFoundException('JBS video was not found.');
 
-      await db
-        .update(schema.posts)
-        .set({ viewCount: sql`${schema.posts.viewCount} + 1` })
-        .where(eq(schema.posts.id, id));
+      const shouldIncrementViewCount = await this.viewCounts.claimIncrement('post', id, viewerKey);
+      if (shouldIncrementViewCount) {
+        await db
+          .update(schema.posts)
+          .set({ viewCount: sql`${schema.posts.viewCount} + 1` })
+          .where(eq(schema.posts.id, id));
+      }
 
       return {
-        ...this.toPost({ ...row, viewCount: row.viewCount + 1 }),
+        ...this.toPost({ ...row, viewCount: row.viewCount + Number(shouldIncrementViewCount) }),
         canEdit: Boolean(actorId && actorId > 0 && row.authorId === actorId),
       };
     });

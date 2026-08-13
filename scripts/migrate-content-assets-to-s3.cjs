@@ -257,7 +257,48 @@ function apiUrl(id) {
 
 function fileUrl(file) {
   const key = file.objectKey ?? file.object_key;
-  return file.visibility === 'public' ? publicUrl(key) : apiUrl(file.id);
+  // Article files must stay behind the API so the parent post/notice visibility
+  // is checked before a short-lived S3 URL is issued. Profile images are the
+  // only file rows that intentionally keep a public URL.
+  return file.target_type === 'profile' ? publicUrl(key) : apiUrl(file.id);
+}
+
+function directUrlForFile(file) {
+  const key = file.objectKey ?? file.object_key;
+  return key ? publicUrl(key) : '';
+}
+
+function findFileForDirectUrl(value, files) {
+  if (!publicBase() || !value.startsWith(`${publicBase()}/`)) return null;
+
+  let key;
+  try {
+    key = value
+      .slice(publicBase().length + 1)
+      .split('/')
+      .map((part) => decodeURIComponent(part))
+      .join('/');
+  } catch {
+    return null;
+  }
+
+  for (const file of files.values()) {
+    if (file.target_type !== 'profile' && (file.object_key ?? file.objectKey) === key) return file;
+  }
+  return null;
+}
+
+function normalizeDirectUrls(value, files) {
+  let next = String(value ?? '');
+  let changed = false;
+  for (const file of files.values()) {
+    if (file.target_type === 'profile' || !file.id) continue;
+    const directUrl = directUrlForFile(file);
+    if (!directUrl || !next.includes(directUrl)) continue;
+    next = next.split(directUrl).join(apiUrl(file.id));
+    changed = true;
+  }
+  return { value: next, changed };
 }
 
 function parseNotice(html, url) {
@@ -451,11 +492,20 @@ async function migrateDoc(db, s3, target, doc, files, cache, failures) {
             changed = true;
           }
         }
-      } else if (!source.startsWith(`${publicBase()}/`)) {
-        const replacement = await migrateAsset(db, s3, target, source, cache, failures);
-        if (replacement !== source) {
-          node.attrs.src = replacement;
-          changed = true;
+      } else {
+        const directFile = findFileForDirectUrl(source, files);
+        if (directFile) {
+          const replacement = fileUrl(directFile);
+          if (replacement && replacement !== source) {
+            node.attrs.src = replacement;
+            changed = true;
+          }
+        } else if (!source.startsWith(`${publicBase()}/`)) {
+          const replacement = await migrateAsset(db, s3, target, source, cache, failures);
+          if (replacement !== source) {
+            node.attrs.src = replacement;
+            changed = true;
+          }
         }
       }
     }
@@ -468,12 +518,20 @@ async function migrateDoc(db, s3, target, doc, files, cache, failures) {
 async function migrateText(db, s3, target, value, files, cache, failures) {
   let next = String(value ?? '');
   let changed = false;
+  const normalizedDirectUrls = normalizeDirectUrls(next, files);
+  next = normalizedDirectUrls.value;
+  changed ||= normalizedDirectUrls.changed;
   for (const id of extractApiIds(next)) {
     const file = files.get(id);
     if (!file) continue;
-    const replacement = fileUrl(file);
-    next = next.replace(new RegExp(`/api/files/${id}/(?:content|download)`, 'g'), replacement);
-    changed = true;
+    const pattern = new RegExp(`/api/files/${id}/(content|download)`, 'g');
+    const replacement = (_match, disposition) =>
+      disposition === 'download' ? `/api/files/${id}/download` : fileUrl(file);
+    const updated = next.replace(pattern, replacement);
+    if (updated !== next) {
+      next = updated;
+      changed = true;
+    }
   }
   for (const url of textAssets(next)) {
     if (publicBase() && url.startsWith(`${publicBase()}/`)) continue;

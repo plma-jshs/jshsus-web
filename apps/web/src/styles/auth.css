@@ -33,7 +33,7 @@
   position: fixed;
   z-index: 0;
   inset: 0;
-  background: url('/images/auth-campus.png') center / cover no-repeat;
+  background: url('/images/auth-campus-2560.webp') center / cover no-repeat;
   content: '';
   transform: scale(1.12);
 }
@@ -878,7 +878,7 @@
     padding: 26px clamp(20px, 7vw, 48px);
     background:
       linear-gradient(180deg, rgb(0 0 0 / 32%) 0%, rgb(8 27 48 / 64%) 100%),
-      url('/images/auth-campus.png') center / auto 180% no-repeat;
+      url('/images/auth-campus-1280.webp') center / auto 180% no-repeat;
   }
 
   .auth-intro::before {

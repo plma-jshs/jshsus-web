@@ -5,7 +5,7 @@ const booleanFromString = z
   .union([z.boolean(), z.string()])
   .transform((value) => value === true || value === 'true');
 
-const envSchema = z
+export const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     TZ: z.string().default('Asia/Seoul'),
@@ -68,6 +68,7 @@ const envSchema = z
     COGNITO_AWS_SECRET_ACCESS_KEY: z.string().trim().default(''),
     COGNITO_FLOW_TTL_SECONDS: z.coerce.number().int().min(120).max(900).default(300),
     COGNITO_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(15_000).default(5_000),
+    ACCOUNT_ACTIVATION_CODE_TTL_DAYS: z.coerce.number().int().min(1).max(365).default(30),
     PASSWORD_RESET_CODE_TTL_SECONDS: z.coerce.number().int().min(120).max(900).default(300),
     SENDON_API_BASE_URL: z.string().url().default('https://api.sendon.io'),
     SENDON_ACCOUNT_ID: z.string().trim().default(''),
@@ -105,6 +106,9 @@ const envSchema = z
     RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().positive().default(60),
     RATE_LIMIT_MAX: z.coerce.number().int().positive().default(60),
     FILE_UPLOAD_MAX_MB: z.coerce.number().int().positive().default(10),
+    FILE_USER_STORAGE_QUOTA_MB: z.coerce.number().int().positive().max(102_400).default(1_024),
+    FILE_MANAGER_STORAGE_QUOTA_MB: z.coerce.number().int().positive().max(102_400).default(1_024),
+    FILE_PRESIGNED_URL_TTL_SECONDS: z.coerce.number().int().min(30).max(900).default(300),
     FILE_CLEANUP_BATCH_SIZE: z.coerce.number().int().min(1).max(100).default(20),
     FILE_CLEANUP_INTERVAL_MS: z.coerce.number().int().min(1_000).max(3_600_000).default(60_000),
     FILE_CLEANUP_LOCK_TIMEOUT_MS: z.coerce
@@ -347,6 +351,22 @@ const envSchema = z
         code: z.ZodIssueCode.custom,
         path: ['FILE_CLEANUP_RETRY_MAX_MS'],
         message: 'FILE_CLEANUP_RETRY_MAX_MS must be at least FILE_CLEANUP_RETRY_BASE_MS.',
+      });
+    }
+
+    if (value.FILE_USER_STORAGE_QUOTA_MB < value.FILE_UPLOAD_MAX_MB) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['FILE_USER_STORAGE_QUOTA_MB'],
+        message: 'FILE_USER_STORAGE_QUOTA_MB must be at least FILE_UPLOAD_MAX_MB.',
+      });
+    }
+
+    if (value.FILE_MANAGER_STORAGE_QUOTA_MB < value.FILE_USER_STORAGE_QUOTA_MB) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['FILE_MANAGER_STORAGE_QUOTA_MB'],
+        message: 'FILE_MANAGER_STORAGE_QUOTA_MB must be at least FILE_USER_STORAGE_QUOTA_MB.',
       });
     }
 

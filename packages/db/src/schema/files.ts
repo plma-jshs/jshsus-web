@@ -29,6 +29,7 @@ export const files = mysqlTable(
     ...timestamps,
   },
   (table) => ({
+    ownerIdx: index('files_owner_idx').on(table.ownerId),
     targetIdx: index('files_target_idx').on(table.targetType, table.targetId),
     objectKeyIdx: index('files_object_key_idx').on(table.objectKey),
   }),

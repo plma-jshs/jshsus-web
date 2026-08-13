@@ -227,7 +227,6 @@ cleanup_old_images() {
       fi
     done < <(docker image ls --format '{{.Repository}}:{{.Tag}}' "ghcr.io/$GHCR_NAMESPACE/jshsus-$service")
   done
-  docker image prune -f --filter 'until=168h' >/dev/null
 }
 
 if [[ "$ACTION" == '--rollback' ]]; then

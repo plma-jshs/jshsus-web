@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  PayloadTooLargeException,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -13,11 +14,12 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import * as schema from '@jshsus/db';
 import type { UploadedFileSummary } from '@jshsus/types';
 import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
-import { and, asc, eq, inArray, isNull, lt, lte, ne, or } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, lt, lte, ne, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { env } from '../../shared/config/env';
 import { auditValues, type AppDatabase, DatabaseService } from '../database/database.service';
@@ -123,6 +125,15 @@ function hasTrustedFileSignature(mimeType: string, bytes: Buffer): boolean {
   return true;
 }
 
+/**
+ * Content files must never expose a permanent bucket URL. Their parent can be
+ * hidden or moved behind an audience boundary at any time, so every access
+ * must pass through the target authorization check first.
+ */
+function isProtectedContentTarget(targetType: string | null): boolean {
+  return targetType !== 'profile';
+}
+
 function toSummary(row: {
   id: number;
   originalName: string;
@@ -135,7 +146,10 @@ function toSummary(row: {
   uploadedAt: Date;
 }): UploadedFileSummary {
   const apiUrl = `/api/files/${row.id}`;
-  const publicUrl = row.visibility === 'public' ? getS3PublicObjectUrl(row.objectKey) : null;
+  const publicUrl =
+    row.visibility === 'public' && !isProtectedContentTarget(row.targetType)
+      ? getS3PublicObjectUrl(row.objectKey)
+      : null;
 
   return {
     id: row.id,
@@ -145,9 +159,9 @@ function toSummary(row: {
     visibility: row.visibility,
     targetType: row.targetType ?? undefined,
     targetId: row.targetId ?? undefined,
-    // Public content is intentionally served from the bucket so rich-text image
-    // nodes do not depend on an authenticated API request. Private files remain
-    // behind the API and keep their target-access checks.
+    // Content files intentionally use the API redirect endpoint even when their
+    // row is marked public. The endpoint checks the parent target first and
+    // returns a short-lived S3 URL only after that check succeeds.
     url: publicUrl ?? `${apiUrl}/download`,
     inlineUrl: publicUrl ?? `${apiUrl}/content`,
     uploadedAt: row.uploadedAt.toISOString(),
@@ -210,6 +224,8 @@ export class FilesService {
       );
     }
 
+    await this.assertWithinStorageQuota(actorId, bytes.length, session, parsed.data.targetType);
+
     const objectKey = [
       parsed.data.targetType ?? 'misc',
       new Date().toISOString().slice(0, 10),
@@ -229,6 +245,14 @@ export class FilesService {
           parsed.data.targetId,
           session,
           parsed.data.visibility,
+          transaction as unknown as AppDatabase,
+          true,
+        );
+        await this.assertWithinStorageQuota(
+          actorId,
+          bytes.length,
+          session,
+          parsed.data.targetType,
           transaction as unknown as AppDatabase,
           true,
         );
@@ -619,6 +643,43 @@ export class FilesService {
     return { bytes, mimeType: row.mimeType, originalName: row.originalName };
   }
 
+  async getPresignedObjectUrl(id: number, disposition: 'inline' | 'attachment'): Promise<string> {
+    if (!this.s3) {
+      throw new ServiceUnavailableException('File storage is not configured.');
+    }
+
+    const [row] = await this.database.db
+      .select({
+        objectKey: schema.files.objectKey,
+        mimeType: schema.files.mimeType,
+        originalName: schema.files.originalName,
+      })
+      .from(schema.files)
+      .where(eq(schema.files.id, id))
+      .limit(1);
+
+    if (!row) {
+      throw new NotFoundException('File was not found.');
+    }
+
+    const safeName = row.originalName.replace(/[\r\n"]/g, '_');
+    const contentDisposition =
+      disposition === 'inline'
+        ? 'inline'
+        : `attachment; filename="download"; filename*=UTF-8''${encodeURIComponent(safeName)}`;
+
+    const command = new GetObjectCommand({
+      Bucket: env.S3_BUCKET,
+      Key: row.objectKey,
+      ResponseContentType: row.mimeType,
+      ResponseContentDisposition: contentDisposition,
+    }) as unknown as Parameters<typeof getSignedUrl>[1];
+
+    return getSignedUrl(this.s3 as unknown as Parameters<typeof getSignedUrl>[0], command, {
+      expiresIn: env.FILE_PRESIGNED_URL_TTL_SECONDS,
+    });
+  }
+
   private async enqueueCleanup(
     input: CleanupEnqueueInput,
     db: AppDatabase = this.database.db,
@@ -859,11 +920,14 @@ export class FilesService {
 
     if (file.targetType === 'dorm_report') {
       const [target] = await this.database.db
-        .select({ id: schema.dormReports.id })
+        .select({ authorId: schema.dormReports.userId })
         .from(schema.dormReports)
         .where(eq(schema.dormReports.id, file.targetId))
         .limit(1);
       if (!target) throw new NotFoundException('File was not found.');
+      if (!session?.isLogined || (!canManage && target.authorId !== session.userId)) {
+        throw new NotFoundException('File was not found.');
+      }
       return;
     }
 
@@ -969,6 +1033,52 @@ export class FilesService {
       visibility !== 'private'
     ) {
       throw new BadRequestException('Draft post files must remain private until publication.');
+    }
+  }
+
+  private async assertWithinStorageQuota(
+    actorId: number,
+    incomingBytes: number,
+    session: AuthSession,
+    targetType: 'notice' | 'post' | 'lost_item' | 'profile' | 'dorm_report',
+    db: AppDatabase = this.database.db,
+    lockOwner = false,
+  ) {
+    if (lockOwner) {
+      // Every upload by an account locks the same row before the final usage
+      // calculation. This prevents concurrent requests from each observing
+      // enough remaining quota and committing an over-limit aggregate.
+      const [owner] = await db
+        .select({ id: schema.users.id })
+        .from(schema.users)
+        .where(eq(schema.users.id, actorId))
+        .limit(1)
+        .for('update');
+      if (!owner) {
+        throw new ForbiddenException('A persisted account is required to upload files.');
+      }
+    }
+
+    const [usage] = await db
+      .select({
+        totalBytes: sql<number>`coalesce(sum(${schema.files.sizeBytes}), 0)`.mapWith(Number),
+      })
+      .from(schema.files)
+      .where(eq(schema.files.ownerId, actorId));
+
+    const quotaMb = canManageTarget(session, targetType)
+      ? env.FILE_MANAGER_STORAGE_QUOTA_MB
+      : env.FILE_USER_STORAGE_QUOTA_MB;
+    const quotaBytes = quotaMb * 1024 * 1024;
+    const usedBytes = Number(usage?.totalBytes ?? 0);
+
+    if (usedBytes + incomingBytes > quotaBytes) {
+      throw new PayloadTooLargeException({
+        code: 'FILE_STORAGE_QUOTA_EXCEEDED',
+        message: `File storage quota exceeded (${quotaMb} MB per account).`,
+        quotaBytes,
+        usedBytes,
+      });
     }
   }
 }

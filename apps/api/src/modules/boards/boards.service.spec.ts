@@ -44,7 +44,13 @@ function createService(operationDb: object) {
     ),
     writeAudit: vi.fn().mockResolvedValue(undefined),
   } as unknown as DatabaseService;
-  const service = new BoardsService(database, {} as FilesService);
+  const service = new BoardsService(
+    database,
+    {} as FilesService,
+    {
+      claimIncrement: vi.fn().mockResolvedValue(true),
+    } as never,
+  );
   return { database, service };
 }
 
@@ -185,15 +191,60 @@ describe('BoardsService free-board likes', () => {
     const files = {
       listForTarget: vi.fn().mockResolvedValue([]),
     } as unknown as FilesService;
-    const service = new BoardsService(database, files);
+    const service = new BoardsService(database, files, {
+      claimIncrement: vi.fn().mockResolvedValue(true),
+    } as never);
 
-    await expect(service.getPost('free', 41, 12)).resolves.toEqual(
+    await expect(service.getPost('free', 41, 12, 'user:12')).resolves.toEqual(
       expect.objectContaining({
         authorProfileImageUrl: '/api/files/91/content',
         likeCount: 4,
         likedByMe: true,
       }),
     );
+  });
+
+  it('keeps the public detail readable without a view-count write when Redis denies the claim', async () => {
+    const board = selectChain([{ id: 3, slug: 'free', visibility: 'public' }]);
+    const post = selectChain([
+      {
+        id: 41,
+        publicNumber: 41,
+        title: 'title',
+        content: 'content',
+        contentJson: null,
+        authorId: 12,
+        authorName: 'student',
+        authorNickname: null,
+        storedAuthorName: null,
+        authorProfileImageId: null,
+        isAnonymous: false,
+        pinned: false,
+        viewCount: 5,
+        commentCount: 2,
+        likeCount: 4,
+        likedByMe: 0,
+        createdAt: new Date('2026-07-13T00:00:00Z'),
+      },
+    ]);
+    const operationDb = {
+      select: vi.fn().mockReturnValueOnce(board).mockReturnValueOnce(post),
+      update: vi.fn(),
+    };
+    const database = {
+      query: vi.fn(async (_name: string, work: (value: typeof operationDb) => unknown) =>
+        work(operationDb),
+      ),
+    } as unknown as DatabaseService;
+    const files = { listForTarget: vi.fn().mockResolvedValue([]) } as unknown as FilesService;
+    const service = new BoardsService(database, files, {
+      claimIncrement: vi.fn().mockResolvedValue(false),
+    } as never);
+
+    await expect(service.getPost('free', 41, 12, 'user:12')).resolves.toEqual(
+      expect.objectContaining({ id: 41, viewCount: 5 }),
+    );
+    expect(operationDb.update).not.toHaveBeenCalled();
   });
 
   it('serializes on the post, inserts one user like, and returns the updated count', async () => {
@@ -319,7 +370,9 @@ describe('BoardsService draft cleanup ordering', () => {
         return { deleted: 0, failed: 2 };
       }),
     } as unknown as FilesService;
-    const service = new BoardsService(database, files);
+    const service = new BoardsService(database, files, {
+      claimIncrement: vi.fn().mockResolvedValue(true),
+    } as never);
 
     await expect(
       service.deleteDraft('free', 41, {

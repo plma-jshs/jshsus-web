@@ -386,16 +386,10 @@ export class AuthController {
   ) {
     this.ssoService.assertAuthOrigin(requestOrigin(request));
     const input = parseBody(ssoLogoutSchema, { returnTo });
-    const token = this.authService.extractToken(request);
-    if (token) {
-      const session = await this.authService.getSessionFromToken(token);
-      if (session?.userId) {
-        await this.authService.invalidateUserSessions(session.userId);
-      } else {
-        await this.authService.logout(token);
-      }
-    }
-    this.clearSessionCookies(request, response);
+    // Service origins invalidate every server-side session through the
+    // CSRF-protected POST /auth/logout before navigating here. This legacy GET
+    // remains a passive, allowlisted redirect so cross-site navigation cannot
+    // mutate authentication state.
     return response.redirect(302, this.ssoService.validateLogoutTarget(input.returnTo));
   }
 

@@ -23,5 +23,5 @@ function run(script, extraEnv = {}) {
 assertLocalSeedAllowed();
 run('db:prepare-baseline', { RESET_DATABASE_ON_BASELINE_MISMATCH: 'true' });
 run('db:migrate');
-run('db:bootstrap-core');
+run('db:bootstrap-core', { BOOTSTRAP_LEGACY_CONTENT: 'true' });
 run('db:seed-local-test-user');

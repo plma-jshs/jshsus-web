@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { type ContentListQuery, toContainsPattern } from '../../shared/content-list-query';
 import { auditValues, type AppDatabase, DatabaseService } from '../database/database.service';
 import { FilesService } from '../files/files.service';
+import { ViewCountService } from '../redis/view-count.service';
 
 const noticeSchema = z.object({
   title: z.string().min(1).max(255),
@@ -34,6 +35,7 @@ export class NoticesService {
   constructor(
     private readonly database: DatabaseService,
     private readonly filesService: FilesService,
+    private readonly viewCounts: ViewCountService,
   ) {}
 
   async listPage(query: ContentListQuery): Promise<PaginatedResponse<NoticeListItem>> {
@@ -92,7 +94,7 @@ export class NoticesService {
     });
   }
 
-  async getDetail(id: number): Promise<NoticeDetail> {
+  async getDetail(id: number, viewerKey: string): Promise<NoticeDetail> {
     if (!Number.isInteger(id) || id <= 0) throw new BadRequestException('Invalid notice id.');
 
     return this.database.query('notices.detail', async (db) => {
@@ -121,10 +123,17 @@ export class NoticesService {
         .limit(1);
       if (!row) throw new NotFoundException('Notice was not found.');
 
-      await db
-        .update(schema.notices)
-        .set({ viewCount: sql`${schema.notices.viewCount} + 1` })
-        .where(eq(schema.notices.id, id));
+      const shouldIncrementViewCount = await this.viewCounts.claimIncrement(
+        'notice',
+        id,
+        viewerKey,
+      );
+      if (shouldIncrementViewCount) {
+        await db
+          .update(schema.notices)
+          .set({ viewCount: sql`${schema.notices.viewCount} + 1` })
+          .where(eq(schema.notices.id, id));
+      }
       const attachments = await this.filesService.listForTarget('notice', id);
 
       return {
@@ -136,7 +145,7 @@ export class NoticesService {
         authorName: row.storedAuthorName ?? row.accountAuthorName ?? undefined,
         pinned: row.pinned,
         publishedAt: toIso(row.publishedAt),
-        viewCount: row.viewCount + 1,
+        viewCount: row.viewCount + Number(shouldIncrementViewCount),
         attachments,
       };
     });

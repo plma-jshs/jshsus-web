@@ -178,6 +178,17 @@ export function PrivacyPage() {
             기억하기’ 설정에 따라 쿠키의 유지기간이 달라집니다. 브라우저에서 쿠키 저장을 거부할 수
             있으나 이 경우 로그인과 일부 기능을 이용할 수 없습니다.
           </p>
+          <p>
+            운영 환경에 Google Analytics 측정 ID가 설정된 경우, 공개 정보 페이지의 이용 현황을
+            파악하기 위해 Google Analytics를 사용할 수 있습니다. 로그인·계정·마이페이지·관리자 등
+            인증 또는 개인 영역은 측정하지 않으며, 페이지 주소의 경로만 전송하고 검색 매개변수와
+            해시 값은 전송하지 않습니다. 이 과정에서 Google의 분석용 쿠키 또는 저장소와
+            브라우저·기기·네트워크 정보가 함께 처리될 수 있습니다. 자세한 내용은{' '}
+            <a href="https://policies.google.com/privacy?hl=ko" target="_blank" rel="noreferrer">
+              Google 개인정보처리방침
+            </a>
+            에서 확인할 수 있습니다.
+          </p>
         </section>
 
         <section>

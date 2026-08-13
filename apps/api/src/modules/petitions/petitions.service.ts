@@ -162,7 +162,13 @@ export class PetitionsService {
       const summary = toPetitionSummary(petition, answer);
       return {
         ...summary,
-        canEdit: Boolean(actorId && actorId > 0 && petition.authorId === actorId),
+        canEdit: Boolean(
+          actorId &&
+          actorId > 0 &&
+          petition.authorId === actorId &&
+          petition.status === 'open' &&
+          petition.participantCount === 0,
+        ),
       };
     });
   }
@@ -323,7 +329,7 @@ export class PetitionsService {
     );
   }
 
-  async delete(id: number, actorId?: number | null) {
+  async delete(id: number, actorId?: number | null, canManage = false) {
     this.assertActor(actorId);
 
     return this.database.query('petitions.delete', async (db) =>
@@ -333,6 +339,7 @@ export class PetitionsService {
             id: schema.petitions.id,
             authorId: schema.petitions.authorId,
             status: schema.petitions.status,
+            participantCount: schema.petitions.participantCount,
           })
           .from(schema.petitions)
           .where(and(eq(schema.petitions.id, id), ne(schema.petitions.status, 'hidden')))
@@ -340,8 +347,11 @@ export class PetitionsService {
           .for('update');
 
         if (!petition) throw new NotFoundException('Petition does not exist.');
-        if (petition.authorId !== actorId) {
+        if (!canManage && petition.authorId !== actorId) {
           throw new ForbiddenException('You cannot modify this petition.');
+        }
+        if (!canManage && (petition.status !== 'open' || petition.participantCount > 0)) {
+          throw new ConflictException('Petitions can only be deleted before participation starts.');
         }
 
         await tx

@@ -87,8 +87,8 @@ export const accountActivationCodes = mysqlTable(
     id,
     identityType: mysqlEnum('identity_type', ['student', 'staff']).notNull(),
     identityNumber: int('identity_number').notNull(),
-    // Student codes may be issued before the target school year becomes active.
-    // Staff activation codes leave this field null.
+    // Kept nullable only for activation codes issued before school-year attribution.
+    // Every newly issued student and staff code stores the active school year.
     schoolYear: int('school_year'),
     codeHash: varchar('code_hash', { length: 128 }).notNull(),
     codeLookupHash: varchar('code_lookup_hash', { length: 64 }),
@@ -96,6 +96,8 @@ export const accountActivationCodes = mysqlTable(
     issuedById: int('issued_by_id').references(() => users.id),
     usedById: int('used_by_id').references(() => users.id),
     usedAt: datetime('used_at', { mode: 'date', fsp: 3 }),
+    // Null means a legacy code issued before expiry enforcement. New codes always set this value.
+    expiresAt: datetime('expires_at', { mode: 'date', fsp: 3 }),
     ...timestamps,
   },
   (table) => ({
@@ -105,6 +107,7 @@ export const accountActivationCodes = mysqlTable(
     ),
     issuerIdx: index('account_activation_issuer_idx').on(table.issuedById),
     usedIdx: index('account_activation_used_idx').on(table.usedAt),
+    expiresIdx: index('account_activation_expires_idx').on(table.expiresAt),
     schoolYearIdx: index('account_activation_school_year_idx').on(table.schoolYear),
     codeLookupIdx: uniqueIndex('account_activation_code_lookup_idx').on(table.codeLookupHash),
   }),

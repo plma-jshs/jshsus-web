@@ -57,4 +57,11 @@ export class PetitionsController {
   answer(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthenticatedRequest) {
     return this.petitionsService.answer(Number(id), body, request.authSession?.userId);
   }
+
+  @Delete('admin/petitions/:id')
+  @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
+  @RequirePermissions('petitions.answer')
+  deleteManagedPetition(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
+    return this.petitionsService.delete(Number(id), request.authSession?.userId, true);
+  }
 }

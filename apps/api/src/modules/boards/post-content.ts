@@ -1,7 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import type { PostStatus, RichTextDocument, RichTextNode, RichTextPoll } from '@jshsus/types';
 import { z } from 'zod';
-import { getS3PublicBaseUrl } from '../../shared/storage/s3-url';
 
 const MAX_DOCUMENT_BYTES = 1_000_000;
 const MAX_DOCUMENT_NODES = 5_000;
@@ -16,18 +15,7 @@ function isAllowedLink(value: string): boolean {
 }
 
 export function isAllowedInlineImageSource(value: string): boolean {
-  if (/^\/api\/files\/[1-9]\d*\/content$/.test(value)) return true;
-
-  const publicBase = getS3PublicBaseUrl();
-  if (!publicBase || !value.startsWith(`${publicBase}/`)) return false;
-
-  try {
-    const source = new URL(value);
-    const base = new URL(publicBase);
-    return source.protocol === base.protocol && source.origin === base.origin && !source.hash;
-  } catch {
-    return false;
-  }
+  return /^\/api\/files\/[1-9]\d*\/content$/.test(value);
 }
 
 const linkMarkSchema = z

@@ -112,7 +112,11 @@ describe('board post rich-text validation', () => {
       BadRequestException,
     );
 
-    for (const src of ['https://evil.example/image.png', 'data:image/png;base64,AA==']) {
+    for (const src of [
+      'https://evil.example/image.png',
+      'https://s3.ap-northeast-2.amazonaws.com/jshsus-uploads/post/image.png',
+      'data:image/png;base64,AA==',
+    ]) {
       const externalImage = structuredClone(tiptapDocument) as unknown as MutableFixture;
       externalImage.content[3]!.attrs!.src = src;
       expect(() =>

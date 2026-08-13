@@ -35,7 +35,12 @@ function safeTextEqual(left: string, right: string): boolean {
 }
 
 function safeReturnTo(value: string | undefined): string {
-  if (!value || !value.startsWith('/') || value.startsWith('//')) return '/';
+  // Browsers and URL parsers normalize backslashes as path separators. A value
+  // such as `/\\evil.example` therefore becomes a protocol-relative URL when
+  // the client navigates to it, despite appearing to start with a single slash.
+  if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
+    return '/';
+  }
   return value.slice(0, 1_000);
 }
 

@@ -33,4 +33,15 @@ describe('RolesGuard', () => {
 
     expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
   });
+
+  it.each(['admin', 'root', 'plma_admin'])('does not treat legacy %s as system_admin', (role) => {
+    const reflector = {
+      getAllAndOverride: vi.fn().mockReturnValue(['system_admin']),
+    } as unknown as Reflector;
+    const guard = new RolesGuard(reflector);
+
+    expect(() => guard.canActivate(contextWithSession({ roles: [role], permissions: [] }))).toThrow(
+      ForbiddenException,
+    );
+  });
 });

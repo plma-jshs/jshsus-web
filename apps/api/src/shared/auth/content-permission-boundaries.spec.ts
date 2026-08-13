@@ -4,6 +4,7 @@ import { AdminController } from '../../modules/admin/admin.controller';
 import { BoardsController } from '../../modules/boards/boards.controller';
 import { LostItemsController } from '../../modules/lost-items/lost-items.controller';
 import { NoticesController } from '../../modules/notices/notices.controller';
+import { PetitionsController } from '../../modules/petitions/petitions.controller';
 import { ReportsController } from '../../modules/reports/reports.controller';
 import { PERMISSIONS_KEY } from './auth.decorators';
 
@@ -43,6 +44,12 @@ describe('content management permission boundaries', () => {
       ]);
     },
   );
+
+  it('protects moderator petition deletion with petitions.answer', () => {
+    expect(requiredPermission(PetitionsController.prototype.deleteManagedPetition)).toEqual([
+      'petitions.answer',
+    ]);
+  });
 
   it.each([
     'schoolEvents',

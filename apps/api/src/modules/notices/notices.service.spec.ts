@@ -49,7 +49,9 @@ describe('NoticesService delete cleanup outbox', () => {
       }),
     } as unknown as FilesService;
 
-    await expect(new NoticesService(database, files).delete(51, 7)).resolves.toEqual({
+    await expect(
+      new NoticesService(database, files, { claimIncrement: vi.fn() } as never).delete(51, 7),
+    ).resolves.toEqual({
       ok: true,
       id: 51,
       cleanupPending: true,
@@ -95,7 +97,11 @@ describe('NoticesService public author display', () => {
       query: vi.fn(async (_label: string, work: (value: typeof db) => unknown) => work(db)),
     } as unknown as DatabaseService;
 
-    const result = await new NoticesService(database, {} as FilesService).listPage({
+    const result = await new NoticesService(
+      database,
+      {} as FilesService,
+      { claimIncrement: vi.fn() } as never,
+    ).listPage({
       page: 1,
       pageSize: 10,
       q: '',
@@ -114,5 +120,48 @@ describe('NoticesService public author display', () => {
       },
     ]);
     expect(result.items[0]).not.toHaveProperty('authorName');
+  });
+});
+
+describe('NoticesService view count write boundary', () => {
+  it('returns the detail but skips the database update when the Redis claim is unavailable', async () => {
+    const detailQuery = {
+      from: vi.fn(),
+      leftJoin: vi.fn(),
+      where: vi.fn(),
+      limit: vi.fn().mockResolvedValue([
+        {
+          id: 7,
+          publicNumber: 7,
+          title: 'notice',
+          content: 'content',
+          department: 'IT',
+          storedAuthorName: null,
+          accountAuthorName: null,
+          pinned: false,
+          publishedAt: new Date('2026-07-15T00:00:00.000Z'),
+          viewCount: 9,
+        },
+      ]),
+    };
+    detailQuery.from.mockReturnValue(detailQuery);
+    detailQuery.leftJoin.mockReturnValue(detailQuery);
+    detailQuery.where.mockReturnValue(detailQuery);
+    const db = {
+      select: vi.fn().mockReturnValue(detailQuery),
+      update: vi.fn(),
+    };
+    const database = {
+      query: vi.fn(async (_label: string, work: (value: typeof db) => unknown) => work(db)),
+    } as unknown as DatabaseService;
+    const files = {
+      listForTarget: vi.fn().mockResolvedValue([]),
+    } as unknown as FilesService;
+    const viewCounts = { claimIncrement: vi.fn().mockResolvedValue(false) };
+
+    await expect(
+      new NoticesService(database, files, viewCounts as never).getDetail(7, 'user:12'),
+    ).resolves.toEqual(expect.objectContaining({ id: 7, viewCount: 9 }));
+    expect(db.update).not.toHaveBeenCalled();
   });
 });

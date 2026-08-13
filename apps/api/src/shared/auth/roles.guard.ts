@@ -4,15 +4,6 @@ import type { UserRole } from '@jshsus/types';
 import { ROLES_KEY } from './auth.decorators';
 import type { AuthenticatedRequest } from './request-auth';
 
-const roleAliases: Partial<Record<UserRole, string[]>> = {
-  system_admin: ['system_admin', 'admin', 'root', 'plma_admin'],
-  student_affairs_head: ['student_affairs_head', 'student_affairs', 'points_admin'],
-  teacher: ['teacher', 'staff'],
-  student_council: ['student_council', 'council'],
-  broadcast_club: ['broadcast_club', 'jbs'],
-  student: ['student'],
-};
-
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
@@ -35,9 +26,7 @@ export class RolesGuard implements CanActivate {
     }
 
     const roles = new Set(session.roles ?? []);
-    const allowed = requiredRoles.some((role) =>
-      (roleAliases[role] ?? [role]).some((alias) => roles.has(alias)),
-    );
+    const allowed = requiredRoles.some((role) => roles.has(role));
 
     if (!allowed) {
       throw new ForbiddenException('Insufficient permissions.');

@@ -98,25 +98,35 @@ export class FilesController {
   async download(@Param('id') id: string, @Req() request: Request, @Res() response: Response) {
     const numericId = Number(id);
     const session = await this.authService.getSessionFromRequest(request);
-    await this.filesService.getAccessibleById(numericId, session);
+    const file = await this.filesService.getAccessibleById(numericId, session);
+    if (file.targetType === 'profile') {
+      const stored = await this.filesService.getStoredObject(numericId);
+      response.type(stored.mimeType);
+      response.attachment(stored.originalName);
+      response.send(stored.bytes);
+      return;
+    }
 
-    const stored = await this.filesService.getStoredObject(numericId);
-    response.type(stored.mimeType);
-    response.attachment(stored.originalName);
-
-    response.send(stored.bytes);
+    const url = await this.filesService.getPresignedObjectUrl(numericId, 'attachment');
+    response.setHeader('Cache-Control', 'private, no-store');
+    response.redirect(302, url);
   }
 
   @Get(':id/content')
   async content(@Param('id') id: string, @Req() request: Request, @Res() response: Response) {
     const numericId = Number(id);
     const session = await this.authService.getSessionFromRequest(request);
-    await this.filesService.getAccessibleById(numericId, session);
+    const file = await this.filesService.getAccessibleById(numericId, session);
+    if (file.targetType === 'profile') {
+      const stored = await this.filesService.getStoredObject(numericId);
+      response.type(stored.mimeType);
+      response.setHeader('Content-Disposition', 'inline');
+      response.send(stored.bytes);
+      return;
+    }
 
-    const stored = await this.filesService.getStoredObject(numericId);
-    response.type(stored.mimeType);
-    response.setHeader('Content-Disposition', 'inline');
-
-    response.send(stored.bytes);
+    const url = await this.filesService.getPresignedObjectUrl(numericId, 'inline');
+    response.setHeader('Cache-Control', 'private, no-store');
+    response.redirect(302, url);
   }
 }

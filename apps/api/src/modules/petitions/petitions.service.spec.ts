@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import type { DatabaseService } from '../database/database.service';
 import { PetitionsService } from './petitions.service';
@@ -16,6 +16,40 @@ function selectChain(rows: unknown[]) {
   chain.where.mockReturnValue(chain);
   chain.orderBy.mockReturnValue(chain);
   return chain;
+}
+
+function deleteDatabase(petition: {
+  id: number;
+  authorId: number;
+  status: 'open' | 'awaiting_answer' | 'answered' | 'expired';
+  participantCount: number;
+}) {
+  const lockedPetition = {
+    from: vi.fn(),
+    where: vi.fn(),
+    limit: vi.fn(),
+    for: vi.fn().mockResolvedValue([petition]),
+  };
+  lockedPetition.from.mockReturnValue(lockedPetition);
+  lockedPetition.where.mockReturnValue(lockedPetition);
+  lockedPetition.limit.mockReturnValue(lockedPetition);
+
+  const updateWhere = vi.fn().mockResolvedValue(undefined);
+  const updateSet = vi.fn().mockReturnValue({ where: updateWhere });
+  const auditValues = vi.fn().mockResolvedValue(undefined);
+  const tx = {
+    select: vi.fn().mockReturnValue(lockedPetition),
+    update: vi.fn().mockReturnValue({ set: updateSet }),
+    insert: vi.fn().mockReturnValue({ values: auditValues }),
+  };
+  const db = {
+    transaction: vi.fn(async (work: (value: typeof tx) => unknown) => work(tx)),
+  };
+  const database = {
+    query: vi.fn(async (_name: string, work: (value: typeof db) => unknown) => work(db)),
+  } as unknown as DatabaseService;
+
+  return { database, tx, updateSet };
 }
 
 describe('PetitionsService detail contract', () => {
@@ -58,6 +92,7 @@ describe('PetitionsService detail contract', () => {
   it('loads one petition independently from the capped list and includes rich text', async () => {
     const petition = {
       id: 73,
+      authorId: 10,
       title: '상세 청원',
       content: '상세 본문',
       contentJson: {
@@ -88,10 +123,11 @@ describe('PetitionsService detail contract', () => {
       query: vi.fn(async (_name: string, work: (value: typeof db) => unknown) => work(db)),
     } as unknown as DatabaseService;
 
-    const result = await new PetitionsService(database).getById(73);
+    const result = await new PetitionsService(database).getById(73, 10);
 
     expect(result.id).toBe(73);
     expect(result.contentDoc).toEqual(petition.contentJson);
+    expect(result.canEdit).toBe(false);
     expect(result.authorName).toBe('2401 작성자');
     expect(result.answer?.content).toBe('답변');
   });
@@ -114,5 +150,57 @@ describe('PetitionsService detail contract', () => {
     } as unknown as DatabaseService;
 
     await expect(new PetitionsService(database).getById(73)).rejects.toBe(failure);
+  });
+});
+
+describe('PetitionsService deletion boundary', () => {
+  it.each([
+    ['open', 1],
+    ['awaiting_answer', 100],
+    ['answered', 100],
+    ['expired', 0],
+  ] as const)(
+    'blocks an author from hiding a %s petition with %i participants',
+    async (status, participantCount) => {
+      const { database, updateSet } = deleteDatabase({
+        id: 73,
+        authorId: 10,
+        status,
+        participantCount,
+      });
+
+      await expect(new PetitionsService(database).delete(73, 10)).rejects.toBeInstanceOf(
+        ConflictException,
+      );
+      expect(updateSet).not.toHaveBeenCalled();
+    },
+  );
+
+  it('allows an author to delete an open petition before participation', async () => {
+    const { database, updateSet } = deleteDatabase({
+      id: 73,
+      authorId: 10,
+      status: 'open',
+      participantCount: 0,
+    });
+
+    await expect(new PetitionsService(database).delete(73, 10)).resolves.toEqual({
+      ok: true,
+      id: 73,
+    });
+    expect(updateSet).toHaveBeenCalledWith(expect.objectContaining({ status: 'hidden' }));
+  });
+
+  it('preserves moderator deletion after participation', async () => {
+    const { database, updateSet } = deleteDatabase({
+      id: 73,
+      authorId: 10,
+      status: 'answered',
+      participantCount: 100,
+    });
+    const service = new PetitionsService(database);
+
+    await expect(service.delete(73, 20, true)).resolves.toEqual({ ok: true, id: 73 });
+    expect(updateSet).toHaveBeenCalledWith(expect.objectContaining({ status: 'hidden' }));
   });
 });

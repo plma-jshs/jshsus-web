@@ -500,6 +500,7 @@ async function upsertActiveSchoolYear(connection, schoolYear) {
 async function bootstrapCoreData(connection, options = {}) {
   const schoolYear =
     options.schoolYear ?? resolveActiveSchoolYear(options.environment ?? process.env);
+  const includeLegacyContent = options.includeLegacyContent === true;
 
   await connection.beginTransaction();
   try {
@@ -507,7 +508,9 @@ async function bootstrapCoreData(connection, options = {}) {
     await upsertPermissions(connection);
     await rebuildBuiltInRolePermissions(connection);
     await upsertBoards(connection);
-    await upsertLegacyContent(connection);
+    if (includeLegacyContent) {
+      await upsertLegacyContent(connection);
+    }
     await upsertLegacyJbsVideos(connection);
     await upsertActiveSchoolYear(connection, schoolYear);
     await connection.commit();
@@ -518,6 +521,10 @@ async function bootstrapCoreData(connection, options = {}) {
   }
 }
 
+function shouldIncludeLegacyContent(environment = process.env) {
+  return environment.BOOTSTRAP_LEGACY_CONTENT === 'true';
+}
+
 async function main() {
   loadLocalEnv();
   const databaseUrl = process.env.DATABASE_URL;
@@ -525,7 +532,9 @@ async function main() {
 
   const connection = await mysql.createConnection(seedConnectionOptions(databaseUrl));
   try {
-    const { schoolYear } = await bootstrapCoreData(connection);
+    const { schoolYear } = await bootstrapCoreData(connection, {
+      includeLegacyContent: shouldIncludeLegacyContent(process.env),
+    });
     console.log(`Core database data ready: ${CORE_ROLES.length} roles, ${schoolYear} active year.`);
   } finally {
     await connection.end();
@@ -550,4 +559,5 @@ module.exports = {
   findSeededPost,
   loadLocalEnv,
   resolveActiveSchoolYear,
+  shouldIncludeLegacyContent,
 };

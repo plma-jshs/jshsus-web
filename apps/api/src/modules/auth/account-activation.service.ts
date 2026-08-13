@@ -139,6 +139,10 @@ function safeCompareHex(left: string, right: string) {
   return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
 }
 
+function activationExpiresAt(issuedAt: Date) {
+  return new Date(issuedAt.getTime() + env.ACCOUNT_ACTIVATION_CODE_TTL_DAYS * 24 * 60 * 60 * 1_000);
+}
+
 @Injectable()
 export class AccountActivationService {
   constructor(
@@ -152,19 +156,14 @@ export class AccountActivationService {
   async issue(body: unknown, actorId?: number | null): Promise<AccountActivationIssueResult> {
     const parsed = activationIssueSchema.safeParse(body);
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    const identity = this.parseIdentity(parsed.data);
     const input = {
-      ...this.parseIdentity(parsed.data),
-      schoolYear: parsed.data.schoolYear,
+      ...identity,
+      schoolYear: await this.resolveActivationSchoolYear(parsed.data.schoolYear),
     };
-    if (input.identityType === 'student') {
-      input.schoolYear = await this.resolveActivationSchoolYear(input.schoolYear);
-    }
 
     const code = await this.database.db.transaction(async (tx) => {
-      await this.lockActiveSchoolYear(
-        tx,
-        input.identityType === 'student' ? input.schoolYear : undefined,
-      );
+      await this.lockActiveSchoolYear(tx, input.schoolYear);
 
       // Keep the same lock order as bulk issuance and account completion:
       // school year -> activation row -> enrollment row.
@@ -172,6 +171,7 @@ export class AccountActivationService {
         .select({
           attemptCount: schema.accountActivationCodes.attemptCount,
           usedAt: schema.accountActivationCodes.usedAt,
+          expiresAt: schema.accountActivationCodes.expiresAt,
         })
         .from(schema.accountActivationCodes)
         .where(
@@ -183,16 +183,7 @@ export class AccountActivationService {
         .limit(1)
         .for('update');
 
-      if (
-        existingCode &&
-        !existingCode.usedAt &&
-        existingCode.attemptCount < MAX_ACTIVATION_ATTEMPTS &&
-        !parsed.data.force
-      ) {
-        throw new ConflictException(
-          '이미 사용 가능한 인증코드가 발급되어 있습니다. 기존 코드를 사용하거나 재발급을 선택해 주세요.',
-        );
-      }
+      this.assertActivationIssueAllowed(existingCode, parsed.data.force);
 
       if (input.identityType === 'student') {
         await this.assertActiveEnrollment(input, tx);
@@ -200,18 +191,20 @@ export class AccountActivationService {
 
       const nextCode = generateActivationCode();
       const issuedAt = new Date();
+      const expiresAt = activationExpiresAt(issuedAt);
       await tx
         .insert(schema.accountActivationCodes)
         .values({
           identityType: input.identityType,
           identityNumber: input.identityNumber,
-          schoolYear: input.schoolYear ?? null,
+          schoolYear: input.schoolYear,
           codeHash: this.hashCode(input, nextCode),
           codeLookupHash: this.hashCodeLookup(nextCode),
           attemptCount: 0,
           issuedById: actorId && actorId > 0 ? actorId : null,
           usedById: null,
           usedAt: null,
+          expiresAt,
           createdAt: issuedAt,
           updatedAt: issuedAt,
         })
@@ -220,10 +213,11 @@ export class AccountActivationService {
             codeHash: this.hashCode(input, nextCode),
             codeLookupHash: this.hashCodeLookup(nextCode),
             attemptCount: 0,
-            schoolYear: input.schoolYear ?? null,
+            schoolYear: input.schoolYear,
             issuedById: actorId && actorId > 0 ? actorId : null,
             usedById: null,
             usedAt: null,
+            expiresAt,
             updatedAt: issuedAt,
           },
         });
@@ -286,6 +280,7 @@ export class AccountActivationService {
             identityNumber: schema.accountActivationCodes.identityNumber,
             attemptCount: schema.accountActivationCodes.attemptCount,
             usedAt: schema.accountActivationCodes.usedAt,
+            expiresAt: schema.accountActivationCodes.expiresAt,
           })
           .from(schema.accountActivationCodes)
           .where(
@@ -336,13 +331,13 @@ export class AccountActivationService {
       const unregisteredStudents = students.filter(
         (student) => !student.userId || !authenticatedUserIds.has(student.userId),
       );
-      const pendingIdentityNumbers = new Set(
+      const blockedIdentityNumbers = new Set(
         activationCodes
-          .filter((code) => !code.usedAt && code.attemptCount < MAX_ACTIVATION_ATTEMPTS)
+          .filter((code) => this.isActivationIssueBlocked(code))
           .map((code) => code.identityNumber),
       );
       const eligibleStudents = unregisteredStudents.filter(
-        (student) => !pendingIdentityNumbers.has(student.identityNumber),
+        (student) => !blockedIdentityNumbers.has(student.identityNumber),
       );
       if (eligibleStudents.length === 0) {
         if (unregisteredStudents.length > 0) {
@@ -354,6 +349,7 @@ export class AccountActivationService {
       }
 
       const issuedAt = new Date();
+      const expiresAt = activationExpiresAt(issuedAt);
       const codes = eligibleStudents.map((student) => ({
         ...student,
         code: generateActivationCode(),
@@ -364,15 +360,7 @@ export class AccountActivationService {
           identityNumber: item.identityNumber,
         };
         const existingCode = codeByIdentity.get(item.identityNumber);
-        if (
-          existingCode &&
-          !existingCode.usedAt &&
-          existingCode.attemptCount < MAX_ACTIVATION_ATTEMPTS
-        ) {
-          throw new ConflictException(
-            '동시에 다른 인증코드 발급 요청이 처리되었습니다. 목록을 새로고침해 주세요.',
-          );
-        }
+        this.assertActivationIssueAllowed(existingCode, false);
         await tx
           .insert(schema.accountActivationCodes)
           .values({
@@ -385,6 +373,7 @@ export class AccountActivationService {
             issuedById: actorId && actorId > 0 ? actorId : null,
             usedById: null,
             usedAt: null,
+            expiresAt,
             createdAt: issuedAt,
             updatedAt: issuedAt,
           })
@@ -397,6 +386,7 @@ export class AccountActivationService {
               issuedById: actorId && actorId > 0 ? actorId : null,
               usedById: null,
               usedAt: null,
+              expiresAt,
               updatedAt: issuedAt,
             },
           });
@@ -642,6 +632,7 @@ export class AccountActivationService {
             attemptCount: schema.accountActivationCodes.attemptCount,
             usedAt: schema.accountActivationCodes.usedAt,
             schoolYear: schema.accountActivationCodes.schoolYear,
+            expiresAt: schema.accountActivationCodes.expiresAt,
           })
           .from(schema.accountActivationCodes)
           .where(
@@ -653,23 +644,14 @@ export class AccountActivationService {
           .limit(1)
           .for('update');
 
-        if (!activation || activation.usedAt) {
+        if (!activation || activation.usedAt || this.isActivationExpired(activation.expiresAt)) {
           throw new BadRequestException({
             code: 'ACCOUNT_ACTIVATION_CODE_INVALID',
             message: '인증코드를 확인해 주세요.',
           });
         }
 
-        if (
-          input.identityType === 'student' &&
-          activation.schoolYear !== null &&
-          activation.schoolYear !== activeSchoolYear
-        ) {
-          throw new BadRequestException({
-            code: 'ACCOUNT_ACTIVATION_CODE_INVALID',
-            message: '학년도가 변경된 인증코드입니다. 새 인증코드를 발급받아 주세요.',
-          });
-        }
+        this.assertActivationSchoolYear(activation.schoolYear, activeSchoolYear);
 
         if (activation.attemptCount >= MAX_ACTIVATION_ATTEMPTS) {
           throw new BadRequestException({
@@ -858,6 +840,7 @@ export class AccountActivationService {
         identityNumber: schema.accountActivationCodes.identityNumber,
         schoolYear: schema.accountActivationCodes.schoolYear,
         usedAt: schema.accountActivationCodes.usedAt,
+        expiresAt: schema.accountActivationCodes.expiresAt,
         attemptCount: schema.accountActivationCodes.attemptCount,
       })
       .from(schema.accountActivationCodes)
@@ -874,13 +857,20 @@ export class AccountActivationService {
           identityNumber: schema.accountActivationCodes.identityNumber,
           schoolYear: schema.accountActivationCodes.schoolYear,
           usedAt: schema.accountActivationCodes.usedAt,
+          expiresAt: schema.accountActivationCodes.expiresAt,
           attemptCount: schema.accountActivationCodes.attemptCount,
         })
         .from(schema.accountActivationCodes)
         .where(isNull(schema.accountActivationCodes.codeLookupHash));
 
       activation = legacyActivations.find((candidate) => {
-        if (candidate.usedAt || candidate.attemptCount >= MAX_ACTIVATION_ATTEMPTS) return false;
+        if (
+          candidate.usedAt ||
+          this.isActivationExpired(candidate.expiresAt) ||
+          candidate.attemptCount >= MAX_ACTIVATION_ATTEMPTS
+        ) {
+          return false;
+        }
         const expectedHash = this.hashCode(
           {
             identityType: candidate.identityType,
@@ -899,7 +889,12 @@ export class AccountActivationService {
       }
     }
 
-    if (!activation || activation.usedAt || activation.attemptCount >= MAX_ACTIVATION_ATTEMPTS) {
+    if (
+      !activation ||
+      activation.usedAt ||
+      this.isActivationExpired(activation.expiresAt) ||
+      activation.attemptCount >= MAX_ACTIVATION_ATTEMPTS
+    ) {
       throw new BadRequestException({
         code: 'ACCOUNT_ACTIVATION_CODE_INVALID',
         message: '인증코드를 확인해 주세요.',
@@ -908,11 +903,56 @@ export class AccountActivationService {
     return {
       identityType: activation.identityType,
       identityNumber: activation.identityNumber,
-      schoolYear:
-        activation.identityType === 'student'
-          ? (activation.schoolYear ?? (await this.resolveActiveSchoolYear()))
-          : undefined,
+      schoolYear: activation.schoolYear ?? (await this.resolveActiveSchoolYear()),
     };
+  }
+
+  private isActivationExpired(expiresAt: Date | null | undefined, now = new Date()) {
+    // Compatibility window: codes issued before expires_at was introduced remain usable.
+    return expiresAt !== null && expiresAt !== undefined && expiresAt.getTime() <= now.getTime();
+  }
+
+  private assertActivationSchoolYear(codeSchoolYear: number | null, activeSchoolYear: number) {
+    if (codeSchoolYear === null || codeSchoolYear === activeSchoolYear) return;
+    throw new BadRequestException({
+      code: 'ACCOUNT_ACTIVATION_CODE_INVALID',
+      message: '학년도가 변경된 인증코드입니다. 새 인증코드를 발급받아 주세요.',
+    });
+  }
+
+  private isActivationIssueBlocked(activation: {
+    usedAt: Date | null;
+    expiresAt: Date | null;
+    attemptCount: number;
+  }) {
+    return (
+      activation.usedAt !== null ||
+      (!this.isActivationExpired(activation.expiresAt) &&
+        activation.attemptCount < MAX_ACTIVATION_ATTEMPTS)
+    );
+  }
+
+  private assertActivationIssueAllowed(
+    activation:
+      | {
+          usedAt: Date | null;
+          expiresAt: Date | null;
+          attemptCount: number;
+        }
+      | undefined,
+    force: boolean,
+  ) {
+    if (activation?.usedAt) {
+      throw new ConflictException({
+        code: 'ACCOUNT_ALREADY_ACTIVATED',
+        message: '이미 활성화된 계정입니다. 계정 복구에는 비밀번호 재설정을 이용해 주세요.',
+      });
+    }
+    if (activation && this.isActivationIssueBlocked(activation) && !force) {
+      throw new ConflictException(
+        '이미 사용 가능한 인증코드가 발급되어 있습니다. 기존 코드를 사용하거나 재발급을 선택해 주세요.',
+      );
+    }
   }
 
   private async assertPhoneVerification(input: {

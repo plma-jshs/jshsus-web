@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /login
+Disallow: /logout
+Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /account-activation
+Disallow: /boards/
+Disallow: /petitions
+Disallow: /thanks
+Disallow: /wake-songs
+Disallow: /activity-requests
+Disallow: /my-status
+Disallow: /points
+Disallow: /dorm
+Disallow: /notices/new
+Disallow: /notices/*/edit
+Disallow: /jbs/new
+Disallow: /jbs/*/edit
+Disallow: /lost-items/new
+
+Sitemap: https://v26.jshsus.kr/sitemap.xml

@@ -26,7 +26,14 @@ function Featurette({
         <p className="lead">{children}</p>
       </div>
       <div className="about-featurette__media">
-        <img src={imageSrc} alt={imageAlt} width="500" height="500" />
+        <img
+          src={imageSrc}
+          alt={imageAlt}
+          width="500"
+          height="500"
+          loading="lazy"
+          decoding="async"
+        />
       </div>
     </div>
   );
@@ -49,7 +56,15 @@ function DeveloperProfile({
 }) {
   return (
     <div className="about-developer-profile">
-      <img src={imageSrc} className={imageClass} width="140" height="140" alt={name} />
+      <img
+        src={imageSrc}
+        className={imageClass}
+        width="140"
+        height="140"
+        alt={name}
+        loading="lazy"
+        decoding="async"
+      />
       <h2 className="dev-3">
         {name}
         <br className="hid-br" /> <span className="text-secondary smalltext">{role}</span>
@@ -104,9 +119,10 @@ function EagleCheer() {
         <img
           key={flightId}
           className="about-flying-eagle"
-          src="/images/about-eagle.png"
+          src="/images/about-eagle-520.webp"
           alt=""
           aria-hidden="true"
+          decoding="async"
         />
       ) : null}
     </>
@@ -440,7 +456,7 @@ function DeveloperIntroduce() {
       </h3>
       <div className="about-dev-row">
         <DeveloperProfile
-          imageSrc="/images/introduce/kang_jae_hwan.png"
+          imageSrc="/images/introduce/kang_jae_hwan-480.webp"
           name="강재환"
           role="Developer"
           contribution={<>- 2025/2026 과구리 개발</>}
@@ -449,7 +465,7 @@ function DeveloperIntroduce() {
         </DeveloperProfile>
 
         <DeveloperProfile
-          imageSrc="/images/introduce/kim_seong_chan.jpg"
+          imageSrc="/images/introduce/kim_seong_chan-480.webp"
           name="김성찬"
           role="Developer"
           contribution={

@@ -40,7 +40,9 @@ export class JbsController {
   @Get('posts/:id')
   @UseGuards(OptionalSessionGuard)
   post(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
-    return this.jbsService.getPost(Number(id), request.authSession?.userId);
+    const actorId = request.authSession?.userId;
+    const viewerKey = actorId ? `user:${actorId}` : 'anonymous';
+    return this.jbsService.getPost(Number(id), actorId, viewerKey);
   }
 
   @Post('posts')

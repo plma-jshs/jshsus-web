@@ -23,6 +23,7 @@ import { type ContentListQuery, toContainsPattern } from '../../shared/content-l
 import type { AuthSession } from '../auth/auth.service';
 import { auditValues, DatabaseService, type AppDatabase } from '../database/database.service';
 import { FilesService } from '../files/files.service';
+import { ViewCountService } from '../redis/view-count.service';
 import {
   collectInlineImageSources,
   extractPollDefinitions,
@@ -54,6 +55,7 @@ export class BoardsService {
   constructor(
     private readonly database: DatabaseService,
     private readonly filesService: FilesService,
+    private readonly viewCounts: ViewCountService,
   ) {}
 
   async listPostsPage(
@@ -326,7 +328,12 @@ export class BoardsService {
     });
   }
 
-  async getPost(slug: string, id: number, actorId?: number | null): Promise<BoardPostDetail> {
+  async getPost(
+    slug: string,
+    id: number,
+    actorId: number | null | undefined,
+    viewerKey: string,
+  ): Promise<BoardPostDetail> {
     if (!Number.isInteger(id) || id <= 0) throw new BadRequestException('Invalid post id.');
 
     return this.database.query('boards.posts.detail', async (db) => {
@@ -386,10 +393,13 @@ export class BoardsService {
         .limit(1);
       if (!row) throw new NotFoundException('Post was not found.');
 
-      await db
-        .update(schema.posts)
-        .set({ viewCount: sql`${schema.posts.viewCount} + 1` })
-        .where(eq(schema.posts.id, id));
+      const shouldIncrementViewCount = await this.viewCounts.claimIncrement('post', id, viewerKey);
+      if (shouldIncrementViewCount) {
+        await db
+          .update(schema.posts)
+          .set({ viewCount: sql`${schema.posts.viewCount} + 1` })
+          .where(eq(schema.posts.id, id));
+      }
       const attachments = await this.filesService.listForTarget('post', id);
       const contentDoc = (row.contentJson as RichTextDocument | null) ?? undefined;
       const polls = await this.pollStatesForPost(
@@ -415,7 +425,7 @@ export class BoardsService {
             : undefined,
         isAnonymous: row.isAnonymous,
         pinned: row.pinned ?? false,
-        viewCount: row.viewCount + 1,
+        viewCount: row.viewCount + Number(shouldIncrementViewCount),
         commentCount: row.commentCount,
         likeCount: Number(row.likeCount ?? 0),
         likedByMe: Boolean(row.likedByMe),
