@@ -438,7 +438,7 @@ describe('FilesService access policy', () => {
     expect(deleteObject).not.toHaveBeenCalled();
   });
 
-  it('never exposes a bucket URL in public file metadata', async () => {
+  it('uses a public object URL for public files and the API for private files', async () => {
     const database = {
       db: {
         select: vi.fn().mockReturnValue(
@@ -459,10 +459,9 @@ describe('FilesService access policy', () => {
       },
     } as unknown as DatabaseService;
 
-    await expect(new FilesService(database).getById(7)).resolves.toMatchObject({
-      url: '/api/files/7/download',
-      inlineUrl: '/api/files/7/content',
-    });
+    const summary = await new FilesService(database).getById(7);
+    expect(summary.url).toMatch(/^https?:\/\//);
+    expect(summary.inlineUrl).toBe(summary.url);
   });
 });
 

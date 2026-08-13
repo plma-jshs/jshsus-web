@@ -22,6 +22,7 @@ import { z } from 'zod';
 import { env } from '../../shared/config/env';
 import { auditValues, type AppDatabase, DatabaseService } from '../database/database.service';
 import type { AuthSession } from '../auth/auth.service';
+import { getS3PublicObjectUrl } from '../../shared/storage/s3-url';
 
 export type FileCleanupReason =
   | 'upload_compensation'
@@ -133,6 +134,9 @@ function toSummary(row: {
   targetId: number | null;
   uploadedAt: Date;
 }): UploadedFileSummary {
+  const apiUrl = `/api/files/${row.id}`;
+  const publicUrl = row.visibility === 'public' ? getS3PublicObjectUrl(row.objectKey) : null;
+
   return {
     id: row.id,
     originalName: row.originalName,
@@ -141,11 +145,11 @@ function toSummary(row: {
     visibility: row.visibility,
     targetType: row.targetType ?? undefined,
     targetId: row.targetId ?? undefined,
-    // Keep every client-facing URL behind the API. Redirecting public objects to a
-    // bucket URL would permanently disclose a bypass that cannot be revoked when
-    // the parent post or lost-item entry is hidden later.
-    url: `/api/files/${row.id}/download`,
-    inlineUrl: `/api/files/${row.id}/content`,
+    // Public content is intentionally served from the bucket so rich-text image
+    // nodes do not depend on an authenticated API request. Private files remain
+    // behind the API and keep their target-access checks.
+    url: publicUrl ?? `${apiUrl}/download`,
+    inlineUrl: publicUrl ?? `${apiUrl}/content`,
     uploadedAt: row.uploadedAt.toISOString(),
   };
 }

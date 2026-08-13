@@ -635,7 +635,7 @@ jobs:
           set_env_value AWS_ACCESS_KEY_ID "$AWS_ACCESS_KEY_ID"
           set_env_value AWS_SECRET_ACCESS_KEY "$AWS_SECRET_ACCESS_KEY"
           set_env_value S3_BUCKET "$S3_BUCKET"
-          set_env_value S3_PUBLIC_BASE_URL ""
+          set_env_value S3_PUBLIC_BASE_URL "https://s3.${AWS_REGION}.amazonaws.com/${S3_BUCKET}"
           set_env_value S3_ENDPOINT ""
           set_env_value S3_FORCE_PATH_STYLE false
           set_env_value NEIS_API_KEY "$NEIS_API_KEY"

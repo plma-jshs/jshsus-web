@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import type { PostStatus, RichTextDocument, RichTextNode, RichTextPoll } from '@jshsus/types';
 import { z } from 'zod';
-import { env } from '../../shared/config/env';
+import { getS3PublicBaseUrl } from '../../shared/storage/s3-url';
 
 const MAX_DOCUMENT_BYTES = 1_000_000;
 const MAX_DOCUMENT_NODES = 5_000;
@@ -18,7 +18,7 @@ function isAllowedLink(value: string): boolean {
 export function isAllowedInlineImageSource(value: string): boolean {
   if (/^\/api\/files\/[1-9]\d*\/content$/.test(value)) return true;
 
-  const publicBase = env.S3_PUBLIC_BASE_URL.replace(/\/+$/, '');
+  const publicBase = getS3PublicBaseUrl();
   if (!publicBase || !value.startsWith(`${publicBase}/`)) return false;
 
   try {
