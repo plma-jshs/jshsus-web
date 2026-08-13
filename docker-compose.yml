@@ -40,16 +40,11 @@ services:
       DATABASE_URL: ${COMPOSE_DATABASE_URL:-mysql://${MYSQL_USER:-jshs_web}:${MYSQL_PASSWORD:-local_mysql_password}@mysql:3306/jshsus}
       DATABASE_SSL_MODE: disabled
       REDIS_URL: redis://:${REDIS_PASSWORD:-local_redis_password}@redis:6379/0
-      FILE_LOCAL_DIR: /var/lib/jshsus/uploads
-      # Local Compose stores uploads in upload-data. Production injects S3
-      # credentials through docker-compose.release.yml instead.
       S3_BUCKET: ''
       S3_PUBLIC_BASE_URL: ''
       S3_ENDPOINT: ''
       AWS_ACCESS_KEY_ID: ''
       AWS_SECRET_ACCESS_KEY: ''
-    volumes:
-      - upload-data:/var/lib/jshsus/uploads
     ports:
       - '${API_PORT:-4000}:4000'
     depends_on:
@@ -94,9 +89,6 @@ services:
       TEST_USER_USERNAME: ${TEST_USER_USERNAME:-9999}
       TEST_USER_PASSWORD: ${TEST_USER_PASSWORD:-Hello00!}
       TEST_USER_STUDENT_NO: ${TEST_USER_STUDENT_NO:-9999}
-      FILE_LOCAL_DIR: /var/lib/jshsus/uploads
-    volumes:
-      - upload-data:/var/lib/jshsus/uploads
     depends_on:
       mysql:
         condition: service_healthy
@@ -125,4 +117,3 @@ services:
 volumes:
   mysql-data:
     name: ${MYSQL_VOLUME_NAME:-jshs_web_mysql-data}
-  upload-data:

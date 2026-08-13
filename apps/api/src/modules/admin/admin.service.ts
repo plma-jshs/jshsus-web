@@ -426,8 +426,11 @@ export class AdminService {
         },
         {
           key: 'storage',
-          label: env.S3_BUCKET ? 'Amazon S3' : '로컬 파일 저장소',
-          status: 'configured',
+          label: 'Amazon S3',
+          status:
+            env.S3_BUCKET && env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY
+              ? 'configured'
+              : 'not_configured',
         },
       ],
       processes: [

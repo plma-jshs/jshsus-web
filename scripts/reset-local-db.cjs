@@ -80,7 +80,6 @@ function main() {
     console.log(`Volume ${target.volumeName} does not exist; nothing to remove.`);
   }
 
-  // Do not pass --volumes: upload-data must survive a database reset.
   runDocker(['compose', 'up', '-d', '--build', '--wait']);
   console.log('Local database reset, migration, core seed, and service startup completed.');
 }

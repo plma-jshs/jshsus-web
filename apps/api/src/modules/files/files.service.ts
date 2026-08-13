@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
@@ -15,8 +16,7 @@ import {
 import * as schema from '@jshsus/db';
 import type { UploadedFileSummary } from '@jshsus/types';
 import { randomUUID } from 'node:crypto';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
-import { dirname, extname, join } from 'node:path';
+import { extname } from 'node:path';
 import { and, asc, eq, inArray, isNull, lt, lte, ne, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { env } from '../../shared/config/env';
@@ -586,7 +586,7 @@ export class FilesService {
 
   async getStoredObject(
     id: number,
-  ): Promise<{ bytes?: Buffer; path?: string; mimeType: string; originalName: string }> {
+  ): Promise<{ bytes: Buffer; mimeType: string; originalName: string }> {
     const [row] = await this.database.db
       .select({
         objectKey: schema.files.objectKey,
@@ -602,11 +602,7 @@ export class FilesService {
     }
 
     if (!this.s3) {
-      return {
-        path: join(env.FILE_LOCAL_DIR, row.objectKey),
-        mimeType: row.mimeType,
-        originalName: row.originalName,
-      };
+      throw new ServiceUnavailableException('파일 저장소가 설정되지 않았습니다.');
     }
 
     const object = await this.s3.send(
@@ -732,35 +728,26 @@ export class FilesService {
   }
 
   private async store(objectKey: string, bytes: Buffer, mimeType: string) {
-    if (this.s3) {
-      await this.s3.send(
-        new PutObjectCommand({
-          Bucket: env.S3_BUCKET,
-          Key: objectKey,
-          Body: bytes,
-          ContentType: mimeType,
-        }),
-      );
-      return;
+    if (!this.s3) {
+      throw new ServiceUnavailableException('파일 저장소가 설정되지 않았습니다.');
     }
 
-    const filePath = join(env.FILE_LOCAL_DIR, objectKey);
-    await mkdir(dirname(filePath), { recursive: true });
-    await writeFile(filePath, bytes);
+    await this.s3.send(
+      new PutObjectCommand({
+        Bucket: env.S3_BUCKET,
+        Key: objectKey,
+        Body: bytes,
+        ContentType: mimeType,
+      }),
+    );
   }
 
   private async deleteStoredObject(objectKey: string): Promise<void> {
-    if (this.s3) {
-      await this.s3.send(new DeleteObjectCommand({ Bucket: env.S3_BUCKET, Key: objectKey }));
-      return;
+    if (!this.s3) {
+      throw new ServiceUnavailableException('파일 저장소가 설정되지 않았습니다.');
     }
 
-    try {
-      await unlink(join(env.FILE_LOCAL_DIR, objectKey));
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
-      throw error;
-    }
+    await this.s3.send(new DeleteObjectCommand({ Bucket: env.S3_BUCKET, Key: objectKey }));
   }
 
   private async fileObjectExists(objectKey: string): Promise<boolean> {

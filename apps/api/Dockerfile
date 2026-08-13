@@ -24,7 +24,6 @@ COPY --from=build /app/packages/db/dist ./packages/db/dist
 COPY --from=build /app/packages/db/package.json ./packages/db/package.json
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY apps/api/package.json apps/api/package.json
-RUN mkdir -p /var/lib/jshsus/uploads && chown -R node:node /var/lib/jshsus
 USER node
 EXPOSE 4000
 CMD ["node", "apps/api/dist/main.js"]

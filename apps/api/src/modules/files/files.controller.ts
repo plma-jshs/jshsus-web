@@ -104,11 +104,6 @@ export class FilesController {
     response.type(stored.mimeType);
     response.attachment(stored.originalName);
 
-    if (stored.path) {
-      response.sendFile(stored.path);
-      return;
-    }
-
     response.send(stored.bytes);
   }
 
@@ -121,11 +116,6 @@ export class FilesController {
     const stored = await this.filesService.getStoredObject(numericId);
     response.type(stored.mimeType);
     response.setHeader('Content-Disposition', 'inline');
-
-    if (stored.path) {
-      response.sendFile(stored.path);
-      return;
-    }
 
     response.send(stored.bytes);
   }

@@ -9,6 +9,8 @@ COPY packages/types/package.json packages/types/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
+ARG VITE_GA_MEASUREMENT_ID
+ENV VITE_GA_MEASUREMENT_ID=$VITE_GA_MEASUREMENT_ID
 COPY . .
 RUN pnpm --filter @jshsus/types build
 RUN pnpm --filter @jshsus/admin build

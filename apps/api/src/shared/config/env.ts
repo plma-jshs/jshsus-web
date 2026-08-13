@@ -129,7 +129,6 @@ const envSchema = z
           .map((mime) => mime.trim())
           .filter(Boolean),
       ),
-    FILE_LOCAL_DIR: z.string().default('/tmp/jshsus-uploads'),
     AWS_REGION: z.string().default('ap-northeast-2'),
     AWS_ACCESS_KEY_ID: z.string().default(''),
     AWS_SECRET_ACCESS_KEY: z.string().default(''),
@@ -351,12 +350,27 @@ const envSchema = z
       });
     }
 
-    if (value.S3_BUCKET && (!value.AWS_ACCESS_KEY_ID || !value.AWS_SECRET_ACCESS_KEY)) {
+    const hasAnyS3Setting = Boolean(
+      value.S3_BUCKET || value.AWS_ACCESS_KEY_ID || value.AWS_SECRET_ACCESS_KEY,
+    );
+    const hasCompleteS3Setting = Boolean(
+      value.S3_BUCKET && value.AWS_ACCESS_KEY_ID && value.AWS_SECRET_ACCESS_KEY,
+    );
+
+    if (hasAnyS3Setting && !hasCompleteS3Setting) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['S3_BUCKET'],
         message:
           'S3_BUCKET, AWS_ACCESS_KEY_ID, and AWS_SECRET_ACCESS_KEY must be configured together.',
+      });
+    }
+
+    if (value.NODE_ENV === 'production' && !hasCompleteS3Setting) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['S3_BUCKET'],
+        message: 'Production requires an S3 bucket and AWS credentials for file storage.',
       });
     }
 

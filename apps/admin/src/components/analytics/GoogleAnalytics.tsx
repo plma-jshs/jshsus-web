@@ -16,6 +16,7 @@ function configureGoogleAnalytics() {
 
   window.dataLayer = window.dataLayer ?? [];
   window.gtag = window.gtag ?? ((...args: unknown[]) => window.dataLayer?.push(args));
+
   const scriptSrc = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
   if (!document.querySelector(`script[src="${scriptSrc}"]`)) {
     const script = document.createElement('script');
@@ -29,6 +30,7 @@ function configureGoogleAnalytics() {
     window.gtag('config', measurementId, { send_page_view: false });
     configuredMeasurementId = measurementId;
   }
+
   return window.gtag;
 }
 
@@ -44,7 +46,7 @@ export function GoogleAnalytics() {
     gtag('event', 'page_view', {
       page_title: document.title,
       page_location: window.location.href,
-      page_path: `${pathname}${window.location.search}${window.location.hash}`,
+      page_path: `${pathname}${search}${hash}`,
     });
   }, [hash, pathname, search]);
 

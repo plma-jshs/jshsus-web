@@ -115,7 +115,6 @@ services:
       FILE_CLEANUP_LOCK_TIMEOUT_MS: ${FILE_CLEANUP_LOCK_TIMEOUT_MS:-300000}
       FILE_CLEANUP_RETRY_BASE_MS: ${FILE_CLEANUP_RETRY_BASE_MS:-30000}
       FILE_CLEANUP_RETRY_MAX_MS: ${FILE_CLEANUP_RETRY_MAX_MS:-3600000}
-      FILE_LOCAL_DIR: /var/lib/jshsus/uploads
       AWS_REGION: ${AWS_REGION:-ap-northeast-2}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
@@ -129,8 +128,6 @@ services:
     read_only: true
     tmpfs:
       - /tmp:size=32m,mode=1777
-    volumes:
-      - upload-data:/var/lib/jshsus/uploads
     networks:
       - app
     depends_on:
@@ -260,5 +257,3 @@ networks:
 volumes:
   redis-data:
     name: jshsus-v26-redis-data
-  upload-data:
-    name: jshsus-v26-upload-data

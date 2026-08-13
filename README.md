@@ -31,9 +31,9 @@ pnpm local:reset-db
 이 명령은 Docker Compose가 해석한 API·부트스트랩·마이그레이션 DB 주소가 모두
 `mysql:3306/jshsus`인지 확인하고, 실행 중인 MySQL 컨테이너의 볼륨과 Compose 소유권
 라벨도 확인한 뒤 해당 MySQL 볼륨만 제거합니다. 이후 이미지를 다시 빌드하고 전체
-마이그레이션과 데모 시드를 적용합니다. `upload-data`는 보존되며,
+마이그레이션과 데모 시드를 적용합니다.
 `COMPOSE_DATABASE_URL`이 원격 DB를 가리키면 삭제 전에 즉시 중단합니다.
-`docker compose down -v`는 업로드 볼륨까지 삭제하므로 DB 초기화 용도로 사용하지 마세요.
+파일은 S3에만 저장되므로 DB 초기화와 파일 저장소가 서로 영향을 주지 않습니다.
 
 수동으로 시드를 다시 적용할 때만 다음 명령을 사용합니다.
 
