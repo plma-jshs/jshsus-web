@@ -502,6 +502,9 @@ jobs:
         shell: bash
         env:
           PRODUCTION_ENV_FILE: ${{ secrets.PRODUCTION_ENV_FILE }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           S3_BUCKET: ${{ secrets.S3_BUCKET }}
           NEIS_API_KEY: ${{ secrets.NEIS_API_KEY }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -581,6 +584,8 @@ jobs:
 
           normalize_aws_credential COGNITO_AWS_ACCESS_KEY_ID
           normalize_aws_credential COGNITO_AWS_SECRET_ACCESS_KEY
+          normalize_aws_credential AWS_ACCESS_KEY_ID
+          normalize_aws_credential AWS_SECRET_ACCESS_KEY
           if [[ ! "$COGNITO_AWS_ACCESS_KEY_ID" =~ ^(AKIA|ASIA)[A-Z0-9]{16}$ ]]; then
             printf '::error::COGNITO_AWS_ACCESS_KEY_ID is not a valid AWS access key ID.\n' >&2
             exit 1
@@ -589,9 +594,20 @@ jobs:
             printf '::error::COGNITO_AWS_SECRET_ACCESS_KEY is not a valid AWS secret access key.\n' >&2
             exit 1
           fi
+          if [[ ! "$AWS_ACCESS_KEY_ID" =~ ^(AKIA|ASIA)[A-Z0-9]{16}$ ]]; then
+            printf '::error::AWS_ACCESS_KEY_ID is not a valid AWS access key ID.\n' >&2
+            exit 1
+          fi
+          if [[ ! "$AWS_SECRET_ACCESS_KEY" =~ ^[A-Za-z0-9/+=]{40}$ ]]; then
+            printf '::error::AWS_SECRET_ACCESS_KEY is not a valid AWS secret access key.\n' >&2
+            exit 1
+          fi
 
           test -n "$PRODUCTION_ENV_FILE"
           for secret_name in \
+            AWS_REGION \
+            AWS_ACCESS_KEY_ID \
+            AWS_SECRET_ACCESS_KEY \
             S3_BUCKET \
             NEIS_API_KEY \
             YOUTUBE_API_KEY \
@@ -615,7 +631,13 @@ jobs:
           fi
 
           printf '%s\n' "$PRODUCTION_ENV_FILE" > .env.production
+          set_env_value AWS_REGION "$AWS_REGION"
+          set_env_value AWS_ACCESS_KEY_ID "$AWS_ACCESS_KEY_ID"
+          set_env_value AWS_SECRET_ACCESS_KEY "$AWS_SECRET_ACCESS_KEY"
           set_env_value S3_BUCKET "$S3_BUCKET"
+          set_env_value S3_PUBLIC_BASE_URL ""
+          set_env_value S3_ENDPOINT ""
+          set_env_value S3_FORCE_PATH_STYLE false
           set_env_value NEIS_API_KEY "$NEIS_API_KEY"
           set_env_value YOUTUBE_API_KEY "$YOUTUBE_API_KEY"
           set_env_value AUTH_MODE cognito
