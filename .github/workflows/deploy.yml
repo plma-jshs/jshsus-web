@@ -502,6 +502,7 @@ jobs:
         shell: bash
         env:
           PRODUCTION_ENV_FILE: ${{ secrets.PRODUCTION_ENV_FILE }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
           NEIS_API_KEY: ${{ secrets.NEIS_API_KEY }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
@@ -591,6 +592,7 @@ jobs:
 
           test -n "$PRODUCTION_ENV_FILE"
           for secret_name in \
+            S3_BUCKET \
             NEIS_API_KEY \
             YOUTUBE_API_KEY \
             COGNITO_USER_POOL_ID \
@@ -607,7 +609,13 @@ jobs:
             require_scalar_secret "$secret_name"
           done
 
+          if [[ ! "$S3_BUCKET" =~ ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$ ]]; then
+            printf '::error::S3_BUCKET is not a valid bucket name.\n' >&2
+            exit 1
+          fi
+
           printf '%s\n' "$PRODUCTION_ENV_FILE" > .env.production
+          set_env_value S3_BUCKET "$S3_BUCKET"
           set_env_value NEIS_API_KEY "$NEIS_API_KEY"
           set_env_value YOUTUBE_API_KEY "$YOUTUBE_API_KEY"
           set_env_value AUTH_MODE cognito
