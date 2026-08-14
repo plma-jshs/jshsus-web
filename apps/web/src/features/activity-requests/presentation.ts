@@ -4,7 +4,7 @@ import type {
   ActivityRequestSummary,
 } from '@jshsus/types';
 
-export type ActivityRequestFilter = 'all' | 'submitted' | 'approved' | 'rejected' | 'completed';
+export type ActivityRequestFilter = 'all' | 'submitted' | 'approved' | 'rejected';
 export type ActivityRequestSearchField =
   'all' | 'activity' | 'participants' | 'location' | 'advisor';
 
@@ -14,7 +14,6 @@ export const activityStatusLabels: Record<ActivityRequestStatus, string> = {
   approved: '승인',
   rejected: '반려',
   canceled: '취소',
-  completed: '완료',
 };
 
 export function matchesActivityFilter(

@@ -17,15 +17,15 @@ const request: ActivityRequestSummary = {
   startsAt: '2026-07-13T18:00:00+09:00',
   endsAt: '2026-07-13T19:30:00+09:00',
   purpose: '간섭무늬 탐구 실험 진행',
-  status: 'completed',
+  status: 'approved',
 };
 
 describe('activity request presentation', () => {
   it('keeps rejected requests visible while hiding canceled records', () => {
-    expect(matchesActivityFilter(request, 'completed')).toBe(true);
+    expect(matchesActivityFilter(request, 'approved')).toBe(true);
     expect(matchesActivityFilter({ ...request, status: 'canceled' }, 'all')).toBe(false);
     expect(matchesActivityFilter({ ...request, status: 'rejected' }, 'all')).toBe(true);
-    expect(matchesActivityFilter({ ...request, status: 'approved' }, 'completed')).toBe(false);
+    expect(matchesActivityFilter({ ...request, status: 'rejected' }, 'approved')).toBe(false);
   });
 
   it('searches purpose, location, teacher, representative, and public id', () => {

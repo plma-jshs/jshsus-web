@@ -30,7 +30,7 @@ export function PageSizeSelect({
     >
       {ADMIN_PAGE_SIZES.map((size) => (
         <option key={size} value={size}>
-          {size}건
+          {size}개씩 보기
         </option>
       ))}
     </AdminSelect>

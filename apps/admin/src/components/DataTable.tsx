@@ -202,6 +202,7 @@ export function DataTable<T>({
 
   const moveToPage = (pageIndex: number) => {
     const nextPageIndex = Math.min(Math.max(pageIndex, 0), resolvedPageCount - 1);
+    if (nextPageIndex === currentPageIndex) return;
     syncTableQuery(nextPageIndex + 1, pagination?.pageSize ?? pageSize);
     if (pagination) pagination.onPageChange(nextPageIndex);
     else table.setPageIndex(nextPageIndex);
@@ -214,7 +215,7 @@ export function DataTable<T>({
 
   const submitPageInput = (value: string) => {
     const requestedPage = Number(value);
-    if (!Number.isInteger(requestedPage)) {
+    if (!Number.isInteger(requestedPage) || requestedPage < 1 || requestedPage === currentPage) {
       return;
     }
     moveToPage(requestedPage - 1);
@@ -369,23 +370,25 @@ export function DataTable<T>({
           className="admin-table-pagination admin-table-pagination--compact"
           aria-label="페이지 이동"
         >
-          {pagination?.onPageSizeChange || onPageSizeChange ? (
-            <PageSizeSelect
-              value={pagination?.pageSize ?? table.getState().pagination.pageSize}
-              onChange={changePageSize}
-              ariaLabel="페이지당 표시 건수"
-            />
-          ) : null}
-          <span className="admin-table-pagination__range admin-table-pagination__mobile-status">
-            {pagination?.totalCount
-              ? `총 ${pagination.totalCount.toLocaleString('ko-KR')}건 중 ${
-                  currentPageIndex * (pagination.pageSize ?? 0) + 1
-                }-${Math.min(
-                  (currentPageIndex + 1) * (pagination.pageSize ?? 0),
-                  pagination.totalCount,
-                )}`
-              : `${currentPage} / ${resolvedPageCount} 페이지`}
-          </span>
+          <div className="admin-table-pagination__summary">
+            {pagination?.onPageSizeChange || onPageSizeChange ? (
+              <PageSizeSelect
+                value={pagination?.pageSize ?? table.getState().pagination.pageSize}
+                onChange={changePageSize}
+                ariaLabel="페이지당 표시 건수"
+              />
+            ) : null}
+            <span className="admin-table-pagination__range admin-table-pagination__mobile-status">
+              {pagination?.totalCount
+                ? `총 ${pagination.totalCount.toLocaleString('ko-KR')}건 중 ${
+                    currentPageIndex * (pagination.pageSize ?? 0) + 1
+                  }-${Math.min(
+                    (currentPageIndex + 1) * (pagination.pageSize ?? 0),
+                    pagination.totalCount,
+                  )}`
+                : `${currentPage} / ${resolvedPageCount} 페이지`}
+            </span>
+          </div>
           <button
             className="admin-table-pagination__previous"
             type="button"

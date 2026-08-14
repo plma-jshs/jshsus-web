@@ -304,15 +304,6 @@ function participantReferences(value) {
   return references.length === schoolNumbers.length ? references : null;
 }
 
-function koreaToday() {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
-}
-
 function koreaLocalDatabaseTime(date, time) {
   return new Date(`${date}T${time}:00+09:00`).toISOString().replace('T', ' ').replace('Z', '');
 }
@@ -343,7 +334,6 @@ function createLinkPlan(records, students, staff) {
     exceedsCurrentFieldLimit: 0,
   };
   const linked = [];
-  const today = koreaToday();
 
   for (const record of records) {
     const representative = personReference(record.representativeText);
@@ -396,7 +386,7 @@ function createLinkPlan(records, students, staff) {
       startsAt: koreaLocalDatabaseTime(record.activityDate, record.timeRanges[0].startsAt),
       endsAt: koreaLocalDatabaseTime(record.activityDate, record.timeRanges.at(-1).endsAt),
       activitySlotIds: slotIds.every(Boolean) ? slotIds : null,
-      status: record.activityDate < today ? 'completed' : 'approved',
+      status: 'approved',
       timestamp: koreaLocalDatabaseTime(record.activityDate, '00:00'),
     });
   }

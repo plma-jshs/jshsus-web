@@ -436,11 +436,6 @@
   color: #245a8c;
 }
 
-.operation-status--completed {
-  background: #e9f7ef;
-  color: #23714a;
-}
-
 .operation-status--rejected,
 .operation-status--canceled {
   background: #f5eeee;
@@ -938,7 +933,10 @@
 
   .activity-print-page {
     display: block !important;
-    min-height: 180mm;
+    height: 180mm;
+    min-height: 0;
+    max-height: 180mm;
+    overflow: hidden;
     break-after: page;
   }
 
@@ -946,22 +944,17 @@
     break-after: auto;
   }
 
-  .activity-print-page h1,
-  .activity-print-page h2 {
+  .activity-print-page h1 {
     margin: 0 0 4mm;
     padding: 3mm 4mm;
     border: 1px solid #b7d4c1;
     color: #17231c;
     background: #e4f3e9 !important;
-    font-size: 16pt;
+    font-size: 20pt;
     font-weight: 700;
     text-align: center;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-  }
-
-  .activity-print-page h2 {
-    font-size: 12pt;
   }
 
   .activity-print-batch table {
@@ -975,7 +968,7 @@
     padding: 1.3mm 1.6mm;
     border: 1px solid #555;
     color: #111;
-    font-size: 8pt;
+    font-size: 10pt;
     line-height: 1.25;
     text-align: left;
     vertical-align: middle;
@@ -991,41 +984,41 @@
   }
 
   .activity-print-activity-table th:nth-child(1) {
-    width: 14%;
+    width: 15%;
   }
 
   .activity-print-activity-table th:nth-child(2) {
-    width: 13%;
+    width: 12%;
   }
 
   .activity-print-activity-table th:nth-child(3) {
-    width: 13%;
+    width: 11%;
   }
 
   .activity-print-activity-table th:nth-child(4) {
-    width: 49%;
+    width: 55%;
   }
 
   .activity-print-activity-table th:nth-child(5) {
-    width: 11%;
+    width: 7%;
   }
 
   .activity-print-student-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: start;
-    gap: 4mm;
+    gap: 2mm;
   }
 
   .activity-print-student-table {
-    font-size: 7pt;
+    font-size: 9pt;
   }
 
   .activity-print-student-table caption {
-    padding: 1.5mm;
+    padding: 0.8mm;
     border: 1px solid #aaa;
     background: #d7d7d7 !important;
-    font-size: 8pt;
+    font-size: 9pt;
     font-weight: 700;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -1033,18 +1026,29 @@
 
   .activity-print-student-table th,
   .activity-print-student-table td {
-    padding: 0.9mm 1mm;
-    font-size: 6.5pt;
+    padding: 0.55mm 0.6mm;
+    font-size: 9pt;
     text-align: center;
   }
 
   .activity-print-student-table th:nth-child(1),
   .activity-print-student-table td:nth-child(1) {
-    width: 20%;
+    width: 12%;
   }
 
   .activity-print-student-table th:nth-child(2),
   .activity-print-student-table td:nth-child(2) {
-    width: 22%;
+    width: 15%;
+  }
+
+  .activity-print-page--students .activity-print-student-table tr.is-moved td {
+    background: #f1f8f4 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .activity-print-page--students .activity-print-student-table tr.is-empty td {
+    color: transparent;
+    background: #fff !important;
   }
 }

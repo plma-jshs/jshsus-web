@@ -8,6 +8,20 @@
       "when": 1786650214614,
       "tag": "0000_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1786706690515,
+      "tag": "0001_aberrant_tigra",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1786707752307,
+      "tag": "0002_tan_warhawk",
+      "breakpoints": true
     }
   ]
 }

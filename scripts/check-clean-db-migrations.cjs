@@ -150,7 +150,7 @@ function seedPrivacyRetentionFixture() {
     VALUES
       (@privacy_student_id, @privacy_user_id, 'fixture',
        '2024-01-01 10:00:00.000', '2024-01-01 11:00:00.000',
-       'Retention fixture', 'completed', now(3), now(3));
+       'Retention fixture', 'approved', now(3), now(3));
     SET @privacy_activity_request_id = LAST_INSERT_ID();
 
     INSERT INTO activity_request_participants
@@ -161,7 +161,7 @@ function seedPrivacyRetentionFixture() {
     INSERT INTO activity_request_events
       (activity_request_id, actor_id, activity_request_event_type, note, created_at)
     VALUES
-      (@privacy_activity_request_id, @privacy_user_id, 'completed',
+      (@privacy_activity_request_id, @privacy_user_id, 'approved',
        'Retention fixture', now(3));
 
     INSERT INTO legacy_activity_archives

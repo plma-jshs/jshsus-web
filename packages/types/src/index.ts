@@ -820,8 +820,7 @@ export type DormSelfView = {
   reports: DormReport[];
 };
 
-export type ActivityRequestStatus =
-  'draft' | 'submitted' | 'approved' | 'rejected' | 'canceled' | 'completed';
+export type ActivityRequestStatus = 'draft' | 'submitted' | 'approved' | 'rejected' | 'canceled';
 
 export type ActivityTimeSlotId =
   | 'morning-1'
@@ -918,7 +917,13 @@ export type ActivityRequestAdminSummary = Omit<
   workflowStatus: ActivityRequestStatus;
 };
 
-export type ActivityPrintFloor = 2 | 3 | 4;
+export type ActivityPrintFloor = 2 | 3 | 4 | 'all';
+
+export type ActivityRequestPrintSection = {
+  floor: Exclude<ActivityPrintFloor, 'all'>;
+  documents: ActivityRequestAdminSummary[];
+  students: ActivityPrintStudent[];
+};
 
 export type ActivityPrintStudent = {
   studentNo: number;
@@ -928,6 +933,8 @@ export type ActivityPrintStudent = {
   number: number;
   /** Numeric study-period keys (1, 2, 3) mapped to the room/location. */
   slotLocations: Record<string, string>;
+  /** Students whose room assignment changes in the printed schedule. */
+  moved?: boolean;
 };
 
 export type ActivityRequestPrintBatch = {
@@ -935,6 +942,8 @@ export type ActivityRequestPrintBatch = {
   floor: ActivityPrintFloor;
   documents: ActivityRequestAdminSummary[];
   students: ActivityPrintStudent[];
+  /** Present for the all-floors print, which renders three two-page sections. */
+  sections?: ActivityRequestPrintSection[];
 };
 
 export type AdminDashboardTask = {

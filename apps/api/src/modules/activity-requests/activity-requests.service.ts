@@ -97,8 +97,8 @@ const printBatchSchema = z.object({
     .optional(),
   floor: z
     .preprocess(
-      (value) => (value === undefined ? 3 : Number(value)),
-      z.union([z.literal(2), z.literal(3), z.literal(4)]),
+      (value) => (value === undefined ? 3 : value === 'all' ? 'all' : Number(value)),
+      z.union([z.literal(2), z.literal(3), z.literal(4), z.literal('all')]),
     )
     .default(3),
 });
@@ -231,7 +231,7 @@ function activityDateRange(date: string) {
 }
 
 function adminStatus(status: ActivityRequestStatus): ActivityRequestAdminStatus {
-  if (status === 'approved' || status === 'completed') return 'approved';
+  if (status === 'approved') return 'approved';
   if (status === 'rejected' || status === 'canceled') return 'rejected';
   return 'pending';
 }
@@ -249,7 +249,9 @@ type PrintStudentRow = {
   gender: '0' | '1' | null;
 };
 
-function isStudentOnPrintFloor(student: PrintStudentRow, floor: ActivityPrintFloor) {
+type ActivityPrintSectionFloor = Exclude<ActivityPrintFloor, 'all'>;
+
+function isStudentOnPrintFloor(student: PrintStudentRow, floor: ActivityPrintSectionFloor) {
   if (floor === 2) return student.gender === '1' && student.grade >= 1 && student.grade <= 3;
   if (student.gender !== '0') return false;
   if (floor === 3)
@@ -259,6 +261,74 @@ function isStudentOnPrintFloor(student: PrintStudentRow, floor: ActivityPrintFlo
 
 function printPeriodKey(slotId: ActivityTimeSlotId) {
   return slotId.split('-').at(-1) ?? '';
+}
+
+function buildPrintSection(
+  floor: ActivityPrintSectionFloor,
+  allDocuments: ActivityRequestAdminSummary[],
+  studentRows: PrintStudentRow[],
+) {
+  const floorStudents = studentRows.filter((student) => isStudentOnPrintFloor(student, floor));
+  const floorStudentNos = new Set(floorStudents.map((student) => student.studentNo));
+  const documents = allDocuments.filter((document) => {
+    const participants = document.participants.length
+      ? document.participants
+      : [
+          {
+            studentNo: document.studentNo,
+            studentName: document.studentName,
+            isRepresentative: true,
+          },
+        ];
+    return participants.some((participant) => floorStudentNos.has(participant.studentNo));
+  });
+  const studentLocations = new Map<number, Record<string, string>>();
+
+  for (const document of documents) {
+    const location = document.location.trim();
+    if (!location) continue;
+    const participants = document.participants.length
+      ? document.participants
+      : [
+          {
+            studentNo: document.studentNo,
+            studentName: document.studentName,
+            isRepresentative: true,
+          },
+        ];
+    for (const participant of participants) {
+      if (!floorStudentNos.has(participant.studentNo)) continue;
+      const locations = studentLocations.get(participant.studentNo) ?? {};
+      for (const slotId of document.activitySlotIds ?? []) {
+        const key = printPeriodKey(slotId);
+        if (!key) continue;
+        const current = locations[key]?.split(', ').filter(Boolean) ?? [];
+        const normalizedLocation = location.replace(/\s+/g, '');
+        if (!current.some((item) => item.replace(/\s+/g, '') === normalizedLocation)) {
+          current.push(location);
+        }
+        locations[key] = current.join(', ');
+      }
+      studentLocations.set(participant.studentNo, locations);
+    }
+  }
+
+  return {
+    floor,
+    documents,
+    students: floorStudents.map((student) => {
+      const slotLocations = studentLocations.get(student.studentNo) ?? {};
+      return {
+        studentNo: student.studentNo,
+        studentName: student.studentName,
+        grade: student.grade,
+        classNo: student.classNo,
+        number: student.number,
+        slotLocations,
+        moved: Object.values(slotLocations).some(Boolean),
+      };
+    }),
+  };
 }
 
 @Injectable()
@@ -280,7 +350,7 @@ export class ActivityRequestsService {
       const visibleCondition = canViewAllActivityRequests(session)
         ? ne(schema.activityRequests.status, 'canceled')
         : or(
-            inArray(schema.activityRequests.status, ['approved', 'completed']),
+            eq(schema.activityRequests.status, 'approved'),
             and(
               requestIds.length > 0 ? inArray(schema.activityRequests.id, requestIds) : sql`1 = 0`,
               ne(schema.activityRequests.status, 'canceled'),
@@ -332,12 +402,7 @@ export class ActivityRequestsService {
         throw new NotFoundException('Activity request does not exist.');
       }
 
-      if (
-        !membership &&
-        !canViewAllActivityRequests(session) &&
-        row.status !== 'approved' &&
-        row.status !== 'completed'
-      ) {
+      if (!membership && !canViewAllActivityRequests(session) && row.status !== 'approved') {
         throw new NotFoundException('Activity request does not exist.');
       }
 
@@ -441,7 +506,7 @@ export class ActivityRequestsService {
       if (status === 'pending') {
         conditions.push(inArray(schema.activityRequests.status, ['draft', 'submitted']));
       } else if (status === 'approved') {
-        conditions.push(inArray(schema.activityRequests.status, ['approved', 'completed']));
+        conditions.push(eq(schema.activityRequests.status, 'approved'));
       } else if (status === 'rejected') {
         conditions.push(eq(schema.activityRequests.status, 'rejected'));
       }
@@ -1140,7 +1205,7 @@ export class ActivityRequestsService {
           )
           .where(
             and(
-              inArray(schema.activityRequests.status, ['approved', 'completed']),
+              eq(schema.activityRequests.status, 'approved'),
               lt(schema.activityRequests.startsAt, range.endsAt),
               gt(schema.activityRequests.endsAt, range.startsAt),
             ),
@@ -1148,7 +1213,7 @@ export class ActivityRequestsService {
           .orderBy(asc(schema.activityRequests.startsAt), asc(schema.students.studentNo));
 
         const allDocuments = await this.toAdminSummaries(tx, rows);
-        const studentRows = await tx
+        const studentRows = (await tx
           .select({
             studentNo: schema.students.studentNo,
             studentName: schema.students.name,
@@ -1159,65 +1224,23 @@ export class ActivityRequestsService {
           })
           .from(schema.students)
           .leftJoin(schema.users, eq(schema.students.userId, schema.users.id))
-          .orderBy(asc(schema.students.studentNo));
-        const floorStudents = studentRows.filter((student) =>
-          isStudentOnPrintFloor(student, floor),
+          .orderBy(asc(schema.students.studentNo))) as PrintStudentRow[];
+        const floors: ActivityPrintSectionFloor[] = floor === 'all' ? [2, 3, 4] : [floor];
+        const sections = floors.map((sectionFloor) =>
+          buildPrintSection(sectionFloor, allDocuments, studentRows),
         );
-        const floorStudentNos = new Set(floorStudents.map((student) => student.studentNo));
-        const documents = allDocuments.filter((document) => {
-          const participants = document.participants.length
-            ? document.participants
-            : [
-                {
-                  studentNo: document.studentNo,
-                  studentName: document.studentName,
-                  isRepresentative: true,
-                },
-              ];
-          return participants.some((participant) => floorStudentNos.has(participant.studentNo));
-        });
-        const studentLocations = new Map<number, Record<string, string>>();
-        for (const document of documents) {
-          const location = document.location.trim();
-          if (!location) continue;
-          const slotIds = document.activitySlotIds ?? [];
-          const participants = document.participants.length
-            ? document.participants
-            : [
-                {
-                  studentNo: document.studentNo,
-                  studentName: document.studentName,
-                  isRepresentative: true,
-                },
-              ];
-          for (const participant of participants) {
-            if (!floorStudentNos.has(participant.studentNo)) continue;
-            const locations = studentLocations.get(participant.studentNo) ?? {};
-            for (const slotId of slotIds) {
-              const key = printPeriodKey(slotId);
-              if (!key) continue;
-              const current = locations[key]?.split(', ') ?? [];
-              if (!current.includes(location)) current.push(location);
-              locations[key] = current.join(', ');
-            }
-            studentLocations.set(participant.studentNo, locations);
-          }
-        }
-        const students = floorStudents.map((student) => ({
-          studentNo: student.studentNo,
-          studentName: student.studentName,
-          grade: student.grade,
-          classNo: student.classNo,
-          number: student.number,
-          slotLocations: studentLocations.get(student.studentNo) ?? {},
-        }));
+        const documents = sections.flatMap((section) => section.documents);
+        const uniqueDocuments = [
+          ...new Map(documents.map((document) => [document.id, document])).values(),
+        ];
+        const students = sections.flatMap((section) => section.students);
         if (documents.length > 0) {
           await tx.insert(schema.activityRequestEvents).values(
-            documents.map((document) => ({
+            uniqueDocuments.map((document) => ({
               activityRequestId: document.id,
               actorId,
               type: 'printed' as const,
-              note: `${date} ${floor}층 인쇄`,
+              note: `${date} ${floor === 'all' ? '전체' : `${floor}층`} 인쇄`,
             })),
           );
           await tx.insert(schema.auditLogs).values(
@@ -1225,11 +1248,17 @@ export class ActivityRequestsService {
               actorId,
               action: 'activity_request.print_batch',
               targetType: 'activity_requests',
-              targetId: `${date}:${floor}:${documents.length}`,
+              targetId: `${date}:${floor}:${uniqueDocuments.length}`,
             }),
           );
         }
-        return { date, floor, documents, students };
+        return {
+          date,
+          floor,
+          documents: uniqueDocuments,
+          students,
+          ...(floor === 'all' ? { sections } : {}),
+        };
       }),
     );
   }

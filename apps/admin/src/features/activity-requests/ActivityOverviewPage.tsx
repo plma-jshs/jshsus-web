@@ -8,7 +8,7 @@ import type {
 } from '@jshsus/types';
 import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { ChevronDown, ChevronRight, Printer, Search, Users } from 'lucide-react';
+import { ChevronRight, Search, Users } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
@@ -80,41 +80,23 @@ function ActivityPrintMenu({
   disabled?: boolean;
   onSelect: (floor: ActivityPrintFloor) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const floors: ActivityPrintFloor[] = [2, 3, 4];
-
   return (
-    <div className={`activity-print-menu${open ? ' is-open' : ''}`}>
-      <button
-        type="button"
-        className="activity-print-menu__trigger"
-        aria-expanded={open}
-        aria-haspopup="menu"
-        disabled={disabled}
-        onClick={() => setOpen((current) => !current)}
-      >
-        <Printer size={16} aria-hidden="true" />
-        <span>인쇄</span>
-        <ChevronDown size={15} aria-hidden="true" />
-      </button>
-      {open ? (
-        <div className="activity-print-menu__list" role="menu" aria-label="인쇄할 층 선택">
-          {floors.map((floor) => (
-            <button
-              key={floor}
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setOpen(false);
-                onSelect(floor);
-              }}
-            >
-              {floor}층
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </div>
+    <AdminSelect
+      className="activity-print-select"
+      value=""
+      aria-label="인쇄할 층 선택"
+      onChange={(event) => {
+        const value = event.target.value;
+        if (value) onSelect(value === 'all' ? 'all' : (Number(value) as ActivityPrintFloor));
+      }}
+      disabled={disabled}
+    >
+      <option value="">인쇄</option>
+      <option value="all">전체</option>
+      <option value="2">2층</option>
+      <option value="3">3층</option>
+      <option value="4">4층</option>
+    </AdminSelect>
   );
 }
 
@@ -286,13 +268,13 @@ export function ActivityOverviewPage() {
     onSuccess: (result) => {
       setPrintBatch(result);
       if (!result.documents.length) {
-        setPrintMessage('오늘 활동하는 승인 완료 탐구활동서가 없습니다.');
+        setPrintMessage('오늘 활동하는 승인된 탐구활동서가 없습니다.');
         showToast({ title: '오늘 인쇄할 탐구활동서가 없습니다.', tone: 'warning' });
         return;
       }
       setPrintMessage('');
       showToast({
-        title: `${result.floor}층 ${result.documents.length}건의 인쇄 화면을 준비했습니다.`,
+        title: `${result.floor === 'all' ? '전체' : `${result.floor}층`} ${result.documents.length}건의 인쇄 화면을 준비했습니다.`,
         tone: 'success',
       });
       window.setTimeout(() => window.print(), 50);
@@ -319,7 +301,7 @@ export function ActivityOverviewPage() {
                     setSearch(event.target.value);
                     resetPage();
                   }}
-                  placeholder="내용, 참여자, 장소, 지도교사 검색"
+                  placeholder="내용, 인원, 장소, 지도교사 검색"
                 />
               </label>
             }

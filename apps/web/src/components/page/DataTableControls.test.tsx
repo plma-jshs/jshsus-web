@@ -120,4 +120,21 @@ describe('DataTablePagination', () => {
     expect(screen.getByRole('button', { name: '다음 페이지' })).toBeInTheDocument();
     expect(view.container.querySelector('.data-table-pagination__spinner')).not.toBeInTheDocument();
   });
+
+  it('does not navigate when the page input is blurred without changing its value', () => {
+    const onChange = vi.fn();
+    render(
+      <DataTablePagination
+        page={1}
+        totalPages={3}
+        total={50}
+        onChange={onChange}
+        syncUrl={false}
+      />,
+    );
+
+    fireEvent.blur(screen.getByRole('textbox', { name: '페이지 번호' }));
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });

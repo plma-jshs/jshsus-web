@@ -364,7 +364,6 @@ export const activityRequestStatusEnum = mysqlEnum('activity_request_status', [
   'approved',
   'rejected',
   'canceled',
-  'completed',
 ]);
 
 /**
@@ -474,7 +473,6 @@ export const activityRequestEventTypeEnum = mysqlEnum('activity_request_event_ty
   'rejected',
   'canceled',
   'printed',
-  'completed',
 ]);
 
 export const activityRequestEvents = mysqlTable(

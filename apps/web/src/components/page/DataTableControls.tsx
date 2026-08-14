@@ -79,12 +79,14 @@ export function ToolbarSelect<TValue extends string | number>({
   value,
   options,
   onChange,
+  disabled = false,
 }: {
   ariaLabel: string;
   label?: string;
   value: TValue;
   options: readonly ToolbarSelectOption<TValue>[];
   onChange: (value: TValue) => void;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const isCompactViewport = useCompactViewport();
@@ -98,6 +100,7 @@ export function ToolbarSelect<TValue extends string | number>({
         <select
           aria-label={ariaLabel}
           className="data-table-toolbar-select__native"
+          disabled={disabled}
           value={String(value)}
           onChange={(event) => {
             const nextOption = options.find(
@@ -137,6 +140,7 @@ export function ToolbarSelect<TValue extends string | number>({
         aria-label={`${ariaLabel}: ${selected?.label ?? value}`}
         className="data-table-toolbar-select__trigger"
         type="button"
+        disabled={disabled}
         onClick={() => setOpen((current) => !current)}
       >
         <span>{selected?.label ?? value}</span>
@@ -372,7 +376,7 @@ export function DataTablePagination({
 }) {
   if (totalPages <= 1 && !onPageSizeChange) return null;
 
-  const safePage = Math.min(Math.max(page, 1), totalPages);
+  const safePage = Math.min(Math.max(page, 1), Math.max(totalPages, 1));
   const resolvedPageSize = pageSize ?? 20;
   const firstItem = total ? (safePage - 1) * resolvedPageSize + 1 : undefined;
   const lastItem = total ? Math.min(safePage * resolvedPageSize, total) : undefined;
@@ -382,28 +386,31 @@ export function DataTablePagination({
   };
   const changePage = (nextPage: number) => {
     const resolvedPage = Math.min(Math.max(nextPage, 1), Math.max(totalPages, 1));
+    if (resolvedPage === safePage) return;
     onChange(resolvedPage);
     if (syncUrl) syncTableQuery(resolvedPage, resolvedPageSize);
   };
 
   return (
     <nav className="data-table-pagination" aria-label="목록 페이지">
-      {onPageSizeChange ? (
-        <ToolbarSelect
-          ariaLabel="페이지당 표시 건수"
-          value={pageSize as DataTablePageSize}
-          options={([20, 50, 100] as const).map((size) => ({
-            value: size,
-            label: `${size}개씩 보기`,
-          }))}
-          onChange={changePageSize}
-        />
-      ) : null}
-      <span className="data-table-pagination__range">
-        {firstItem !== undefined && lastItem !== undefined
-          ? `총 ${total!.toLocaleString('ko-KR')}건 중 ${firstItem}-${lastItem}`
-          : `${safePage} / ${Math.max(totalPages, 1)}페이지`}
-      </span>
+      <div className="data-table-pagination__summary">
+        {onPageSizeChange ? (
+          <ToolbarSelect
+            ariaLabel="페이지당 표시 건수"
+            value={pageSize as DataTablePageSize}
+            options={([20, 50, 100] as const).map((size) => ({
+              value: size,
+              label: `${size}개씩 보기`,
+            }))}
+            onChange={changePageSize}
+          />
+        ) : null}
+        <span className="data-table-pagination__range">
+          {firstItem !== undefined && lastItem !== undefined
+            ? `총 ${total!.toLocaleString('ko-KR')}건 중 ${firstItem}-${lastItem}`
+            : `${safePage} / ${Math.max(totalPages, 1)}페이지`}
+        </span>
+      </div>
       <div className="data-table-pagination__controls">
         <button
           type="button"

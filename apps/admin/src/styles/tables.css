@@ -239,46 +239,60 @@
   min-height: 48px;
   margin-top: 12px;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 4px;
   color: var(--muted);
   font-size: 13px;
+  font-family: inherit;
+  font-weight: var(--j-weight-regular);
+  line-height: 1;
 }
 
 .admin-table-pagination--compact {
-  justify-content: center;
-  flex-wrap: wrap;
+  justify-content: space-between;
   gap: 8px;
   color: var(--j-color-text-secondary);
 }
 
+.admin-table-pagination__summary {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
 .admin-table-pagination--compact .ui-page-size-select {
-  min-width: 104px;
+  min-width: 128px;
+  width: 128px !important;
+  height: 36px;
+  min-height: 36px;
 }
 
 .admin-table-pagination__range {
   margin-right: 4px;
   white-space: nowrap;
+  font: inherit;
 }
 
 .admin-table-pagination__input-label {
   display: inline-grid;
-  width: 42px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   place-items: center;
 }
 
 .admin-table-pagination__input-label input {
-  width: 42px;
-  height: 40px;
-  padding: 0 4px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
   color: var(--j-color-text);
   font: inherit;
-  font-size: 13px;
-  font-weight: var(--j-weight-medium);
+  font-size: inherit;
+  font-weight: inherit;
   text-align: center;
 }
 
@@ -297,15 +311,23 @@
 .admin-table-pagination button,
 .admin-table-pagination__ellipsis {
   display: grid;
-  min-width: 34px;
-  height: 40px;
-  padding: 0 8px;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
   place-items: center;
-  border: 1px solid transparent;
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: transparent;
+  background: var(--surface);
   color: var(--j-color-text-secondary);
-  font-weight: var(--j-weight-medium);
+  font: inherit;
+}
+
+.admin-table-pagination--compact .ui-page-size-select,
+.admin-table-pagination--compact .ui-page-size-select .admin-select__trigger,
+.admin-table-pagination--compact .ui-page-size-select select {
+  height: 36px;
+  min-height: 36px;
 }
 
 .admin-table-pagination button {
@@ -840,13 +862,12 @@
   .admin-table-pagination__previous,
   .admin-table-pagination__next {
     display: inline-flex !important;
-    width: auto;
-    min-width: 64px !important;
-    height: 40px !important;
-    padding-inline: 8px !important;
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
     align-items: center;
     justify-content: center;
-    gap: 3px;
     border-color: var(--line) !important;
     background: var(--surface) !important;
   }

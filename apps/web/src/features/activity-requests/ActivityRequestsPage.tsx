@@ -2,19 +2,12 @@ import { useMemo, useState, type KeyboardEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import type { ActivityPrintFloor, ActivityRequestPrintBatch } from '@jshsus/types';
-import {
-  CalendarDays,
-  ChevronDown,
-  MapPin,
-  PenLine,
-  Printer,
-  UserRound,
-  Users,
-} from 'lucide-react';
+import { CalendarDays, MapPin, PenLine, UserRound, Users } from 'lucide-react';
 import {
   DataTablePagination,
   type DataTablePageSize,
   DataTableToolbar,
+  ToolbarSelect,
 } from '../../components/page/DataTableControls';
 import { FilterChips, PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
@@ -48,40 +41,22 @@ function ActivityPrintMenu({
   disabled?: boolean;
   onSelect: (floor: ActivityPrintFloor) => void;
 }) {
-  const [open, setOpen] = useState(false);
-
   return (
-    <div className={`activity-print-menu${open ? ' is-open' : ''}`}>
-      <button
-        type="button"
-        className="activity-print-menu__trigger"
-        aria-expanded={open}
-        aria-haspopup="menu"
-        disabled={disabled}
-        onClick={() => setOpen((current) => !current)}
-      >
-        <Printer size={16} aria-hidden="true" />
-        <span>인쇄</span>
-        <ChevronDown size={15} aria-hidden="true" />
-      </button>
-      {open ? (
-        <div className="activity-print-menu__list" role="menu" aria-label="인쇄할 층 선택">
-          {([2, 3, 4] as const).map((floor) => (
-            <button
-              key={floor}
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setOpen(false);
-                onSelect(floor);
-              }}
-            >
-              {floor}층
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </div>
+    <ToolbarSelect<'' | 'all' | 2 | 3 | 4>
+      ariaLabel="인쇄할 층 선택"
+      value=""
+      disabled={disabled}
+      options={[
+        { value: '', label: '인쇄' },
+        { value: 'all', label: '전체' },
+        { value: 2, label: '2층' },
+        { value: 3, label: '3층' },
+        { value: 4, label: '4층' },
+      ]}
+      onChange={(value) => {
+        if (value) onSelect(value as ActivityPrintFloor);
+      }}
+    />
   );
 }
 
@@ -112,7 +87,9 @@ export function ActivityRequestsPage() {
     onSuccess: (result) => {
       setPrintBatch(result);
       if (!result.documents.length) {
-        setPrintMessage(`${result.floor}층에 오늘 인쇄할 승인 완료 탐구활동서가 없습니다.`);
+        setPrintMessage(
+          `${result.floor === 'all' ? '전체' : `${result.floor}층`}에 오늘 인쇄할 승인 탐구활동서가 없습니다.`,
+        );
         return;
       }
       setPrintMessage('');
@@ -205,7 +182,7 @@ export function ActivityRequestsPage() {
           searchFieldOptions={[
             { value: 'all', label: '전체' },
             { value: 'activity', label: '내용' },
-            { value: 'participants', label: '참여자' },
+            { value: 'participants', label: '인원' },
             { value: 'location', label: '장소' },
             { value: 'advisor', label: '지도교사' },
           ]}
@@ -227,7 +204,6 @@ export function ActivityRequestsPage() {
                   { value: 'submitted', label: '승인 대기' },
                   { value: 'approved', label: '승인' },
                   { value: 'rejected', label: '반려' },
-                  { value: 'completed', label: '완료' },
                 ]}
                 label="신청 상태"
                 onChange={(nextFilter) => {

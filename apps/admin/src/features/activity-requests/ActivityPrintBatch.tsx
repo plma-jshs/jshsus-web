@@ -1,8 +1,10 @@
 import type {
+  ActivityPrintStudent,
   ActivityRequestAdminSummary,
   ActivityRequestPrintBatch,
-  ActivityPrintStudent,
+  ActivityRequestPrintSection,
 } from '@jshsus/types';
+import type { ReactNode } from 'react';
 import { formatActivityTimeRanges, koreaDateInput } from './activitySchedule';
 
 function participantsText(request: ActivityRequestAdminSummary) {
@@ -29,21 +31,6 @@ function printDateLabel(date: string) {
   return `${month ?? ''}월 ${day ?? ''}일`;
 }
 
-function ActivityPrintRow({ request }: { request: ActivityRequestAdminSummary }) {
-  const date = koreaDateInput(new Date(request.startsAt));
-  return (
-    <tr>
-      <td>
-        {formatActivityTimeRanges(date, request.startsAt, request.endsAt, request.activitySlotIds)}
-      </td>
-      <td>{request.location}</td>
-      <td>{request.purpose}</td>
-      <td>{participantsText(request)}</td>
-      <td>{request.advisorTeacherName ?? '-'}</td>
-    </tr>
-  );
-}
-
 function studentGroupLabel(student: ActivityPrintStudent, floor: number) {
   const genderLabel = floor === 2 ? '여자' : '남자';
   return `${student.grade}학년 ${student.classNo}반 ${genderLabel}`;
@@ -59,44 +46,79 @@ function StudentPrintTable({
   const groups = new Map<string, ActivityPrintStudent[]>();
   for (const student of students) {
     const key = `${student.grade}-${student.classNo}`;
-    const group = groups.get(key) ?? [];
-    group.push(student);
-    groups.set(key, group);
+    groups.set(
+      key,
+      [...(groups.get(key) ?? []), student].sort((left, right) => left.studentNo - right.studentNo),
+    );
   }
   const periodKeys = [...new Set(students.flatMap((student) => Object.keys(student.slotLocations)))]
     .filter((key) => /^\d+$/.test(key))
     .sort((left, right) => Number(left) - Number(right));
   const periods = periodKeys.length ? periodKeys : ['1', '2'];
+  const entries = [...groups.entries()];
+  const locationKey = (location: string) => location.replace(/\s+/g, '');
+
+  const renderLocations = (student: ActivityPrintStudent) => {
+    const cells: ReactNode[] = [];
+    for (let index = 0; index < periods.length; index += 1) {
+      const period = periods[index]!;
+      const nextPeriod = periods[index + 1];
+      const location = student.slotLocations[period] ?? '';
+      const nextLocation = nextPeriod ? (student.slotLocations[nextPeriod] ?? '') : '';
+      if (
+        period === '1' &&
+        nextPeriod === '2' &&
+        location &&
+        nextLocation &&
+        locationKey(location) === locationKey(nextLocation)
+      ) {
+        cells.push(
+          <td key={`${period}-${nextPeriod}`} colSpan={2}>
+            {location}
+          </td>,
+        );
+        index += 1;
+      } else {
+        cells.push(<td key={period}>{location}</td>);
+      }
+    }
+    return cells;
+  };
 
   return (
     <div className="activity-print-student-grid">
-      {[...groups.entries()].map(([key, group]) => (
-        <table key={key} className="activity-print-student-table">
-          <caption>{studentGroupLabel(group[0]!, floor)}</caption>
-          <thead>
-            <tr>
-              <th>학번</th>
-              <th>이름</th>
-              {periods.map((period) => (
-                <th key={period}>{period}면학</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {group
-              .sort((left, right) => left.studentNo - right.studentNo)
-              .map((student) => (
-                <tr key={student.studentNo}>
+      {Array.from({ length: Math.ceil(entries.length / 4) }, (_, rowIndex) => {
+        const rowEntries = entries.slice(rowIndex * 4, rowIndex * 4 + 4);
+        const maxRows = Math.max(...rowEntries.map(([, group]) => group.length), 0);
+        return rowEntries.map(([key, group]) => (
+          <table key={key} className="activity-print-student-table">
+            <caption>{studentGroupLabel(group[0]!, floor)}</caption>
+            <thead>
+              <tr>
+                <th>학번</th>
+                <th>이름</th>
+                {periods.map((period) => (
+                  <th key={period}>{period}면학</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {group.map((student) => (
+                <tr className={student.moved ? 'is-moved' : undefined} key={student.studentNo}>
                   <td>{student.studentNo}</td>
                   <td>{student.studentName}</td>
-                  {periods.map((period) => (
-                    <td key={period}>{student.slotLocations[period] ?? ''}</td>
-                  ))}
+                  {renderLocations(student)}
                 </tr>
               ))}
-          </tbody>
-        </table>
-      ))}
+              {Array.from({ length: maxRows - group.length }, (_, index) => (
+                <tr aria-hidden="true" className="is-empty" key={`empty-${index}`}>
+                  <td colSpan={periods.length + 2} />
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ));
+      })}
     </div>
   );
 }
@@ -104,35 +126,66 @@ function StudentPrintTable({
 export function ActivityPrintBatch({ batch }: { batch: ActivityRequestPrintBatch | null }) {
   if (!batch?.documents.length) return null;
 
+  const sections: ActivityRequestPrintSection[] = batch.sections?.length
+    ? batch.sections
+    : [
+        {
+          floor: batch.floor as Exclude<ActivityRequestPrintSection['floor'], 'all'>,
+          documents: batch.documents,
+          students: batch.students,
+        },
+      ];
+
   return (
     <section className="activity-print-batch" aria-hidden="true">
-      <div className="activity-print-page activity-print-page--activities">
-        <h1>
-          {printDateLabel(batch.date)} 탐활서 명단 ({batch.floor}층)
-        </h1>
-        <table className="activity-print-activity-table">
-          <thead>
-            <tr>
-              <th>활동 시간</th>
-              <th>활동 장소</th>
-              <th>활동 내용</th>
-              <th>참여 학생</th>
-              <th>지도 교사</th>
-            </tr>
-          </thead>
-          <tbody>
-            {batch.documents.map((request) => (
-              <ActivityPrintRow key={request.id} request={request} />
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="activity-print-page activity-print-page--students">
-        <h2>
-          {printDateLabel(batch.date)} 학생 면학 배정 ({batch.floor}층)
-        </h2>
-        <StudentPrintTable students={batch.students} floor={batch.floor} />
-      </div>
+      {sections.flatMap((section) => [
+        <div
+          className="activity-print-page activity-print-page--activities"
+          key={`${section.floor}-activities`}
+        >
+          <h1>
+            {printDateLabel(batch.date)} 탐활서 명단 ({section.floor}층)
+          </h1>
+          <table className="activity-print-activity-table">
+            <thead>
+              <tr>
+                <th>활동 시간</th>
+                <th>활동 장소</th>
+                <th>활동 내용</th>
+                <th>참여 학생</th>
+                <th>지도 교사</th>
+              </tr>
+            </thead>
+            <tbody>
+              {section.documents.map((request) => {
+                const date = koreaDateInput(new Date(request.startsAt));
+                return (
+                  <tr key={request.id}>
+                    <td>
+                      {formatActivityTimeRanges(
+                        date,
+                        request.startsAt,
+                        request.endsAt,
+                        request.activitySlotIds,
+                      )}
+                    </td>
+                    <td>{request.location}</td>
+                    <td>{request.purpose}</td>
+                    <td>{participantsText(request)}</td>
+                    <td>{request.advisorTeacherName ?? '-'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>,
+        <div
+          className="activity-print-page activity-print-page--students"
+          key={`${section.floor}-students`}
+        >
+          <StudentPrintTable students={section.students} floor={section.floor} />
+        </div>,
+      ])}
     </section>
   );
 }
