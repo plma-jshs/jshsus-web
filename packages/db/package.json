@@ -21,6 +21,8 @@
     "db:migrate-legacy-thanks-activity": "node scripts/migrate-legacy-thanks-activity.cjs",
     "db:migrate-legacy-points": "node scripts/migrate-legacy-points.cjs",
     "db:normalize-board-content": "node scripts/normalize-board-content.cjs",
+    "db:repair-legacy-content": "node scripts/repair-legacy-content.cjs",
+    "db:seed-2026-1-dorm-assignments": "node scripts/seed-2026-1-dorm-assignments.cjs",
     "db:privacy-retention": "node scripts/privacy-retention.cjs",
     "db:provision-cognito-students": "node scripts/provision-cognito-students.cjs",
     "db:assert-local": "node -e \"require('./scripts/local-seed-safety.cjs').assertLocalSeedAllowed(); console.log('Local database target verified.')\"",

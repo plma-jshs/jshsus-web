@@ -2,9 +2,14 @@ import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 
 const require = createRequire(import.meta.url);
-const { decodeHtmlEntities, decodeJsonStrings } = require('./html-entities.cjs') as {
-  decodeHtmlEntities: (value: unknown) => string;
-  decodeJsonStrings: (value: unknown) => unknown;
+const { decodeCloudflareEmail, decodeHtmlEntities, decodeJsonStrings } =
+  require('./html-entities.cjs') as {
+    decodeCloudflareEmail: (value: unknown) => string | null;
+    decodeHtmlEntities: (value: unknown) => string;
+    decodeJsonStrings: (value: unknown) => unknown;
+  };
+const { htmlSegmentToTextLines } = require('./import-legacy-site-data.cjs') as {
+  htmlSegmentToTextLines: (value: unknown) => string[];
 };
 const { buildContentPlan } = require('./normalize-board-content.cjs') as {
   buildContentPlan: (
@@ -75,6 +80,20 @@ describe('legacy HTML entity cleanup', () => {
       type: 'text',
       text: '"hello"',
     });
+  });
+
+  it('decodes Cloudflare-protected email addresses before HTML stripping', () => {
+    expect(decodeCloudflareEmail('cba1b8a3b8bea5a2a4a58baca6aaa2a7e5a8a4a6')).toBe(
+      'jshsunion@gmail.com',
+    );
+  });
+
+  it('restores Cloudflare-protected emails while converting legacy HTML', () => {
+    expect(
+      htmlSegmentToTextLines(
+        '<p>문의 <a class="__cf_email__" data-cfemail="cba1b8a3b8bea5a2a4a58baca6aaa2a7e5a8a4a6">[email protected]</a>&nbsp;&gt;</p>',
+      ),
+    ).toEqual(['문의 jshsunion@gmail.com >']);
   });
 });
 

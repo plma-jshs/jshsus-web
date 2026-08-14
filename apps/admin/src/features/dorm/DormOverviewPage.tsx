@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { DormRoom } from '@jshsus/types';
+import { formatDormBedPosition, type DormRoom } from '@jshsus/types';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { CircleAlert, DoorOpen, Eye } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
@@ -212,7 +212,7 @@ export function DormOverviewPage() {
                 <ul className="dorm-resident-list">
                   {selectedRoom.residents.map((resident) => (
                     <li key={resident.id}>
-                      <span>{resident.bedPosition}번</span>
+                      <span>{formatDormBedPosition(resident.bedPosition)}</span>
                       <strong>
                         {resident.studentNo} {resident.studentName}
                       </strong>

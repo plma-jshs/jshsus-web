@@ -9,7 +9,7 @@
 const { existsSync, readFileSync } = require('node:fs');
 const { resolve } = require('node:path');
 const mysql = require('mysql2/promise');
-const { decodeHtmlEntities } = require('./html-entities.cjs');
+const { decodeCloudflareEmail, decodeHtmlEntities } = require('./html-entities.cjs');
 const { seedConnectionOptions } = require('./seed-connection.cjs');
 
 const ROOT_DIR = resolve(__dirname, '../../..');
@@ -164,7 +164,14 @@ function paragraph(text) {
 }
 
 function htmlSegmentToTextLines(segment) {
-  const withBreaks = String(segment ?? '')
+  const withDecodedEmails = String(segment ?? '').replace(
+    /<([a-z][a-z0-9:-]*)\b[^>]*__cf_email__[^>]*>[\s\S]*?<\/\1>/gi,
+    (tag) => {
+      const encoded = attrsFromTag(tag)['data-cfemail'];
+      return decodeCloudflareEmail(encoded) ?? tag;
+    },
+  );
+  const withBreaks = withDecodedEmails
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(?:p|div|li|h[1-6]|blockquote)>/gi, '\n')
     .replace(/<li[^>]*>/gi, '\n')
@@ -1084,7 +1091,18 @@ async function main() {
   if (legacy) await legacy.end();
 }
 
-main().catch((error) => {
-  console.error(error.stack || error.message);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((error) => {
+    console.error(error.stack || error.message);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  fetchText,
+  htmlSegmentToTextLines,
+  htmlToRichTextDocument,
+  parseNoticeDetail,
+  projectDocumentToPlainText,
+  serializeNoticeContent,
+};

@@ -45,6 +45,29 @@ function decodeHtmlEntities(value) {
   return decoded;
 }
 
+/**
+ * Cloudflare Email Protection stores the visible email as an obfuscated
+ * `data-cfemail` hex string. Decode it before the HTML is converted to text;
+ * otherwise the legacy page's `[email protected]` placeholder gets persisted.
+ */
+function decodeCloudflareEmail(value) {
+  const encoded = String(value ?? '').trim();
+  if (!/^[0-9a-f]+$/i.test(encoded) || encoded.length < 4 || encoded.length % 2 !== 0) {
+    return null;
+  }
+
+  const key = Number.parseInt(encoded.slice(0, 2), 16);
+  if (!Number.isInteger(key)) return null;
+
+  let decoded = '';
+  for (let index = 2; index < encoded.length; index += 2) {
+    const byte = Number.parseInt(encoded.slice(index, index + 2), 16);
+    if (!Number.isInteger(byte)) return null;
+    decoded += String.fromCharCode(byte ^ key);
+  }
+  return decoded;
+}
+
 function decodeJsonStrings(value) {
   if (typeof value === 'string') return decodeHtmlEntities(value);
   if (Array.isArray(value)) return value.map(decodeJsonStrings);
@@ -56,5 +79,6 @@ function decodeJsonStrings(value) {
 
 module.exports = {
   decodeHtmlEntities,
+  decodeCloudflareEmail,
   decodeJsonStrings,
 };

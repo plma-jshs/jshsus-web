@@ -2,6 +2,7 @@ import type { PointerEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
+import { formatDormBedPosition } from '@jshsus/types';
 import {
   BedDouble,
   CalendarDays,
@@ -702,7 +703,7 @@ export function MyStatusPage() {
               <strong>
                 {status.dorm ? `${status.dorm.dormName} ${status.dorm.roomName}` : '미배정'}
               </strong>
-              {status.dorm ? <small>{status.dorm.bedPosition}번 침대</small> : null}
+              {status.dorm ? <small>{formatDormBedPosition(status.dorm.bedPosition)}</small> : null}
             </div>
           </article>
           <article>

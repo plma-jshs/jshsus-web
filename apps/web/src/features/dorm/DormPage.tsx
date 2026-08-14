@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
+import { formatDormBedPosition } from '@jshsus/types';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
@@ -74,7 +75,7 @@ export function DormPage() {
                         {currentAssignment.studentNo})
                       </td>
                       <td>{roomLabel(currentAssignment)}</td>
-                      <td>{currentAssignment.bedPosition}번</td>
+                      <td>{formatDormBedPosition(currentAssignment.bedPosition)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -103,7 +104,7 @@ export function DormPage() {
                         <td>
                           <strong>{roommate.studentName}</strong> ({roommate.studentNo})
                         </td>
-                        <td>{roommate.bedPosition}번</td>
+                        <td>{formatDormBedPosition(roommate.bedPosition)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -138,7 +139,7 @@ export function DormPage() {
                             <strong>{assignment.studentName}</strong> ({assignment.studentNo})
                           </td>
                           <td>{roomLabel(assignment)}</td>
-                          <td>{assignment.bedPosition}번</td>
+                          <td>{formatDormBedPosition(assignment.bedPosition)}</td>
                         </tr>
                       );
                     })}

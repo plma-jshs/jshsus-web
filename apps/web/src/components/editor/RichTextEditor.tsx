@@ -613,6 +613,7 @@ function ToolbarPalette({
                     }}
                   >
                     <span
+                      className="rich-text-toolbar-palette__swatch"
                       style={{
                         backgroundColor:
                           normalizeRichTextColor(option.value) ?? styles[option.value],
