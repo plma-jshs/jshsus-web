@@ -285,6 +285,8 @@
 .admin-table-pagination__input-label input {
   width: 36px;
   height: 36px;
+  min-height: 0;
+  max-height: 36px;
   padding: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -314,6 +316,8 @@
   width: 36px;
   min-width: 36px;
   height: 36px;
+  min-height: 36px;
+  max-height: 36px;
   padding: 0;
   place-items: center;
   border: 1px solid var(--line);
