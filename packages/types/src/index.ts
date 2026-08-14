@@ -705,6 +705,17 @@ export type DormAssignment = {
   bedPosition: number;
 };
 
+const DORM_BED_POSITION_LABELS: Record<number, string> = {
+  1: '\uC88C\uCE21 1\uCE35',
+  2: '\uC88C\uCE21 2\uCE35',
+  3: '\uC6B0\uCE21 1\uCE35',
+  4: '\uC6B0\uCE21 2\uCE35',
+};
+
+export function formatDormBedPosition(position: number) {
+  return DORM_BED_POSITION_LABELS[position] ?? `${position}\uBC88 \uCE68\uB300`;
+}
+
 export type DormRoomResident = Pick<
   DormAssignment,
   | 'id'
