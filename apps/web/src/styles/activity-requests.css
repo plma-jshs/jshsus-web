@@ -1600,14 +1600,26 @@
   background: var(--j-color-canvas);
 }
 
+.activity-print-printable {
+  width: 100%;
+}
+
 .activity-print-preview-modal__body .activity-print-batch {
   display: grid;
   gap: 20px;
 }
 
 .activity-print-preview-modal__body .activity-print-page {
-  min-height: 180mm;
+  display: flex;
+  width: min(100%, 1120px);
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 297 / 210;
+  margin: 0 auto;
   padding: 16px;
+  box-sizing: border-box;
+  flex-direction: column;
+  overflow: hidden;
   border: 1px solid var(--j-color-border);
   background: #fff;
   box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
@@ -1647,6 +1659,65 @@
   text-align: center;
 }
 
+.activity-print-preview-modal__body .activity-print-page--students {
+  display: flex;
+}
+
+.activity-print-preview-modal__body .activity-print-student-grid {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: 8px;
+}
+
+.activity-print-preview-modal__body .activity-print-student-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 10px;
+}
+
+.activity-print-preview-modal__body .activity-print-student-table caption {
+  padding: 3px 2px;
+  border: 1px solid #aaa;
+  background: #d7d7d7;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.activity-print-preview-modal__body .activity-print-student-table th,
+.activity-print-preview-modal__body .activity-print-student-table td {
+  padding: 3px 2px;
+  border: 1px solid #8c9690;
+  font-size: 9px;
+  line-height: 1.1;
+  text-align: center;
+  vertical-align: middle;
+  overflow-wrap: normal;
+}
+
+.activity-print-preview-modal__body .activity-print-student-table th:nth-child(1),
+.activity-print-preview-modal__body .activity-print-student-table td:nth-child(1) {
+  width: 18%;
+  white-space: nowrap;
+}
+
+.activity-print-preview-modal__body .activity-print-student-table th:nth-child(2),
+.activity-print-preview-modal__body .activity-print-student-table td:nth-child(2) {
+  width: 24%;
+  white-space: nowrap;
+}
+
+.activity-print-preview-modal__body .activity-print-student-table .is-empty td {
+  height: 12px;
+  color: transparent;
+}
+
 .activity-print-preview-modal__actions {
   justify-content: flex-end;
   border-top: 1px solid var(--j-color-border);
@@ -1683,6 +1754,11 @@
 
   body * {
     visibility: hidden !important;
+  }
+
+  .activity-print-printable,
+  .activity-print-printable * {
+    visibility: visible !important;
   }
 
   .activity-print-preview-modal,
@@ -1727,9 +1803,12 @@
 
   .activity-print-page {
     display: block !important;
-    height: 180mm;
+    width: 100%;
+    height: 186mm;
     min-height: 0;
-    max-height: 180mm;
+    max-height: 186mm;
+    box-sizing: border-box;
+    padding: 0;
     overflow: hidden;
     break-after: page;
     page-break-after: always;
@@ -1742,6 +1821,36 @@
     padding: 0;
     border: 0;
     box-shadow: none;
+  }
+
+  .activity-print-printable {
+    display: block !important;
+    width: 100%;
+    min-height: 0;
+    padding: 0;
+    overflow: visible;
+    background: #fff;
+  }
+
+  .activity-print-printable .activity-print-batch {
+    display: block !important;
+    width: 100%;
+  }
+
+  .activity-print-printable .activity-print-page {
+    display: block !important;
+    width: 100%;
+    height: 186mm;
+    min-height: 186mm;
+    max-height: 186mm;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .activity-print-printable .activity-print-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
   }
 
   .activity-print-page:last-child {

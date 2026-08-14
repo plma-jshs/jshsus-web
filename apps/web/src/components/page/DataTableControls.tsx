@@ -184,8 +184,8 @@ export function ToolbarSelect<TValue extends string | number>({
 
 export function DataTableToolbar<TField extends string = DataTableSearchField>({
   total,
-  page,
-  totalPages,
+  page: _page,
+  totalPages: _totalPages,
   field,
   query,
   extraControls,
@@ -266,9 +266,6 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
       <div className="data-table-toolbar__summary" aria-live="polite">
         <span>
           전체 <strong>{total.toLocaleString('ko-KR')}</strong>건
-        </span>
-        <span>
-          {Math.min(page, Math.max(totalPages, 1))}/{Math.max(totalPages, 1)}페이지
         </span>
       </div>
       <div className="data-table-toolbar__controls">

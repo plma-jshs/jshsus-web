@@ -1,17 +1,22 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Printer, X } from 'lucide-react';
+import { useReactToPrint } from 'react-to-print';
 import type { ActivityRequestPrintBatch } from '@jshsus/types';
 import { ActivityPrintBatch } from './ActivityPrintBatch';
 
 export function ActivityPrintPreviewModal({
   batch,
   onClose,
-  onPrint,
 }: {
   batch: ActivityRequestPrintBatch;
   onClose: () => void;
-  onPrint: () => void;
 }) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const handlePrint = useReactToPrint({
+    contentRef,
+    documentTitle: '탐구활동서 인쇄',
+  });
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -41,13 +46,15 @@ export function ActivityPrintPreviewModal({
           </button>
         </header>
         <div className="activity-print-preview-modal__body">
-          <ActivityPrintBatch batch={batch} preview />
+          <div ref={contentRef} className="activity-print-printable">
+            <ActivityPrintBatch batch={batch} preview />
+          </div>
         </div>
         <footer className="activity-print-preview-modal__actions">
           <button className="secondary-button" type="button" onClick={onClose}>
             취소
           </button>
-          <button className="primary-button" type="button" onClick={onPrint}>
+          <button className="primary-button" type="button" onClick={handlePrint}>
             <Printer size={16} aria-hidden="true" />
             인쇄
           </button>

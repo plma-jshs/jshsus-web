@@ -44,18 +44,17 @@ function ActivityPrintMenu({
   return (
     <ToolbarSelect<'' | 'all' | 2 | 3 | 4>
       ariaLabel="인쇄할 층 선택"
-      value=""
+      value="all"
       disabled={disabled}
       leadingIcon={<Printer size={15} />}
       options={[
-        { value: '', label: '인쇄' },
         { value: 'all', label: '전체' },
         { value: 2, label: '2층' },
         { value: 3, label: '3층' },
         { value: 4, label: '4층' },
       ]}
       onChange={(value) => {
-        if (value) onSelect(value as ActivityPrintFloor);
+        onSelect(value as ActivityPrintFloor);
       }}
     />
   );
@@ -461,11 +460,7 @@ export function ActivityRequestsPage() {
       </section>
       {printMessage ? <p className="activity-print-message">{printMessage}</p> : null}
       {printBatch?.documents.length ? (
-        <ActivityPrintPreviewModal
-          batch={printBatch}
-          onClose={() => setPrintBatch(null)}
-          onPrint={() => window.print()}
-        />
+        <ActivityPrintPreviewModal batch={printBatch} onClose={() => setPrintBatch(null)} />
       ) : null}
     </PageScaffold>
   );

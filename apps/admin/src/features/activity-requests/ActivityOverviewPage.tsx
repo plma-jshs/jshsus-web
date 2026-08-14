@@ -85,7 +85,7 @@ function ActivityPrintMenu({
       <Printer size={15} aria-hidden="true" />
       <AdminSelect
         className="activity-print-select"
-        value=""
+        value="all"
         aria-label="인쇄할 층 선택"
         onChange={(event) => {
           const value = event.target.value;
@@ -93,7 +93,6 @@ function ActivityPrintMenu({
         }}
         disabled={disabled}
       >
-        <option value="">인쇄</option>
         <option value="all">전체</option>
         <option value="2">2층</option>
         <option value="3">3층</option>
@@ -429,11 +428,7 @@ export function ActivityOverviewPage() {
         ) : null}
       </Drawer>
       {printBatch?.documents.length ? (
-        <ActivityPrintPreviewModal
-          batch={printBatch}
-          onClose={() => setPrintBatch(null)}
-          onPrint={() => window.print()}
-        />
+        <ActivityPrintPreviewModal batch={printBatch} onClose={() => setPrintBatch(null)} />
       ) : null}
     </div>
   );
