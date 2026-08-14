@@ -32,6 +32,8 @@ type CalendarSearch = {
 };
 
 type ActivitySearch = {
+  page?: number;
+  size?: (typeof tablePageSizes)[number];
   field?: 'all' | 'activity' | 'participants' | 'location' | 'advisor';
   q?: string;
 };
@@ -46,6 +48,13 @@ function safeInternalReturnTo(value: unknown) {
 
 function validateActivitySearch(search: Record<string, unknown>): ActivitySearch {
   const result: ActivitySearch = {};
+  const requestedPage = Number(search.page);
+  const requestedPageSize = Number(search.size ?? search.pageSize);
+
+  if (Number.isInteger(requestedPage) && requestedPage >= 1) result.page = requestedPage;
+  if (tablePageSizes.includes(requestedPageSize as (typeof tablePageSizes)[number])) {
+    result.size = requestedPageSize as (typeof tablePageSizes)[number];
+  }
   if (activitySearchFields.includes(search.field as (typeof activitySearchFields)[number])) {
     result.field = search.field as ActivitySearch['field'];
   }

@@ -13,14 +13,6 @@ import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 
 export type DataTableSearchField = 'title_content' | 'title' | 'author';
 export type DataTablePageSize = 20 | 50 | 100;
-
-function syncTableQuery(page: number, pageSize: number) {
-  if (typeof window === 'undefined') return;
-  const url = new URL(window.location.href);
-  url.searchParams.set('page', String(Math.max(page, 1)));
-  url.searchParams.set('size', String(pageSize));
-  window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
-}
 export type DataTableSearchFieldOption<TField extends string = DataTableSearchField> = {
   value: TField;
   label: string;
@@ -361,7 +353,6 @@ export function DataTablePagination({
   pageSize = 20,
   onPageSizeChange,
   onChange,
-  syncUrl = true,
 }: {
   page: number;
   totalPages: number;
@@ -382,13 +373,11 @@ export function DataTablePagination({
   const lastItem = total ? Math.min(safePage * resolvedPageSize, total) : undefined;
   const changePageSize = (nextPageSize: DataTablePageSize) => {
     onPageSizeChange?.(nextPageSize);
-    if (syncUrl) syncTableQuery(1, nextPageSize);
   };
   const changePage = (nextPage: number) => {
     const resolvedPage = Math.min(Math.max(nextPage, 1), Math.max(totalPages, 1));
     if (resolvedPage === safePage) return;
     onChange(resolvedPage);
-    if (syncUrl) syncTableQuery(resolvedPage, resolvedPageSize);
   };
 
   return (

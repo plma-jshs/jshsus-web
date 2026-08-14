@@ -101,9 +101,15 @@ function StudentPrintTable({
             </thead>
             <tbody>
               {group.map((student) => (
-                <tr className={student.moved ? 'is-moved' : undefined} key={student.studentNo}>
-                  <td>{student.studentNo}</td>
-                  <td>{student.studentName}</td>
+                <tr key={student.studentNo}>
+                  <td className="activity-print-student-number">{student.studentNo}</td>
+                  <td
+                    className={`activity-print-student-name${
+                      student.studentName.length >= 4 ? ' is-long' : ''
+                    }`}
+                  >
+                    {student.studentName}
+                  </td>
                   {renderLocations(student)}
                 </tr>
               ))}
@@ -123,15 +129,19 @@ function StudentPrintTable({
 export function ActivityPrintBatch({ batch }: { batch: ActivityRequestPrintBatch | null }) {
   if (!batch?.documents.length) return null;
 
-  const sections: ActivityRequestPrintSection[] = batch.sections?.length
-    ? batch.sections
-    : [
-        {
-          floor: batch.floor as Exclude<ActivityRequestPrintSection['floor'], 'all'>,
-          documents: batch.documents,
-          students: batch.students,
-        },
-      ];
+  const fallbackSection: ActivityRequestPrintSection = {
+    floor: batch.floor as Exclude<ActivityRequestPrintSection['floor'], 'all'>,
+    documents: batch.documents,
+    students: batch.students,
+  };
+  const sections: ActivityRequestPrintSection[] =
+    batch.floor === 'all'
+      ? [2, 3, 4]
+          .map((floor) => batch.sections?.find((section) => section.floor === floor))
+          .filter((section): section is ActivityRequestPrintSection => Boolean(section))
+      : batch.sections?.length
+        ? batch.sections
+        : [fallbackSection];
 
   return (
     <section className="activity-print-batch" aria-hidden="true">

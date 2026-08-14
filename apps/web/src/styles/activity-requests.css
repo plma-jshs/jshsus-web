@@ -1573,10 +1573,14 @@
     max-height: 180mm;
     overflow: hidden;
     break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .activity-print-page:last-child {
     break-after: auto;
+    page-break-after: auto;
   }
 
   .activity-print-page h1 {
@@ -1619,7 +1623,7 @@
   }
 
   .activity-print-activity-table th:nth-child(1) {
-    width: 15%;
+    width: 12%;
   }
 
   .activity-print-activity-table th:nth-child(2) {
@@ -1627,7 +1631,7 @@
   }
 
   .activity-print-activity-table th:nth-child(3) {
-    width: 11%;
+    width: 14%;
   }
 
   .activity-print-activity-table th:nth-child(4) {
@@ -1645,11 +1649,17 @@
     gap: 2mm;
   }
 
+  .activity-print-student-table {
+    font-size: 8pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
   .activity-print-student-table caption {
-    padding: 0.8mm;
+    padding: 0.45mm;
     border: 1px solid #aaa;
     background: #d7d7d7 !important;
-    font-size: 9pt;
+    font-size: 8pt;
     font-weight: 700;
     text-align: center;
     -webkit-print-color-adjust: exact;
@@ -1658,28 +1668,45 @@
 
   .activity-print-student-table th,
   .activity-print-student-table td {
-    padding: 0.55mm 0.6mm;
-    font-size: 9pt;
+    padding: 0.45mm 0.6mm;
+    font-size: 8pt;
+    line-height: 1.15;
     text-align: center;
   }
 
   .activity-print-student-table th:nth-child(1),
   .activity-print-student-table td:nth-child(1) {
-    width: 12%;
+    width: 18%;
+    white-space: nowrap;
+    overflow-wrap: normal;
   }
 
   .activity-print-student-table th:nth-child(2),
   .activity-print-student-table td:nth-child(2) {
-    width: 15%;
+    width: 24%;
+    white-space: nowrap;
+    overflow-wrap: normal;
   }
 
-  .activity-print-page--students .activity-print-student-table tr.is-moved td {
-    background: #f1f8f4 !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+  .activity-print-student-number {
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+
+  .activity-print-student-name {
+    white-space: nowrap;
+    overflow: hidden;
+    overflow-wrap: normal;
+  }
+
+  .activity-print-student-name.is-long {
+    font-size: 7pt !important;
+    letter-spacing: -0.04em;
   }
 
   .activity-print-page--students .activity-print-student-table tr.is-empty td {
+    height: 4.5mm;
+    padding: 0.45mm 0.6mm;
     color: transparent;
     background: #fff !important;
   }

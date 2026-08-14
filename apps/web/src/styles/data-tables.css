@@ -658,6 +658,7 @@
   min-width: 0;
   max-width: 100%;
   margin-top: var(--j-space-6);
+  margin-bottom: var(--j-space-4);
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
@@ -1140,6 +1141,7 @@
   .data-table-pagination {
     width: 100%;
     margin-top: var(--j-space-5);
+    margin-bottom: var(--j-space-4);
     justify-content: space-between;
     gap: 8px;
   }

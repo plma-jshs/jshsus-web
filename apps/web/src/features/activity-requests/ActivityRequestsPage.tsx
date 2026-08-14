@@ -61,7 +61,7 @@ function ActivityPrintMenu({
 }
 
 export function ActivityRequestsPage() {
-  const navigate = useNavigate();
+  const navigate = useNavigate({ from: '/activity-requests' });
   const routeSearch = useSearch({ from: '/activity-requests' });
   const requestsQuery = useQuery({
     queryKey: ['activity-requests', 'me'],
@@ -74,14 +74,23 @@ export function ActivityRequestsPage() {
   const [query, setQuery] = useState(routeSearch.q ?? '');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState<DataTablePageSize>(20);
+  const page = routeSearch.page ?? 1;
+  const pageSize: DataTablePageSize = routeSearch.size ?? 20;
   const [mobileVisibleState, setMobileVisibleState] = useState<{ key: string; count: number }>({
     key: '',
     count: pageSize,
   });
   const [printBatch, setPrintBatch] = useState<ActivityRequestPrintBatch | null>(null);
   const [printMessage, setPrintMessage] = useState('');
+  const updateTableSearch = (next: { page?: number; size?: DataTablePageSize }) => {
+    void navigate({
+      search: (current) => ({
+        ...current,
+        page: next.page ?? current.page ?? 1,
+        size: next.size ?? current.size ?? 20,
+      }),
+    });
+  };
   const printMutation = useMutation({
     mutationFn: (floor: ActivityPrintFloor) => printActivityRequests({ floor }),
     onSuccess: (result) => {
@@ -187,13 +196,12 @@ export function ActivityRequestsPage() {
             { value: 'advisor', label: '지도교사' },
           ]}
           onPageSizeChange={(nextPageSize) => {
-            setPageSize(nextPageSize);
-            setPage(1);
+            updateTableSearch({ page: 1, size: nextPageSize });
           }}
           onSearch={(nextField, nextQuery) => {
             setSearchField(nextField);
             setQuery(nextQuery);
-            setPage(1);
+            updateTableSearch({ page: 1 });
           }}
           extraControls={
             <>
@@ -208,7 +216,7 @@ export function ActivityRequestsPage() {
                 label="신청 상태"
                 onChange={(nextFilter) => {
                   setFilter(nextFilter as ActivityRequestFilter);
-                  setPage(1);
+                  updateTableSearch({ page: 1 });
                 }}
               />
               <div className="activity-date-range" aria-label="활동 기간">
@@ -225,7 +233,7 @@ export function ActivityRequestsPage() {
                     max={endDate || undefined}
                     onChange={(event) => {
                       setStartDate(event.target.value);
-                      setPage(1);
+                      updateTableSearch({ page: 1 });
                     }}
                   />
                 </label>
@@ -245,7 +253,7 @@ export function ActivityRequestsPage() {
                     min={startDate || undefined}
                     onChange={(event) => {
                       setEndDate(event.target.value);
-                      setPage(1);
+                      updateTableSearch({ page: 1 });
                     }}
                   />
                 </label>
@@ -438,8 +446,7 @@ export function ActivityRequestsPage() {
             total={filtered.length}
             pageSize={pageSize}
             onPageSizeChange={(nextSize) => {
-              setPageSize(nextSize);
-              setPage(1);
+              updateTableSearch({ page: 1, size: nextSize });
             }}
             hasMore={mobileVisibleCount < filtered.length}
             onLoadMore={() =>
@@ -448,7 +455,7 @@ export function ActivityRequestsPage() {
                 count: mobileVisibleCount + pageSize,
               })
             }
-            onChange={setPage}
+            onChange={(nextPage) => updateTableSearch({ page: nextPage })}
           />
         ) : null}
       </section>
