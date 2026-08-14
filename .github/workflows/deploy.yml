@@ -240,6 +240,7 @@ jobs:
     needs: verify
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
       packages: write
@@ -301,7 +302,7 @@ jobs:
           image="ghcr.io/${{ github.repository_owner }}/jshsus-${{ matrix.image }}"
           build_args=()
           if [[ "${{ matrix.image }}" == "web" ]]; then
-            build_args+=(--build-arg "VITE_GA_MEASUREMENT_ID=${{ vars.VITE_GA_MEASUREMENT_ID }}")
+            build_args+=(--build-arg "VITE_GA_MEASUREMENT_ID=${{ secrets.VITE_GA_MEASUREMENT_ID || vars.VITE_GA_MEASUREMENT_ID }}")
           fi
           docker buildx build . \
             --file "${{ matrix.dockerfile }}" \

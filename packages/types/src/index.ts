@@ -55,12 +55,14 @@ export type NoticeListItem = {
 
 export type NoticeDetail = NoticeListItem & {
   content: string;
+  contentDoc?: RichTextDocument;
   authorName?: string;
   attachments: UploadedFileSummary[];
 };
 
 export type NoticeSummary = DashboardNotice & {
   content: string;
+  contentDoc?: RichTextDocument;
   viewCount: number;
   attachments?: UploadedFileSummary[];
 };
@@ -501,6 +503,7 @@ export type AdminStaffSummary = {
   managedClasses?: Array<{ grade: number; classNo: number }>;
   email?: string;
   phone?: string;
+  accountStatus?: 'pending' | 'active';
   status: Extract<AdminUserStatus, 'active' | 'deleted'>;
   roles: UserRole[];
   lastLoginAt?: string;

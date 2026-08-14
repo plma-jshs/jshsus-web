@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import type { NoticeSummary } from '@jshsus/types';
+import type { NoticeSummary, RichTextDocument, RichTextNode } from '@jshsus/types';
 import { ExternalLink, Eye, Paperclip, Pin, PinOff, Search, Settings2, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
@@ -21,6 +21,96 @@ import {
   formatAdminDate,
 } from './components/ContentAdminPanel';
 import { publicSiteHref } from './publicSiteHref';
+
+const RICH_NOTICE_PREFIX = 'jshsus-rich-text:v1\n';
+
+function fallbackNoticeText(content: string) {
+  if (!content.startsWith(RICH_NOTICE_PREFIX)) return content;
+  try {
+    const parsed = JSON.parse(content.slice(RICH_NOTICE_PREFIX.length)) as { plainText?: unknown };
+    return typeof parsed.plainText === 'string' ? parsed.plainText : '';
+  } catch {
+    return '';
+  }
+}
+
+function renderNoticeNode(
+  node: RichTextNode,
+  key: string,
+  imageSources: ReadonlyMap<string, string>,
+): ReactNode {
+  const children = node.content?.map((child, index) =>
+    renderNoticeNode(child, `${key}-${index}`, imageSources),
+  );
+
+  switch (node.type) {
+    case 'text':
+      return <span key={key}>{node.text}</span>;
+    case 'hardBreak':
+      return <br key={key} />;
+    case 'image': {
+      const source = node.attrs?.src;
+      if (!source) return null;
+      return (
+        <img
+          key={key}
+          src={imageSources.get(source) ?? source}
+          alt={node.attrs?.alt ?? ''}
+          loading="lazy"
+        />
+      );
+    }
+    case 'heading':
+      return node.attrs?.level === 3 ? (
+        <h4 key={key}>{children}</h4>
+      ) : (
+        <h3 key={key}>{children}</h3>
+      );
+    case 'bulletList':
+      return <ul key={key}>{children}</ul>;
+    case 'orderedList':
+      return <ol key={key}>{children}</ol>;
+    case 'listItem':
+      return <li key={key}>{children}</li>;
+    case 'blockquote':
+      return <blockquote key={key}>{children}</blockquote>;
+    case 'poll':
+      return (
+        <div key={key} className="content-detail-rich-poll">
+          <strong>{node.attrs?.question ?? '투표'}</strong>
+          {node.attrs?.options?.length ? (
+            <ul>
+              {node.attrs.options.map((option) => (
+                <li key={option.id}>{option.text}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      );
+    case 'paragraph':
+    default:
+      return <p key={key}>{children}</p>;
+  }
+}
+
+function NoticeContentPreview({ notice }: { notice: NoticeSummary }) {
+  const imageSources = new Map<string, string>();
+  for (const attachment of notice.attachments ?? []) {
+    imageSources.set(attachment.inlineUrl, attachment.inlineUrl);
+    imageSources.set(attachment.url, attachment.inlineUrl);
+  }
+
+  const document = notice.contentDoc as RichTextDocument | undefined;
+  if (!document) {
+    return <div className="content-detail-copy">{fallbackNoticeText(notice.content)}</div>;
+  }
+
+  return (
+    <div className="content-detail-copy content-detail-copy--rich">
+      {document.content.map((node, index) => renderNoticeNode(node, String(index), imageSources))}
+    </div>
+  );
+}
 
 export function NoticeManagementPage() {
   const queryClient = useQueryClient();
@@ -380,9 +470,7 @@ export function NoticeManagementPage() {
             </dl>
             <section className="content-detail-section">
               <h3>본문</h3>
-              <div className="content-detail-copy">
-                {selectedNotice.content || '본문이 없습니다.'}
-              </div>
+              <NoticeContentPreview notice={selectedNotice} />
             </section>
           </div>
         ) : null}

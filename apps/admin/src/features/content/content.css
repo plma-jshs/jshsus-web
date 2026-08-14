@@ -292,6 +292,34 @@ a.content-table-primary:focus-visible {
   white-space: pre-wrap;
 }
 
+.content-detail-copy--rich {
+  display: grid;
+  gap: 8px;
+  white-space: normal;
+}
+
+.content-detail-copy--rich p,
+.content-detail-copy--rich h3,
+.content-detail-copy--rich h4,
+.content-detail-copy--rich blockquote,
+.content-detail-copy--rich ul,
+.content-detail-copy--rich ol {
+  margin: 0;
+}
+
+.content-detail-copy--rich img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.content-detail-rich-poll {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
 .content-attachment-list {
   display: grid;
   margin: 0;

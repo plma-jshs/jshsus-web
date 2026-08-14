@@ -735,6 +735,13 @@ export function UsersPage() {
   ];
   const staffColumns: ColumnDef<AdminStaffSummary>[] = [
     {
+      id: 'accountStatus',
+      accessorKey: 'accountStatus',
+      header: '계정',
+      cell: ({ row }) => (row.original.accountStatus === 'active' ? '가입 완료' : '미가입'),
+      meta: { align: 'center', width: 112, mobileRole: 'badge' },
+    },
+    {
       id: 'identifier',
       accessorKey: 'staffNo',
       header: '교사번호',

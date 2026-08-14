@@ -1589,6 +1589,21 @@ export class AdminService {
         .limit(pageSize)
         .offset((page - 1) * pageSize);
       const roles = await this.rolesByUserIds(rows.map((row) => row.userId));
+      const linkedAccounts = await db
+        .select({ userId: schema.authAccounts.userId })
+        .from(schema.authAccounts)
+        .where(
+          and(
+            eq(schema.authAccounts.provider, 'cognito'),
+            rows.length > 0
+              ? inArray(
+                  schema.authAccounts.userId,
+                  rows.map((row) => row.userId),
+                )
+              : sql`1 = 0`,
+          ),
+        );
+      const linkedUserIds = new Set(linkedAccounts.map((account) => account.userId));
 
       return {
         items: rows.map((row) => ({
@@ -1600,6 +1615,7 @@ export class AdminService {
           managedClasses: row.managedClasses ?? [],
           email: row.email ?? undefined,
           phone: row.phone ?? undefined,
+          accountStatus: linkedUserIds.has(row.userId) ? 'active' : 'pending',
           status: row.status === 'deleted' ? 'deleted' : 'active',
           roles: roles.get(row.userId) ?? [],
           lastLoginAt: row.lastLoginAt?.toISOString(),

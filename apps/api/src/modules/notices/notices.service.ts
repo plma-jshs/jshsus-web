@@ -6,6 +6,7 @@ import type {
   NoticeListItem,
   NoticeSummary,
   PaginatedResponse,
+  RichTextDocument,
 } from '@jshsus/types';
 import { and, count, desc, eq, like, lte, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -25,6 +26,25 @@ const noticeSchema = z.object({
     .optional()
     .default(() => new Date()),
 });
+
+const RICH_NOTICE_PREFIX = 'jshsus-rich-text:v1\n';
+
+function parseSerializedNoticeDocument(content: string): RichTextDocument | undefined {
+  if (!content.startsWith(RICH_NOTICE_PREFIX)) return undefined;
+  try {
+    const parsed = JSON.parse(content.slice(RICH_NOTICE_PREFIX.length)) as {
+      contentDoc?: unknown;
+    };
+    const document = parsed.contentDoc;
+    if (!document || typeof document !== 'object') return undefined;
+    const candidate = document as { type?: unknown; content?: unknown };
+    return candidate.type === 'doc' && Array.isArray(candidate.content)
+      ? (document as RichTextDocument)
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 function toIso(value?: Date | null) {
   return value ? value.toISOString() : new Date().toISOString();
@@ -190,6 +210,7 @@ export class NoticesService {
         publicNumber: row.publicNumber,
         title: row.title,
         content: row.content,
+        contentDoc: parseSerializedNoticeDocument(row.content),
         department: row.department ?? '학교',
         pinned: row.pinned,
         publishedAt: toIso(row.publishedAt),
