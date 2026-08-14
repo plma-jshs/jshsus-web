@@ -46,7 +46,7 @@ export function PetitionsPage() {
       ),
     [filter, petitions, query, searchField],
   );
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(20);
   const totalPages = Math.ceil(filtered.length / pageSize);
   const safePage = Math.min(page, Math.max(totalPages, 1));
   const [mobileVisibleState, setMobileVisibleState] = useState<{ key: string; count: number }>({
@@ -255,6 +255,12 @@ export function PetitionsPage() {
           <DataTablePagination
             page={safePage}
             totalPages={totalPages}
+            total={filtered.length}
+            pageSize={pageSize}
+            onPageSizeChange={(nextSize) => {
+              setPageSize(nextSize);
+              setPage(1);
+            }}
             hasMore={safePage === 1 && mobileVisibleCount < filtered.length}
             onLoadMore={() =>
               setMobileVisibleState({

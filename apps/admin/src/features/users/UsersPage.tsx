@@ -38,7 +38,6 @@ import {
   AdminSelect,
   Dialog,
   type DialogSize,
-  PageSizeSelect,
   RowActionButton,
   RowActions,
   SegmentedTabs,
@@ -735,13 +734,6 @@ export function UsersPage() {
   ];
   const staffColumns: ColumnDef<AdminStaffSummary>[] = [
     {
-      id: 'accountStatus',
-      accessorKey: 'accountStatus',
-      header: '계정',
-      cell: ({ row }) => (row.original.accountStatus === 'active' ? '가입 완료' : '미가입'),
-      meta: { align: 'center', width: 112, mobileRole: 'badge' },
-    },
-    {
       id: 'identifier',
       accessorKey: 'staffNo',
       header: '교사번호',
@@ -788,6 +780,13 @@ export function UsersPage() {
       accessorKey: 'status',
       header: '상태',
       cell: ({ row }) => (row.original.status === 'deleted' ? '전근·퇴직' : '재직'),
+      meta: { align: 'center', width: 112, mobileRole: 'badge' },
+    },
+    {
+      id: 'accountStatus',
+      accessorKey: 'accountStatus',
+      header: '계정',
+      cell: ({ row }) => (row.original.accountStatus === 'active' ? '가입 완료' : '미가입'),
       meta: { align: 'center', width: 112, mobileRole: 'badge' },
     },
     {
@@ -1133,12 +1132,6 @@ export function UsersPage() {
                 </Field>
               </>
             ) : null}
-            <PageSizeSelect
-              value={filters.pageSize ?? 20}
-              onChange={(pageSize) => {
-                updateFilters({ pageSize });
-              }}
-            />
           </div>
         </TableToolbar>
 
@@ -1164,6 +1157,7 @@ export function UsersPage() {
               pageCount: studentsQuery.data?.totalPages ?? 1,
               totalCount: studentsQuery.data?.total ?? 0,
               onPageChange: (pageIndex) => setPage(pageIndex + 1),
+              onPageSizeChange: (pageSize) => updateFilters({ pageSize }),
             }}
             getRowId={(student) => String(student.id)}
             caption="학생 목록"
@@ -1192,6 +1186,7 @@ export function UsersPage() {
               pageCount: staffQuery.data?.totalPages ?? 1,
               totalCount: staffQuery.data?.total ?? 0,
               onPageChange: (pageIndex) => setPage(pageIndex + 1),
+              onPageSizeChange: (pageSize) => updateFilters({ pageSize }),
             }}
             getRowId={(staff) => String(staff.id)}
             caption="교직원 목록"

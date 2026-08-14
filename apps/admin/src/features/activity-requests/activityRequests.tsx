@@ -9,16 +9,14 @@ import { api } from '../../shared/api/adminApi';
 export const activityRequestsQueryKey = ['activity-requests'] as const;
 
 export const activityStatusLabels: Record<ActivityRequestAdminStatus, string> = {
-  pending: '대기',
+  pending: '승인 대기',
   approved: '승인',
   rejected: '반려',
 };
 
 export const activityStatusOptions = (
   Object.entries(activityStatusLabels) as Array<[ActivityRequestAdminStatus, string]>
-)
-  .filter(([value]) => value !== 'rejected')
-  .map(([value, label]) => ({ value, label }));
+).map(([value, label]) => ({ value, label }));
 
 export function useActivityRequests(query: ActivityRequestAdminListQuery = {}) {
   return useQuery({

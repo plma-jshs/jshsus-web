@@ -4,7 +4,7 @@ import type {
   ActivityRequestSummary,
 } from '@jshsus/types';
 
-export type ActivityRequestFilter = 'all' | 'submitted' | 'approved' | 'completed';
+export type ActivityRequestFilter = 'all' | 'submitted' | 'approved' | 'rejected' | 'completed';
 export type ActivityRequestSearchField =
   'all' | 'activity' | 'participants' | 'location' | 'advisor';
 
@@ -21,7 +21,7 @@ export function matchesActivityFilter(
   request: ActivityRequestSummary,
   filter: ActivityRequestFilter,
 ) {
-  if (request.status === 'rejected' || request.status === 'canceled') return false;
+  if (request.status === 'canceled') return false;
   if (filter === 'all') return true;
   return request.status === filter;
 }

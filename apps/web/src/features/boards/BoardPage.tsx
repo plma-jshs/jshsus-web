@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { BookOpen, Eye, PenLine, Pin, X } from 'lucide-react';
-import type { BoardPostListItem } from '@jshsus/types';
 import {
   DataTablePagination,
   type DataTablePageSize,
@@ -30,12 +29,12 @@ export function BoardPage() {
     };
   }, [rulesOpen]);
   const rawSearch = useSearch({ from: '/boards/free' });
-  const [search, setSearch] = useState(() => ({
+  const search = {
     page: rawSearch.page ?? 1,
-    pageSize: rawSearch.pageSize ?? 20,
+    pageSize: rawSearch.size ?? 20,
     field: rawSearch.field ?? 'title_content',
     q: rawSearch.q ?? '',
-  }));
+  };
   const navigate = useNavigate({ from: '/boards/free' });
   const postsQuery = useQuery({
     queryKey: ['board-posts', 'free', search.page, search.pageSize, search.field, search.q],
@@ -44,35 +43,7 @@ export function BoardPage() {
   });
   const result = postsQuery.data;
   const posts = result?.items ?? [];
-  const mobileSearchKey = `${search.field}|${search.page}|${search.pageSize}|${search.q}`;
-  const [mobileAccumulation, setMobileAccumulation] = useState<{
-    key: string;
-    items: BoardPostListItem[];
-    page: number;
-  }>({ key: '', items: [], page: search.page });
-  const [loadingMore, setLoadingMore] = useState(false);
-  const mobileAdditionalPosts =
-    mobileAccumulation.key === mobileSearchKey ? mobileAccumulation.items : [];
-  const mobileLoadedPage =
-    mobileAccumulation.key === mobileSearchKey ? mobileAccumulation.page : search.page;
-  const visiblePosts = [...posts, ...mobileAdditionalPosts];
-  const loadMoreMobilePosts = async () => {
-    if (!result || loadingMore || mobileLoadedPage >= result.totalPages) return;
-    setLoadingMore(true);
-    try {
-      const nextPage = await getBoardPosts('free', {
-        ...search,
-        page: mobileLoadedPage + 1,
-      });
-      setMobileAccumulation((current) => ({
-        key: mobileSearchKey,
-        items: [...(current.key === mobileSearchKey ? current.items : []), ...nextPage.items],
-        page: nextPage.page,
-      }));
-    } finally {
-      setLoadingMore(false);
-    }
-  };
+  const visiblePosts = posts;
 
   const updateSearch = (
     next: Partial<{
@@ -82,7 +53,15 @@ export function BoardPage() {
       q: string;
     }>,
   ) => {
-    setSearch((current) => ({ ...current, ...next }));
+    void navigate({
+      search: (current) => ({
+        ...current,
+        page: next.page ?? search.page,
+        size: next.pageSize ?? search.pageSize,
+        field: next.field ?? search.field,
+        q: next.q ?? search.q,
+      }),
+    });
   };
 
   return (
@@ -242,9 +221,9 @@ export function BoardPage() {
             <DataTablePagination
               page={result.page}
               totalPages={result.totalPages}
-              hasMore={mobileLoadedPage < result.totalPages}
-              loadingMore={loadingMore}
-              onLoadMore={loadMoreMobilePosts}
+              total={result.total}
+              pageSize={search.pageSize}
+              onPageSizeChange={(pageSize) => updateSearch({ page: 1, pageSize })}
               onChange={(page) => updateSearch({ page })}
             />
           </>

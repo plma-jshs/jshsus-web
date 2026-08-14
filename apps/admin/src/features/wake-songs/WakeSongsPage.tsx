@@ -5,7 +5,6 @@ import { Check, ExternalLink, Search, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   Drawer,
-  PageSizeSelect,
   RowActionButton,
   RowActions,
   SegmentedTabs,
@@ -249,13 +248,6 @@ export function WakeSongsPage() {
             setPage(1);
           }}
         />
-        <PageSizeSelect
-          value={pageSize}
-          onChange={(nextPageSize) => {
-            setPage(1);
-            setPageSize(nextPageSize);
-          }}
-        />
       </TableToolbar>
 
       <section className="admin-panel wake-song-admin-list">
@@ -283,6 +275,10 @@ export function WakeSongsPage() {
             pageCount: pageData?.totalPages ?? 1,
             totalCount: pageData?.total ?? 0,
             onPageChange: (pageIndex) => setPage(pageIndex + 1),
+            onPageSizeChange: (nextPageSize) => {
+              setPage(1);
+              setPageSize(nextPageSize);
+            },
           }}
           getRowId={(request) => String(request.id)}
           caption="기상곡 신청 목록"

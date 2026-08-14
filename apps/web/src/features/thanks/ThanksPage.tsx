@@ -8,8 +8,6 @@ import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createThanksMessage, getThanksChallenge } from './api';
 import '../../styles/thanks.css';
 
-const pageSize = 30;
-
 function formatLegacyDateTime(value: string) {
   const [datePart, timePart = ''] = value.split(' ');
   const [year, month, day] = datePart.split('-');
@@ -26,6 +24,7 @@ export function ThanksPage() {
   const [activeTab, setActiveTab] = useState<'guide' | 'participate'>('participate');
   const [selectedSchoolNumber, setSelectedSchoolNumber] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(30);
   const [mobileVisibleState, setMobileVisibleState] = useState<{ key: string; count: number }>({
     key: '',
     count: pageSize,
@@ -229,6 +228,12 @@ export function ThanksPage() {
                 <DataTablePagination
                   page={safePage}
                   totalPages={totalPages}
+                  total={filteredMessages.length}
+                  pageSize={pageSize}
+                  onPageSizeChange={(nextSize) => {
+                    setPageSize(nextSize);
+                    setPage(1);
+                  }}
                   hasMore={safePage === 1 && mobileVisibleCount < filteredMessages.length}
                   onLoadMore={() =>
                     setMobileVisibleState({

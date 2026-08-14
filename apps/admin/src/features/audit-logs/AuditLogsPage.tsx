@@ -4,13 +4,7 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { AdminAuditLog, AdminAuditLogListQuery } from '@jshsus/types';
 import { MoreHorizontal, Search } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import {
-  DateRangeField,
-  Drawer,
-  MobileSortSelect,
-  PageSizeSelect,
-  TableToolbar,
-} from '../../components/ui';
+import { DateRangeField, Drawer, MobileSortSelect, TableToolbar } from '../../components/ui';
 import { api, describeAdminApiError } from '../../shared/api/adminApi';
 import { formatKoreanDate } from '../../shared/lib/date';
 import './audit-logs.css';
@@ -147,13 +141,6 @@ export function AuditLogsPage() {
               setPage(1);
             }}
           />
-          <PageSizeSelect
-            value={pageSize}
-            onChange={(nextPageSize) => {
-              setPage(1);
-              setPageSize(nextPageSize);
-            }}
-          />
         </div>
       </TableToolbar>
       {logsQuery.isError ? (
@@ -178,6 +165,10 @@ export function AuditLogsPage() {
           pageCount: logsQuery.data?.totalPages ?? 1,
           totalCount: logsQuery.data?.total ?? 0,
           onPageChange: (pageIndex) => setPage(pageIndex + 1),
+          onPageSizeChange: (nextPageSize) => {
+            setPage(1);
+            setPageSize(nextPageSize);
+          },
         }}
         caption="감사 로그 목록"
         renderMobileRow={(log) => (

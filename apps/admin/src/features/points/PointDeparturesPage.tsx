@@ -9,7 +9,6 @@ import {
   Button,
   Dialog,
   FormField,
-  PageSizeSelect,
   RowActions,
   SegmentedTabs,
   TableToolbar,
@@ -426,13 +425,6 @@ export function PointDeparturesPage() {
                     <option value="departure">승인 가능</option>
                   </AdminSelect>
                 </label>
-                <PageSizeSelect
-                  value={pageSize}
-                  onChange={(value) => {
-                    setPageSize(value);
-                    resetPages();
-                  }}
-                />
               </TableToolbar>
             }
           >
@@ -457,6 +449,10 @@ export function PointDeparturesPage() {
                 pageCount: candidatesQuery.data?.totalPages ?? 1,
                 totalCount: candidatesQuery.data?.total,
                 onPageChange: (nextPage) => setPage(nextPage + 1),
+                onPageSizeChange: (nextPageSize) => {
+                  setPageSize(nextPageSize);
+                  resetPages();
+                },
               }}
               alwaysShowPagination
               getRowId={(row) => String(row.id)}
@@ -485,6 +481,10 @@ export function PointDeparturesPage() {
                 pageCount: historyQuery.data?.totalPages ?? 1,
                 totalCount: historyQuery.data?.total,
                 onPageChange: (nextPage) => setHistoryPage(nextPage + 1),
+                onPageSizeChange: (nextPageSize) => {
+                  setPageSize(nextPageSize);
+                  resetPages();
+                },
               }}
               alwaysShowPagination
               getRowId={(row) => String(row.id)}

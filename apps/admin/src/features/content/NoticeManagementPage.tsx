@@ -8,7 +8,6 @@ import {
   ConfirmDialog,
   Drawer,
   MobileSortSelect,
-  PageSizeSelect,
   RowActionButton,
   RowActions,
   useToast,
@@ -308,7 +307,6 @@ export function NoticeManagementPage() {
         }
         actions={
           <div className="content-toolbar">
-            <PageSizeSelect value={pageSize} onChange={setPageSize} />
             <a
               className="primary-button notice-desktop-create"
               href={publicSiteHref('/notices/new')}
@@ -335,6 +333,9 @@ export function NoticeManagementPage() {
             loadingText="공지 목록을 불러오는 중입니다."
             emptyText={search ? '검색 조건에 맞는 공지가 없습니다.' : '등록된 공지가 없습니다.'}
             pageSize={pageSize}
+            onPageSizeChange={(nextSize) => {
+              setPageSize(nextSize);
+            }}
             sorting={sorting}
             onSortingChange={setSorting}
             alwaysShowPagination

@@ -2,13 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
-import {
-  AdminListPanel,
-  AdminSelect,
-  MobileSortSelect,
-  PageSizeSelect,
-  TableToolbar,
-} from '../../components/ui';
+import { AdminListPanel, AdminSelect, MobileSortSelect, TableToolbar } from '../../components/ui';
 import { pointsApi, type PointStudentRow } from './pointsApi';
 import './points.css';
 
@@ -180,13 +174,6 @@ export function PointsOverviewPage() {
               ))}
             </AdminSelect>
           </label>
-          <PageSizeSelect
-            value={pageSize}
-            onChange={(value) => {
-              setPageSize(value);
-              resetPage();
-            }}
-          />
         </TableToolbar>
       }
     >
@@ -248,6 +235,10 @@ export function PointsOverviewPage() {
           pageCount: query.data?.totalPages ?? 1,
           totalCount: query.data?.total,
           onPageChange: (nextPage) => setPage(nextPage + 1),
+          onPageSizeChange: (nextPageSize) => {
+            setPageSize(nextPageSize);
+            resetPage();
+          },
         }}
         alwaysShowPagination
         getRowId={(row) => String(row.id)}

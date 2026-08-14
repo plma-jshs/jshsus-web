@@ -9,7 +9,6 @@ import {
   Button,
   Drawer,
   MobileSortSelect,
-  PageSizeSelect,
   RowActionButton,
   RowActions,
   TableToolbar,
@@ -177,13 +176,13 @@ export function DormReportsPanel({
             </option>
           ))}
         </AdminSelect>
-        <PageSizeSelect value={pageSize} onChange={setPageSize} />
       </TableToolbar>
       <DataTable
         columns={columns}
         data={filtered}
         loading={loading}
         pageSize={pageSize}
+        onPageSizeChange={setPageSize}
         sorting={sorting}
         onSortingChange={setSorting}
         alwaysShowPagination

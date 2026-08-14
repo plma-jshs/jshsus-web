@@ -1,8 +1,6 @@
-import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { Eye, PenLine } from 'lucide-react';
-import type { NoticeListItem } from '@jshsus/types';
 import {
   DataTablePagination,
   type DataTablePageSize,
@@ -29,12 +27,12 @@ const noticeMobileDateFormatter = createKoreanDateFormatter({
 export function NoticesPage() {
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: getSession });
   const rawSearch = useSearch({ from: '/notices' });
-  const [search, setSearch] = useState(() => ({
+  const search = {
     page: rawSearch.page ?? 1,
-    pageSize: rawSearch.pageSize ?? 20,
+    pageSize: rawSearch.size ?? 20,
     field: rawSearch.field ?? 'title_content',
     q: rawSearch.q ?? '',
-  }));
+  };
   const navigate = useNavigate({ from: '/notices' });
   const noticesQuery = useQuery({
     queryKey: ['notices', search.page, search.pageSize, search.field, search.q],
@@ -43,35 +41,7 @@ export function NoticesPage() {
   });
   const result = noticesQuery.data;
   const notices = result?.items ?? [];
-  const mobileSearchKey = `${search.field}|${search.page}|${search.pageSize}|${search.q}`;
-  const [mobileAccumulation, setMobileAccumulation] = useState<{
-    key: string;
-    items: NoticeListItem[];
-    page: number;
-  }>({ key: '', items: [], page: search.page });
-  const [loadingMore, setLoadingMore] = useState(false);
-  const mobileAdditionalNotices =
-    mobileAccumulation.key === mobileSearchKey ? mobileAccumulation.items : [];
-  const mobileLoadedPage =
-    mobileAccumulation.key === mobileSearchKey ? mobileAccumulation.page : search.page;
-  const visibleNotices = [...notices, ...mobileAdditionalNotices];
-  const loadMoreMobileNotices = async () => {
-    if (!result || loadingMore || mobileLoadedPage >= result.totalPages) return;
-    setLoadingMore(true);
-    try {
-      const nextPage = await getNotices({
-        ...search,
-        page: mobileLoadedPage + 1,
-      });
-      setMobileAccumulation((current) => ({
-        key: mobileSearchKey,
-        items: [...(current.key === mobileSearchKey ? current.items : []), ...nextPage.items],
-        page: nextPage.page,
-      }));
-    } finally {
-      setLoadingMore(false);
-    }
-  };
+  const visibleNotices = notices;
 
   const updateSearch = (
     next: Partial<{
@@ -81,7 +51,15 @@ export function NoticesPage() {
       q: string;
     }>,
   ) => {
-    setSearch((current) => ({ ...current, ...next }));
+    void navigate({
+      search: (current) => ({
+        ...current,
+        page: next.page ?? search.page,
+        size: next.pageSize ?? search.pageSize,
+        field: next.field ?? search.field,
+        q: next.q ?? search.q,
+      }),
+    });
   };
 
   return (
@@ -228,9 +206,9 @@ export function NoticesPage() {
             <DataTablePagination
               page={result.page}
               totalPages={result.totalPages}
-              hasMore={mobileLoadedPage < result.totalPages}
-              loadingMore={loadingMore}
-              onLoadMore={loadMoreMobileNotices}
+              total={result.total}
+              pageSize={search.pageSize}
+              onPageSizeChange={(pageSize) => updateSearch({ page: 1, pageSize })}
               onChange={(page) => updateSearch({ page })}
             />
           </>

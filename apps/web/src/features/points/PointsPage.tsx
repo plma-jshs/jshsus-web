@@ -19,6 +19,7 @@ function formatRecordDate(value: string) {
 
 export function PointsPage() {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [mobileVisibleState, setMobileVisibleState] = useState<{ key: string; count: number }>({
     key: '',
     count: 20,
@@ -88,7 +89,6 @@ export function PointsPage() {
   }
 
   const status = statusQuery.data;
-  const pageSize = 20;
   const totalPages = Math.ceil(status.points.records.length / pageSize);
   const safePage = Math.min(page, Math.max(totalPages, 1));
   const visibleRecords = status.points.records.slice(
@@ -155,6 +155,12 @@ export function PointsPage() {
             <DataTablePagination
               page={safePage}
               totalPages={totalPages}
+              total={status.points.records.length}
+              pageSize={pageSize}
+              onPageSizeChange={(nextSize) => {
+                setPageSize(nextSize);
+                setPage(1);
+              }}
               hasMore={safePage === 1 && mobileVisibleCount < status.points.records.length}
               onLoadMore={() =>
                 setMobileVisibleState({

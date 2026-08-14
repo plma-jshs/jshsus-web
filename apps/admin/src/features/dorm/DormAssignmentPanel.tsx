@@ -15,7 +15,6 @@ import {
   AdminSelect,
   Button,
   Dialog,
-  PageSizeSelect,
   RowActionButton,
   RowActions,
   TableToolbar,
@@ -627,7 +626,6 @@ export function DormAssignmentPanel({
               <TableToolbar
                 summary={`대상 ${preview.targetUserIds.length}명 · 배정 ${placements.length}명 · 미배정 ${preview.targetUserIds.length - placements.length}명`}
               >
-                <PageSizeSelect value={previewPageSize} onChange={setPreviewPageSize} />
                 <Button
                   variant="primary"
                   loading={applyMutation.isPending}
@@ -662,6 +660,7 @@ export function DormAssignmentPanel({
                     columns={fixedPlacementColumns}
                     data={preview.fixedPlacements}
                     pageSize={previewPageSize}
+                    onPageSizeChange={setPreviewPageSize}
                     emptyText="고정 거주자가 없습니다."
                     caption="방 추첨 고정 거주자"
                     getRowId={(placement) => String(placement.userId)}
@@ -676,6 +675,7 @@ export function DormAssignmentPanel({
                 columns={previewColumns}
                 data={placements}
                 pageSize={previewPageSize}
+                onPageSizeChange={setPreviewPageSize}
                 emptyText="배정 가능한 학생이 없습니다."
                 caption="방 추첨 미리보기"
                 getRowId={(placement) => String(placement.userId)}
@@ -711,7 +711,6 @@ export function DormAssignmentPanel({
 
       <section className="admin-panel">
         <TableToolbar summary={`총 ${assignments.length}명`} mobileSheet={false}>
-          <PageSizeSelect value={pageSize} onChange={setPageSize} />
           <Button
             disabled={selectedAssignments.length !== 2}
             loading={swapMutation.isPending}
@@ -725,6 +724,7 @@ export function DormAssignmentPanel({
           data={assignments}
           loading={loading}
           pageSize={pageSize}
+          onPageSizeChange={setPageSize}
           sorting={assignmentSorting}
           onSortingChange={setAssignmentSorting}
           alwaysShowPagination

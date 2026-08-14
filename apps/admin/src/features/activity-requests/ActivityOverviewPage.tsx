@@ -3,9 +3,11 @@ import type {
   ActivityRequestAdminListQuery,
   ActivityRequestAdminStatus,
   ActivityRequestAdminSummary,
+  ActivityRequestPrintBatch,
 } from '@jshsus/types';
+import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { ChevronRight, Search, Users } from 'lucide-react';
+import { ChevronRight, Printer, Search, Users } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
@@ -13,9 +15,11 @@ import {
   DateRangeField,
   Drawer,
   MobileSortSelect,
-  PageSizeSelect,
   TableToolbar,
+  Button,
+  useToast,
 } from '../../components/ui';
+import { api } from '../../shared/api/adminApi';
 import { formatKoreanDate } from '../../shared/lib/date';
 import {
   ActivityStatusBadge,
@@ -27,6 +31,7 @@ import {
   formatActivityTimeRanges,
   koreaDateInput,
 } from './activitySchedule';
+import { ActivityPrintBatch } from './ActivityPrintBatch';
 import './operations.css';
 
 function formatParticipants(request: ActivityRequestAdminSummary) {
@@ -131,10 +136,10 @@ const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
     meta: { widthPreset: 'index', hideOnMobile: true },
   },
   {
-    id: 'date',
+    id: 'startsAt',
     accessorFn: (request) => request.startsAt,
     header: '날짜',
-    enableSorting: false,
+    enableSorting: true,
     cell: ({ row }) =>
       formatKoreanDate(row.original.startsAt, { month: '2-digit', day: '2-digit' }),
     meta: { width: 76, align: 'center' },
@@ -209,14 +214,17 @@ const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
 ];
 
 export function ActivityOverviewPage() {
+  const { showToast } = useToast();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [status, setStatus] = useState<'all' | ActivityRequestAdminStatus>('all');
   const [pageSize, setPageSize] = useState(20);
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'id', desc: true }]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'startsAt', desc: true }]);
   const [selectedRequest, setSelectedRequest] = useState<ActivityRequestAdminSummary | null>(null);
+  const [printBatch, setPrintBatch] = useState<ActivityRequestPrintBatch | null>(null);
+  const [printMessage, setPrintMessage] = useState('');
   const sort = sorting[0];
   const requestsQuery = useActivityRequests({
     page,
@@ -225,8 +233,26 @@ export function ActivityOverviewPage() {
     startDate: startDate || undefined,
     endDate: endDate || undefined,
     status: status === 'all' ? undefined : status,
-    sortBy: (sort?.id as ActivityRequestAdminListQuery['sortBy']) ?? 'id',
+    sortBy: (sort?.id as ActivityRequestAdminListQuery['sortBy']) ?? 'startsAt',
     sortOrder: sort ? (sort.desc ? 'desc' : 'asc') : 'desc',
+  });
+  const printMutation = useMutation({
+    mutationFn: () => api.printTodayActivityRequests(),
+    onSuccess: (result) => {
+      setPrintBatch(result);
+      if (!result.documents.length) {
+        setPrintMessage('오늘 활동하는 승인 완료 탐구활동서가 없습니다.');
+        showToast({ title: '오늘 인쇄할 탐구활동서가 없습니다.', tone: 'warning' });
+        return;
+      }
+      setPrintMessage('');
+      showToast({
+        title: `${result.documents.length}건의 인쇄 화면을 준비했습니다.`,
+        tone: 'success',
+      });
+      window.setTimeout(() => window.print(), 50);
+    },
+    onError: () => showToast({ title: '인쇄 자료를 준비하지 못했습니다.', tone: 'danger' }),
   });
   const resetPage = () => setPage(1);
 
@@ -254,16 +280,14 @@ export function ActivityOverviewPage() {
             }
             mobileSort={
               <MobileSortSelect
-                value={`${sort?.id ?? 'id'}:${sort?.desc ? 'desc' : 'asc'}`}
+                value={`${sort?.id ?? 'startsAt'}:${sort?.desc ? 'desc' : 'asc'}`}
                 options={[
-                  { value: 'id:desc', label: '신청 최신순' },
-                  { value: 'id:asc', label: '신청 오래된순' },
                   { value: 'startsAt:desc', label: '활동일 최신순' },
                   { value: 'startsAt:asc', label: '활동일 오래된순' },
                 ]}
                 onChange={(value) => {
                   const [id, direction] = value.split(':');
-                  setSorting([{ id: id ?? 'id', desc: direction === 'desc' }]);
+                  setSorting([{ id: id ?? 'startsAt', desc: direction === 'desc' }]);
                   resetPage();
                 }}
               />
@@ -298,13 +322,14 @@ export function ActivityOverviewPage() {
                 </option>
               ))}
             </AdminSelect>
-            <PageSizeSelect
-              value={pageSize}
-              onChange={(value) => {
-                setPageSize(value);
-                resetPage();
-              }}
-            />
+            <Button
+              type="button"
+              onClick={() => printMutation.mutate()}
+              disabled={printMutation.isPending}
+            >
+              <Printer size={16} aria-hidden="true" />
+              오늘자 전체 인쇄
+            </Button>
           </TableToolbar>
         }
       >
@@ -326,6 +351,10 @@ export function ActivityOverviewPage() {
               pageCount: requestsQuery.data?.totalPages ?? 1,
               totalCount: requestsQuery.data?.total,
               onPageChange: (nextPage) => setPage(nextPage + 1),
+              onPageSizeChange: (nextPageSize) => {
+                setPageSize(nextPageSize);
+                resetPage();
+              },
             }}
             loading={requestsQuery.isPending}
             loadingText="탐구활동서 현황을 불러오는 중입니다."
@@ -339,6 +368,7 @@ export function ActivityOverviewPage() {
           />
         )}
       </AdminListPanel>
+      {printMessage ? <p className="operation-inline-message">{printMessage}</p> : null}
       <Drawer
         open={Boolean(selectedRequest)}
         onClose={() => setSelectedRequest(null)}
@@ -364,9 +394,16 @@ export function ActivityOverviewPage() {
               <dt>참여 학생</dt>
               <dd>{formatParticipants(selectedRequest)}</dd>
             </div>
+            {selectedRequest.rejectionReason ? (
+              <div>
+                <dt>반려 사유</dt>
+                <dd>{selectedRequest.rejectionReason}</dd>
+              </div>
+            ) : null}
           </dl>
         ) : null}
       </Drawer>
+      <ActivityPrintBatch batch={printBatch} />
     </div>
   );
 }

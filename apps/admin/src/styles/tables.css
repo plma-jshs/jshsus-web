@@ -245,6 +245,45 @@
   font-size: 13px;
 }
 
+.admin-table-pagination--compact {
+  justify-content: flex-end;
+  gap: 8px;
+  color: var(--j-color-text-secondary);
+}
+
+.admin-table-pagination--compact .ui-page-size-select {
+  min-width: 104px;
+}
+
+.admin-table-pagination__range {
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.admin-table-pagination__input-label {
+  display: inline-grid;
+  width: 42px;
+  height: 34px;
+  place-items: center;
+}
+
+.admin-table-pagination__input-label input {
+  width: 42px;
+  height: 34px;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--j-color-text);
+  font: inherit;
+  text-align: center;
+}
+
+.admin-table-pagination__input-label input:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  outline-offset: 1px;
+}
+
 .admin-table-pagination__mobile-label,
 .admin-table-pagination__mobile-status,
 .admin-mobile-card-list,

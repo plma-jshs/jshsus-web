@@ -9,7 +9,6 @@ import {
   ConfirmDialog,
   Drawer,
   MobileSortSelect,
-  PageSizeSelect,
   RowActionButton,
   RowActions,
   SelectedRowsHeaderAction,
@@ -325,7 +324,6 @@ export function LostItemsManagementPage() {
                 ))}
               </AdminSelect>
             </label>
-            <PageSizeSelect value={itemPageSize} onChange={setItemPageSize} />
           </div>
         }
       >
@@ -345,6 +343,7 @@ export function LostItemsManagementPage() {
             emptyText="조건에 맞는 분실물 게시물이 없습니다."
             alwaysShowPagination
             pageSize={itemPageSize}
+            onPageSizeChange={setItemPageSize}
             sorting={itemSorting}
             onSortingChange={setItemSorting}
             caption="분실물 관리 목록"

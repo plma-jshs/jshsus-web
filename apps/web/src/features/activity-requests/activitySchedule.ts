@@ -69,7 +69,7 @@ function groupedActivityTimeSlots(slotIds: ActivityTimeSlotId[]) {
 
     if (selected.length !== group.slotIds.length) {
       return selected.map((slot) => ({
-        label: slot.label,
+        label: slot.label.replace(/^저녁\s*/, ''),
         startsAt: slot.startsAt,
         endsAt: slot.endsAt,
       }));
@@ -78,7 +78,7 @@ function groupedActivityTimeSlots(slotIds: ActivityTimeSlotId[]) {
     const periodNumbers = selected.map((slot) => slot.label.match(/\d+/)?.[0]).filter(Boolean);
     return [
       {
-        label: `${group.prefix} ${periodNumbers.join('·')}면학`,
+        label: `${group.prefix === '저녁' ? '' : `${group.prefix} `}${periodNumbers.join('·')}면학`,
         startsAt: selected[0].startsAt,
         endsAt: selected.at(-1)!.endsAt,
       },

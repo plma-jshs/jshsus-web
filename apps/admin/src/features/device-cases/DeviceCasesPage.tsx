@@ -7,7 +7,6 @@ import { DataTable } from '../../components/DataTable';
 import {
   Button,
   Dialog,
-  PageSizeSelect,
   RowActionButton,
   RowActions,
   TableSelectionCheckbox,
@@ -312,9 +311,7 @@ export function DeviceCasesPage() {
               </Button>
             </div>
           }
-        >
-          <PageSizeSelect value={casePageSize} onChange={setCasePageSize} />
-        </TableToolbar>
+        ></TableToolbar>
         <DataTable
           columns={caseColumns}
           data={cases}
@@ -322,6 +319,7 @@ export function DeviceCasesPage() {
           loadingText="보관함 상태를 불러오는 중입니다."
           emptyText="등록된 휴대폰 보관함이 없습니다."
           pageSize={casePageSize}
+          onPageSizeChange={setCasePageSize}
           alwaysShowPagination
           caption="휴대폰 보관함 상태 목록"
           renderMobileRow={(deviceCase) => (
@@ -353,9 +351,10 @@ export function DeviceCasesPage() {
             {describeAdminApiError(commandsQuery.error, '보관함 명령 기록')}
           </p>
         ) : null}
-        <TableToolbar summary={`총 ${commandsQuery.data?.length ?? 0}건`} mobileSheet={false}>
-          <PageSizeSelect value={commandPageSize} onChange={setCommandPageSize} />
-        </TableToolbar>
+        <TableToolbar
+          summary={`총 ${commandsQuery.data?.length ?? 0}건`}
+          mobileSheet={false}
+        ></TableToolbar>
         <DataTable
           columns={commandColumns}
           data={commandsQuery.data ?? []}
@@ -363,6 +362,7 @@ export function DeviceCasesPage() {
           loadingText="명령 기록을 불러오는 중입니다."
           emptyText="명령 기록이 없습니다."
           pageSize={commandPageSize}
+          onPageSizeChange={setCommandPageSize}
           alwaysShowPagination
           caption="휴대폰 보관함 명령 기록"
         />

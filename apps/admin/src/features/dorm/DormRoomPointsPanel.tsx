@@ -7,7 +7,6 @@ import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
   Button,
-  PageSizeSelect,
   RowActionButton,
   RowActions,
   TableToolbar,
@@ -258,7 +257,6 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
         </label>
       </div>
       <TableToolbar summary={`${queue.length}건`}>
-        <PageSizeSelect value={pageSize} onChange={setPageSize} />
         <Button
           variant="primary"
           disabled={!canApply}
@@ -272,6 +270,7 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
         columns={columns}
         data={queue}
         pageSize={pageSize}
+        onPageSizeChange={setPageSize}
         emptyText="방을 검색해 학생을 추가해 주세요."
         caption="방 상벌점 부여 목록"
         getRowId={(resident) => String(resident.userId)}

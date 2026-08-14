@@ -3,9 +3,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  LoaderCircle,
   Search,
   SlidersHorizontal,
   X,
@@ -16,6 +13,14 @@ import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 
 export type DataTableSearchField = 'title_content' | 'title' | 'author';
 export type DataTablePageSize = 20 | 50 | 100;
+
+function syncTableQuery(page: number, pageSize: number) {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  url.searchParams.set('page', String(Math.max(page, 1)));
+  url.searchParams.set('size', String(pageSize));
+  window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+}
 export type DataTableSearchFieldOption<TField extends string = DataTableSearchField> = {
   value: TField;
   label: string;
@@ -173,7 +178,6 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
   total,
   page,
   totalPages,
-  pageSize,
   field,
   query,
   extraControls,
@@ -181,7 +185,6 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
   groupActionWithPageSize = false,
   showSearchField = true,
   searchPlaceholder = '검색어를 입력하세요',
-  onPageSizeChange,
   onSearch,
   searchFieldOptions,
 }: DataTableToolbarProps<TField>) {
@@ -274,23 +277,11 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
               <X size={17} aria-hidden="true" />
             </button>
           </div>
-          <div className="data-table-toolbar__primary-actions">
-            <div className="data-table-toolbar__page-size">
-              <ToolbarSelect
-                ariaLabel="페이지당 표시 건수"
-                label="보기"
-                value={pageSize}
-                options={([20, 50, 100] as const).map((size) => ({
-                  value: size,
-                  label: `${size}건`,
-                }))}
-                onChange={onPageSizeChange}
-              />
-            </div>
-            {groupActionWithPageSize && action ? (
+          {groupActionWithPageSize && action ? (
+            <div className="data-table-toolbar__primary-actions">
               <div className="data-table-toolbar__action">{action}</div>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
           {extraControls ? <div className="data-table-toolbar__extra">{extraControls}</div> : null}
           {showSearchField ? (
             <div className="data-table-toolbar__search-field">
@@ -359,131 +350,100 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
   );
 }
 
-type PaginationItem = number | 'ellipsis-left' | 'ellipsis-right';
-
-function getPaginationItems(page: number, totalPages: number): PaginationItem[] {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, index) => index + 1);
-  }
-
-  if (page <= 4) return [1, 2, 3, 4, 5, 'ellipsis-right', totalPages];
-  if (page >= totalPages - 3) {
-    return [
-      1,
-      'ellipsis-left',
-      totalPages - 4,
-      totalPages - 3,
-      totalPages - 2,
-      totalPages - 1,
-      totalPages,
-    ];
-  }
-
-  return [1, 'ellipsis-left', page - 1, page, page + 1, 'ellipsis-right', totalPages];
-}
-
 export function DataTablePagination({
   page,
   totalPages,
+  total,
+  pageSize = 20,
+  onPageSizeChange,
   onChange,
-  onLoadMore,
-  loadingMore = false,
-  hasMore = true,
 }: {
   page: number;
   totalPages: number;
+  total?: number;
+  pageSize?: number;
+  onPageSizeChange?: (pageSize: DataTablePageSize) => void;
   onChange: (page: number) => void;
   onLoadMore?: () => void;
   loadingMore?: boolean;
   hasMore?: boolean;
 }) {
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1 && !onPageSizeChange) return null;
 
   const safePage = Math.min(Math.max(page, 1), totalPages);
+  const resolvedPageSize = pageSize ?? 20;
+  const firstItem = total ? (safePage - 1) * resolvedPageSize + 1 : undefined;
+  const lastItem = total ? Math.min(safePage * resolvedPageSize, total) : undefined;
+  const changePageSize = (nextPageSize: DataTablePageSize) => {
+    syncTableQuery(1, nextPageSize);
+    onPageSizeChange?.(nextPageSize);
+  };
+  const changePage = (nextPage: number) => {
+    const resolvedPage = Math.min(Math.max(nextPage, 1), Math.max(totalPages, 1));
+    syncTableQuery(resolvedPage, resolvedPageSize);
+    onChange(resolvedPage);
+  };
 
   return (
     <nav className="data-table-pagination" aria-label="목록 페이지">
-      <div className="data-table-pagination__full">
-        <button
-          type="button"
-          aria-label="첫 페이지"
-          disabled={safePage === 1}
-          onClick={() => onChange(1)}
-        >
-          <ChevronsLeft size={18} aria-hidden="true" />
-        </button>
+      {onPageSizeChange ? (
+        <ToolbarSelect
+          ariaLabel="페이지당 표시 건수"
+          value={pageSize as DataTablePageSize}
+          options={([20, 50, 100] as const).map((size) => ({
+            value: size,
+            label: `${size}개씩 보기`,
+          }))}
+          onChange={changePageSize}
+        />
+      ) : null}
+      <span className="data-table-pagination__range">
+        {firstItem !== undefined && lastItem !== undefined
+          ? `총 ${total!.toLocaleString('ko-KR')}건 중 ${firstItem}-${lastItem}`
+          : `${safePage} / ${Math.max(totalPages, 1)}페이지`}
+      </span>
+      <div className="data-table-pagination__controls">
         <button
           type="button"
           aria-label="이전 페이지"
           disabled={safePage === 1}
-          onClick={() => onChange(safePage - 1)}
+          onClick={() => changePage(safePage - 1)}
         >
           <ChevronLeft size={18} aria-hidden="true" />
         </button>
-        {getPaginationItems(safePage, totalPages).map((item) =>
-          typeof item === 'number' ? (
-            <button
-              type="button"
-              className={item === safePage ? 'is-current' : undefined}
-              aria-current={item === safePage ? 'page' : undefined}
-              onClick={() => onChange(item)}
-              key={item}
-            >
-              {item}
-            </button>
-          ) : (
-            <span aria-hidden="true" key={item}>
-              ···
-            </span>
-          ),
-        )}
+        <label className="data-table-pagination__page-input">
+          <span className="sr-only">현재 페이지</span>
+          <input
+            inputMode="numeric"
+            type="text"
+            defaultValue={String(safePage)}
+            key={safePage}
+            onChange={(event) => {
+              event.currentTarget.value = event.currentTarget.value.replace(/\D/g, '');
+            }}
+            onBlur={(event) => {
+              const nextPage = Number(event.currentTarget.value);
+              if (Number.isInteger(nextPage) && nextPage > 0) {
+                changePage(nextPage);
+              }
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter') return;
+              event.preventDefault();
+              event.currentTarget.blur();
+            }}
+            aria-label="페이지 번호"
+          />
+        </label>
+        <span aria-hidden="true">/ {Math.max(totalPages, 1)}</span>
         <button
           type="button"
           aria-label="다음 페이지"
-          disabled={safePage === totalPages}
-          onClick={() => onChange(safePage + 1)}
+          disabled={safePage >= totalPages}
+          onClick={() => changePage(safePage + 1)}
         >
           <ChevronRight size={18} aria-hidden="true" />
         </button>
-        <button
-          type="button"
-          aria-label="마지막 페이지"
-          disabled={safePage === totalPages}
-          onClick={() => onChange(totalPages)}
-        >
-          <ChevronsRight size={18} aria-hidden="true" />
-        </button>
-      </div>
-      <div className="data-table-pagination__compact">
-        {safePage < totalPages && hasMore ? (
-          <button
-            aria-busy={loadingMore}
-            aria-label={loadingMore ? '다음 게시글을 불러오는 중' : undefined}
-            className="data-table-pagination__load-more"
-            type="button"
-            disabled={loadingMore}
-            onClick={() => {
-              if (onLoadMore) {
-                onLoadMore();
-              } else {
-                onChange(safePage + 1);
-              }
-            }}
-          >
-            {loadingMore ? (
-              <LoaderCircle
-                className="data-table-pagination__spinner"
-                size={17}
-                aria-hidden="true"
-              />
-            ) : (
-              <>
-                <span>더보기</span>
-                <ChevronDown size={17} aria-hidden="true" />
-              </>
-            )}
-          </button>
-        ) : null}
       </div>
     </nav>
   );

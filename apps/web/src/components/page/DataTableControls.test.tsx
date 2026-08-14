@@ -25,10 +25,10 @@ describe('DataTableToolbar', () => {
     );
 
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '페이지당 표시 건수: 20건' }));
-    expect(screen.getByRole('listbox', { name: '페이지당 표시 건수' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('option', { name: '50건' }));
-    expect(onPageSizeChange).toHaveBeenCalledWith(50);
+    expect(
+      screen.queryByRole('button', { name: '페이지당 표시 건수: 20건' }),
+    ).not.toBeInTheDocument();
+    expect(onPageSizeChange).not.toHaveBeenCalled();
   });
 
   it('applies search changes after a 250ms debounce and exposes a stable clear button', () => {
@@ -105,7 +105,7 @@ describe('DataTableToolbar', () => {
 });
 
 describe('DataTablePagination', () => {
-  it('shows only the loading spinner while more rows are loading', () => {
+  it('renders compact page controls instead of the old load-more action', () => {
     const view = render(
       <DataTablePagination
         page={1}
@@ -117,8 +117,7 @@ describe('DataTablePagination', () => {
       />,
     );
 
-    const button = screen.getByRole('button', { name: '다음 게시글을 불러오는 중' });
-    expect(button).not.toHaveTextContent('더보기');
-    expect(view.container.querySelector('.data-table-pagination__spinner')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '다음 페이지' })).toBeInTheDocument();
+    expect(view.container.querySelector('.data-table-pagination__spinner')).not.toBeInTheDocument();
   });
 });

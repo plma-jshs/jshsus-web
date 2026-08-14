@@ -11,7 +11,6 @@ import {
   Dialog,
   FormField,
   MobileSortSelect,
-  PageSizeSelect,
   RowActionButton,
   RowActions,
   TableToolbar,
@@ -233,13 +232,6 @@ export function PointReasonsPage() {
                 <option value="ETC">기타</option>
               </AdminSelect>
             </label>
-            <PageSizeSelect
-              value={pageSize}
-              onChange={(value) => {
-                setPageSize(value);
-                resetPage();
-              }}
-            />
           </TableToolbar>
         }
       >
@@ -260,6 +252,10 @@ export function PointReasonsPage() {
             pageCount: reasonsQuery.data?.totalPages ?? 1,
             totalCount: reasonsQuery.data?.total,
             onPageChange: (nextPage) => setPage(nextPage + 1),
+            onPageSizeChange: (nextPageSize) => {
+              setPageSize(nextPageSize);
+              resetPage();
+            },
           }}
           alwaysShowPagination
           getRowId={(row) => String(row.id)}

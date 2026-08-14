@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   flexRender,
   getCoreRowModel,
@@ -20,8 +20,17 @@ import {
   type DataTableWidthPreset,
 } from './dataTableConfig';
 import { EmptyState } from './ui/EmptyState';
+import { PageSizeSelect } from './ui/PageSizeSelect';
 
 export type DataTableAlignment = 'left' | 'center' | 'right';
+
+function syncTableQuery(page: number, pageSize: number) {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  url.searchParams.set('page', String(Math.max(page, 1)));
+  url.searchParams.set('size', String(pageSize));
+  window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+}
 
 declare module '@tanstack/react-table' {
   // TanStack requires these exact generic parameter names for declaration merging.
@@ -52,6 +61,7 @@ export type DataTablePagination = {
   pageCount: number;
   totalCount?: number;
   onPageChange: (pageIndex: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
 };
 
 export type DataTableProps<T> = {
@@ -61,6 +71,7 @@ export type DataTableProps<T> = {
   loading?: boolean;
   loadingText?: string;
   pageSize?: number;
+  onPageSizeChange?: (pageSize: number) => void;
   pagination?: DataTablePagination;
   alwaysShowPagination?: boolean;
   caption?: string;
@@ -70,8 +81,6 @@ export type DataTableProps<T> = {
   manualSorting?: boolean;
   renderMobileRow?: (row: T, index: number) => ReactNode;
 };
-
-type PaginationItem = number | 'ellipsis-left' | 'ellipsis-right';
 
 function SortDirectionGlyph({ direction }: { direction: false | 'asc' | 'desc' }) {
   return (
@@ -117,31 +126,6 @@ function cellClassName(
     .join(' ');
 }
 
-function paginationItems(currentPage: number, pageCount: number): PaginationItem[] {
-  if (pageCount <= 7) return Array.from({ length: pageCount }, (_, index) => index + 1);
-  if (currentPage <= 4) return [1, 2, 3, 4, 5, 'ellipsis-right', pageCount];
-  if (currentPage >= pageCount - 3) {
-    return [
-      1,
-      'ellipsis-left',
-      pageCount - 4,
-      pageCount - 3,
-      pageCount - 2,
-      pageCount - 1,
-      pageCount,
-    ];
-  }
-  return [
-    1,
-    'ellipsis-left',
-    currentPage - 1,
-    currentPage,
-    currentPage + 1,
-    'ellipsis-right',
-    pageCount,
-  ];
-}
-
 export function DataTable<T>({
   columns,
   data,
@@ -149,6 +133,7 @@ export function DataTable<T>({
   loading = false,
   loadingText = '불러오는 중입니다.',
   pageSize = ADMIN_DEFAULT_PAGE_SIZE,
+  onPageSizeChange,
   pagination,
   alwaysShowPagination = false,
   caption,
@@ -217,8 +202,22 @@ export function DataTable<T>({
 
   const moveToPage = (pageIndex: number) => {
     const nextPageIndex = Math.min(Math.max(pageIndex, 0), resolvedPageCount - 1);
+    syncTableQuery(nextPageIndex + 1, pagination?.pageSize ?? pageSize);
     if (pagination) pagination.onPageChange(nextPageIndex);
     else table.setPageIndex(nextPageIndex);
+  };
+
+  const changePageSize = (nextPageSize: number) => {
+    syncTableQuery(1, nextPageSize);
+    (pagination?.onPageSizeChange ?? onPageSizeChange)?.(nextPageSize);
+  };
+
+  const submitPageInput = (value: string) => {
+    const requestedPage = Number(value);
+    if (!Number.isInteger(requestedPage)) {
+      return;
+    }
+    moveToPage(requestedPage - 1);
   };
 
   return (
@@ -366,16 +365,27 @@ export function DataTable<T>({
       {!loading &&
       (pagination?.totalCount ?? visibleRows.length) > 0 &&
       (alwaysShowPagination || resolvedPageCount > 1) ? (
-        <nav className="admin-table-pagination" aria-label="페이지 이동">
-          <button
-            className="admin-table-pagination__first"
-            type="button"
-            aria-label="첫 페이지"
-            onClick={() => moveToPage(0)}
-            disabled={currentPage <= 1}
-          >
-            <ChevronsLeft size={16} aria-hidden="true" />
-          </button>
+        <nav
+          className="admin-table-pagination admin-table-pagination--compact"
+          aria-label="페이지 이동"
+        >
+          {pagination?.onPageSizeChange || onPageSizeChange ? (
+            <PageSizeSelect
+              value={pagination?.pageSize ?? table.getState().pagination.pageSize}
+              onChange={changePageSize}
+              ariaLabel="페이지당 표시 건수"
+            />
+          ) : null}
+          <span className="admin-table-pagination__range admin-table-pagination__mobile-status">
+            {pagination?.totalCount
+              ? `총 ${pagination.totalCount.toLocaleString('ko-KR')}건 중 ${
+                  currentPageIndex * (pagination.pageSize ?? 0) + 1
+                }-${Math.min(
+                  (currentPageIndex + 1) * (pagination.pageSize ?? 0),
+                  pagination.totalCount,
+                )}`
+              : `${currentPage} / ${resolvedPageCount} 페이지`}
+          </span>
           <button
             className="admin-table-pagination__previous"
             type="button"
@@ -384,29 +394,29 @@ export function DataTable<T>({
             disabled={currentPage <= 1}
           >
             <ChevronLeft size={16} aria-hidden="true" />
-            <span className="admin-table-pagination__mobile-label">이전</span>
           </button>
-          {paginationItems(currentPage, resolvedPageCount).map((item) =>
-            typeof item === 'number' ? (
-              <button
-                className="admin-table-pagination__page"
-                key={item}
-                type="button"
-                aria-label={`${item}페이지`}
-                aria-current={item === currentPage ? 'page' : undefined}
-                onClick={() => moveToPage(item - 1)}
-              >
-                {item}
-              </button>
-            ) : (
-              <span className="admin-table-pagination__ellipsis" key={item} aria-hidden="true">
-                …
-              </span>
-            ),
-          )}
-          <span className="admin-table-pagination__mobile-status">
-            {currentPage} / {resolvedPageCount} 페이지
-          </span>
+          <label className="admin-table-pagination__input-label">
+            <span className="sr-only">현재 페이지</span>
+            <input
+              key={currentPage}
+              inputMode="numeric"
+              type="text"
+              defaultValue={String(currentPage)}
+              onChange={(event) => {
+                event.currentTarget.value = event.currentTarget.value.replace(/\D/g, '');
+              }}
+              onBlur={(event) => submitPageInput(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  submitPageInput(event.currentTarget.value);
+                  event.currentTarget.blur();
+                }
+              }}
+              aria-label="페이지 번호"
+            />
+          </label>
+          <span aria-hidden="true">/ {resolvedPageCount}</span>
           <button
             className="admin-table-pagination__next"
             type="button"
@@ -414,17 +424,7 @@ export function DataTable<T>({
             onClick={() => moveToPage(currentPageIndex + 1)}
             disabled={currentPage >= resolvedPageCount}
           >
-            <span className="admin-table-pagination__mobile-label">다음</span>
             <ChevronRight size={16} aria-hidden="true" />
-          </button>
-          <button
-            className="admin-table-pagination__last"
-            type="button"
-            aria-label="마지막 페이지"
-            onClick={() => moveToPage(resolvedPageCount - 1)}
-            disabled={currentPage >= resolvedPageCount}
-          >
-            <ChevronsRight size={16} aria-hidden="true" />
           </button>
         </nav>
       ) : null}

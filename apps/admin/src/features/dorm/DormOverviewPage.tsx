@@ -8,7 +8,6 @@ import {
   Drawer,
   EmptyState,
   MobileSortSelect,
-  PageSizeSelect,
   RowActionButton,
   RowActions,
   TableToolbar,
@@ -180,12 +179,12 @@ export function DormOverviewPage() {
               </option>
             ))}
           </AdminSelect>
-          <PageSizeSelect value={pageSize} onChange={setPageSize} />
         </TableToolbar>
         <DataTable
           columns={columns}
           data={rooms}
           pageSize={pageSize}
+          onPageSizeChange={setPageSize}
           sorting={sorting}
           onSortingChange={setSorting}
           loading={roomsQuery.isPending}

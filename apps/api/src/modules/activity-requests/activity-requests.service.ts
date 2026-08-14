@@ -29,7 +29,7 @@ import {
   gte,
   like,
   lt,
-  notInArray,
+  ne,
   or,
   sql,
   type SQL,
@@ -136,7 +136,7 @@ const adminListSchema = z.object({
       'status',
     ])
     .optional()
-    .default('issuedNumber'),
+    .default('startsAt'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
 });
 
@@ -229,6 +229,10 @@ function adminStatus(status: ActivityRequestStatus): ActivityRequestAdminStatus 
   return 'pending';
 }
 
+function canViewAllActivityRequests(session?: AuthSession) {
+  return Boolean(session?.roles?.some((role) => role === 'teacher' || role === 'system_admin'));
+}
+
 @Injectable()
 export class ActivityRequestsService {
   constructor(
@@ -244,9 +248,16 @@ export class ActivityRequestsService {
         .from(schema.activityRequestParticipants)
         .where(eq(schema.activityRequestParticipants.studentId, studentId));
 
-      if (participantRows.length === 0) return [];
-
       const requestIds = participantRows.map((row) => row.activityRequestId);
+      const visibleCondition = canViewAllActivityRequests(session)
+        ? ne(schema.activityRequests.status, 'canceled')
+        : or(
+            inArray(schema.activityRequests.status, ['approved', 'completed']),
+            and(
+              requestIds.length > 0 ? inArray(schema.activityRequests.id, requestIds) : sql`1 = 0`,
+              ne(schema.activityRequests.status, 'canceled'),
+            ),
+          );
       const rows = await db
         .select(activitySelection)
         .from(schema.activityRequests)
@@ -254,12 +265,7 @@ export class ActivityRequestsService {
           schema.students,
           eq(schema.activityRequests.representativeStudentId, schema.students.id),
         )
-        .where(
-          and(
-            inArray(schema.activityRequests.id, requestIds),
-            notInArray(schema.activityRequests.status, ['rejected', 'canceled']),
-          ),
-        )
+        .where(and(visibleCondition))
         .orderBy(desc(schema.activityRequests.startsAt), desc(schema.activityRequests.id));
 
       return this.toPublicSummaries(db, rows, session?.userId);
@@ -282,10 +288,6 @@ export class ActivityRequestsService {
         )
         .limit(1);
 
-      if (!membership) {
-        throw new NotFoundException('Activity request does not exist.');
-      }
-
       const [row] = await db
         .select(activitySelection)
         .from(schema.activityRequests)
@@ -294,14 +296,20 @@ export class ActivityRequestsService {
           eq(schema.activityRequests.representativeStudentId, schema.students.id),
         )
         .where(
-          and(
-            eq(schema.activityRequests.id, id),
-            notInArray(schema.activityRequests.status, ['rejected', 'canceled']),
-          ),
+          and(eq(schema.activityRequests.id, id), ne(schema.activityRequests.status, 'canceled')),
         )
         .limit(1);
 
       if (!row) {
+        throw new NotFoundException('Activity request does not exist.');
+      }
+
+      if (
+        !membership &&
+        !canViewAllActivityRequests(session) &&
+        row.status !== 'approved' &&
+        row.status !== 'completed'
+      ) {
         throw new NotFoundException('Activity request does not exist.');
       }
 
@@ -339,9 +347,7 @@ export class ActivityRequestsService {
     }
 
     return this.database.query('activity-requests.admin-list', async (db) => {
-      const conditions: SQL[] = [
-        notInArray(schema.activityRequests.status, ['rejected', 'canceled']),
-      ];
+      const conditions: SQL[] = [ne(schema.activityRequests.status, 'canceled')];
       if (search) {
         const pattern = `%${search}%`;
         const studentSearch = or(
@@ -408,6 +414,8 @@ export class ActivityRequestsService {
         conditions.push(inArray(schema.activityRequests.status, ['draft', 'submitted']));
       } else if (status === 'approved') {
         conditions.push(inArray(schema.activityRequests.status, ['approved', 'completed']));
+      } else if (status === 'rejected') {
+        conditions.push(eq(schema.activityRequests.status, 'rejected'));
       }
       if (assignedToMe) {
         conditions.push(eq(schema.activityRequests.advisorTeacherId, actorId!));

@@ -233,12 +233,12 @@ export function WakeSongsPage() {
     !editingId && (requestsQuery.data?.pendingCount ?? 0) >= (requestsQuery.data?.maxPending ?? 3);
   const submitDisabled =
     saveMutation.isPending || !preview || !segmentIsValid || pendingLimitReached;
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(20);
   const totalPages = Math.max(1, Math.ceil(requests.length / pageSize));
   const safePage = Math.min(page, totalPages);
   const visibleRequests = useMemo(
     () => requests.slice((safePage - 1) * pageSize, safePage * pageSize),
-    [requests, safePage],
+    [pageSize, requests, safePage],
   );
   const mobileVisibleKey = String(safePage);
   const [mobileVisibleState, setMobileVisibleState] = useState<{ key: string; count: number }>({
@@ -798,6 +798,12 @@ export function WakeSongsPage() {
           <DataTablePagination
             page={safePage}
             totalPages={totalPages}
+            total={requests.length}
+            pageSize={pageSize}
+            onPageSizeChange={(nextSize) => {
+              setPageSize(nextSize);
+              setPage(1);
+            }}
             hasMore={safePage === 1 && mobileVisibleCount < requests.length}
             onLoadMore={() =>
               setMobileVisibleState({

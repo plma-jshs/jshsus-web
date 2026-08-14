@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { Link, useSearch } from '@tanstack/react-router';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { Eye, MessageCircle, PenLine } from 'lucide-react';
 import {
   DataTablePagination,
@@ -12,17 +11,18 @@ import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { formatKoreanRelativeTime } from '../../shared/lib/date';
 import { getSession } from '../auth/api';
-import { getJbsPosts, type JbsPost } from './api';
+import { getJbsPosts } from './api';
 import './jbs.css';
 
 export function JbsPage() {
   const rawSearch = useSearch({ from: '/jbs' });
-  const [search, setSearch] = useState(() => ({
+  const search = {
     page: rawSearch.page ?? 1,
-    pageSize: rawSearch.pageSize ?? 20,
+    pageSize: rawSearch.size ?? 20,
     field: rawSearch.field ?? 'title_content',
     q: rawSearch.q ?? '',
-  }));
+  };
+  const navigate = useNavigate({ from: '/jbs' });
   const postsQuery = useQuery({
     queryKey: ['jbs-posts', search.page, search.pageSize, search.field, search.q],
     queryFn: () => getJbsPosts(search),
@@ -34,35 +34,7 @@ export function JbsPage() {
     session?.isLogined &&
     (session.roles?.includes('system_admin') || session.permissions.includes('jbs.publish'));
   const result = postsQuery.data;
-  const mobileSearchKey = `${search.field}|${search.page}|${search.pageSize}|${search.q}`;
-  const [mobileAccumulation, setMobileAccumulation] = useState<{
-    key: string;
-    items: JbsPost[];
-    page: number;
-  }>({ key: '', items: [], page: search.page });
-  const [loadingMore, setLoadingMore] = useState(false);
-  const mobileAdditionalPosts =
-    mobileAccumulation.key === mobileSearchKey ? mobileAccumulation.items : [];
-  const mobileLoadedPage =
-    mobileAccumulation.key === mobileSearchKey ? mobileAccumulation.page : search.page;
-  const visiblePosts = [...(result?.items ?? []), ...mobileAdditionalPosts];
-  const loadMoreMobilePosts = async () => {
-    if (!result || loadingMore || mobileLoadedPage >= result.totalPages) return;
-    setLoadingMore(true);
-    try {
-      const nextPage = await getJbsPosts({
-        ...search,
-        page: mobileLoadedPage + 1,
-      });
-      setMobileAccumulation((current) => ({
-        key: mobileSearchKey,
-        items: [...(current.key === mobileSearchKey ? current.items : []), ...nextPage.items],
-        page: nextPage.page,
-      }));
-    } finally {
-      setLoadingMore(false);
-    }
-  };
+  const visiblePosts = result?.items ?? [];
 
   const updateSearch = (
     next: Partial<{
@@ -71,7 +43,17 @@ export function JbsPage() {
       field: DataTableSearchField;
       q: string;
     }>,
-  ) => setSearch((current) => ({ ...current, ...next }));
+  ) => {
+    void navigate({
+      search: (current) => ({
+        ...current,
+        page: next.page ?? search.page,
+        size: next.pageSize ?? search.pageSize,
+        field: next.field ?? search.field,
+        q: next.q ?? search.q,
+      }),
+    });
+  };
 
   return (
     <PageScaffold
@@ -177,9 +159,9 @@ export function JbsPage() {
             <DataTablePagination
               page={result.page}
               totalPages={result.totalPages}
-              hasMore={mobileLoadedPage < result.totalPages}
-              loadingMore={loadingMore}
-              onLoadMore={loadMoreMobilePosts}
+              total={result.total}
+              pageSize={search.pageSize}
+              onPageSizeChange={(pageSize) => updateSearch({ page: 1, pageSize })}
               onChange={(page) => updateSearch({ page })}
             />
           </>

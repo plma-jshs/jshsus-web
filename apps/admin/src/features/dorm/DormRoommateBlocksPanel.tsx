@@ -4,14 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import {
-  Button,
-  PageSizeSelect,
-  RowActionButton,
-  RowActions,
-  TableToolbar,
-  useToast,
-} from '../../components/ui';
+import { Button, RowActionButton, RowActions, TableToolbar, useToast } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 
 type Props = {
@@ -184,14 +177,13 @@ export function DormRoommateBlocksPanel({
           추가
         </Button>
       </div>
-      <TableToolbar summary={`총 ${blocks.length}건`}>
-        <PageSizeSelect value={pageSize} onChange={setPageSize} />
-      </TableToolbar>
+      <TableToolbar summary={`총 ${blocks.length}건`}></TableToolbar>
       <DataTable
         columns={columns}
         data={blocks}
         loading={loading}
         pageSize={pageSize}
+        onPageSizeChange={setPageSize}
         sorting={sorting}
         onSortingChange={setSorting}
         alwaysShowPagination

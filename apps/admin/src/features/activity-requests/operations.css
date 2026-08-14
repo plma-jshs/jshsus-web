@@ -874,49 +874,57 @@
     font-family: 'Pretendard Variable', Pretendard, sans-serif;
   }
 
-  .activity-permit-document {
-    box-sizing: border-box;
-    width: 100%;
-    padding: 3mm 2mm;
-    break-after: page;
-    page-break-after: always;
+  .activity-print-batch > time {
+    display: block;
+    margin-bottom: 2mm;
+    color: #555;
+    font-size: 7pt;
+    text-align: right;
   }
 
-  .activity-permit-document:last-child {
-    break-after: auto;
-    page-break-after: auto;
-  }
-
-  .activity-permit-document > h1 {
-    margin: 0 0 6mm;
-    font-size: 18pt;
-    text-align: center;
-  }
-
-  .activity-permit-document table {
+  .activity-print-batch table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: auto;
-    font-size: 10pt;
+    table-layout: fixed;
+    font-size: 8pt;
   }
 
-  .activity-permit-document th,
-  .activity-permit-document td {
-    min-height: 9mm;
-    padding: 2.2mm 2.8mm;
+  .activity-print-batch th,
+  .activity-print-batch td {
+    padding: 1.3mm 1.8mm;
     border: 1px solid #555;
     text-align: left;
     vertical-align: middle;
+    overflow-wrap: anywhere;
   }
 
-  .activity-permit-document th {
+  .activity-print-batch th {
     background: #f0f0f0 !important;
     font-weight: 700;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  .activity-permit-document__table th {
+  .activity-print-batch th:nth-child(1) {
+    width: 32mm;
+  }
+
+  .activity-print-batch th:nth-child(2) {
     width: 30mm;
+  }
+
+  .activity-print-batch th:nth-child(3) {
+    width: 52mm;
+  }
+
+  .activity-print-batch th:nth-child(5) {
+    width: 27mm;
+  }
+
+  .activity-print-batch td small {
+    display: block;
+    margin-top: 0.6mm;
+    color: #555;
+    font-size: 7pt;
   }
 }

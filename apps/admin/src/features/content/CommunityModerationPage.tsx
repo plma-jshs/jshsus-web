@@ -9,7 +9,6 @@ import {
   ConfirmDialog,
   Drawer,
   MobileSortSelect,
-  PageSizeSelect,
   RowActionButton,
   RowActions,
   SelectedRowsHeaderAction,
@@ -556,7 +555,6 @@ export function CommunityModerationPage({
                 <option value="hidden">숨김</option>
               </AdminSelect>
             </label>
-            <PageSizeSelect value={postPageSize} onChange={setPostPageSize} />
           </div>
         }
       >
@@ -580,6 +578,7 @@ export function CommunityModerationPage({
             }
             alwaysShowPagination
             pageSize={postPageSize}
+            onPageSizeChange={setPostPageSize}
             sorting={postSorting}
             onSortingChange={setPostSorting}
             caption={`${activeSource.label} 게시글 관리 목록`}
@@ -680,7 +679,6 @@ export function CommunityModerationPage({
                 <option value="closed">처리 완료</option>
               </AdminSelect>
             </label>
-            <PageSizeSelect value={reportPageSize} onChange={setReportPageSize} />
           </>
         }
       >
@@ -700,6 +698,7 @@ export function CommunityModerationPage({
             emptyText="조건에 맞는 신고가 없습니다."
             alwaysShowPagination
             pageSize={reportPageSize}
+            onPageSizeChange={setReportPageSize}
             caption="자유게시판 신고 목록"
           />
         </ContentQueryState>
@@ -774,7 +773,6 @@ export function CommunityModerationPage({
             <section className="content-detail-section">
               <div className="content-detail-section__header">
                 <h3>댓글 {commentsQuery.data?.length ?? 0}건</h3>
-                <PageSizeSelect value={commentPageSize} onChange={setCommentPageSize} />
               </div>
               <ContentQueryState
                 isPending={commentsQuery.isPending}
@@ -792,6 +790,7 @@ export function CommunityModerationPage({
                   emptyText="등록된 댓글이 없습니다."
                   alwaysShowPagination
                   pageSize={commentPageSize}
+                  onPageSizeChange={setCommentPageSize}
                   caption="댓글 관리 목록"
                 />
               </ContentQueryState>

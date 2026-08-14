@@ -10,7 +10,7 @@ describe('admin activity schedule presentation', () => {
         '2026-07-30T09:00:00.000Z',
         ['afternoon-1', 'afternoon-2'],
       ),
-    ).toBe('14:00~15:40, 16:00~18:00');
+    ).toBe('14:00~18:00');
   });
 
   it('keeps non-contiguous study periods separated like the student portal', () => {

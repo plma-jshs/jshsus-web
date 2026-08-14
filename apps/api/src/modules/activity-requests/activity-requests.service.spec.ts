@@ -147,7 +147,8 @@ describe('ActivityRequestsService participant contract', () => {
       select: vi
         .fn()
         .mockReturnValueOnce(selectChain([{ id: 9 }]))
-        .mockReturnValueOnce(selectChain([])),
+        .mockReturnValueOnce(selectChain([]))
+        .mockReturnValueOnce(selectChain([activityRow])),
     };
     const database = {
       query: vi.fn(async (_name: string, work: (db: typeof operationDb) => unknown) =>

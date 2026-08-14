@@ -21,10 +21,10 @@ const request: ActivityRequestSummary = {
 };
 
 describe('activity request presentation', () => {
-  it('hides rejected and canceled requests as archived records', () => {
+  it('keeps rejected requests visible while hiding canceled records', () => {
     expect(matchesActivityFilter(request, 'completed')).toBe(true);
     expect(matchesActivityFilter({ ...request, status: 'canceled' }, 'all')).toBe(false);
-    expect(matchesActivityFilter({ ...request, status: 'rejected' }, 'all')).toBe(false);
+    expect(matchesActivityFilter({ ...request, status: 'rejected' }, 'all')).toBe(true);
     expect(matchesActivityFilter({ ...request, status: 'approved' }, 'completed')).toBe(false);
   });
 

@@ -659,25 +659,28 @@
   max-width: 100%;
   margin-top: var(--j-space-6);
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  gap: 14px;
 }
 
-.data-table-pagination__full,
-.data-table-pagination__compact {
+.data-table-pagination__controls {
   display: flex;
   min-width: 0;
   max-width: 100%;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 4px;
 }
 
-.data-table-pagination__compact {
-  display: none;
+.data-table-pagination__range {
+  min-width: max-content;
+  color: var(--j-color-text-secondary);
+  font-size: var(--j-text-xs);
+  font-weight: var(--j-weight-medium);
 }
 
-.data-table-pagination button,
-.data-table-pagination > span {
+.data-table-pagination__controls button,
+.data-table-pagination__controls > span {
   display: grid;
   min-width: 34px;
   height: 34px;
@@ -691,19 +694,36 @@
   font-weight: var(--j-weight-medium);
 }
 
-.data-table-pagination button:hover:not(:disabled):not(.is-current) {
+.data-table-pagination__controls button:hover:not(:disabled) {
   border-color: var(--j-color-border);
   background: var(--j-color-surface-hover);
 }
 
-.data-table-pagination button.is-current {
-  border-color: var(--j-color-brand-strong);
-  color: var(--j-color-text-inverse);
-  background: var(--j-color-brand-strong);
-  cursor: default;
+.data-table-pagination__page-input {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
 }
 
-.data-table-pagination button:disabled {
+.data-table-pagination__page-input input {
+  width: 100%;
+  height: 100%;
+  padding: 0 4px;
+  border: 1px solid var(--j-color-border);
+  border-radius: 8px;
+  color: var(--j-color-text-primary);
+  background: var(--j-color-surface);
+  font: inherit;
+  text-align: center;
+}
+
+.data-table-pagination__page-input input:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--j-color-brand-strong) 30%, transparent);
+  outline-offset: 1px;
+}
+
+.data-table-pagination__controls button:disabled {
   opacity: 0.38;
 }
 
@@ -1080,91 +1100,21 @@
   .data-table-pagination {
     width: 100%;
     margin-top: var(--j-space-5);
-    overflow: hidden;
+    justify-content: space-between;
+    gap: 8px;
   }
 
-  .data-table-pagination__full {
-    display: none;
+  .data-table-pagination .data-table-toolbar-select__trigger,
+  .data-table-pagination .data-table-toolbar-select__native {
+    min-width: 116px;
   }
 
-  .data-table-pagination__compact {
-    display: flex;
-    width: 100%;
-    justify-content: center;
-    gap: 0;
+  .data-table-pagination__range {
+    font-size: var(--j-text-xs);
+    text-align: center;
   }
 
-  .data-table-pagination:has(.data-table-pagination__compact:empty),
-  .data-table-pagination__compact:empty {
-    display: none;
-  }
-
-  .data-table-pagination__load-more {
-    display: inline-flex;
-  }
-
-  .data-table-pagination .data-table-pagination__load-more {
-    display: inline-grid;
-    flex: 0 0 auto;
-    grid-auto-flow: column;
-    grid-template-columns: auto auto;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    width: auto;
-    min-width: 96px;
-    height: 40px;
-    min-height: 40px;
-    padding: 0 16px;
-    place-items: initial;
-    border: 0;
-    border-radius: var(--j-radius-pill);
-    color: var(--j-color-text-secondary);
-    background: var(--j-color-surface-subtle);
-    font-weight: var(--j-weight-semibold);
-    line-height: 1;
-    white-space: nowrap;
-  }
-
-  .data-table-pagination .data-table-pagination__load-more > span,
-  .data-table-pagination .data-table-pagination__load-more > svg {
-    display: block;
-    flex: 0 0 auto;
-    margin: 0;
-    align-self: center;
-  }
-
-  .data-table-pagination .data-table-pagination__load-more > span {
-    width: auto;
-    height: auto;
-    font-size: var(--j-text-sm);
-  }
-
-  .data-table-pagination .data-table-pagination__load-more > svg {
-    width: 17px;
-    height: 17px;
-  }
-
-  .data-table-pagination .data-table-pagination__load-more:disabled {
-    border: 0;
-    color: #111827;
-    background: #eef1f3;
-    opacity: 1;
-  }
-
-  .data-table-pagination__load-more:hover {
-    border-color: transparent;
-    color: var(--j-color-brand-strong);
-    background: var(--j-color-surface-selected);
-  }
-
-  .data-table-pagination__spinner {
-    animation: data-table-pagination-spin 800ms linear infinite;
-  }
-}
-
-@keyframes data-table-pagination-spin {
-  to {
-    transform: rotate(360deg);
+  .data-table-pagination__controls {
+    gap: 2px;
   }
 }

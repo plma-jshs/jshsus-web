@@ -9,7 +9,6 @@ import {
   AdminListPanel,
   DateRangeField,
   MobileSortSelect,
-  PageSizeSelect,
   SelectedRowsHeaderAction,
   TableSelectionCheckbox,
   TableToolbar,
@@ -334,13 +333,6 @@ export function PointRecordsPage() {
               resetPage();
             }}
           />
-          <PageSizeSelect
-            value={pageSize}
-            onChange={(value) => {
-              setPageSize(value);
-              resetPage();
-            }}
-          />
         </TableToolbar>
       }
     >
@@ -363,6 +355,10 @@ export function PointRecordsPage() {
           onPageChange: (nextPage) => {
             setPage(nextPage + 1);
             setSelectedRecordIds(new Set());
+          },
+          onPageSizeChange: (nextPageSize) => {
+            setPageSize(nextPageSize);
+            resetPage();
           },
         }}
         alwaysShowPagination

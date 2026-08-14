@@ -3,21 +3,18 @@ import { useMemo, useState } from 'react';
 import type {
   ActivityRequestAdminListQuery,
   ActivityRequestAdminSummary,
-  ActivityRequestPrintBatch,
   ActivityRequestStudentOption,
 } from '@jshsus/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Check, Printer, X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
   AdminSelect,
   Button,
   Drawer,
-  EmptyState,
   MobileSortSelect,
-  PageSizeSelect,
   RowActionButton,
   RowActions,
   TableToolbar,
@@ -32,7 +29,6 @@ import {
 import {
   activitySlotsDateTimes,
   availableActivityTimeSlots,
-  formatActivityTimeRanges,
   koreaDateInput,
   type ActivityTimeSlotId,
 } from './activitySchedule';
@@ -54,7 +50,7 @@ const activityReviewSearchOptions: Array<{ value: ActivityReviewSearchBy; label:
   { value: 'student', label: '학생' },
   { value: 'advisor', label: '담당 교사' },
   { value: 'location', label: '장소' },
-  { value: 'purpose', label: '활동 목적' },
+  { value: 'purpose', label: '내용' },
 ];
 
 function createInitialActivityForm(): CreateActivityForm {
@@ -68,74 +64,6 @@ function createInitialActivityForm(): CreateActivityForm {
     activitySlotIds: firstSlot ? [firstSlot.id] : ['evening-1'],
     purpose: '',
   };
-}
-
-function ActivityPermitDocument({ request }: { request: ActivityRequestAdminSummary }) {
-  const participants = request.participants.length
-    ? request.participants
-    : [
-        {
-          studentId: request.representativeStudentId,
-          studentNo: request.studentNo,
-          studentName: request.studentName,
-          isRepresentative: true,
-        },
-      ];
-
-  const activityDate = koreaDateInput(new Date(request.startsAt));
-  const participantText = participants
-    .map(
-      (participant) =>
-        `${participant.studentNo} ${participant.studentName}${
-          participant.isRepresentative ? '(대표)' : ''
-        }`,
-    )
-    .join(', ');
-
-  return (
-    <article className="activity-permit-document">
-      <h1>탐구활동서</h1>
-      <table className="activity-permit-document__table">
-        <tbody>
-          <tr>
-            <th>활동 목적</th>
-            <td>{request.purpose}</td>
-          </tr>
-          <tr>
-            <th>활동 시간</th>
-            <td>
-              {formatActivityTimeRanges(
-                activityDate,
-                request.startsAt,
-                request.endsAt,
-                request.activitySlotIds,
-              )}
-            </td>
-          </tr>
-          <tr>
-            <th>활동 장소</th>
-            <td>{request.location}</td>
-          </tr>
-          <tr>
-            <th>참여 학생</th>
-            <td>{participantText}</td>
-          </tr>
-          <tr>
-            <th>지도교사</th>
-            <td>{request.advisorTeacherName ?? '-'}</td>
-          </tr>
-          <tr>
-            <th>작성자</th>
-            <td>{request.creatorName ?? '-'}</td>
-          </tr>
-          <tr>
-            <th>승인자</th>
-            <td>{request.reviewerName ?? '-'}</td>
-          </tr>
-        </tbody>
-      </table>
-    </article>
-  );
 }
 
 export function ActivityReviewPage() {
@@ -158,8 +86,6 @@ export function ActivityReviewPage() {
   });
   const refreshActivityRequests = useRefreshActivityRequests();
   const [rejectForm, setRejectForm] = useState({ id: 0, reason: '' });
-  const [printBatch, setPrintBatch] = useState<ActivityRequestPrintBatch | null>(null);
-  const [printMessage, setPrintMessage] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateActivityForm>(createInitialActivityForm);
   const [studentSearch, setStudentSearch] = useState('');
@@ -212,28 +138,10 @@ export function ActivityReviewPage() {
     },
     onError: () => showToast({ title: '탐구활동서를 반려하지 못했습니다.', tone: 'danger' }),
   });
-  const printMutation = useMutation({
-    mutationFn: () => api.printTodayActivityRequests(),
-    onSuccess: (result) => {
-      setPrintBatch(result);
-      if (result.documents.length === 0) {
-        setPrintMessage('오늘 활동하는 승인 완료 탐구활동서가 없습니다.');
-        showToast({ title: '오늘 인쇄할 탐구활동서가 없습니다.', tone: 'warning' });
-        return;
-      }
-      setPrintMessage('');
-      showToast({
-        title: `${result.documents.length}건의 인쇄 화면을 준비했습니다.`,
-        tone: 'success',
-      });
-      window.setTimeout(() => window.print(), 50);
-    },
-    onError: () => showToast({ title: '인쇄 자료를 준비하지 못했습니다.', tone: 'danger' }),
-  });
   const createMutation = useMutation({
     mutationFn: (form: CreateActivityForm) => {
       if (!form.representativeStudentNo) {
-        throw new Error('대표 학생을 선택해 주세요.');
+        throw new Error('선택한 학생을 확인해 주세요.');
       }
       const activityTimes = activitySlotsDateTimes(form.activityDate, form.activitySlotIds);
       if (!activityTimes) {
@@ -433,30 +341,10 @@ export function ActivityReviewPage() {
                 </option>
               ))}
             </AdminSelect>
-            <PageSizeSelect
-              value={pageSize}
-              onChange={(value) => {
-                setPageSize(value);
-                setPage(1);
-              }}
-            />
-            <Button
-              className="operation-review-print"
-              type="button"
-              onClick={() => printMutation.mutate()}
-              disabled={printMutation.isPending}
-            >
-              <Printer size={16} aria-hidden="true" />
-              오늘자 전체 인쇄
-            </Button>
           </TableToolbar>
         }
         className="operation-review-list"
       >
-        {printMessage ? <p className="operation-inline-message">{printMessage}</p> : null}
-        {printMutation.isError ? (
-          <p className="form-error">오늘자 탐구활동서를 준비하지 못했습니다.</p>
-        ) : null}
         {requestsQuery.isError ? (
           <p className="form-error">승인 대상 탐구활동서를 불러오지 못했습니다.</p>
         ) : (
@@ -475,6 +363,10 @@ export function ActivityReviewPage() {
               pageCount: requestsQuery.data?.totalPages ?? 1,
               totalCount: requestsQuery.data?.total,
               onPageChange: (nextPage) => setPage(nextPage + 1),
+              onPageSizeChange: (nextPageSize) => {
+                setPageSize(nextPageSize);
+                setPage(1);
+              },
             }}
             loading={requestsQuery.isPending}
             loadingText="승인 대상을 불러오는 중입니다."
@@ -556,10 +448,8 @@ export function ActivityReviewPage() {
           <section className="activity-create-section activity-student-picker">
             <header>
               <h3>참여 학생</h3>
-              <p>대표 학생 한 명과 함께 활동할 학생을 선택하세요.</p>
             </header>
             <label>
-              <span>학생 검색</span>
               <input
                 type="search"
                 value={studentSearch}
@@ -573,7 +463,7 @@ export function ActivityReviewPage() {
                 <p className="form-error">학생을 불러오지 못했습니다.</p>
               ) : null}
               {!studentsQuery.isPending && filteredStudents.length === 0 ? (
-                <EmptyState compact title="검색 결과가 없습니다." />
+                <p className="activity-student-results__empty">검색 결과가 없습니다.</p>
               ) : null}
               {filteredStudents.map((student) => (
                 <div key={student.studentId} role="listitem">
@@ -581,16 +471,26 @@ export function ActivityReviewPage() {
                     {student.studentNo} {student.studentName}
                   </span>
                   <div>
-                    <button type="button" onClick={() => selectRepresentative(student)}>
-                      대표
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => addParticipant(student)}
-                      disabled={selectedStudentNos.has(student.studentNo)}
-                    >
-                      추가
-                    </button>
+                    {student.studentNo === createForm.representativeStudentNo ? (
+                      <span className="activity-student-result__badge is-representative">대표</span>
+                    ) : selectedStudentNos.has(student.studentNo) ? (
+                      <button
+                        className="activity-student-result__badge"
+                        type="button"
+                        aria-label={`${student.studentName}을 대표 학생으로 설정`}
+                        onClick={() => selectRepresentative(student)}
+                      >
+                        참여
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => addParticipant(student)}
+                        disabled={selectedStudentNos.has(student.studentNo)}
+                      >
+                        추가
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -610,7 +510,7 @@ export function ActivityReviewPage() {
                 </span>
               </div>
             ) : (
-              <p>대표 학생을 선택해 주세요.</p>
+              <p className="sr-only">대표 학생이 선택되지 않았습니다.</p>
             )}
             {createForm.participantStudentNos.map((studentNo) => (
               <div className="activity-student-chip" key={studentNo}>
@@ -637,11 +537,10 @@ export function ActivityReviewPage() {
 
           <section className="activity-create-section activity-create-schedule">
             <header>
-              <h3>활동 시간</h3>
+              <h3>시간</h3>
             </header>
             <div className="activity-create-form__grid">
               <label>
-                <span>활동 날짜</span>
                 <input
                   type="date"
                   value={createForm.activityDate}
@@ -693,28 +592,27 @@ export function ActivityReviewPage() {
           <section className="activity-create-section activity-create-details">
             <header>
               <h3>활동 내용</h3>
-              <p>허가서에 표시될 장소와 목적을 입력하세요.</p>
             </header>
             <div className="activity-create-form__grid activity-create-form__grid--details">
               <label>
-                <span>장소</span>
                 <input
                   value={createForm.location}
                   onChange={(event) =>
                     setCreateForm((form) => ({ ...form, location: event.target.value }))
                   }
                   maxLength={160}
+                  placeholder="활동 장소를 입력해 주세요."
                   required
                 />
               </label>
               <label>
-                <span>활동 목적</span>
                 <textarea
                   value={createForm.purpose}
                   onChange={(event) =>
                     setCreateForm((form) => ({ ...form, purpose: event.target.value }))
                   }
                   maxLength={500}
+                  placeholder="활동 내용을 입력해 주세요."
                   required
                 />
               </label>
@@ -729,12 +627,6 @@ export function ActivityReviewPage() {
           ) : null}
         </form>
       </Drawer>
-
-      <section className="activity-print-batch" aria-hidden="true">
-        {printBatch?.documents.map((request) => (
-          <ActivityPermitDocument key={request.id} request={request} />
-        ))}
-      </section>
     </div>
   );
 }

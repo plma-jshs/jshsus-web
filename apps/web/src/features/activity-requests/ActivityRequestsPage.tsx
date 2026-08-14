@@ -143,6 +143,7 @@ export function ActivityRequestsPage() {
                   { value: 'all', label: '전체' },
                   { value: 'submitted', label: '승인 대기' },
                   { value: 'approved', label: '승인' },
+                  { value: 'rejected', label: '반려' },
                   { value: 'completed', label: '완료' },
                 ]}
                 label="신청 상태"
@@ -375,6 +376,12 @@ export function ActivityRequestsPage() {
           <DataTablePagination
             page={safePage}
             totalPages={totalPages}
+            total={filtered.length}
+            pageSize={pageSize}
+            onPageSizeChange={(nextSize) => {
+              setPageSize(nextSize);
+              setPage(1);
+            }}
             hasMore={mobileVisibleCount < filtered.length}
             onLoadMore={() =>
               setMobileVisibleState({
