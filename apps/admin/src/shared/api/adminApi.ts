@@ -3,6 +3,7 @@ import type {
   AccountActivationIdentityType,
   AccountActivationIssueResult,
   AcademicEvent,
+  ActivityPrintFloor,
   ActivityRequestAdminListQuery,
   ActivityRequestAdminSummary,
   ActivityRequestPrintBatch,
@@ -565,9 +566,9 @@ export const api = {
         body: { reason },
       },
     ),
-  printTodayActivityRequests: (date?: string) =>
+  printTodayActivityRequests: (options?: { date?: string; floor?: ActivityPrintFloor }) =>
     request<ActivityRequestPrintBatch>('/api/admin/activity-requests/print/today', {
       method: 'POST',
-      body: date ? { date } : {},
+      body: options ?? {},
     }),
 };

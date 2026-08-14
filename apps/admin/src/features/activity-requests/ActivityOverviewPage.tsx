@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type {
+  ActivityPrintFloor,
   ActivityRequestAdminListQuery,
   ActivityRequestAdminStatus,
   ActivityRequestAdminSummary,
@@ -7,7 +8,7 @@ import type {
 } from '@jshsus/types';
 import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { ChevronRight, Printer, Search, Users } from 'lucide-react';
+import { ChevronDown, ChevronRight, Printer, Search, Users } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
@@ -16,7 +17,6 @@ import {
   Drawer,
   MobileSortSelect,
   TableToolbar,
-  Button,
   useToast,
 } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
@@ -71,6 +71,51 @@ function formatActivityMobileDate(request: ActivityRequestAdminSummary) {
   });
   const weekday = formatKoreanDate(request.startsAt, { weekday: 'short' });
   return `${date}(${weekday})`;
+}
+
+function ActivityPrintMenu({
+  disabled,
+  onSelect,
+}: {
+  disabled?: boolean;
+  onSelect: (floor: ActivityPrintFloor) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const floors: ActivityPrintFloor[] = [2, 3, 4];
+
+  return (
+    <div className={`activity-print-menu${open ? ' is-open' : ''}`}>
+      <button
+        type="button"
+        className="activity-print-menu__trigger"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        disabled={disabled}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <Printer size={16} aria-hidden="true" />
+        <span>인쇄</span>
+        <ChevronDown size={15} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="activity-print-menu__list" role="menu" aria-label="인쇄할 층 선택">
+          {floors.map((floor) => (
+            <button
+              key={floor}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onSelect(floor);
+              }}
+            >
+              {floor}층
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function ActivityMobileCard({
@@ -237,7 +282,7 @@ export function ActivityOverviewPage() {
     sortOrder: sort ? (sort.desc ? 'desc' : 'asc') : 'desc',
   });
   const printMutation = useMutation({
-    mutationFn: () => api.printTodayActivityRequests(),
+    mutationFn: (floor: ActivityPrintFloor) => api.printTodayActivityRequests({ floor }),
     onSuccess: (result) => {
       setPrintBatch(result);
       if (!result.documents.length) {
@@ -247,7 +292,7 @@ export function ActivityOverviewPage() {
       }
       setPrintMessage('');
       showToast({
-        title: `${result.documents.length}건의 인쇄 화면을 준비했습니다.`,
+        title: `${result.floor}층 ${result.documents.length}건의 인쇄 화면을 준비했습니다.`,
         tone: 'success',
       });
       window.setTimeout(() => window.print(), 50);
@@ -322,14 +367,10 @@ export function ActivityOverviewPage() {
                 </option>
               ))}
             </AdminSelect>
-            <Button
-              type="button"
-              onClick={() => printMutation.mutate()}
+            <ActivityPrintMenu
               disabled={printMutation.isPending}
-            >
-              <Printer size={16} aria-hidden="true" />
-              오늘자 전체 인쇄
-            </Button>
+              onSelect={(floor) => printMutation.mutate(floor)}
+            />
           </TableToolbar>
         }
       >

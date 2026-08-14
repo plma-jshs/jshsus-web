@@ -1,7 +1,16 @@
 import { useMemo, useState, type KeyboardEvent } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
-import { CalendarDays, MapPin, PenLine, UserRound, Users } from 'lucide-react';
+import type { ActivityPrintFloor, ActivityRequestPrintBatch } from '@jshsus/types';
+import {
+  CalendarDays,
+  ChevronDown,
+  MapPin,
+  PenLine,
+  Printer,
+  UserRound,
+  Users,
+} from 'lucide-react';
 import {
   DataTablePagination,
   type DataTablePageSize,
@@ -10,7 +19,7 @@ import {
 import { FilterChips, PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
-import { getMyActivityRequests } from './api';
+import { getMyActivityRequests, printActivityRequests } from './api';
 import {
   formatActivityPeriodLabel,
   formatActivityTimeRanges,
@@ -24,12 +33,57 @@ import {
   matchesActivityFilter,
   matchesActivityQuery,
 } from './presentation';
+import { ActivityPrintBatch } from './ActivityPrintBatch';
 import '../../styles/activity-requests.css';
 
 const activityDayFormatter = createKoreanDateFormatter({
   month: '2-digit',
   day: '2-digit',
 });
+
+function ActivityPrintMenu({
+  disabled,
+  onSelect,
+}: {
+  disabled?: boolean;
+  onSelect: (floor: ActivityPrintFloor) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className={`activity-print-menu${open ? ' is-open' : ''}`}>
+      <button
+        type="button"
+        className="activity-print-menu__trigger"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        disabled={disabled}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <Printer size={16} aria-hidden="true" />
+        <span>인쇄</span>
+        <ChevronDown size={15} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="activity-print-menu__list" role="menu" aria-label="인쇄할 층 선택">
+          {([2, 3, 4] as const).map((floor) => (
+            <button
+              key={floor}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onSelect(floor);
+              }}
+            >
+              {floor}층
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export function ActivityRequestsPage() {
   const navigate = useNavigate();
@@ -50,6 +104,21 @@ export function ActivityRequestsPage() {
   const [mobileVisibleState, setMobileVisibleState] = useState<{ key: string; count: number }>({
     key: '',
     count: pageSize,
+  });
+  const [printBatch, setPrintBatch] = useState<ActivityRequestPrintBatch | null>(null);
+  const [printMessage, setPrintMessage] = useState('');
+  const printMutation = useMutation({
+    mutationFn: (floor: ActivityPrintFloor) => printActivityRequests({ floor }),
+    onSuccess: (result) => {
+      setPrintBatch(result);
+      if (!result.documents.length) {
+        setPrintMessage(`${result.floor}층에 오늘 인쇄할 승인 완료 탐구활동서가 없습니다.`);
+        return;
+      }
+      setPrintMessage('');
+      window.setTimeout(() => window.print(), 50);
+    },
+    onError: () => setPrintMessage('인쇄 자료를 준비하지 못했습니다. 잠시 후 다시 시도해 주세요.'),
   });
   const requests = useMemo(() => requestsQuery.data ?? [], [requestsQuery.data]);
   const filtered = useMemo(
@@ -88,14 +157,22 @@ export function ActivityRequestsPage() {
       title="탐구활동서"
       width="wide"
       action={
-        <Link
-          aria-label="신청하기"
-          className="detail-primary-button content-compose-fab"
-          title="신청하기"
-          to="/activity-requests/new"
-        >
-          <PenLine size={20} aria-hidden="true" />
-        </Link>
+        <div className="activity-page-actions">
+          <div className="activity-page-actions__print">
+            <ActivityPrintMenu
+              disabled={printMutation.isPending}
+              onSelect={(floor) => printMutation.mutate(floor)}
+            />
+          </div>
+          <Link
+            aria-label="신청하기"
+            className="detail-primary-button content-compose-fab"
+            title="신청하기"
+            to="/activity-requests/new"
+          >
+            <PenLine size={20} aria-hidden="true" />
+          </Link>
+        </div>
       }
     >
       <section
@@ -110,12 +187,18 @@ export function ActivityRequestsPage() {
           field={searchField}
           query={query}
           action={
-            <Link
-              className="detail-primary-button data-table-toolbar__create"
-              to="/activity-requests/new"
-            >
-              작성
-            </Link>
+            <div className="activity-toolbar-actions">
+              <ActivityPrintMenu
+                disabled={printMutation.isPending}
+                onSelect={(floor) => printMutation.mutate(floor)}
+              />
+              <Link
+                className="detail-primary-button data-table-toolbar__create"
+                to="/activity-requests/new"
+              >
+                작성
+              </Link>
+            </div>
           }
           groupActionWithPageSize
           searchPlaceholder="검색어를 입력하세요"
@@ -393,6 +476,8 @@ export function ActivityRequestsPage() {
           />
         ) : null}
       </section>
+      {printMessage ? <p className="activity-print-message">{printMessage}</p> : null}
+      <ActivityPrintBatch batch={printBatch} />
     </PageScaffold>
   );
 }

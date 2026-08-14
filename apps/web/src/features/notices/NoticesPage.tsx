@@ -210,6 +210,7 @@ export function NoticesPage() {
               pageSize={search.pageSize}
               onPageSizeChange={(pageSize) => updateSearch({ page: 1, pageSize })}
               onChange={(page) => updateSearch({ page })}
+              syncUrl={false}
             />
           </>
         ) : null}

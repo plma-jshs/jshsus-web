@@ -50,6 +50,13 @@ export class ActivityRequestsController {
     return this.activityRequestsService.teacherOptions();
   }
 
+  @Post('activity-requests/print/today')
+  @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
+  @RequireRoles('student', 'teacher')
+  printToday(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
+    return this.activityRequestsService.printToday(body, request.authSession?.userId);
+  }
+
   @Get('activity-requests/:id')
   @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
   @RequireRoles('student')
@@ -109,7 +116,7 @@ export class ActivityRequestsController {
   @Post('admin/activity-requests/print/today')
   @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
   @RequirePermissions('activity.review')
-  printToday(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
+  adminPrintToday(@Body() body: unknown, @Req() request: AuthenticatedRequest) {
     return this.activityRequestsService.printToday(body, request.authSession?.userId);
   }
 

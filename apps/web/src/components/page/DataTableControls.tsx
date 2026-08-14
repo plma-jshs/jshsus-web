@@ -357,6 +357,7 @@ export function DataTablePagination({
   pageSize = 20,
   onPageSizeChange,
   onChange,
+  syncUrl = true,
 }: {
   page: number;
   totalPages: number;
@@ -364,6 +365,7 @@ export function DataTablePagination({
   pageSize?: number;
   onPageSizeChange?: (pageSize: DataTablePageSize) => void;
   onChange: (page: number) => void;
+  syncUrl?: boolean;
   onLoadMore?: () => void;
   loadingMore?: boolean;
   hasMore?: boolean;
@@ -375,13 +377,13 @@ export function DataTablePagination({
   const firstItem = total ? (safePage - 1) * resolvedPageSize + 1 : undefined;
   const lastItem = total ? Math.min(safePage * resolvedPageSize, total) : undefined;
   const changePageSize = (nextPageSize: DataTablePageSize) => {
-    syncTableQuery(1, nextPageSize);
     onPageSizeChange?.(nextPageSize);
+    if (syncUrl) syncTableQuery(1, nextPageSize);
   };
   const changePage = (nextPage: number) => {
     const resolvedPage = Math.min(Math.max(nextPage, 1), Math.max(totalPages, 1));
-    syncTableQuery(resolvedPage, resolvedPageSize);
     onChange(resolvedPage);
+    if (syncUrl) syncTableQuery(resolvedPage, resolvedPageSize);
   };
 
   return (

@@ -659,7 +659,8 @@
   max-width: 100%;
   margin-top: var(--j-space-6);
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 14px;
 }
 
@@ -683,7 +684,7 @@
 .data-table-pagination__controls > span {
   display: grid;
   min-width: 34px;
-  height: 34px;
+  height: 40px;
   padding: 0 8px;
   place-items: center;
   border: 1px solid transparent;
@@ -702,7 +703,7 @@
 .data-table-pagination__page-input {
   display: grid;
   width: 34px;
-  height: 34px;
+  height: 40px;
   place-items: center;
 }
 
@@ -715,6 +716,8 @@
   color: var(--j-color-text-primary);
   background: var(--j-color-surface);
   font: inherit;
+  font-size: var(--j-text-xs);
+  font-weight: var(--j-weight-medium);
   text-align: center;
 }
 
@@ -1100,7 +1103,7 @@
   .data-table-pagination {
     width: 100%;
     margin-top: var(--j-space-5);
-    justify-content: space-between;
+    justify-content: center;
     gap: 8px;
   }
 

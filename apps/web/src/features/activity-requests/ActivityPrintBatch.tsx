@@ -1,7 +1,7 @@
 import type {
+  ActivityPrintStudent,
   ActivityRequestAdminSummary,
   ActivityRequestPrintBatch,
-  ActivityPrintStudent,
 } from '@jshsus/types';
 import { formatActivityTimeRanges, koreaDateInput } from './activitySchedule';
 
@@ -15,7 +15,6 @@ function participantsText(request: ActivityRequestAdminSummary) {
           isRepresentative: true,
         },
       ];
-
   return participants
     .map(
       (participant) =>
@@ -29,26 +28,6 @@ function printDateLabel(date: string) {
   return `${month ?? ''}월 ${day ?? ''}일`;
 }
 
-function ActivityPrintRow({ request }: { request: ActivityRequestAdminSummary }) {
-  const date = koreaDateInput(new Date(request.startsAt));
-  return (
-    <tr>
-      <td>
-        {formatActivityTimeRanges(date, request.startsAt, request.endsAt, request.activitySlotIds)}
-      </td>
-      <td>{request.location}</td>
-      <td>{request.purpose}</td>
-      <td>{participantsText(request)}</td>
-      <td>{request.advisorTeacherName ?? '-'}</td>
-    </tr>
-  );
-}
-
-function studentGroupLabel(student: ActivityPrintStudent, floor: number) {
-  const genderLabel = floor === 2 ? '여자' : '남자';
-  return `${student.grade}학년 ${student.classNo}반 ${genderLabel}`;
-}
-
 function StudentPrintTable({
   students,
   floor,
@@ -59,20 +38,21 @@ function StudentPrintTable({
   const groups = new Map<string, ActivityPrintStudent[]>();
   for (const student of students) {
     const key = `${student.grade}-${student.classNo}`;
-    const group = groups.get(key) ?? [];
-    group.push(student);
-    groups.set(key, group);
+    groups.set(key, [...(groups.get(key) ?? []), student]);
   }
   const periodKeys = [...new Set(students.flatMap((student) => Object.keys(student.slotLocations)))]
     .filter((key) => /^\d+$/.test(key))
     .sort((left, right) => Number(left) - Number(right));
   const periods = periodKeys.length ? periodKeys : ['1', '2'];
+  const genderLabel = floor === 2 ? '여자' : '남자';
 
   return (
     <div className="activity-print-student-grid">
       {[...groups.entries()].map(([key, group]) => (
         <table key={key} className="activity-print-student-table">
-          <caption>{studentGroupLabel(group[0]!, floor)}</caption>
+          <caption>
+            {group[0]?.grade}학년 {group[0]?.classNo}반 {genderLabel}
+          </caption>
           <thead>
             <tr>
               <th>학번</th>
@@ -121,9 +101,25 @@ export function ActivityPrintBatch({ batch }: { batch: ActivityRequestPrintBatch
             </tr>
           </thead>
           <tbody>
-            {batch.documents.map((request) => (
-              <ActivityPrintRow key={request.id} request={request} />
-            ))}
+            {batch.documents.map((request) => {
+              const date = koreaDateInput(new Date(request.startsAt));
+              return (
+                <tr key={request.id}>
+                  <td>
+                    {formatActivityTimeRanges(
+                      date,
+                      request.startsAt,
+                      request.endsAt,
+                      request.activitySlotIds,
+                    )}
+                  </td>
+                  <td>{request.location}</td>
+                  <td>{request.purpose}</td>
+                  <td>{participantsText(request)}</td>
+                  <td>{request.advisorTeacherName ?? '-'}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

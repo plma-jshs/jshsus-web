@@ -299,6 +299,7 @@
 .activity-table__location {
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: left !important;
   white-space: nowrap;
 }
 
@@ -1441,5 +1442,237 @@
   .activity-table-section .data-table-toolbar__query {
     width: 100%;
     min-width: 0;
+  }
+}
+
+.activity-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-page-actions__print {
+  display: none;
+}
+
+.activity-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.activity-print-menu {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.activity-print-menu__trigger {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 13px;
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-md);
+  color: var(--j-color-text-primary);
+  background: var(--j-color-surface);
+  font: inherit;
+  font-size: 13px;
+  font-weight: var(--j-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.activity-print-menu__trigger:hover {
+  background: var(--j-color-surface-hover);
+}
+
+.activity-print-menu__trigger:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.activity-print-menu__list {
+  position: absolute;
+  z-index: var(--j-layer-popover);
+  top: calc(100% + 6px);
+  right: 0;
+  display: grid;
+  min-width: 112px;
+  padding: 5px;
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-md);
+  background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-overlay);
+}
+
+.activity-print-menu__list button {
+  min-height: 38px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--j-color-text-primary);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.activity-print-menu__list button:hover {
+  background: var(--j-color-surface-hover);
+}
+
+.activity-print-message {
+  margin: 12px 0 0;
+  color: var(--j-color-text-secondary);
+  font-size: 13px;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .activity-page-actions__print {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .activity-page-actions__print {
+    display: block;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .activity-print-batch,
+  .activity-print-batch * {
+    visibility: visible !important;
+  }
+
+  .activity-print-batch {
+    position: absolute;
+    inset: 0;
+    display: block !important;
+    width: 100%;
+    color: #111;
+    background: #fff;
+    font-family: 'Pretendard Variable', Pretendard, sans-serif;
+  }
+
+  .activity-print-page {
+    display: block !important;
+    min-height: 180mm;
+    break-after: page;
+  }
+
+  .activity-print-page:last-child {
+    break-after: auto;
+  }
+
+  .activity-print-page h1,
+  .activity-print-page h2 {
+    margin: 0 0 4mm;
+    padding: 3mm 4mm;
+    border: 1px solid #b7d4c1;
+    color: #17231c;
+    background: #e4f3e9 !important;
+    font-size: 16pt;
+    font-weight: 700;
+    text-align: center;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .activity-print-page h2 {
+    font-size: 12pt;
+  }
+
+  .activity-print-batch table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  .activity-print-batch th,
+  .activity-print-batch td {
+    padding: 1.3mm 1.6mm;
+    border: 1px solid #555;
+    color: #111;
+    font-size: 8pt;
+    line-height: 1.25;
+    text-align: left;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+  }
+
+  .activity-print-batch th {
+    background: #ececec !important;
+    font-weight: 700;
+    text-align: center;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .activity-print-activity-table th:nth-child(1) {
+    width: 14%;
+  }
+
+  .activity-print-activity-table th:nth-child(2) {
+    width: 13%;
+  }
+
+  .activity-print-activity-table th:nth-child(3) {
+    width: 13%;
+  }
+
+  .activity-print-activity-table th:nth-child(4) {
+    width: 49%;
+  }
+
+  .activity-print-activity-table th:nth-child(5) {
+    width: 11%;
+  }
+
+  .activity-print-student-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: start;
+    gap: 4mm;
+  }
+
+  .activity-print-student-table caption {
+    padding: 1.5mm;
+    border: 1px solid #aaa;
+    background: #d7d7d7 !important;
+    font-size: 8pt;
+    font-weight: 700;
+    text-align: center;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .activity-print-student-table th,
+  .activity-print-student-table td {
+    padding: 0.9mm 1mm;
+    font-size: 6.5pt;
+    text-align: center;
+  }
+
+  .activity-print-student-table th:nth-child(1),
+  .activity-print-student-table td:nth-child(1) {
+    width: 20%;
+  }
+
+  .activity-print-student-table th:nth-child(2),
+  .activity-print-student-table td:nth-child(2) {
+    width: 22%;
   }
 }

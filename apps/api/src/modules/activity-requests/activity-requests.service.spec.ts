@@ -666,6 +666,26 @@ describe('ActivityRequestsService today print batch', () => {
             { id: 30, name: '담당 교사' },
             { id: 40, name: '승인 교사' },
           ]),
+        )
+        .mockReturnValueOnce(
+          selectChain([
+            {
+              studentNo: 9999,
+              studentName: '테스트',
+              grade: 2,
+              classNo: 1,
+              number: 1,
+              gender: '0',
+            },
+            {
+              studentNo: 1101,
+              studentName: '참여학생',
+              grade: 1,
+              classNo: 1,
+              number: 1,
+              gender: '1',
+            },
+          ]),
         ),
       insert: vi.fn().mockReturnValueOnce(eventInsert).mockReturnValueOnce(auditInsert),
     };
@@ -687,6 +707,7 @@ describe('ActivityRequestsService today print batch', () => {
 
     expect(result).toMatchObject({
       date: '2026-07-14',
+      floor: 3,
       documents: [
         {
           id: 14,
@@ -702,7 +723,7 @@ describe('ActivityRequestsService today print batch', () => {
       ],
     });
     expect(eventInsert.values).toHaveBeenCalledWith([
-      expect.objectContaining({ activityRequestId: 14, note: '2026-07-14 일괄 인쇄' }),
+      expect.objectContaining({ activityRequestId: 14, note: '2026-07-14 3층 인쇄' }),
     ]);
   });
 

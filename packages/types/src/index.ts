@@ -918,9 +918,23 @@ export type ActivityRequestAdminSummary = Omit<
   workflowStatus: ActivityRequestStatus;
 };
 
+export type ActivityPrintFloor = 2 | 3 | 4;
+
+export type ActivityPrintStudent = {
+  studentNo: number;
+  studentName: string;
+  grade: number;
+  classNo: number;
+  number: number;
+  /** Numeric study-period keys (1, 2, 3) mapped to the room/location. */
+  slotLocations: Record<string, string>;
+};
+
 export type ActivityRequestPrintBatch = {
   date: string;
+  floor: ActivityPrintFloor;
   documents: ActivityRequestAdminSummary[];
+  students: ActivityPrintStudent[];
 };
 
 export type AdminDashboardTask = {

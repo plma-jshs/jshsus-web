@@ -1,5 +1,7 @@
 import type {
+  ActivityPrintFloor,
   ActivityRequestDetail,
+  ActivityRequestPrintBatch,
   ActivityRequestStudentOption,
   ActivityRequestSummary,
   ActivityRequestTeacherOption,
@@ -25,6 +27,13 @@ export function getActivityRequestStudentOptions() {
 
 export function getActivityRequestTeacherOptions() {
   return request<ActivityRequestTeacherOption[]>('/api/activity-requests/teachers');
+}
+
+export function printActivityRequests(options: { date?: string; floor: ActivityPrintFloor }) {
+  return request<ActivityRequestPrintBatch>('/api/activity-requests/print/today', {
+    method: 'POST',
+    body: options,
+  });
 }
 
 export function createActivityRequest(input: {
