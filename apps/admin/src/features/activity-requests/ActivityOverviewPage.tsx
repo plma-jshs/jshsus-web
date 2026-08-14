@@ -8,7 +8,7 @@ import type {
 } from '@jshsus/types';
 import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { ChevronRight, Search, Users } from 'lucide-react';
+import { ChevronRight, Printer, Search, Users } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
@@ -31,7 +31,7 @@ import {
   formatActivityTimeRanges,
   koreaDateInput,
 } from './activitySchedule';
-import { ActivityPrintBatch } from './ActivityPrintBatch';
+import { ActivityPrintPreviewModal } from './ActivityPrintPreviewModal';
 import './operations.css';
 
 function formatParticipants(request: ActivityRequestAdminSummary) {
@@ -81,22 +81,25 @@ function ActivityPrintMenu({
   onSelect: (floor: ActivityPrintFloor) => void;
 }) {
   return (
-    <AdminSelect
-      className="activity-print-select"
-      value=""
-      aria-label="인쇄할 층 선택"
-      onChange={(event) => {
-        const value = event.target.value;
-        if (value) onSelect(value === 'all' ? 'all' : (Number(value) as ActivityPrintFloor));
-      }}
-      disabled={disabled}
-    >
-      <option value="">인쇄</option>
-      <option value="all">전체</option>
-      <option value="2">2층</option>
-      <option value="3">3층</option>
-      <option value="4">4층</option>
-    </AdminSelect>
+    <div className="activity-print-select-wrap">
+      <Printer size={15} aria-hidden="true" />
+      <AdminSelect
+        className="activity-print-select"
+        value=""
+        aria-label="인쇄할 층 선택"
+        onChange={(event) => {
+          const value = event.target.value;
+          if (value) onSelect(value === 'all' ? 'all' : (Number(value) as ActivityPrintFloor));
+        }}
+        disabled={disabled}
+      >
+        <option value="">인쇄</option>
+        <option value="all">전체</option>
+        <option value="2">2층</option>
+        <option value="3">3층</option>
+        <option value="4">4층</option>
+      </AdminSelect>
+    </div>
   );
 }
 
@@ -277,7 +280,6 @@ export function ActivityOverviewPage() {
         title: `${result.floor === 'all' ? '전체' : `${result.floor}층`} ${result.documents.length}건의 인쇄 화면을 준비했습니다.`,
         tone: 'success',
       });
-      window.setTimeout(() => window.print(), 50);
     },
     onError: () => showToast({ title: '인쇄 자료를 준비하지 못했습니다.', tone: 'danger' }),
   });
@@ -426,7 +428,13 @@ export function ActivityOverviewPage() {
           </dl>
         ) : null}
       </Drawer>
-      <ActivityPrintBatch batch={printBatch} />
+      {printBatch?.documents.length ? (
+        <ActivityPrintPreviewModal
+          batch={printBatch}
+          onClose={() => setPrintBatch(null)}
+          onPrint={() => window.print()}
+        />
+      ) : null}
     </div>
   );
 }

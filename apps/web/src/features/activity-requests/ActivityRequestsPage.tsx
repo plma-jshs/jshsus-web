@@ -2,7 +2,7 @@ import { useMemo, useState, type KeyboardEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import type { ActivityPrintFloor, ActivityRequestPrintBatch } from '@jshsus/types';
-import { CalendarDays, MapPin, PenLine, UserRound, Users } from 'lucide-react';
+import { CalendarDays, MapPin, PenLine, Printer, UserRound, Users } from 'lucide-react';
 import {
   DataTablePagination,
   type DataTablePageSize,
@@ -26,7 +26,7 @@ import {
   matchesActivityFilter,
   matchesActivityQuery,
 } from './presentation';
-import { ActivityPrintBatch } from './ActivityPrintBatch';
+import { ActivityPrintPreviewModal } from './ActivityPrintPreviewModal';
 import '../../styles/activity-requests.css';
 
 const activityDayFormatter = createKoreanDateFormatter({
@@ -46,6 +46,7 @@ function ActivityPrintMenu({
       ariaLabel="인쇄할 층 선택"
       value=""
       disabled={disabled}
+      leadingIcon={<Printer size={15} />}
       options={[
         { value: '', label: '인쇄' },
         { value: 'all', label: '전체' },
@@ -102,7 +103,6 @@ export function ActivityRequestsPage() {
         return;
       }
       setPrintMessage('');
-      window.setTimeout(() => window.print(), 50);
     },
     onError: () => setPrintMessage('인쇄 자료를 준비하지 못했습니다. 잠시 후 다시 시도해 주세요.'),
   });
@@ -460,7 +460,13 @@ export function ActivityRequestsPage() {
         ) : null}
       </section>
       {printMessage ? <p className="activity-print-message">{printMessage}</p> : null}
-      <ActivityPrintBatch batch={printBatch} />
+      {printBatch?.documents.length ? (
+        <ActivityPrintPreviewModal
+          batch={printBatch}
+          onClose={() => setPrintBatch(null)}
+          onPrint={() => window.print()}
+        />
+      ) : null}
     </PageScaffold>
   );
 }

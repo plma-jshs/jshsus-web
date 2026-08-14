@@ -118,7 +118,11 @@ function StudentPrintTable({
               ))}
               {Array.from({ length: maxRows - group.length }, (_, index) => (
                 <tr aria-hidden="true" className="is-empty" key={`empty-${index}`}>
-                  <td colSpan={periods.length + 2} />
+                  <td />
+                  <td />
+                  {periods.map((period) => (
+                    <td key={period} />
+                  ))}
                 </tr>
               ))}
             </tbody>
@@ -129,7 +133,13 @@ function StudentPrintTable({
   );
 }
 
-export function ActivityPrintBatch({ batch }: { batch: ActivityRequestPrintBatch | null }) {
+export function ActivityPrintBatch({
+  batch,
+  preview = false,
+}: {
+  batch: ActivityRequestPrintBatch | null;
+  preview?: boolean;
+}) {
   if (!batch?.documents.length) return null;
 
   const fallbackSection: ActivityRequestPrintSection = {
@@ -147,7 +157,10 @@ export function ActivityPrintBatch({ batch }: { batch: ActivityRequestPrintBatch
         : [fallbackSection];
 
   return (
-    <section className="activity-print-batch" aria-hidden="true">
+    <section
+      className={`activity-print-batch${preview ? ' activity-print-batch--preview' : ''}`}
+      aria-hidden={preview ? undefined : true}
+    >
       {sections.flatMap((section) => [
         <div
           className="activity-print-page activity-print-page--activities"

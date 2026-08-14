@@ -470,7 +470,6 @@ function UserMenu({
 
 function PortalShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const isRouteLoading = useRouterState({ select: (state) => state.isLoading });
   const normalizedPathname = pathname.replace(/\/+$/, '') || '/';
   const mobilePortalHeaderTitle = getMobilePortalHeaderTitle(pathname);
   const mobileEditorRoute = isMobileEditorRoute(pathname);
@@ -642,21 +641,7 @@ function PortalShell() {
       </header>
 
       <main id="main-content" className="main-panel" tabIndex={-1}>
-        {isRouteLoading ? (
-          <section className="route-pending" aria-busy="true" aria-label="화면을 불러오는 중">
-            <span className="sr-only" role="status">
-              화면을 불러오는 중입니다.
-            </span>
-            <div className="route-pending__skeleton" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
-          </section>
-        ) : (
-          <Outlet />
-        )}
+        <Outlet />
       </main>
 
       <nav className="mobile-tabbar" aria-label="모바일 주요 메뉴">

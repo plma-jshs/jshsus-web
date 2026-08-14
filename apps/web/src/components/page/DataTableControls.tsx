@@ -72,6 +72,7 @@ export function ToolbarSelect<TValue extends string | number>({
   options,
   onChange,
   disabled = false,
+  leadingIcon,
 }: {
   ariaLabel: string;
   label?: string;
@@ -79,6 +80,7 @@ export function ToolbarSelect<TValue extends string | number>({
   options: readonly ToolbarSelectOption<TValue>[];
   onChange: (value: TValue) => void;
   disabled?: boolean;
+  leadingIcon?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const isCompactViewport = useCompactViewport();
@@ -88,6 +90,11 @@ export function ToolbarSelect<TValue extends string | number>({
   if (isCompactViewport) {
     return (
       <label className="data-table-toolbar-select__native-wrap">
+        {leadingIcon ? (
+          <span className="data-table-toolbar-select__leading-icon" aria-hidden="true">
+            {leadingIcon}
+          </span>
+        ) : null}
         {label ? <span>{label}</span> : null}
         <select
           aria-label={ariaLabel}
@@ -135,6 +142,11 @@ export function ToolbarSelect<TValue extends string | number>({
         disabled={disabled}
         onClick={() => setOpen((current) => !current)}
       >
+        {leadingIcon ? (
+          <span className="data-table-toolbar-select__leading-icon" aria-hidden="true">
+            {leadingIcon}
+          </span>
+        ) : null}
         <span>{selected?.label ?? value}</span>
         <ChevronDown size={15} aria-hidden="true" />
       </button>
@@ -365,10 +377,14 @@ export function DataTablePagination({
   loadingMore?: boolean;
   hasMore?: boolean;
 }) {
-  if (totalPages <= 1 && !onPageSizeChange) return null;
-
   const safePage = Math.min(Math.max(page, 1), Math.max(totalPages, 1));
   const resolvedPageSize = pageSize ?? 20;
+  const [draftPageState, setDraftPageState] = useState({
+    page: safePage,
+    value: String(safePage),
+  });
+  const draftPage = draftPageState.page === safePage ? draftPageState.value : String(safePage);
+  if (totalPages <= 1 && !onPageSizeChange) return null;
   const firstItem = total ? (safePage - 1) * resolvedPageSize + 1 : undefined;
   const lastItem = total ? Math.min(safePage * resolvedPageSize, total) : undefined;
   const changePageSize = (nextPageSize: DataTablePageSize) => {
@@ -378,6 +394,16 @@ export function DataTablePagination({
     const resolvedPage = Math.min(Math.max(nextPage, 1), Math.max(totalPages, 1));
     if (resolvedPage === safePage) return;
     onChange(resolvedPage);
+  };
+  const commitPage = (value: string) => {
+    const nextPage = Number(value);
+    if (!Number.isInteger(nextPage) || nextPage < 1) {
+      setDraftPageState({ page: safePage, value: String(safePage) });
+      return;
+    }
+    const resolvedPage = Math.min(nextPage, Math.max(totalPages, 1));
+    setDraftPageState({ page: resolvedPage, value: String(resolvedPage) });
+    changePage(resolvedPage);
   };
 
   return (
@@ -414,20 +440,20 @@ export function DataTablePagination({
           <input
             inputMode="numeric"
             type="text"
-            defaultValue={String(safePage)}
-            key={safePage}
+            value={draftPage}
             onChange={(event) => {
-              event.currentTarget.value = event.currentTarget.value.replace(/\D/g, '');
+              setDraftPageState({
+                page: safePage,
+                value: event.target.value.replace(/\D/g, ''),
+              });
             }}
             onBlur={(event) => {
-              const nextPage = Number(event.currentTarget.value);
-              if (Number.isInteger(nextPage) && nextPage > 0) {
-                changePage(nextPage);
-              }
+              commitPage(event.currentTarget.value);
             }}
             onKeyDown={(event) => {
               if (event.key !== 'Enter') return;
               event.preventDefault();
+              commitPage(event.currentTarget.value);
               event.currentTarget.blur();
             }}
             aria-label="페이지 번호"
