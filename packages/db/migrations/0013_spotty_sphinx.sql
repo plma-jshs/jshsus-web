@@ -1,1 +1,0 @@
-CREATE INDEX `files_owner_idx` ON `files` (`owner_id`);

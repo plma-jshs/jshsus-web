@@ -91,7 +91,7 @@ Web과 Admin app client를 분리하고 두 client 모두 다음 explicit auth f
 
 현재 구현은 `USER_PASSWORD_AUTH`, `NEW_PASSWORD_REQUIRED`, `ForgotPassword`, `ConfirmForgotPassword`를 사용한다. Hosted UI callback URL은 이 로그인 경로에서 사용하지 않지만 남겨 두어도 무방하다.
 
-User Pool이 `email`을 required attribute로 갖는 경우에도 로그인 UI에는 이메일 입력칸을 추가하지 않는다. 최초 비밀번호 변경 시 API가 DB의 사용자 이메일을 Cognito challenge 응답에 넣고, 이메일이 없으면 `학번@jshsus.kr` 형식의 보조값으로 흐름을 완료한다. 이 보조값은 비밀번호 재설정 메일 수신을 보장하지 않으므로 실제 이메일 인증 정책을 켜기 전에는 사용자 이메일 수집·검증 절차를 별도로 준비한다.
+User Pool이 `email`을 required attribute로 갖는 경우에도 로그인 UI에는 이메일 입력칸을 추가하지 않는다. 최초 비밀번호 변경과 비밀번호 재설정은 DB에 저장된 실제 이메일을 사용한다. 이메일이 없는 계정에 `학번@jshsus.kr` 같은 합성 주소를 넣어 흐름을 우회하지 않고, 먼저 이메일을 등록하도록 명시적인 오류를 반환한다.
 
 ## 비밀번호 재설정 전달 채널
 

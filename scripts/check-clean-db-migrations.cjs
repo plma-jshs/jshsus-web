@@ -174,15 +174,6 @@ function seedPrivacyRetentionFixture() {
        '7777 Retention fixture',
        'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', now(3));
 
-    INSERT INTO legacy_activity_requests
-      (source_id, activity_date, time_text, time_ranges, location, purpose,
-       representative_text, participants_text, source_payload_hash, imported_at)
-    VALUES
-      ('retention-fixture', '2024-01-01', '10:00-11:00',
-       JSON_ARRAY(JSON_OBJECT('startsAt', '10:00', 'endsAt', '11:00')),
-       'fixture', 'Retention fixture', '7777 Retention fixture',
-       '7777 Retention fixture',
-       'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', now(3));
   `);
 }
 
@@ -324,9 +315,6 @@ function main() {
         (SELECT COUNT(*) FROM activity_request_events WHERE note = 'Retention fixture')
         +
         (SELECT COUNT(*) FROM legacy_activity_archives
-         WHERE source_id = 'retention-fixture')
-        +
-        (SELECT COUNT(*) FROM legacy_activity_requests
          WHERE source_id = 'retention-fixture')
     `).trim(),
   );

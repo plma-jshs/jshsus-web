@@ -178,7 +178,6 @@ async function printSafeCounts(connection) {
     'point_records',
     'point_cases',
     'activity_requests',
-    'legacy_activity_requests',
   ]) {
     if (!available.has(table)) continue;
     const [rows] = await connection.query(`SELECT COUNT(*) AS count FROM ${identifier(table)}`);

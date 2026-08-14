@@ -445,7 +445,7 @@ async function assertTargetReady(connection, databaseName) {
   );
   if (rows.length !== 3) {
     throw new Error(
-      'Target migrations are not current. Apply 0003_legacy_activity_archive before importing.',
+      'Target schema is not ready. Apply the current baseline migration before importing.',
     );
   }
 }

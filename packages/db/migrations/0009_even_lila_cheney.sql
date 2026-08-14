@@ -1,2 +1,0 @@
-ALTER TABLE `account_activation_codes` ADD `code_lookup_hash` varchar(64);--> statement-breakpoint
-ALTER TABLE `account_activation_codes` ADD CONSTRAINT `account_activation_code_lookup_idx` UNIQUE(`code_lookup_hash`);

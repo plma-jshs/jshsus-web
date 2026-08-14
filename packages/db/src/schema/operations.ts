@@ -402,9 +402,6 @@ export const legacyActivityArchives = mysqlTable(
   }),
 );
 
-/** @deprecated Use legacyActivityArchives. */
-export const legacyActivityRequests = legacyActivityArchives;
-
 export const activityRequests = mysqlTable(
   'activity_requests',
   {

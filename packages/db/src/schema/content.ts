@@ -165,25 +165,6 @@ export const commentLikes = mysqlTable(
   }),
 );
 
-export const reactionTargetEnum = mysqlEnum('reaction_target', ['post', 'comment', 'petition']);
-export const reactionTypeEnum = mysqlEnum('reaction_type', ['like', 'upvote', 'downvote']);
-
-export const reactions = mysqlTable(
-  'reactions',
-  {
-    targetType: reactionTargetEnum.notNull(),
-    targetId: int('target_id').notNull(),
-    userId: int('user_id')
-      .notNull()
-      .references(() => users.id),
-    type: reactionTypeEnum.notNull().default('like'),
-    createdAt: datetime('created_at', { mode: 'date', fsp: 3 }).notNull().default(now),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.targetType, table.targetId, table.userId] }),
-  }),
-);
-
 export const reportTargetEnum = mysqlEnum('report_target', ['post', 'comment', 'lost_item']);
 
 export const reports = mysqlTable(

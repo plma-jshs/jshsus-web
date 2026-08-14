@@ -41,7 +41,7 @@
 
 ### 사용되지 않는 `reactions` 테이블
 
-게시글·댓글 좋아요는 FK가 있는 `post_likes`, `comment_likes`를 사용하고 현재 API에서 `reactions`를 읽거나 쓰지 않는다. 다만 운영 데이터 0건 확인과 백업 없이 바로 DROP하지 않는다. 배포 후 읽기 전용 점검으로 행 수와 참조 사용처가 모두 0임을 확인한 뒤 별도 승인 작업으로 제거한다.
+게시글·댓글 좋아요는 FK가 있는 `post_likes`, `comment_likes`를 사용하고 현재 API에서 `reactions`를 읽거나 쓰지 않는다. 2026-08-14 v26 운영 DB에서 행 0건·참조 0건·백업 성공을 확인한 뒤 `legacy_activity_requests`와 함께 제거했다. 새 환경에서도 같은 상태가 유지되도록 현재 squashed baseline에 `DROP TABLE IF EXISTS`를 포함했다.
 
 ### 의도적으로 유지하는 중복·비정규화
 
@@ -78,5 +78,5 @@
 - `EXPLAIN`으로 활동 현황 조회가 `activity_requests_status_date_idx`를 사용하는지 확인한다.
 - 감사 로그 파기 쿼리가 `audit_logs_created_idx`를 사용하는지 확인한다.
 - `auth_accounts`에서 `password_hash IS NULL AND password_algorithm IS NOT NULL` 건수가 0인지 확인한다.
-- `reactions` 행 수와 최근 쓰기 시각이 모두 0/없음인지 확인한 뒤 제거 여부를 별도 승인한다.
+- `legacy_activity_archives` 행 수와 최근 쓰기 시각을 점검한다. `reactions`는 squashed baseline에서 제거되어 존재하지 않는 것이 정상이다.
 - `petitions.participant_count`와 `COUNT(petition_participants)` 불일치 건수를 정기 점검한다.

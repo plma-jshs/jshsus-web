@@ -210,11 +210,6 @@ export class DeviceCasesService {
 
   async remoteCases() {
     await this.ensureDefaultCases();
-    const now = new Date();
-    await this.database.db
-      .update(schema.deviceCases)
-      .set({ isConnected: true, lastSeenAt: now, updatedAt: now })
-      .where(inArray(schema.deviceCases.id, DEFAULT_DEVICE_CASE_IDS));
     return this.database.query('device-cases.remote-list', async (db) => {
       const rows = await db
         .select({

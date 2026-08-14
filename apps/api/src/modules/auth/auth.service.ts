@@ -959,7 +959,10 @@ export class AuthService {
       if (staff?.email) return staff.email;
     }
 
-    return this.fallbackCognitoEmail(flow.username);
+    throw new ConflictException({
+      code: 'AUTH_ACCOUNT_EMAIL_REQUIRED',
+      message: '계정에 등록된 이메일이 없어 먼저 이메일을 등록해야 합니다.',
+    });
   }
 
   private async findUserEmailById(userId: number): Promise<string | null> {
@@ -969,19 +972,6 @@ export class AuthService {
       .where(eq(schema.users.id, userId))
       .limit(1);
     return user?.email ?? null;
-  }
-
-  private fallbackCognitoEmail(username: string): string {
-    const normalized = username
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9._-]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 60);
-    if (normalized) return `${normalized}@jshsus.kr`;
-
-    const digest = createHash('sha256').update(username).digest('hex').slice(0, 16);
-    return `user-${digest}@jshsus.kr`;
   }
 
   private async findCognitoAccountBySubject(subject: string) {

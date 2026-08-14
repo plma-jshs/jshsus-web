@@ -95,14 +95,14 @@ GitHub Actions의 `Privacy retention`은 매일 04:30 KST 실행한다. 운영 �
 ## 레거시 탐구활동서
 
 연결할 수 없는 레거시 탐구활동서는 새 DB의 `legacy_activity_archives`에 읽기
-전용으로 격리한다. 새 DB의 기존 `legacy_activity_requests`는 0003 마이그레이션이
-만든 호환용 복제 테이블이며, 현 PHP 서비스의 원본 DB 테이블이 아니다. 신규 코드는
-새 테이블만 사용한다. 테이블 자체의 삭제·이름 변경은 1개월 검증 이후에도 별도
-승인 없이는 실행하지 않는다.
+전용으로 격리한다. `legacy_activity_requests`는 과거 이관 과정에서 사용된 호환용
+복제 테이블이며, 현 PHP 서비스의 원본 DB 테이블이 아니다. 신규 코드는 새 테이블만
+사용한다. v26 운영 DB에서는 2026-08-14 백업·행 대조 후 squashed baseline에 반영된
+정리 작업으로 제거했으며, 현 PHP 원본 DB는 이 작업의 대상이 아니다.
 
 레거시 행에는 학생 상태 변경일이 없으므로 각 행의 `activity_date`를 365일
-기산점으로 사용한다. 만료 시 **새 DB 안의** `legacy_activity_archives`와
-호환용 복제 테이블 `legacy_activity_requests`에 존재하는 동일 원문을 삭제한다.
+기산점으로 사용한다. 만료 시 **새 DB 안의** `legacy_activity_archives` 원문을
+삭제한다.
 파기 스크립트는 `jshsus-php.jshsus.kr`을 대상으로 실행하려 하면 즉시 실패한다.
 현 PHP 서비스의 원본 데이터는 이 정책 자동화의 대상이 아니다.
 

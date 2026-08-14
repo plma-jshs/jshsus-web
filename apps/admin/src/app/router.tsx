@@ -35,7 +35,6 @@ import { useEffect, useState } from 'react';
 import { SsoCallbackPage } from '../features/auth/SsoCallbackPage';
 import { SsoLoginPage } from '../features/auth/SsoLoginPage';
 import { api } from '../shared/api/adminApi';
-import { GoogleAnalytics } from '../components/analytics/GoogleAnalytics';
 
 type AdminNavEntry = {
   label: string;
@@ -479,12 +478,7 @@ function AdminShell() {
 }
 
 function AdminApp() {
-  return (
-    <>
-      <GoogleAnalytics />
-      <AdminShell />
-    </>
-  );
+  return <AdminShell />;
 }
 
 const rootRoute = createRootRoute({ component: AdminApp });

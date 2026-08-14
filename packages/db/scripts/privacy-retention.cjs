@@ -570,17 +570,9 @@ async function eraseLegacyActivityArchives(connection, cutoff, now) {
       'DELETE FROM legacy_activity_archives WHERE activity_date <= DATE(?)',
       [cutoff],
     );
-    // 0004 uses an expand migration, so the pre-rename compatibility table
-    // remains during the observation window. Remove the duplicate originals
-    // there as well; retaining either copy would violate the approved policy.
-    const [compatibilityResult] = await connection.execute(
-      'DELETE FROM legacy_activity_requests WHERE activity_date <= DATE(?)',
-      [cutoff],
-    );
     await connection.commit();
     const counts = {
       archivedActivities: Number(archiveResult.affectedRows),
-      compatibilityCopies: Number(compatibilityResult.affectedRows),
     };
     await completeJob(connection, jobId, now, counts);
     return counts;
@@ -709,7 +701,6 @@ async function main() {
       cognitoDisabled: 0,
       cognitoDeleted: 0,
       legacyActivityArchives: 0,
-      legacyActivityCompatibilityCopies: 0,
       securityLogs: 0,
       failures: 0,
     };
@@ -748,7 +739,6 @@ async function main() {
         new Date(),
       );
       totals.legacyActivityArchives = archiveCounts.archivedActivities;
-      totals.legacyActivityCompatibilityCopies = archiveCounts.compatibilityCopies;
     } catch {
       totals.failures += 1;
     }

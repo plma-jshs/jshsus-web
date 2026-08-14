@@ -1,3 +1,4 @@
+-- squashed from 0000_baseline
 CREATE TABLE `account_activation_codes` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`identity_type` enum('student','staff') NOT NULL,
@@ -761,3 +762,219 @@ CREATE INDEX `student_enrollments_student_idx` ON `student_enrollments` (`studen
 CREATE INDEX `student_enrollments_status_idx` ON `student_enrollments` (`school_year`,`student_enrollment_status`);--> statement-breakpoint
 CREATE INDEX `school_events_range_idx` ON `school_events` (`starts_at`,`ends_at`);--> statement-breakpoint
 CREATE INDEX `school_events_visibility_idx` ON `school_events` (`is_public`,`starts_at`);
+--> statement-breakpoint
+-- squashed from 0001_posts_author_name
+ALTER TABLE `posts` ADD `author_name` varchar(80);
+--> statement-breakpoint
+-- squashed from 0002_comments_author_name
+ALTER TABLE `comments` ADD `author_name` varchar(80);
+--> statement-breakpoint
+-- squashed from 0003_legacy_activity_archive
+CREATE TABLE `legacy_activity_requests` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`source_id` varchar(64) NOT NULL,
+	`activity_date` date NOT NULL,
+	`time_text` varchar(255) NOT NULL,
+	`time_ranges` json NOT NULL,
+	`location` varchar(255) NOT NULL,
+	`purpose` text NOT NULL,
+	`representative_text` varchar(255) NOT NULL,
+	`participants_text` text NOT NULL,
+	`advisor_teacher_name` varchar(128),
+	`support_text` varchar(255),
+	`submitted_label` varchar(128),
+	`source_payload_hash` varchar(64) NOT NULL,
+	`imported_at` datetime(3) NOT NULL DEFAULT (now(3)),
+	CONSTRAINT `legacy_activity_requests_id` PRIMARY KEY(`id`),
+	CONSTRAINT `legacy_activity_requests_source_idx` UNIQUE(`source_id`)
+);
+--> statement-breakpoint
+CREATE INDEX `legacy_activity_requests_date_idx` ON `legacy_activity_requests` (`activity_date`);
+--> statement-breakpoint
+CREATE INDEX `legacy_activity_requests_advisor_idx` ON `legacy_activity_requests` (`advisor_teacher_name`,`activity_date`);
+--> statement-breakpoint
+-- squashed from 0004_sturdy_madrox
+CREATE TABLE `privacy_erasure_jobs` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`policy_key` varchar(64) NOT NULL,
+	`dedupe_key` varchar(190),
+	`target_user_id` int,
+	`privacy_erasure_job_mode` enum('dry_run','apply') NOT NULL,
+	`privacy_erasure_job_status` enum('pending','running','completed','failed') NOT NULL DEFAULT 'pending',
+	`scheduled_for` datetime(3) NOT NULL,
+	`cutoff_at` datetime(3),
+	`started_at` datetime(3),
+	`completed_at` datetime(3),
+	`result_counts` json,
+	`error_code` varchar(64),
+	`created_at` datetime(3) NOT NULL DEFAULT (now(3)),
+	`updated_at` datetime(3) NOT NULL DEFAULT (now(3)),
+	CONSTRAINT `privacy_erasure_jobs_id` PRIMARY KEY(`id`),
+	CONSTRAINT `privacy_erasure_jobs_dedupe_idx` UNIQUE(`dedupe_key`)
+);
+--> statement-breakpoint
+CREATE TABLE `privacy_retention_policies` (
+	`policy_key` varchar(64) NOT NULL,
+	`retention_days` int NOT NULL,
+	`privacy_retention_disposition` enum('hard_delete','anonymize','external_lifecycle') NOT NULL,
+	`is_active` boolean NOT NULL DEFAULT true,
+	`approved_by_id` int,
+	`approved_at` datetime(3) NOT NULL,
+	`approval_reference` varchar(255) NOT NULL,
+	`created_at` datetime(3) NOT NULL DEFAULT (now(3)),
+	`updated_at` datetime(3) NOT NULL DEFAULT (now(3)),
+	CONSTRAINT `privacy_retention_policies_policy_key` PRIMARY KEY(`policy_key`)
+);
+--> statement-breakpoint
+UPDATE `users` SET `user_status` = 'active' WHERE `user_status` = 'restricted';--> statement-breakpoint
+UPDATE `student_enrollments`
+SET `student_enrollment_status` = 'graduated'
+WHERE `student_enrollment_status` IN ('transferred', 'withdrawn');--> statement-breakpoint
+CREATE TABLE `legacy_activity_archives` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`source_id` varchar(64) NOT NULL,
+	`activity_date` date NOT NULL,
+	`time_text` varchar(255) NOT NULL,
+	`time_ranges` json NOT NULL,
+	`location` varchar(255) NOT NULL,
+	`purpose` text NOT NULL,
+	`representative_text` varchar(255) NOT NULL,
+	`participants_text` text NOT NULL,
+	`advisor_teacher_name` varchar(128),
+	`support_text` varchar(255),
+	`submitted_label` varchar(128),
+	`source_payload_hash` varchar(64) NOT NULL,
+	`imported_at` datetime(3) NOT NULL DEFAULT (now(3)),
+	CONSTRAINT `legacy_activity_requests_id` PRIMARY KEY(`id`),
+	CONSTRAINT `legacy_activity_requests_source_idx` UNIQUE(`source_id`)
+);--> statement-breakpoint
+CREATE INDEX `legacy_activity_requests_date_idx` ON `legacy_activity_archives` (`activity_date`);--> statement-breakpoint
+CREATE INDEX `legacy_activity_requests_advisor_idx` ON `legacy_activity_archives` (`advisor_teacher_name`,`activity_date`);--> statement-breakpoint
+INSERT IGNORE INTO `legacy_activity_archives`
+	(`id`, `source_id`, `activity_date`, `time_text`, `time_ranges`, `location`, `purpose`,
+	 `representative_text`, `participants_text`, `advisor_teacher_name`, `support_text`,
+	 `submitted_label`, `source_payload_hash`, `imported_at`)
+SELECT
+	`id`, `source_id`, `activity_date`, `time_text`, `time_ranges`, `location`, `purpose`,
+	`representative_text`, `participants_text`, `advisor_teacher_name`, `support_text`,
+	`submitted_label`, `source_payload_hash`, `imported_at`
+FROM `legacy_activity_requests`;--> statement-breakpoint
+ALTER TABLE `users` ADD `status_changed_at` datetime(3) DEFAULT (now(3));--> statement-breakpoint
+ALTER TABLE `users` ADD `deactivated_at` datetime(3);--> statement-breakpoint
+ALTER TABLE `users` ADD `cognito_delete_after` datetime(3);--> statement-breakpoint
+ALTER TABLE `users` ADD `personal_data_erased_at` datetime(3);--> statement-breakpoint
+ALTER TABLE `student_enrollments` ADD `status_changed_at` datetime(3) DEFAULT (now(3));--> statement-breakpoint
+ALTER TABLE `privacy_erasure_jobs` ADD CONSTRAINT `privacy_erasure_jobs_target_user_id_users_id_fk` FOREIGN KEY (`target_user_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `privacy_retention_policies` ADD CONSTRAINT `privacy_retention_policies_approved_by_id_users_id_fk` FOREIGN KEY (`approved_by_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX `privacy_erasure_jobs_due_idx` ON `privacy_erasure_jobs` (`privacy_erasure_job_status`,`scheduled_for`,`id`);--> statement-breakpoint
+CREATE INDEX `privacy_erasure_jobs_policy_idx` ON `privacy_erasure_jobs` (`policy_key`,`created_at`);--> statement-breakpoint
+CREATE INDEX `privacy_erasure_jobs_target_idx` ON `privacy_erasure_jobs` (`target_user_id`,`created_at`);--> statement-breakpoint
+CREATE INDEX `privacy_retention_policies_active_idx` ON `privacy_retention_policies` (`is_active`,`retention_days`);--> statement-breakpoint
+CREATE INDEX `privacy_retention_policies_approver_idx` ON `privacy_retention_policies` (`approved_by_id`);--> statement-breakpoint
+CREATE INDEX `users_status_changed_idx` ON `users` (`user_status`,`status_changed_at`);--> statement-breakpoint
+CREATE INDEX `users_cognito_delete_idx` ON `users` (`cognito_delete_after`,`personal_data_erased_at`);--> statement-breakpoint
+CREATE INDEX `student_enrollments_status_changed_idx` ON `student_enrollments` (`school_year`,`student_enrollment_status`,`status_changed_at`);--> statement-breakpoint
+INSERT INTO `privacy_retention_policies`
+  (`policy_key`, `retention_days`, `privacy_retention_disposition`, `is_active`, `approved_at`, `approval_reference`)
+VALUES
+  ('student_records', 365, 'hard_delete', true, '2026-07-31 00:00:00.000', 'owner-confirmed-2026-07-31'),
+  ('legacy_activity_archives', 365, 'hard_delete', true, '2026-07-31 00:00:00.000', 'owner-confirmed-2026-07-31'),
+  ('security_logs', 90, 'hard_delete', true, '2026-07-31 00:00:00.000', 'owner-confirmed-2026-07-31'),
+  ('cognito_accounts', 30, 'hard_delete', true, '2026-07-31 00:00:00.000', 'owner-confirmed-2026-07-31'),
+  ('database_backups', 30, 'external_lifecycle', true, '2026-07-31 00:00:00.000', 'owner-confirmed-2026-07-31'),
+  ('account_profile', 0, 'anonymize', true, '2026-07-31 00:00:00.000', 'owner-confirmed-2026-07-31'),
+  ('community_authorship', 0, 'anonymize', true, '2026-07-31 00:00:00.000', 'owner-confirmed-2026-07-31'),
+  ('thanks_authorship', 0, 'anonymize', true, '2026-07-31 00:00:00.000', 'owner-confirmed-2026-07-31');
+--> statement-breakpoint
+-- squashed from 0005_demonic_wraith
+ALTER TABLE `activity_requests` ADD `advisor_teacher_name_snapshot` varchar(128);--> statement-breakpoint
+
+UPDATE `activity_requests` request
+INNER JOIN `staff_profiles` staff ON staff.user_id = request.teacher_id
+SET request.advisor_teacher_name_snapshot = staff.name
+WHERE request.advisor_teacher_name_snapshot IS NULL;--> statement-breakpoint
+
+UPDATE `activity_requests` request
+INNER JOIN `legacy_activity_archives` archive
+  ON request.issued_number = CONCAT(
+    'LEGACY-SSAM-',
+    LEFT(SHA2(archive.source_id, 256), 48)
+  )
+SET
+  request.advisor_teacher_name_snapshot = NULLIF(TRIM(archive.advisor_teacher_name), ''),
+  request.starts_at = DATE_SUB(
+    STR_TO_DATE(
+      CONCAT(
+        DATE_FORMAT(archive.activity_date, '%Y-%m-%d'),
+        ' ',
+        JSON_UNQUOTE(JSON_EXTRACT(archive.time_ranges, '$[0].startsAt'))
+      ),
+      '%Y-%m-%d %H:%i'
+    ),
+    INTERVAL 9 HOUR
+  ),
+  request.ends_at = DATE_SUB(
+    STR_TO_DATE(
+      CONCAT(
+        DATE_FORMAT(archive.activity_date, '%Y-%m-%d'),
+        ' ',
+        JSON_UNQUOTE(
+          JSON_EXTRACT(
+            archive.time_ranges,
+            CONCAT('$[', JSON_LENGTH(archive.time_ranges) - 1, '].endsAt')
+          )
+        )
+      ),
+      '%Y-%m-%d %H:%i'
+    ),
+    INTERVAL 9 HOUR
+  )
+WHERE JSON_LENGTH(archive.time_ranges) > 0;
+--> statement-breakpoint
+-- squashed from 0006_calendar_event_categories
+UPDATE `school_events`
+SET
+  `is_holiday` = (`is_holiday` = true OR `category` = 'holiday'),
+  `category` = CASE
+    WHEN `is_holiday` = true THEN 'holiday'
+    WHEN `category` = 'observance' THEN 'observance'
+    ELSE 'school'
+  END;
+--> statement-breakpoint
+-- squashed from 0007_unknown_arclight
+CREATE INDEX `audit_logs_created_idx` ON `audit_logs` (`created_at`,`id`);--> statement-breakpoint
+CREATE INDEX `activity_request_events_request_created_idx` ON `activity_request_events` (`activity_request_id`,`created_at`);--> statement-breakpoint
+CREATE INDEX `activity_requests_status_date_idx` ON `activity_requests` (`activity_request_status`,`starts_at`,`id`);
+--> statement-breakpoint
+-- squashed from 0008_normalize_nicknames
+-- codex-contract-cleanup-approved: 닉네임은 중복 가능한 표시명이며, 기존 유니크 인덱스를 일반 인덱스로 교체한다.
+DROP INDEX `users_nickname_idx` ON `users`;
+--> statement-breakpoint
+CREATE INDEX `users_nickname_idx` ON `users` (`nickname`);
+--> statement-breakpoint
+UPDATE `users`
+SET `nickname` = `name`, `updated_at` = NOW(3)
+WHERE `personal_data_erased_at` IS NULL
+  AND (`nickname` IS NULL OR TRIM(`nickname`) = '');
+--> statement-breakpoint
+-- squashed from 0009_even_lila_cheney
+ALTER TABLE `account_activation_codes` ADD `code_lookup_hash` varchar(64);--> statement-breakpoint
+ALTER TABLE `account_activation_codes` ADD CONSTRAINT `account_activation_code_lookup_idx` UNIQUE(`code_lookup_hash`);
+--> statement-breakpoint
+-- squashed from 0010_lean_songbird
+ALTER TABLE `posts` ADD `pinned` boolean DEFAULT false;
+--> statement-breakpoint
+-- squashed from 0011_kind_supreme_intelligence
+ALTER TABLE `account_activation_codes` ADD `school_year` int;--> statement-breakpoint
+CREATE INDEX `account_activation_school_year_idx` ON `account_activation_codes` (`school_year`);
+--> statement-breakpoint
+-- squashed from 0012_lumpy_sauron
+ALTER TABLE `account_activation_codes` ADD `expires_at` datetime(3);--> statement-breakpoint
+CREATE INDEX `account_activation_expires_idx` ON `account_activation_codes` (`expires_at`);
+--> statement-breakpoint
+-- squashed from 0013_spotty_sphinx
+CREATE INDEX `files_owner_idx` ON `files` (`owner_id`);
+--> statement-breakpoint
+-- squashed from 0014_loose_princess_powerful
+-- codex-contract-cleanup-approved: the unused reactions table and the fully archived legacy activity compatibility table were backed up, audited for references, and removed from the v26 operational database.
+DROP TABLE IF EXISTS `legacy_activity_requests`, `reactions`;

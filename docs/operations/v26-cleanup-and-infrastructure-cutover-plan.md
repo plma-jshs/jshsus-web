@@ -12,8 +12,8 @@
 - 휴대폰 보관함 원격 API의 별도 Guard 설정은 제거하고 기존 원격 엔드포인트 동작을
   복원했다.
 - 일반 사용자 파일 누적 quota 기본값을 100MB에서 1GB(1024MB)로 올렸다.
-- GA4의 공개 경로 allowlist는 제거했다. 측정 ID가 설정된 경우 웹과 관리자 앱의
-  라우트 이동을 모두 수집하고, 측정 ID가 비어 있으면 수집하지 않는다.
+- GA4는 `apps/web`에서만 사용한다. 측정 ID가 설정된 경우 과구리 웹의 라우트 이동을
+  수집하고, 관리자 앱에는 GA 스크립트·페이지뷰·빌드 측정 ID를 전달하지 않는다.
 - 비밀번호 찾기는 DB에 저장된 이메일·전화번호를 대상으로 하는 기존 정책으로
   복원했다. Cognito의 `email_verified`/`phone_number_verified`만을 강제하는
   복구 정책은 적용하지 않는다.
@@ -38,6 +38,26 @@
 5. 변경 전후의 `/api/health`, 로그인, 게시글·첨부파일, 관리자 접근성, S3 접근,
    메일 발송 smoke test를 기록한다.
 6. 모든 파괴적 변경은 최소 한 번의 dry-run과 복구 리허설 후 실행한다.
+
+## 2.1 레거시 서비스와의 병행 운영 원칙
+
+기존 `jshsus.kr`와 v26은 전환 기간 동안 동시에 살아 있어야 한다. 따라서 전환
+승인 전에는 레거시 서비스의 디렉터리·프로세스·원본 DB·프록시 라우팅을 삭제하거나
+덮어쓰지 않는다.
+
+- 레거시는 기존 사용자와 기존 쓰기의 서비스 경로로 유지하고, v26은 별도 Compose
+  project·release·DB 연결로 운영한다.
+- 두 서비스가 같은 콘텐츠를 쓰게 만들기 전에 **어느 DB가 원장인지, 신규 글·댓글·
+  첨부파일을 어느 쪽에서 생성하는지, 동기화 지연을 허용하는지**를 먼저 확정한다.
+  승인 없이 양방향 dual-write나 임의의 주기적 덮어쓰기를 추가하지 않는다.
+- 병행 기간에는 레거시 → v26 일회성 import와 이후 변경분 동기화의 차이를 기록하고,
+  ID 충돌·작성자 매핑·첨부파일 object key 충돌·삭제/숨김 상태를 대조한다.
+- 인증·메일·S3·조회수·알림처럼 공유될 수 있는 기능은 요청이 어느 origin에서
+  발생했는지와 실제 원장 기록을 함께 관찰한다. 한쪽 서비스의 성공을 다른 쪽의
+  성공으로 추정하지 않는다.
+- cutover 전에는 읽기 트래픽 비교, 쓰기 smoke test, 첨부파일 권한 확인,
+  롤백을 완료한다. 병행 기간이 끝나는 날짜와 종료 조건은 별도 승인 항목으로
+  남긴다.
 
 ## 3. v26 서버 디렉터리 정리
 
@@ -74,21 +94,23 @@ ss -lntup
 기존 `jshsus.kr`, `points.jshsus.kr`, PM2 `plma`·`iam`·`OAuth`, NPM,
 SpiceDB, Redis, MySQL은 v26 정리의 부수 대상이 아니다.
 
-## 4. 마이그레이션 squash
+## 4. 마이그레이션 squash (2026-08-14 완료)
 
-1. 현재 production DB의 Drizzle journal, 적용 migration 목록, 실제
-   `information_schema`를 비교해 drift를 먼저 고친다.
-2. 현행 스키마에서 재현 가능한 baseline SQL과 checksum을 만들고, 빈 DB와 운영
-   clone에 각각 적용한다.
-3. 새 baseline은 기존 운영 DB에 바로 덮어쓰지 않는다. 운영에서는 현재 journal을
-   유지하고, 새 baseline은 다음 major release 또는 신규 설치용으로 사용한다.
-4. 전환이 필요하면 maintenance window에서 journal 기준점, 배포 이미지, 롤백
-   baseline을 함께 고정한다.
-5. squash 전 migration 파일과 snapshot/journal은 archive tag로 보존한다. 이미
-   적용된 migration 파일을 조용히 수정하거나 삭제하지 않는다.
+v26의 기존 15개 Drizzle migration을 `0000_baseline.sql` 하나로 합쳤다. 작업 전
+운영 DB dump를 생성하고 checksum을 저장했으며, 다음을 확인했다.
 
-검증 기준은 빈 DB와 production clone의 테이블·인덱스·FK·기본값·행 수가 일치하고,
-API smoke test 및 `pnpm db:migrations:check`가 통과하는 것이다.
+- 빈 임시 MySQL DB에 baseline을 적용해 52개 테이블이 생성되고
+  `legacy_activity_requests`·`reactions`가 생성되지 않음을 확인했다.
+- v26 운영 DB는 데이터 테이블을 변경하지 않고 `__drizzle_migrations`만 baseline
+  1건으로 전환했다. 핵심 행 수(`users`, `posts`, `files`, `activity_requests`,
+  `legacy_activity_archives`)는 전환 전후 동일했다.
+- 기존 PHP 원본 DB와 레거시 서비스의 migration journal은 건드리지 않았다.
+- 운영 DB journal을 baseline으로 전환한 뒤에는 이전 migration timeline만 포함한
+  구 릴리스를 다시 배포하지 않는다. 다음 v26 배포는 `0000_baseline`이 포함된
+  코드·Compose release와 함께 진행한다.
+
+새 스키마 변경은 이후 baseline 다음 migration으로 추가한다. squash 이전 파일은
+Git history에서 추적할 수 있으며, 운영 백업은 별도 보존한다.
 
 ## 5. 레거시 테이블·컬럼 제거
 
@@ -100,21 +122,21 @@ API smoke test 및 `pnpm db:migrations:check`가 통과하는 것이다.
 3. `users.student_no/grade/class_no/number/gender`, `auth_accounts`의 인증 호환
    컬럼처럼 아직 런타임에서 읽는 필드는 정규 테이블로 읽기를 전환한 뒤 최소 한 달
    불일치 감시를 거친다.
-4. `reactions`처럼 사용처가 없는 후보도 행 수 0, 참조 0, 백업 복구 성공을 확인한
-   별도 파괴 migration에서 제거한다.
+4. `reactions`와 `legacy_activity_requests`는 사용처·FK·행 대조와 백업 복구를
+   확인했으므로 squashed baseline 정리 작업으로 제거했다(2026-08-14, v26 DB 한정).
 5. 레거시 활동 보존 테이블과 기존 PHP 원본 DB는 신규 v26 정리 대상과 분리하고,
    보존기간·개인정보 파기 승인을 받은 뒤 별도 처리한다.
 
 각 삭제는 expand/contract 방식으로 진행한다. 먼저 새 경로를 추가하고, 읽기 전환과
 관찰을 끝낸 뒤에만 구 테이블·컬럼을 제거한다.
 
-## 6. `deploy.sh` 정리
+## 6. `deploy.sh` 정리 (확인 완료)
 
-`deploy/deploy.sh`의 `cleanup_old_images`에 있는 전역
-`docker image prune -f --filter 'until=168h'`는 제거한다. 이 명령은 v26과 무관한
-이미지까지 지울 수 있다.
+현재 `deploy.sh`에는 전역 `docker image prune`가 없고, `cleanup_old_images`가
+v26의 `ghcr.io/<namespace>/jshsus-{api,web,admin,migrate}` 이미지에만 적용된다.
+현재·직전 release digest를 보존하고 오래된 v26 digest만 정리하는 정책을 유지한다.
 
-대신 다음 범위만 정리한다.
+정리 범위는 다음과 같다.
 
 - 현재·이전 release digest는 보존한다.
 - `ghcr.io/<namespace>/jshsus-{api,web,admin,migrate}`의 오래된 digest만
@@ -132,6 +154,9 @@ API smoke test 및 `pnpm db:migrations:check`가 통과하는 것이다.
 - origin 인증서, SSL mode, 캐시·페이지 규칙, `/api` 캐시 우회, WebSocket/SSE,
   업로드 request size와 rate limit을 검토한다.
 - 전환 전 낮은 TTL로 내리고, 전환 후 health check와 캐시 purge를 단계적으로 한다.
+- 2026-08-14 read-only 확인 결과 v26/admin-v26/auth의 DNS와 NPM upstream은 현재
+  v26 Compose를 가리키고 있었다. 기존 `jshsus.kr`과 레거시 host는 변경하지 않았다.
+- Cloudflare API 자격 증명이 이 환경에 없어 DNS·캐시·규칙 변경은 실행하지 않았다.
 
 ### Nginx Proxy Manager
 
@@ -140,6 +165,9 @@ API smoke test 및 `pnpm db:migrations:check`가 통과하는 것이다.
 - UI/API 또는 공식 API로만 변경하고 NPM DB를 직접 수정하지 않는다.
 - `v26`과 `admin-v26`만 새 upstream으로 바꾸고 기존 `jshsus.kr`·`points`는
   별도 change로 유지한다.
+- 현재 NPM에는 이미 `v26.jshsus.kr -> 172.18.0.200:80`,
+  `admin-v26.jshsus.kr -> 172.18.0.201:80`, `auth.jshsus.kr -> 172.18.0.200:80`
+  라우팅이 설정되어 있어 이번에는 변경하지 않았다.
 
 ### AWS
 
@@ -158,6 +186,9 @@ API smoke test 및 `pnpm db:migrations:check`가 통과하는 것이다.
   제거한다.
 - `S3_BUCKET=jshsus-uploads`, `AWS_REGION`, `VITE_GA_MEASUREMENT_ID`, Cognito,
   SES, Sendon, deploy SSH secret을 용도별로 분리한다.
+- `production` 환경에 `AWS_REGION`과 `S3_BUCKET`을 variable로 등록하고 workflow가
+  두 값을 variable에서 읽도록 전환했다. 중복되어 있던 두 secret은 삭제했으며,
+  일반 S3용 AWS key와 Cognito 전용 key는 분리된 secret으로 유지한다.
 - secret은 로그에 출력하지 않고, repository variable과 environment secret의
   우선순위를 workflow에서 명시한다.
 - main 보호 규칙, required checks, production environment approval,
