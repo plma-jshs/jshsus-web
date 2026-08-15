@@ -365,10 +365,11 @@
 .activity-participants-popover {
   position: fixed;
   z-index: var(--j-layer-popover);
-  width: min(280px, calc(100vw - 24px));
-  max-height: min(300px, calc(100vh - 24px));
+  width: fit-content;
+  min-width: 0;
+  max-width: calc(100vw - 24px);
   padding: 12px 14px;
-  overflow-y: auto;
+  overflow: visible;
   box-sizing: border-box;
   border: 1px solid var(--j-color-border);
   border-radius: 10px;
@@ -382,7 +383,7 @@
 
 .activity-participants-popover strong {
   display: block;
-  margin-bottom: 7px;
+  margin: 0;
   color: var(--j-color-text-secondary);
   font-size: 11px;
   font-weight: 700;
@@ -390,22 +391,43 @@
 
 .activity-participants-popover ul {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-flow: column;
+  width: max-content;
+  max-width: 100%;
   padding: 0;
-  margin: 0;
-  column-gap: 14px;
-  row-gap: 2px;
+  margin: 8px 0 0;
+  border-top: 1px solid var(--j-color-border);
+  padding-top: 8px;
   list-style: none;
 }
 
+.activity-participants-popover__list--single {
+  grid-template-columns: max-content;
+  grid-auto-flow: row;
+  row-gap: 2px;
+}
+
+.activity-participants-popover__list--double {
+  grid-template-columns: repeat(2, max-content);
+  grid-auto-flow: column;
+  column-gap: 16px;
+  row-gap: 2px;
+}
+
 .activity-participants-popover li {
+  display: grid;
   min-width: 0;
+  grid-template-columns: 4ch max-content;
+  column-gap: 6px;
   padding: 2px 0;
   border: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.activity-participants-popover__student-number {
+  width: 4ch;
+  color: var(--j-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .activity-table__period {

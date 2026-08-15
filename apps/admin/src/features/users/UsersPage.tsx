@@ -45,7 +45,7 @@ import {
   useToast,
 } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
-import { formatKoreanDate } from '../../shared/lib/date';
+import { formatAdminDate } from '../../shared/lib/date';
 import { loadExcelJs } from '../../shared/lib/excel';
 import './users.css';
 
@@ -138,8 +138,7 @@ function identityNumber(identity: Identity) {
 
 function formatDate(value?: string) {
   if (!value) return '-';
-  return formatKoreanDate(value, {
-    year: 'numeric',
+  return formatAdminDate(value, {
     month: '2-digit',
     day: '2-digit',
   });

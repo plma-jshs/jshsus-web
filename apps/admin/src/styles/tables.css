@@ -276,10 +276,16 @@
 }
 
 .admin-table-pagination--compact .ui-page-size-select {
-  min-width: 128px;
-  width: 128px !important;
+  min-width: 112px;
+  width: 112px !important;
   height: 36px;
   min-height: 36px;
+  flex: 0 0 112px;
+}
+
+.admin-table-pagination--compact .ui-page-size-select .admin-select__trigger {
+  box-sizing: border-box;
+  padding-inline: 9px;
 }
 
 .admin-table-pagination__range {
@@ -359,9 +365,22 @@
   cursor: pointer;
 }
 
+.admin-table-pagination__previous,
+.admin-table-pagination__next {
+  border-color: transparent;
+  background: transparent;
+}
+
 .admin-table-pagination button:hover:not(:disabled):not([aria-current='page']) {
   border-color: var(--line);
   background: var(--j-color-surface-hover);
+}
+
+.admin-table-pagination button.admin-table-pagination__previous,
+.admin-table-pagination button.admin-table-pagination__next,
+.admin-table-pagination button.admin-table-pagination__previous:hover:not(:disabled),
+.admin-table-pagination button.admin-table-pagination__next:hover:not(:disabled) {
+  border-color: transparent;
 }
 
 .admin-table-pagination button[aria-current='page'] {
@@ -485,19 +504,7 @@
   font-size: 13px;
 }
 
-@media (max-width: 1100px) {
-  .admin-table-toolbar {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .admin-table-toolbar__controls {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-}
-
-@media (min-width: 641px) and (max-width: 1100px) {
+@media (min-width: 768px) and (max-width: 1100px) {
   .content-panel-actions .admin-table-toolbar,
   .content-panel-actions .admin-table-toolbar__controls {
     width: 100%;
@@ -520,7 +527,122 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (min-width: 768px) and (max-width: 1023px) {
+  .admin-table-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+    align-items: end;
+  }
+
+  .admin-table-toolbar__summary {
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  .admin-table-toolbar__controls {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
+
+  .admin-table-toolbar__controls
+    > :where(
+      input[type='text'],
+      input[type='search'],
+      input:not([type]),
+      .admin-search-field,
+      .content-search-field,
+      .operation-search-field,
+      .point-filter
+    ) {
+    min-width: 0;
+    width: auto;
+    flex: 1 1 auto;
+  }
+
+  .admin-table-toolbar__controls > .admin-select:not(.ui-page-size-select) {
+    min-width: 76px;
+    max-width: 124px;
+  }
+
+  .admin-table-toolbar__controls > :where(button, a) {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .ui-date-range {
+    min-width: 220px;
+  }
+
+  .ui-date-range__controls {
+    grid-template-columns: 100px auto 100px;
+  }
+
+  .ui-date-range__controls input,
+  .ui-date-input {
+    width: 100px !important;
+  }
+
+  .operation-list-toolbar .admin-table-toolbar__controls {
+    flex-wrap: nowrap;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 860px) {
+  .admin-table-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .admin-table-toolbar__summary,
+  .admin-table-toolbar__controls {
+    width: 100%;
+    grid-column: 1 / -1;
+  }
+
+  .admin-table-toolbar__controls {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .admin-table-toolbar__controls
+    > :where(
+      input[type='text'],
+      input[type='search'],
+      input:not([type]),
+      .admin-search-field,
+      .content-search-field,
+      .operation-search-field,
+      .point-filter
+    ) {
+    width: 100%;
+    flex: 1 0 100%;
+  }
+
+  .admin-table-toolbar__controls > :last-child {
+    margin-left: auto;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .admin-data-table th[data-compact-hidden='true'],
+  .admin-data-table td[data-compact-hidden='true'] {
+    display: none !important;
+  }
+
+  .admin-data-table th[data-compact-only='true'],
+  .admin-data-table td[data-compact-only='true'] {
+    display: table-cell !important;
+  }
+
+  .admin-data-table td[data-compact-only='true'] {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 767px) {
   .admin-table-toolbar {
     display: grid;
     min-height: 44px;
@@ -893,8 +1015,8 @@
     padding: 0 !important;
     align-items: center;
     justify-content: center;
-    border-color: var(--line) !important;
-    background: var(--surface) !important;
+    border-color: transparent !important;
+    background: transparent !important;
   }
 
   .admin-table-pagination__mobile-label,

@@ -107,7 +107,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .admin-nav-item.desktop-only,
   .admin-nav-group.desktop-only-group {
     display: none;

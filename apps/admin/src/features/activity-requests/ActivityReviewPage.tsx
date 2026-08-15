@@ -290,9 +290,7 @@ export function ActivityReviewPage() {
       <AdminListPanel
         toolbar={
           <TableToolbar
-            summary={
-              requestsQuery.data ? `대기 ${requestsQuery.data.total}건` : '승인 대기 탐구활동서'
-            }
+            summary={requestsQuery.data ? `대기 ${requestsQuery.data.total}건` : '대기 탐구활동서'}
             className="operation-list-toolbar operation-review-toolbar"
             mobileSearch={
               <input
@@ -306,7 +304,7 @@ export function ActivityReviewPage() {
                   activityReviewSearchOptions.find((option) => option.value === searchBy)?.label ??
                   '전체'
                 } 검색`}
-                aria-label="승인 대기 탐구활동서 검색"
+                aria-label="대기 탐구활동서 검색"
               />
             }
             mobileActions={
@@ -380,9 +378,9 @@ export function ActivityReviewPage() {
             }}
             loading={requestsQuery.isPending}
             loadingText="승인 대상을 불러오는 중입니다."
-            emptyText="승인 대기 중인 탐구활동서가 없습니다."
+            emptyText="대기 중인 탐구활동서가 없습니다."
             alwaysShowPagination
-            caption="승인 대기 탐구활동서"
+            caption="대기 탐구활동서"
             getRowId={(request) => String(request.id)}
           />
         )}

@@ -21,7 +21,7 @@ import {
   useToast,
 } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
-import { formatKoreanDate } from '../../shared/lib/date';
+import { formatAdminDate, formatKoreanDate } from '../../shared/lib/date';
 import {
   ActivityStatusBadge,
   activityStatusOptions,
@@ -70,7 +70,7 @@ function activityParticipants(request: ActivityRequestAdminSummary) {
 }
 
 function formatActivityMobileDate(request: ActivityRequestAdminSummary) {
-  const date = formatKoreanDate(request.startsAt, {
+  const date = formatAdminDate(request.startsAt, {
     month: '2-digit',
     day: '2-digit',
   });
@@ -104,21 +104,27 @@ function ActivityStatusSelect({
   onChange: (status: ActivityRequestAdminStatus) => void;
 }) {
   return (
-    <select
-      aria-label={label}
-      className={`operation-status-select operation-status-select--${status}`}
-      disabled={disabled}
-      value={status}
+    <span
+      className="operation-status-select-event-guard"
       onClick={(event) => event.stopPropagation()}
       onKeyDown={(event) => event.stopPropagation()}
-      onChange={(event) => onChange(event.target.value as ActivityRequestAdminStatus)}
     >
-      {activityStatusOptions.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
+      <AdminSelect
+        aria-label={label}
+        className={`operation-status-select operation-status-select--${status}`}
+        disabled={disabled}
+        menuClassName="operation-status-select__menu"
+        nativeOnMobile={false}
+        value={status}
+        onChange={(event) => onChange(event.target.value as ActivityRequestAdminStatus)}
+      >
+        {activityStatusOptions.map((option) => (
+          <option key={option.value} value={option.value} data-badge="●" data-tone={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </AdminSelect>
+    </span>
   );
 }
 
@@ -207,19 +213,13 @@ function createColumns(
 ): ColumnDef<ActivityRequestAdminSummary>[] {
   return [
     {
-      accessorKey: 'id',
-      header: '번호',
-      cell: ({ row }) => `#${row.original.id}`,
-      meta: { widthPreset: 'index', hideOnMobile: true },
-    },
-    {
       id: 'startsAt',
       accessorFn: (request) => request.startsAt,
       header: '날짜',
       enableSorting: true,
       cell: ({ row }) =>
-        formatKoreanDate(row.original.startsAt, { month: '2-digit', day: '2-digit' }),
-      meta: { width: 76, align: 'center' },
+        formatAdminDate(row.original.startsAt, { month: '2-digit', day: '2-digit' }),
+      meta: { width: 76, align: 'center', hideAtCompact: true },
     },
     {
       id: 'time',
@@ -250,13 +250,52 @@ function createColumns(
           </span>
         );
       },
-      meta: { minWidth: 164, align: 'center' },
+      meta: { minWidth: 164, align: 'center', hideAtCompact: true },
+    },
+    {
+      id: 'compactDateTime',
+      header: '일시',
+      accessorFn: (request) => request.startsAt,
+      enableSorting: false,
+      cell: ({ row }) => {
+        const request = row.original;
+        const date = koreaDateInput(new Date(request.startsAt));
+        return (
+          <span className="operation-activity-compact-meta">
+            <strong>
+              {formatAdminDate(request.startsAt, { month: '2-digit', day: '2-digit' })}
+            </strong>
+            <span>
+              {formatActivityTimeRanges(
+                date,
+                request.startsAt,
+                request.endsAt,
+                request.activitySlotIds,
+              )}
+            </span>
+          </span>
+        );
+      },
+      meta: { compactOnly: true, minWidth: 140, align: 'center' },
     },
     {
       accessorKey: 'location',
       header: '장소',
       enableSorting: false,
-      meta: { minWidth: 160, maxWidth: 250, truncate: true },
+      meta: { minWidth: 160, maxWidth: 250, truncate: true, hideAtCompact: true },
+    },
+    {
+      id: 'compactLocationTeacher',
+      header: '장소/교사',
+      accessorFn: (request) => `${request.location} ${request.advisorTeacherName ?? ''}`,
+      enableSorting: false,
+      cell: ({ row }) => (
+        <span className="operation-activity-compact-meta">
+          <strong>{row.original.location}</strong>
+          <span>{row.original.advisorTeacherName ?? '-'}</span>
+        </span>
+      ),
+      meta: { compactOnly: true, minWidth: 150, maxWidth: 220 },
     },
     {
       accessorKey: 'purpose',
@@ -283,7 +322,7 @@ function createColumns(
       header: '지도교사',
       enableSorting: false,
       cell: ({ getValue }) => getValue<string | undefined>() ?? '-',
-      meta: { width: 110, align: 'left' },
+      meta: { width: 110, align: 'left', hideAtCompact: true },
     },
     {
       accessorKey: 'status',

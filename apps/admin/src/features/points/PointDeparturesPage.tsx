@@ -14,7 +14,7 @@ import {
   TableToolbar,
   useToast,
 } from '../../components/ui';
-import { formatKoreanDate } from '../../shared/lib/date';
+import { formatAdminDate } from '../../shared/lib/date';
 import {
   pointsApi,
   type DepartureCandidate,
@@ -33,8 +33,7 @@ const today = new Intl.DateTimeFormat('en-CA', {
 
 function formatDateTime(value?: string) {
   if (!value) return '-';
-  return formatKoreanDate(value, {
-    year: 'numeric',
+  return formatAdminDate(value, {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -249,23 +248,25 @@ export function PointDeparturesPage() {
         enableSorting: false,
         cell: ({ row }) =>
           row.original.currentPoint <= -20 ? (
-            <RowActions>
-              <Button
-                className="point-departure-action"
-                variant="danger"
-                size="sm"
-                onClick={() => {
-                  setSelected(row.original);
-                  setMemo('');
-                  setBaseDate(today);
-                }}
-              >
-                <LogOut size={14} aria-hidden="true" />
-                퇴사
-              </Button>
-            </RowActions>
+            <span className="point-departure-action-cell">
+              <RowActions>
+                <Button
+                  className="point-departure-action"
+                  variant="danger"
+                  size="sm"
+                  onClick={() => {
+                    setSelected(row.original);
+                    setMemo('');
+                    setBaseDate(today);
+                  }}
+                >
+                  <LogOut size={14} aria-hidden="true" />
+                  퇴사
+                </Button>
+              </RowActions>
+            </span>
           ) : (
-            '—'
+            <span className="point-departure-action-cell">—</span>
           ),
         meta: { align: 'center', width: 92 },
       },

@@ -540,7 +540,7 @@
   font-size: 12px;
   font-weight: 750;
 }
-@media (min-width: 641px) {
+@media (min-width: 768px) {
   .identity-panel > .admin-table-toolbar .admin-table-toolbar__controls {
     flex: 1 1 auto;
     justify-content: flex-end;
@@ -579,7 +579,7 @@
     width: 100%;
   }
 }
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .identity-success {
     align-items: flex-start;
     flex-wrap: wrap;

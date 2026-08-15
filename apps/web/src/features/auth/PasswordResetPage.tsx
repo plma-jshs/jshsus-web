@@ -330,9 +330,6 @@ export function PasswordResetPage() {
               </button>
               <span> ({verificationTimerLabel})</span>
             </div>
-            <p className="auth-inline-error" role={activeError ? 'alert' : undefined}>
-              {activeError ?? '\u00a0'}
-            </p>
             {verifyMutation.isPending ? (
               <p className="auth-otp-status" role="status">
                 인증번호 확인 중입니다.

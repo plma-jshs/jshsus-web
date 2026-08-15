@@ -29,6 +29,7 @@ type AdminSelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, 'multiple'
   children: ReactNode;
   nativeOnMobile?: boolean;
   mobileLabel?: string;
+  menuClassName?: string;
 };
 
 function toOptions(children: ReactNode): SelectOption[] {
@@ -65,6 +66,7 @@ export function AdminSelect({
   onInvalid,
   nativeOnMobile = true,
   mobileLabel,
+  menuClassName,
   'aria-label': ariaLabel,
   ...selectProps
 }: AdminSelectProps) {
@@ -79,7 +81,7 @@ export function AdminSelect({
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
   const [mobile, setMobile] = useState(() =>
     typeof window !== 'undefined' && typeof window.matchMedia === 'function'
-      ? window.matchMedia('(max-width: 640px)').matches
+      ? window.matchMedia('(max-width: 767px)').matches
       : nativeOnMobile,
   );
   const rootRef = useRef<HTMLDivElement>(null);
@@ -95,7 +97,7 @@ export function AdminSelect({
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return undefined;
-    const query = window.matchMedia('(max-width: 640px)');
+    const query = window.matchMedia('(max-width: 767px)');
     const handleChange = (event: MediaQueryListEvent) => setMobile(event.matches);
     query.addEventListener('change', handleChange);
     return () => query.removeEventListener('change', handleChange);
@@ -234,7 +236,7 @@ export function AdminSelect({
         ? createPortal(
             <div
               aria-label={ariaLabel}
-              className="admin-select__menu"
+              className={`admin-select__menu${menuClassName ? ` ${menuClassName}` : ''}`}
               id={listboxId}
               ref={menuRef}
               role="listbox"

@@ -116,7 +116,7 @@ export function NoticeManagementPage() {
   const { showToast } = useToast();
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState(20);
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'id', desc: true }]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'publishedAt', desc: true }]);
   const [selectedNotice, setSelectedNotice] = useState<NoticeSummary | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<NoticeSummary | null>(null);
 
@@ -164,12 +164,6 @@ export function NoticeManagementPage() {
 
   const columns = useMemo<ColumnDef<NoticeSummary>[]>(
     () => [
-      {
-        accessorKey: 'id',
-        header: '번호',
-        cell: ({ row }) => row.original.publicNumber,
-        meta: { align: 'center', width: 72, hideOnMobile: true },
-      },
       {
         accessorKey: 'title',
         header: '제목',
@@ -292,16 +286,16 @@ export function NoticeManagementPage() {
         }
         mobileSort={
           <MobileSortSelect
-            value={`${sorting[0]?.id ?? 'id'}:${sorting[0]?.desc ? 'desc' : 'asc'}`}
+            value={`${sorting[0]?.id ?? 'publishedAt'}:${sorting[0]?.desc ? 'desc' : 'asc'}`}
             options={[
-              { value: 'id:desc', label: '등록 최신순' },
-              { value: 'id:asc', label: '등록 오래된순' },
+              { value: 'publishedAt:desc', label: '게시일 최신순' },
+              { value: 'publishedAt:asc', label: '게시일 오래된순' },
               { value: 'viewCount:desc', label: '조회수 높은순' },
               { value: 'viewCount:asc', label: '조회수 낮은순' },
             ]}
             onChange={(value) => {
               const [id, direction] = value.split(':');
-              setSorting([{ id: id ?? 'id', desc: direction === 'desc' }]);
+              setSorting([{ id: id ?? 'publishedAt', desc: direction === 'desc' }]);
             }}
           />
         }
@@ -415,11 +409,7 @@ export function NoticeManagementPage() {
         open={selectedNotice !== null}
         onClose={() => setSelectedNotice(null)}
         title={selectedNotice?.title ?? '공지 관리'}
-        description={
-          selectedNotice
-            ? `${selectedNotice.department || '작성자 미상'} · 공지 #${selectedNotice.publicNumber}`
-            : undefined
-        }
+        description={selectedNotice ? selectedNotice.department || '작성자 미상' : undefined}
         className="content-drawer content-drawer--wide"
         footer={
           selectedNotice ? (

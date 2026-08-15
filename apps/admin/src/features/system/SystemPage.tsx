@@ -10,12 +10,11 @@ import {
   Users,
 } from 'lucide-react';
 import { api, describeAdminApiError } from '../../shared/api/adminApi';
-import { formatKoreanDate } from '../../shared/lib/date';
+import { formatAdminDate } from '../../shared/lib/date';
 import './system.css';
 
 function formatCheckedAt(value: string) {
-  return formatKoreanDate(value, {
-    year: 'numeric',
+  return formatAdminDate(value, {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',

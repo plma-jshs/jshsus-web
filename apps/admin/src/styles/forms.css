@@ -89,7 +89,7 @@ select.ui-control:not([multiple]) {
   display: none;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .admin-filter-sheet .admin-select__mobile-label {
     display: block;
     color: var(--j-color-text-muted);

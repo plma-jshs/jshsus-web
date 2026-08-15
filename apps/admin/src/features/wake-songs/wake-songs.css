@@ -73,10 +73,10 @@
 }
 
 .wake-song-admin-list > .admin-data-table {
-  padding: 0 18px 18px;
+  padding: 18px;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .wake-song-admin-toolbar {
     min-height: 48px;
     padding: 8px 0;

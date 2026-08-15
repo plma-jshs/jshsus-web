@@ -5,6 +5,7 @@ import type {
 } from '@jshsus/types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../shared/api/adminApi';
+import { formatAdminDate } from '../../shared/lib/date';
 
 export const activityRequestsQueryKey = ['activity-requests'] as const;
 
@@ -30,25 +31,18 @@ export function useRefreshActivityRequests() {
   return () => queryClient.invalidateQueries({ queryKey: activityRequestsQueryKey });
 }
 
-function activityDateParts(value: string, includeTime: boolean) {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
+export function formatActivityDateTime(value: string) {
+  return formatAdminDate(value, {
     month: '2-digit',
     day: '2-digit',
-    ...(includeTime ? ({ hour: '2-digit', minute: '2-digit', hourCycle: 'h23' } as const) : {}),
-  }).formatToParts(new Date(value));
-  return new Map(parts.map((part) => [part.type, part.value]));
-}
-
-export function formatActivityDateTime(value: string) {
-  const parts = activityDateParts(value, true);
-  return `${parts.get('year')}.${parts.get('month')}.${parts.get('day')} ${parts.get('hour')}:${parts.get('minute')}`;
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
 }
 
 export function formatActivityDate(value: string) {
-  const parts = activityDateParts(value, false);
-  return `${parts.get('year')}.${parts.get('month')}.${parts.get('day')}`;
+  return formatAdminDate(value, { month: '2-digit', day: '2-digit' });
 }
 
 export function ActivityStatusBadge({ status }: { status: ActivityRequestAdminStatus }) {

@@ -13,7 +13,7 @@ import {
 } from '../../components/ui';
 import { YouTubeSegmentPlayer } from '../../components/youtube/YouTubeSegmentPlayer';
 import { wakeSongAdminApi } from './api';
-import { formatKoreanDate } from '../../shared/lib/date';
+import { formatAdminDate } from '../../shared/lib/date';
 import type { WakeSongRequest, WakeSongRequestStatus } from './types';
 import './wake-songs.css';
 
@@ -113,8 +113,7 @@ export function WakeSongsPage() {
       accessorKey: 'createdAt',
       header: '신청일',
       cell: ({ row }) =>
-        formatKoreanDate(row.original.createdAt, {
-          year: 'numeric',
+        formatAdminDate(row.original.createdAt, {
           month: '2-digit',
           day: '2-digit',
         }),

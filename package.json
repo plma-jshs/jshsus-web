@@ -26,7 +26,6 @@
     "db:migrations:check": "node scripts/check-migrations.cjs",
     "db:migrations:apply-check": "node scripts/check-clean-db-migrations.cjs",
     "migrate:legacy-assets": "node scripts/migrate-content-assets-to-s3.cjs",
-    "migrate:reverse-notice-numbers": "node scripts/reverse-notice-public-numbers.cjs",
     "smoke:core": "pnpm --filter @jshsus/api smoke:core"
   },
   "devDependencies": {

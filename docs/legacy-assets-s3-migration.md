@@ -33,10 +33,7 @@ presigning. If profile images remain direct URLs, expose only the `profile/`
 prefix publicly and keep `notice/`, `post/`, `lost_item/`, and `dorm_report/`
 private.
 
-The one-time notice-number correction is separate and idempotent. It assigns
-the six notices in the 169–174 range from newest to oldest as 174–169:
-
-```sh
-node scripts/reverse-notice-public-numbers.cjs
-node scripts/reverse-notice-public-numbers.cjs --apply
-```
+Notice public numbers are normalized chronologically by the database migration
+`0003_normalize_notice_public_numbers.sql`; the old range-specific reversal
+script was removed so future migrations cannot reintroduce an arbitrary number
+ordering.

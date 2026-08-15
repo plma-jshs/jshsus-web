@@ -360,15 +360,6 @@
   box-shadow: var(--j-shadow-dropdown);
 }
 
-.admin-profile-menu__dropdown > span {
-  padding: 8px 10px;
-  overflow: hidden;
-  color: var(--muted);
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .admin-profile-menu__dropdown .admin-logout-button {
   width: 100%;
   min-height: 40px;
@@ -1345,7 +1336,7 @@
   display: none;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .content-panel-header {
     min-height: 44px;
     margin: 0 0 10px;
@@ -1691,7 +1682,7 @@
   color: var(--danger);
 }
 
-@media (max-width: 920px) {
+@media (max-width: 767px) {
   .content-panel-header {
     align-items: flex-start;
     flex-direction: column;

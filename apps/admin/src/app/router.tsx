@@ -448,7 +448,6 @@ function AdminShell() {
                 <ChevronDown size={15} aria-hidden="true" />
               </summary>
               <div className="admin-profile-menu__dropdown">
-                <span>{accountIdentity || sessionQuery.data.name || '관리자'}</span>
                 <button
                   className="admin-logout-button"
                   type="button"

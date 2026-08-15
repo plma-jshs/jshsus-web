@@ -28,6 +28,7 @@ import {
   type AdminSchoolCalendarEvent,
   type SchoolEventInput,
 } from '../../shared/api/adminApi';
+import { formatAdminDate } from '../../shared/lib/date';
 import './school-events.css';
 
 const KOREA_TIME_ZONE = 'Asia/Seoul';
@@ -202,10 +203,12 @@ function validateEvent(form: EventForm) {
   return null;
 }
 
-function formatCalendarDate(date: string, includeYear = true) {
-  const [year, month, day] = date.split('-');
-  const weekday = WEEKDAYS[weekdayOf(date)];
-  return `${includeYear ? `${year}.` : ''}${month}.${day} (${weekday})`;
+function formatCalendarDate(date: string, _includeYear = true) {
+  return formatAdminDate(`${date}T00:00:00+09:00`, {
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+  });
 }
 
 function formatPeriod(event: AdminSchoolCalendarEvent) {

@@ -15,7 +15,7 @@ import {
   useToast,
 } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
-import { formatKoreanDate } from '../../shared/lib/date';
+import { formatAdminDate } from '../../shared/lib/date';
 import { DormReportStatusBadge, dormReportStatusOptions } from './dormData';
 
 export function DormReportsPanel({
@@ -106,8 +106,7 @@ export function DormReportsPanel({
         accessorKey: 'createdAt',
         header: '접수일',
         cell: ({ getValue }) =>
-          formatKoreanDate(getValue<string>(), {
-            year: 'numeric',
+          formatAdminDate(getValue<string>(), {
             month: '2-digit',
             day: '2-digit',
           }),

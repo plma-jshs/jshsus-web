@@ -96,7 +96,7 @@ export function CommunityModerationPage({
   const [commentPageSize, setCommentPageSize] = useState(20);
   const [reportPageSize, setReportPageSize] = useState(20);
   const [selectedReportIds, setSelectedReportIds] = useState<Set<number>>(() => new Set());
-  const [postSorting, setPostSorting] = useState<SortingState>([{ id: 'id', desc: true }]);
+  const [postSorting, setPostSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
 
   const activeSource =
     sources.find((source) => source.slug === activeBoardSlug) ?? sources[0] ?? freeBoardSource;
@@ -212,12 +212,6 @@ export function CommunityModerationPage({
 
   const postColumns = useMemo<ColumnDef<BoardPostSummary>[]>(
     () => [
-      {
-        accessorKey: 'id',
-        header: '번호',
-        cell: ({ row }) => row.original.publicNumber,
-        meta: { align: 'center', width: 72, hideOnMobile: true },
-      },
       {
         accessorKey: 'title',
         header: '제목',
@@ -509,16 +503,16 @@ export function CommunityModerationPage({
         }
         mobileSort={
           <MobileSortSelect
-            value={`${postSorting[0]?.id ?? 'id'}:${postSorting[0]?.desc ? 'desc' : 'asc'}`}
+            value={`${postSorting[0]?.id ?? 'createdAt'}:${postSorting[0]?.desc ? 'desc' : 'asc'}`}
             options={[
-              { value: 'id:desc', label: '등록 최신순' },
-              { value: 'id:asc', label: '등록 오래된순' },
+              { value: 'createdAt:desc', label: '등록 최신순' },
+              { value: 'createdAt:asc', label: '등록 오래된순' },
               { value: 'viewCount:desc', label: '조회수 높은순' },
               { value: 'commentCount:desc', label: '댓글 많은순' },
             ]}
             onChange={(value) => {
               const [id, direction] = value.split(':');
-              setPostSorting([{ id: id ?? 'id', desc: direction === 'desc' }]);
+              setPostSorting([{ id: id ?? 'createdAt', desc: direction === 'desc' }]);
             }}
           />
         }

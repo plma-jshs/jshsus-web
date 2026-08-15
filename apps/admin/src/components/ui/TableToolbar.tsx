@@ -14,11 +14,11 @@ export type TableToolbarProps = HTMLAttributes<HTMLDivElement> & {
 
 function useMobileToolbar() {
   const [mobile, setMobile] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches,
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches,
   );
 
   useEffect(() => {
-    const query = window.matchMedia('(max-width: 640px)');
+    const query = window.matchMedia('(max-width: 767px)');
     const handleChange = (event: MediaQueryListEvent) => setMobile(event.matches);
     query.addEventListener('change', handleChange);
     return () => query.removeEventListener('change', handleChange);

@@ -40,7 +40,7 @@ export function LostItemsManagementPage() {
     useState<LostItemSummary['status']>('PROCESSING');
   const [selectedItemIds, setSelectedItemIds] = useState<Set<number>>(() => new Set());
   const [itemPageSize, setItemPageSize] = useState(20);
-  const [itemSorting, setItemSorting] = useState<SortingState>([{ id: 'id', desc: true }]);
+  const [itemSorting, setItemSorting] = useState<SortingState>([{ id: 'occurredAt', desc: true }]);
   const [deleteTarget, setDeleteTarget] = useState<LostItemSummary | null>(null);
 
   const lostItemsQuery = useQuery({
@@ -129,13 +129,24 @@ export function LostItemsManagementPage() {
       {
         id: 'selection',
         header: () => (
-          <TableSelectionCheckbox
-            label="분실물 전체 선택"
-            checked={allVisibleItemsSelected}
-            indeterminate={someVisibleItemsSelected && !allVisibleItemsSelected}
-            disabled={visibleItemIds.length === 0 || completeSelectedItemsMutation.isPending}
-            onChange={toggleVisibleItems}
-          />
+          <span className="content-selection-header">
+            <TableSelectionCheckbox
+              label="분실물 전체 선택"
+              checked={allVisibleItemsSelected}
+              indeterminate={someVisibleItemsSelected && !allVisibleItemsSelected}
+              disabled={visibleItemIds.length === 0 || completeSelectedItemsMutation.isPending}
+              onChange={toggleVisibleItems}
+            />
+            <SelectedRowsHeaderAction
+              selectedCount={selectedCount}
+              defaultLabel=""
+              deleteLabel="반환 완료"
+              variant="primary"
+              loading={completeSelectedItemsMutation.isPending}
+              loadingLabel="처리 중"
+              onDelete={completeSelectedItems}
+            />
+          </span>
         ),
         cell: ({ row }) => (
           <TableSelectionCheckbox
@@ -146,24 +157,7 @@ export function LostItemsManagementPage() {
           />
         ),
         enableSorting: false,
-        meta: { align: 'center', width: 64, hideOnMobile: true },
-      },
-      {
-        accessorKey: 'id',
-        header: () => (
-          <SelectedRowsHeaderAction
-            selectedCount={selectedCount}
-            defaultLabel="번호"
-            deleteLabel="반환 완료"
-            variant="primary"
-            loading={completeSelectedItemsMutation.isPending}
-            loadingLabel="처리 중"
-            onDelete={completeSelectedItems}
-          />
-        ),
-        enableSorting: selectedCount === 0,
-        cell: ({ row }) => row.original.id,
-        meta: { align: 'center', width: 72, hideOnMobile: true },
+        meta: { align: 'center', width: 96, hideOnMobile: true },
       },
       {
         accessorKey: 'type',
@@ -282,16 +276,14 @@ export function LostItemsManagementPage() {
         }
         mobileSort={
           <MobileSortSelect
-            value={`${itemSorting[0]?.id ?? 'id'}:${itemSorting[0]?.desc ? 'desc' : 'asc'}`}
+            value={`${itemSorting[0]?.id ?? 'occurredAt'}:${itemSorting[0]?.desc ? 'desc' : 'asc'}`}
             options={[
-              { value: 'id:desc', label: '등록 최신순' },
-              { value: 'id:asc', label: '등록 오래된순' },
               { value: 'occurredAt:desc', label: '발생일 최신순' },
               { value: 'occurredAt:asc', label: '발생일 오래된순' },
             ]}
             onChange={(value) => {
               const [id, direction] = value.split(':');
-              setItemSorting([{ id: id ?? 'id', desc: direction === 'desc' }]);
+              setItemSorting([{ id: id ?? 'occurredAt', desc: direction === 'desc' }]);
             }}
           />
         }

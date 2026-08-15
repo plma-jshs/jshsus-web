@@ -6,12 +6,11 @@ import { MoreHorizontal, Search } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import { DateRangeField, Drawer, MobileSortSelect, TableToolbar } from '../../components/ui';
 import { api, describeAdminApiError } from '../../shared/api/adminApi';
-import { formatKoreanDate } from '../../shared/lib/date';
+import { formatAdminDate } from '../../shared/lib/date';
 import './audit-logs.css';
 
 function formatAuditDate(value: string) {
-  return formatKoreanDate(value, {
-    year: 'numeric',
+  return formatAdminDate(value, {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',

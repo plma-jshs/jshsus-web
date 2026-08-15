@@ -31,7 +31,7 @@ export function ActivityParticipants({
     const trigger = triggerRef.current;
     if (!trigger) return;
     const rect = trigger.getBoundingClientRect();
-    const width = Math.min(280, window.innerWidth - 24);
+    const width = popoverRef.current?.offsetWidth ?? Math.min(260, window.innerWidth - 24);
     const left = Math.min(Math.max(12, rect.left), Math.max(12, window.innerWidth - width - 12));
     const popoverHeight = popoverRef.current?.offsetHeight ?? 180;
     const top =
@@ -83,7 +83,11 @@ export function ActivityParticipants({
       onMouseEnter={() => {
         setOpen(true);
       }}
-      onMouseLeave={() => setOpen(false)}
+      onMouseLeave={(event) => {
+        const nextTarget = event.relatedTarget;
+        if (nextTarget instanceof Node && popoverRef.current?.contains(nextTarget)) return;
+        setOpen(false);
+      }}
     >
       <span className={summaryClassName}>
         {formatActivityParticipant(representative)}{' '}
@@ -115,10 +119,27 @@ export function ActivityParticipants({
               onClick={(event) => event.stopPropagation()}
             >
               <strong>참여 학생 {students.length}명</strong>
-              <ul style={{ gridTemplateRows: `repeat(${Math.ceil(students.length / 2)}, auto)` }}>
+              <ul
+                className={`activity-participants-popover__list ${
+                  students.length <= 4
+                    ? 'activity-participants-popover__list--single'
+                    : 'activity-participants-popover__list--double'
+                }`}
+                style={
+                  students.length > 4
+                    ? { gridTemplateRows: `repeat(${Math.ceil(students.length / 2)}, auto)` }
+                    : undefined
+                }
+              >
                 {students.map((student) => (
                   <li key={student.studentId}>
-                    <span>{formatActivityParticipant(student)}</span>
+                    <span className="activity-participants-popover__student-number">
+                      {student.studentNo}
+                    </span>
+                    <span>
+                      {student.studentName}
+                      {student.isRepresentative ? '(대표)' : ''}
+                    </span>
                   </li>
                 ))}
               </ul>

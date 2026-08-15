@@ -10,7 +10,7 @@ export function useAnimatedDialog(open: boolean, onClose: () => void) {
     const dialog = ref.current;
     if (!dialog) return undefined;
 
-    const mobile = window.matchMedia('(max-width: 640px)').matches;
+    const mobile = window.matchMedia('(max-width: 767px)').matches;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (open) {
@@ -34,7 +34,7 @@ export function useAnimatedDialog(open: boolean, onClose: () => void) {
   const requestClose = useCallback(() => {
     const dialog = ref.current;
     if (!dialog || timerRef.current !== null) return;
-    const mobile = window.matchMedia('(max-width: 640px)').matches;
+    const mobile = window.matchMedia('(max-width: 767px)').matches;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (!mobile || reducedMotion || !dialog.open) {

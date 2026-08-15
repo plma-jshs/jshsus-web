@@ -54,6 +54,18 @@
   display: none;
 }
 
+@media (min-width: 768px) and (max-width: 1023px) {
+  .point-panel .admin-data-table th,
+  .point-panel .admin-data-table td {
+    padding-inline: 8px;
+  }
+
+  .point-panel .admin-data-table :is(th, td)[data-column-id='reasonText'] {
+    min-width: 180px !important;
+    max-width: 260px !important;
+  }
+}
+
 .point-table-link {
   display: inline-flex;
   padding: 0;
@@ -179,6 +191,13 @@
 .point-departure-action.ui-button {
   min-height: 30px;
   padding-inline: 9px;
+}
+
+.point-departure-action-cell {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
 }
 
 .point-dialog-form {
@@ -472,7 +491,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .admin-table-toolbar__mobile-search .point-filter--search {
     display: flex;
     width: 100%;

@@ -15,7 +15,7 @@ import {
   useToast,
 } from '../../components/ui';
 import { pointsApi, type PointRecordRow } from './pointsApi';
-import { formatKoreanDate } from '../../shared/lib/date';
+import { formatAdminDate } from '../../shared/lib/date';
 import './points.css';
 
 const reasonTypeLabel: Record<PointReason['type'], string> = {
@@ -27,8 +27,7 @@ const reasonTypeLabel: Record<PointReason['type'], string> = {
 type RecordSort = 'baseDate' | 'createdAt' | 'studentNo' | 'studentName' | 'point' | 'teacherName';
 
 function formatCreatedAt(value: string) {
-  return formatKoreanDate(value, {
-    year: 'numeric',
+  return formatAdminDate(value, {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -170,13 +169,14 @@ export function PointRecordsPage() {
           />
         ),
         enableSorting: selectedCount === 0,
+        cell: ({ row }) => formatAdminDate(row.original.baseDate),
         meta: { align: 'center', width: 130 },
       },
       {
         accessorKey: 'createdAt',
         header: '생성일시',
         cell: ({ row }) => formatCreatedAt(row.original.createdAt),
-        meta: { align: 'center', width: 180 },
+        meta: { align: 'center', width: 180, hideAtCompact: true },
       },
       {
         accessorKey: 'studentNo',
@@ -205,7 +205,7 @@ export function PointRecordsPage() {
         header: '종류',
         enableSorting: false,
         cell: ({ row }) => reasonTypeLabel[row.original.reasonType],
-        meta: { align: 'center', width: 100 },
+        meta: { align: 'center', width: 100, hideAtCompact: true },
       },
       {
         id: 'reasonText',
@@ -228,7 +228,7 @@ export function PointRecordsPage() {
       {
         accessorKey: 'teacherName',
         header: '처리자',
-        meta: { align: 'left', width: 140 },
+        meta: { align: 'left', width: 140, hideAtCompact: true },
       },
     ],
     [
@@ -385,7 +385,7 @@ export function PointRecordsPage() {
             </header>
             <p className="point-record-card__reason">{record.reason}</p>
             <footer>
-              {record.baseDate} · 처리자: {record.teacherName || '-'}
+              {formatAdminDate(record.baseDate)} · 처리자: {record.teacherName || '-'}
             </footer>
           </article>
         )}

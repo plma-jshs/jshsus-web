@@ -50,6 +50,10 @@ declare module '@tanstack/react-table' {
     mobileLabel?: string;
     /** Hides low-value columns from the generic mobile card layout. */
     hideOnMobile?: boolean;
+    /** Hides this column in the tablet compact table (768–1023px). */
+    hideAtCompact?: boolean;
+    /** Shows this column only in the tablet compact table (768–1023px). */
+    compactOnly?: boolean;
     /** Gives the generic mobile card a semantic hierarchy instead of repeating labels. */
     mobileRole?: 'title' | 'subtitle' | 'badge' | 'meta' | 'actions';
   }
@@ -252,6 +256,9 @@ export function DataTable<T>({
                       })}
                       scope="col"
                       aria-sort={ariaSort}
+                      data-column-id={header.column.id}
+                      data-compact-hidden={meta?.hideAtCompact ? 'true' : undefined}
+                      data-compact-only={meta?.compactOnly ? 'true' : undefined}
                       style={{
                         width: meta?.width ?? presetWidth,
                         minWidth: meta?.minWidth ?? presetWidth,
@@ -328,6 +335,8 @@ export function DataTable<T>({
                         })}
                         data-column-id={cell.column.id}
                         data-label={mobileLabel}
+                        data-compact-hidden={meta?.hideAtCompact ? 'true' : undefined}
+                        data-compact-only={meta?.compactOnly ? 'true' : undefined}
                         data-mobile-hidden={meta?.hideOnMobile ? 'true' : undefined}
                         data-mobile-role={meta?.mobileRole}
                         style={{

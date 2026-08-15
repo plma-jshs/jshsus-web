@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { TableToolbar } from '../../../components/ui';
 import { AdminApiError } from '../../../shared/api/adminApi';
-import { formatKoreanDate } from '../../../shared/lib/date';
+import { formatAdminDate as formatSharedAdminDate } from '../../../shared/lib/date';
 import '../content.css';
 
 type ContentAdminPanelProps = {
@@ -143,8 +143,7 @@ export function formatAdminDate(value?: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
 
-  return formatKoreanDate(date, {
-    year: 'numeric',
+  return formatSharedAdminDate(date, {
     month: '2-digit',
     day: '2-digit',
   });
