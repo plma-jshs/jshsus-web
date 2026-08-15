@@ -137,7 +137,7 @@ export function ActivityPrintBatch({
   batch: ActivityRequestPrintBatch | null;
   preview?: boolean;
 }) {
-  if (!batch?.documents.length) return null;
+  if (!batch) return null;
 
   const fallbackSection: ActivityRequestPrintSection = {
     floor: batch.floor as Exclude<ActivityRequestPrintSection['floor'], 'all'>,

@@ -44,18 +44,10 @@ export function ActivityParticipants({
   const others = students.filter((_, index) => index !== representativeIndex);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const closeTimer = useRef<number | undefined>(undefined);
   const popoverId = `activity-participants-popover-${useId().replace(/:/g, '')}`;
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
 
-  const clearCloseTimer = () => {
-    if (closeTimer.current) window.clearTimeout(closeTimer.current);
-  };
-  const scheduleClose = () => {
-    clearCloseTimer();
-    closeTimer.current = window.setTimeout(() => setOpen(false), 140);
-  };
   const updatePosition = useCallback(() => {
     const trigger = triggerRef.current;
     if (!trigger) return;
@@ -100,8 +92,6 @@ export function ActivityParticipants({
     };
   }, [open, updatePosition]);
 
-  useEffect(() => () => clearCloseTimer(), []);
-
   if (!representative) return <span className={className}>-</span>;
   if (students.length < 3) {
     return <span className={className}>{students.map(formatParticipant).join(', ')}</span>;
@@ -112,10 +102,9 @@ export function ActivityParticipants({
     <span
       className="activity-participants-popover-anchor"
       onMouseEnter={() => {
-        clearCloseTimer();
         setOpen(true);
       }}
-      onMouseLeave={scheduleClose}
+      onMouseLeave={() => setOpen(false)}
     >
       <span className={summaryClassName}>
         {formatParticipant(representative)}{' '}
@@ -127,8 +116,7 @@ export function ActivityParticipants({
           type="button"
           onClick={(event) => {
             event.stopPropagation();
-            clearCloseTimer();
-            setOpen((current) => !current);
+            setOpen(true);
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={(event) => event.stopPropagation()}
@@ -144,8 +132,7 @@ export function ActivityParticipants({
               id={popoverId}
               role="tooltip"
               style={{ top: position.top, left: position.left }}
-              onMouseEnter={clearCloseTimer}
-              onMouseLeave={scheduleClose}
+              onMouseLeave={() => setOpen(false)}
               onClick={(event) => event.stopPropagation()}
             >
               <strong>참여 학생 {students.length}명</strong>

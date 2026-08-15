@@ -248,7 +248,7 @@ export function ActivityOverviewPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [endDate, setEndDate] = useState(() => koreaDateInput());
   const [status, setStatus] = useState<'all' | ActivityRequestAdminStatus>('all');
   const [pageSize, setPageSize] = useState(20);
   const [sorting, setSorting] = useState<SortingState>([{ id: 'startsAt', desc: true }]);
@@ -272,12 +272,8 @@ export function ActivityOverviewPage() {
     mutationFn: (floor: ActivityPrintFloor) => api.printTodayActivityRequests({ floor }),
     onSuccess: (result) => {
       setPrintBatch(result);
-      if (!result.documents.length) {
-        setPrintMessage('오늘 활동하는 승인된 탐구활동서가 없습니다.');
-        showToast({ title: '오늘 인쇄할 탐구활동서가 없습니다.', tone: 'warning' });
-        return;
-      }
       setPrintMessage('');
+      if (!result.documents.length) return;
       showToast({
         title: `${result.floor === 'all' ? '전체' : `${result.floor}층`} ${result.documents.length}건의 인쇄 화면을 준비했습니다.`,
         tone: 'success',

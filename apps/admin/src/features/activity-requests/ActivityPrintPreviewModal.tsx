@@ -77,7 +77,12 @@ export function ActivityPrintPreviewModal({
               ))}
             </div>
           </div>
-          <button type="button" aria-label="인쇄 미리보기 닫기" onClick={onClose}>
+          <button
+            className="activity-print-preview-modal__close"
+            type="button"
+            aria-label="인쇄 미리보기 닫기"
+            onClick={onClose}
+          >
             <X size={20} aria-hidden="true" />
           </button>
         </header>
@@ -88,12 +93,12 @@ export function ActivityPrintPreviewModal({
           {!isLoading && errorMessage ? (
             <p className="activity-print-preview-modal__state is-error">{errorMessage}</p>
           ) : null}
-          {!isLoading && !errorMessage && batch?.documents.length ? (
+          {!isLoading && !errorMessage && batch ? (
             <div ref={contentRef} className="activity-print-printable">
               <ActivityPrintBatch batch={batch} preview />
             </div>
           ) : null}
-          {!isLoading && !errorMessage && !batch?.documents.length ? (
+          {!isLoading && !errorMessage && !batch ? (
             <p className="activity-print-preview-modal__state">인쇄할 자료가 없습니다.</p>
           ) : null}
         </div>
@@ -105,7 +110,7 @@ export function ActivityPrintPreviewModal({
             className="primary-button"
             type="button"
             onClick={handlePrint}
-            disabled={isLoading || !batch?.documents.length}
+            disabled={isLoading || !batch}
           >
             <Printer size={16} aria-hidden="true" />
             인쇄

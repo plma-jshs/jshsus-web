@@ -84,12 +84,6 @@ export function ActivityRequestsPage() {
     mutationFn: (floor: ActivityPrintFloor) => printActivityRequests({ floor }),
     onSuccess: (result) => {
       setPrintBatch(result);
-      if (!result.documents.length) {
-        setPrintMessage(
-          `${result.floor === 'all' ? '전체' : `${result.floor}층`}에 오늘 인쇄할 승인 탐구활동서가 없습니다.`,
-        );
-        return;
-      }
       setPrintMessage('');
     },
     onError: () => setPrintMessage('인쇄 자료를 준비하지 못했습니다. 잠시 후 다시 시도해 주세요.'),
@@ -310,7 +304,6 @@ export function ActivityRequestsPage() {
               </thead>
               <tbody>
                 {visibleRequests.map((request) => {
-                  const participantCount = Math.max(1, request.participants?.length ?? 0);
                   return (
                     <tr
                       key={request.id}
@@ -348,12 +341,7 @@ export function ActivityRequestsPage() {
                       <td className="activity-table__purpose" data-label="내용">
                         <span>{request.purpose}</span>
                       </td>
-                      <td
-                        className={`activity-table__participants${
-                          participantCount >= 3 ? ' is-dense' : ''
-                        }`}
-                        data-label="인원"
-                      >
+                      <td className="activity-table__participants" data-label="인원">
                         <ActivityParticipants
                           participants={request.participants}
                           fallback={request}
