@@ -376,11 +376,13 @@ export function DataTablePagination({
 }) {
   const safePage = Math.min(Math.max(page, 1), Math.max(totalPages, 1));
   const resolvedPageSize = pageSize ?? 20;
-  const [draftPageState, setDraftPageState] = useState({
-    page: safePage,
-    value: String(safePage),
-  });
-  const draftPage = draftPageState.page === safePage ? draftPageState.value : String(safePage);
+  const [draftPage, setDraftPage] = useState(String(safePage));
+  const previousSafePage = useRef(safePage);
+  useEffect(() => {
+    if (previousSafePage.current === safePage) return;
+    previousSafePage.current = safePage;
+    setDraftPage(String(safePage));
+  }, [safePage]);
   if (totalPages <= 1 && !onPageSizeChange) return null;
   const firstItem = total ? (safePage - 1) * resolvedPageSize + 1 : undefined;
   const lastItem = total ? Math.min(safePage * resolvedPageSize, total) : undefined;
@@ -395,11 +397,11 @@ export function DataTablePagination({
   const commitPage = (value: string) => {
     const nextPage = Number(value);
     if (!Number.isInteger(nextPage) || nextPage < 1) {
-      setDraftPageState({ page: safePage, value: String(safePage) });
+      setDraftPage(String(safePage));
       return;
     }
     const resolvedPage = Math.min(nextPage, Math.max(totalPages, 1));
-    setDraftPageState({ page: resolvedPage, value: String(resolvedPage) });
+    setDraftPage(String(resolvedPage));
     changePage(resolvedPage);
   };
 
@@ -439,10 +441,7 @@ export function DataTablePagination({
             type="text"
             value={draftPage}
             onChange={(event) => {
-              setDraftPageState({
-                page: safePage,
-                value: event.target.value.replace(/\D/g, ''),
-              });
+              setDraftPage(event.target.value.replace(/\D/g, ''));
             }}
             onBlur={(event) => {
               commitPage(event.currentTarget.value);
@@ -456,7 +455,10 @@ export function DataTablePagination({
             aria-label="페이지 번호"
           />
         </label>
-        <span aria-hidden="true">/ {Math.max(totalPages, 1)}</span>
+        <span className="data-table-pagination__total-pages" aria-hidden="true">
+          <span>/</span>
+          <span>{Math.max(totalPages, 1)}</span>
+        </span>
         <button
           type="button"
           aria-label="다음 페이지"

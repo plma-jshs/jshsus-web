@@ -724,7 +724,7 @@
 .data-table-pagination__controls button {
   width: 36px;
   min-width: 36px;
-  border: 1px solid var(--j-color-border);
+  border: 0;
   border-radius: 8px;
   background: var(--j-color-surface);
   cursor: pointer;
@@ -736,8 +736,15 @@
 }
 
 .data-table-pagination__controls button:hover:not(:disabled) {
-  border-color: var(--j-color-border);
   background: var(--j-color-surface-hover);
+}
+
+.data-table-pagination__total-pages {
+  display: inline-flex !important;
+  min-width: max-content;
+  padding-inline: 4px !important;
+  align-items: center;
+  gap: 7px;
 }
 
 .data-table-pagination__page-input {

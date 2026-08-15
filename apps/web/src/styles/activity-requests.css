@@ -1593,6 +1593,38 @@
   cursor: pointer;
 }
 
+.activity-print-preview-modal__tabs {
+  display: flex;
+  padding: 10px 20px 0;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid var(--j-color-border);
+  background: var(--j-color-surface);
+}
+
+.activity-print-preview-modal__tabs button {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--j-color-text-secondary);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.activity-print-preview-modal__tabs button.is-active {
+  border-bottom-color: var(--j-color-brand-strong);
+  color: var(--j-color-brand-strong);
+  font-weight: 700;
+}
+
+.activity-print-preview-modal__tabs button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 .activity-print-preview-modal__body {
   min-height: 0;
   padding: 20px;
@@ -1616,7 +1648,7 @@
   min-height: 0;
   aspect-ratio: 297 / 210;
   margin: 0 auto;
-  padding: 16px;
+  padding: 0;
   box-sizing: border-box;
   flex-direction: column;
   overflow: hidden;
@@ -1626,12 +1658,13 @@
 }
 
 .activity-print-preview-modal__body .activity-print-page h1 {
-  margin: 0 0 16px;
-  padding: 12px 16px;
+  margin: 0 0 4mm;
+  padding: 3mm 4mm;
   border: 1px solid #b7d4c1;
   color: #17231c;
   background: #e4f3e9;
-  font-size: 24px;
+  font-size: 20pt;
+  font-weight: 700;
   text-align: center;
 }
 
@@ -1643,11 +1676,11 @@
 
 .activity-print-preview-modal__body .activity-print-batch th,
 .activity-print-preview-modal__body .activity-print-batch td {
-  padding: 7px 8px;
+  padding: 1.3mm 1.6mm;
   border: 1px solid #8c9690;
   color: #111;
-  font-size: 13px;
-  line-height: 1.3;
+  font-size: 10pt;
+  line-height: 1.25;
   text-align: left;
   vertical-align: middle;
   overflow-wrap: anywhere;
@@ -1666,25 +1699,26 @@
 .activity-print-preview-modal__body .activity-print-student-grid {
   display: grid;
   width: 100%;
-  height: 100%;
+  height: auto;
   min-height: 0;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: start;
-  gap: 8px;
+  align-content: start;
+  gap: 2mm;
 }
 
 .activity-print-preview-modal__body .activity-print-student-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  font-size: 10px;
+  font-size: 8pt;
 }
 
 .activity-print-preview-modal__body .activity-print-student-table caption {
-  padding: 3px 2px;
+  padding: 0.45mm;
   border: 1px solid #aaa;
   background: #d7d7d7;
-  font-size: 10px;
+  font-size: 8pt;
   font-weight: 700;
   line-height: 1.1;
   text-align: center;
@@ -1692,10 +1726,10 @@
 
 .activity-print-preview-modal__body .activity-print-student-table th,
 .activity-print-preview-modal__body .activity-print-student-table td {
-  padding: 3px 2px;
+  padding: 0.45mm 0.6mm;
   border: 1px solid #8c9690;
-  font-size: 9px;
-  line-height: 1.1;
+  font-size: 8pt;
+  line-height: 1.15;
   text-align: center;
   vertical-align: middle;
   overflow-wrap: normal;
@@ -1714,8 +1748,23 @@
 }
 
 .activity-print-preview-modal__body .activity-print-student-table .is-empty td {
-  height: 12px;
+  height: 4.5mm;
+  padding: 0.45mm 0.6mm;
   color: transparent;
+}
+
+.activity-print-preview-modal__state {
+  display: grid;
+  min-height: 260px;
+  margin: 0;
+  place-items: center;
+  color: var(--j-color-text-secondary);
+  font-size: 14px;
+  text-align: center;
+}
+
+.activity-print-preview-modal__state.is-error {
+  color: var(--j-color-danger);
 }
 
 .activity-print-preview-modal__actions {
@@ -1776,6 +1825,7 @@
 
   .activity-print-preview-modal__backdrop,
   .activity-print-preview-modal__header,
+  .activity-print-preview-modal__tabs,
   .activity-print-preview-modal__actions {
     display: none !important;
   }

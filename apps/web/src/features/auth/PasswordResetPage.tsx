@@ -1,5 +1,5 @@
-import type { FormEvent, ReactNode } from 'react';
-import { useState } from 'react';
+import type { FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft, Eye, EyeOff, KeyRound, LockKeyhole, UserRound } from 'lucide-react';
@@ -21,11 +21,12 @@ function PasswordField(props: {
   autoComplete: string;
   placeholder: string;
   onChange: (value: string) => void;
+  error?: string | null;
 }) {
   const [visible, setVisible] = useState(false);
 
   return (
-    <div className="auth-form-field">
+    <div className={`auth-form-field${props.error ? ' has-error' : ''}`}>
       <label className="sr-only" htmlFor={props.id}>
         {props.label}
       </label>
@@ -49,15 +50,10 @@ function PasswordField(props: {
           {visible ? <EyeOff aria-hidden="true" size={18} /> : <Eye aria-hidden="true" size={18} />}
         </button>
       </div>
+      <p className="auth-inline-error" role={props.error ? 'alert' : undefined}>
+        {props.error ?? '\u00a0'}
+      </p>
     </div>
-  );
-}
-
-function FormMessage({ children, success = false }: { children: ReactNode; success?: boolean }) {
-  return (
-    <p className={success ? 'auth-message auth-message-success' : 'auth-error'} role="status">
-      {children}
-    </p>
   );
 }
 
@@ -112,7 +108,13 @@ export function PasswordResetPage() {
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!toastMessage) return undefined;
+    const timeoutId = window.setTimeout(() => setToastMessage(null), 2200);
+    return () => window.clearTimeout(timeoutId);
+  }, [toastMessage]);
 
   const confirmMutation = useMutation({
     mutationFn: confirmPasswordReset,
@@ -129,7 +131,7 @@ export function PasswordResetPage() {
       setResetToken(result.resetToken);
       setStep('confirm');
       setValidationError(null);
-      setNotice('인증이 완료되었습니다. 새 비밀번호를 설정해 주세요.');
+      setToastMessage('인증이 완료되었습니다.');
     },
   });
 
@@ -144,23 +146,30 @@ export function PasswordResetPage() {
       setNewPassword('');
       setNewPasswordConfirm('');
       setValidationError(null);
-      setNotice(
-        delivery === 'phone'
-          ? '등록된 전화번호로 인증 코드를 보냈습니다'
-          : '등록된 이메일로 인증 코드를 보냈습니다',
-      );
     },
   });
 
   const submitRequest = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setNotice(null);
     setValidationError(null);
     requestMutation.mutate({ username: username.trim(), delivery });
   };
 
+  const passwordError =
+    newPassword && !/(?=.*[A-Za-z])(?=.*\d).{8,}/.test(newPassword)
+      ? '영문, 숫자 포함 8자 이상 입력해 주세요.'
+      : null;
+  const passwordConfirmError =
+    newPasswordConfirm && newPassword !== newPasswordConfirm
+      ? '비밀번호가 일치하지 않습니다.'
+      : null;
+
   const submitConfirm = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (passwordError) {
+      setValidationError(passwordError);
+      return;
+    }
     if (newPassword !== newPasswordConfirm) {
       setValidationError('비밀번호가 일치하지 않습니다.');
       return;
@@ -170,7 +179,6 @@ export function PasswordResetPage() {
       return;
     }
     setValidationError(null);
-    setNotice(null);
     confirmMutation.mutate({
       username: username.trim(),
       resetToken,
@@ -195,7 +203,12 @@ export function PasswordResetPage() {
           : null);
 
   return (
-    <AuthLayout active="password" title="비밀번호 찾기" className="auth-page--password-reset">
+    <AuthLayout active="password" title="비밀번호 재설정" className="auth-page--password-reset">
+      {toastMessage ? (
+        <div className="auth-toast" role="status">
+          {toastMessage}
+        </div>
+      ) : null}
       <div className="auth-password-reset-stage">
         {step === 'request' ? (
           <form key="request" className="auth-form" onSubmit={submitRequest}>
@@ -237,7 +250,9 @@ export function PasswordResetPage() {
                 <span>이메일</span>
               </label>
             </fieldset>
-            {activeError ? <FormMessage>{activeError}</FormMessage> : null}
+            <p className="auth-inline-error" role={activeError ? 'alert' : undefined}>
+              {activeError ?? '\u00a0'}
+            </p>
             <button className="auth-submit" type="submit" disabled={requestMutation.isPending}>
               {requestMutation.isPending ? '전송 중' : '인증 코드 받기'}
             </button>
@@ -259,8 +274,6 @@ export function PasswordResetPage() {
 
         {step === 'verify' ? (
           <form key="verify" className="auth-form auth-password-reset-form" onSubmit={submitVerify}>
-            {notice ? <FormMessage success>{notice}</FormMessage> : null}
-            {activeError ? <FormMessage>{activeError}</FormMessage> : null}
             <label htmlFor="confirmation-code">
               <span className="sr-only">인증 코드</span>
               <span className="auth-input-shell">
@@ -277,16 +290,9 @@ export function PasswordResetPage() {
                 />
               </span>
             </label>
-            <div className="auth-inline-actions">
-              <button
-                className="auth-link-button auth-resend-button"
-                type="button"
-                disabled={requestMutation.isPending || verifyMutation.isPending}
-                onClick={() => requestMutation.mutate({ username: username.trim(), delivery })}
-              >
-                인증 코드 다시 받기
-              </button>
-            </div>
+            <p className="auth-inline-error" role={activeError ? 'alert' : undefined}>
+              {activeError ?? '\u00a0'}
+            </p>
             <button
               className="auth-submit"
               type="submit"
@@ -299,7 +305,6 @@ export function PasswordResetPage() {
               type="button"
               onClick={() => {
                 setStep('request');
-                setNotice(null);
                 setValidationError(null);
                 setResetToken(null);
                 setConfirmationCode('');
@@ -312,8 +317,6 @@ export function PasswordResetPage() {
 
         {step === 'confirm' ? (
           <form key="confirm" className="auth-form" onSubmit={submitConfirm}>
-            {notice ? <FormMessage success>{notice}</FormMessage> : null}
-            {activeError ? <FormMessage>{activeError}</FormMessage> : null}
             <PasswordField
               id="reset-password"
               label="새 비밀번호"
@@ -321,6 +324,7 @@ export function PasswordResetPage() {
               onChange={setNewPassword}
               autoComplete="new-password"
               placeholder="새 비밀번호를 입력해주세요."
+              error={passwordError}
             />
             <PasswordField
               id="reset-password-confirm"
@@ -329,20 +333,13 @@ export function PasswordResetPage() {
               onChange={setNewPasswordConfirm}
               autoComplete="new-password"
               placeholder="새 비밀번호를 다시 입력해주세요."
+              error={passwordConfirmError ?? (confirmMutation.isError ? activeError : null)}
             />
-            <p className="auth-help">
-              8자 이상으로 입력하고, 이름이나 학번과 다른 비밀번호를 사용하세요.
+            <p className="auth-inline-error" role={validationError ? 'alert' : undefined}>
+              {validationError && !passwordError && !passwordConfirmError
+                ? validationError
+                : '\u00a0'}
             </p>
-            <div className="auth-inline-actions">
-              <button
-                className="auth-link-button auth-resend-button"
-                type="button"
-                disabled={requestMutation.isPending || confirmMutation.isPending}
-                onClick={() => requestMutation.mutate({ username: username.trim(), delivery })}
-              >
-                인증 코드 다시 받기
-              </button>
-            </div>
             <button className="auth-submit" type="submit" disabled={confirmMutation.isPending}>
               {confirmMutation.isPending ? '변경 중' : '비밀번호 변경'}
             </button>
@@ -352,7 +349,6 @@ export function PasswordResetPage() {
               onClick={() => {
                 setStep('verify');
                 confirmMutation.reset();
-                setNotice(null);
                 setValidationError(null);
                 setResetToken(null);
                 setConfirmationCode('');

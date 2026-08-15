@@ -637,7 +637,52 @@
 }
 
 .auth-password-reset-stage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   min-height: 350px;
+}
+
+.auth-inline-error {
+  min-height: 17px;
+  padding: 0;
+  margin: -4px 0 0;
+  color: var(--j-color-danger);
+  font-size: 11px;
+  line-height: 17px;
+  animation: auth-inline-error-in 160ms ease-out both;
+}
+
+.auth-form-field.has-error .auth-password-field > input {
+  border-color: var(--j-color-danger);
+  box-shadow: 0 0 0 3px rgb(209 60 52 / 10%);
+}
+
+.auth-toast {
+  position: fixed;
+  z-index: 20;
+  right: 24px;
+  bottom: 24px;
+  padding: 10px 14px;
+  border: 1px solid rgb(8 127 136 / 18%);
+  border-radius: 8px;
+  color: #087f88;
+  background: #f1fbfa;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+  font-size: 12px;
+  font-weight: 600;
+  animation: auth-inline-error-in 160ms ease-out both;
+}
+
+@keyframes auth-inline-error-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .auth-password-reset-stage > .auth-form {

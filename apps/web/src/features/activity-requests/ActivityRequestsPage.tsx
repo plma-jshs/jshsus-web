@@ -7,7 +7,6 @@ import {
   DataTablePagination,
   type DataTablePageSize,
   DataTableToolbar,
-  ToolbarSelect,
 } from '../../components/page/DataTableControls';
 import { FilterChips, PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
@@ -34,29 +33,17 @@ const activityDayFormatter = createKoreanDateFormatter({
   day: '2-digit',
 });
 
-function ActivityPrintMenu({
-  disabled,
-  onSelect,
-}: {
-  disabled?: boolean;
-  onSelect: (floor: ActivityPrintFloor) => void;
-}) {
+function ActivityPrintMenu({ disabled, onOpen }: { disabled?: boolean; onOpen: () => void }) {
   return (
-    <ToolbarSelect<'' | 'all' | 2 | 3 | 4>
-      ariaLabel="인쇄할 층 선택"
-      value="all"
+    <button
+      className="detail-secondary-button activity-print-trigger"
+      type="button"
       disabled={disabled}
-      leadingIcon={<Printer size={15} />}
-      options={[
-        { value: 'all', label: '전체' },
-        { value: 2, label: '2층' },
-        { value: 3, label: '3층' },
-        { value: 4, label: '4층' },
-      ]}
-      onChange={(value) => {
-        onSelect(value as ActivityPrintFloor);
-      }}
-    />
+      onClick={onOpen}
+    >
+      <Printer size={15} aria-hidden="true" />
+      인쇄
+    </button>
   );
 }
 
@@ -80,6 +67,8 @@ export function ActivityRequestsPage() {
     key: '',
     count: pageSize,
   });
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [printFloor, setPrintFloor] = useState<ActivityPrintFloor>('all');
   const [printBatch, setPrintBatch] = useState<ActivityRequestPrintBatch | null>(null);
   const [printMessage, setPrintMessage] = useState('');
   const updateTableSearch = (next: { page?: number; size?: DataTablePageSize }) => {
@@ -105,6 +94,19 @@ export function ActivityRequestsPage() {
     },
     onError: () => setPrintMessage('인쇄 자료를 준비하지 못했습니다. 잠시 후 다시 시도해 주세요.'),
   });
+  const openPrintDialog = () => {
+    setPrintDialogOpen(true);
+    setPrintFloor('all');
+    setPrintBatch(null);
+    setPrintMessage('');
+    printMutation.mutate('all');
+  };
+  const changePrintFloor = (floor: ActivityPrintFloor) => {
+    setPrintFloor(floor);
+    setPrintBatch(null);
+    setPrintMessage('');
+    printMutation.mutate(floor);
+  };
   const requests = useMemo(() => requestsQuery.data ?? [], [requestsQuery.data]);
   const filtered = useMemo(
     () =>
@@ -144,10 +146,7 @@ export function ActivityRequestsPage() {
       action={
         <div className="activity-page-actions">
           <div className="activity-page-actions__print">
-            <ActivityPrintMenu
-              disabled={printMutation.isPending}
-              onSelect={(floor) => printMutation.mutate(floor)}
-            />
+            <ActivityPrintMenu disabled={printMutation.isPending} onOpen={openPrintDialog} />
           </div>
           <Link
             aria-label="신청하기"
@@ -173,10 +172,7 @@ export function ActivityRequestsPage() {
           query={query}
           action={
             <div className="activity-toolbar-actions">
-              <ActivityPrintMenu
-                disabled={printMutation.isPending}
-                onSelect={(floor) => printMutation.mutate(floor)}
-              />
+              <ActivityPrintMenu disabled={printMutation.isPending} onOpen={openPrintDialog} />
               <Link
                 className="detail-primary-button data-table-toolbar__create"
                 to="/activity-requests/new"
@@ -459,8 +455,19 @@ export function ActivityRequestsPage() {
         ) : null}
       </section>
       {printMessage ? <p className="activity-print-message">{printMessage}</p> : null}
-      {printBatch?.documents.length ? (
-        <ActivityPrintPreviewModal batch={printBatch} onClose={() => setPrintBatch(null)} />
+      {printDialogOpen ? (
+        <ActivityPrintPreviewModal
+          batch={printBatch}
+          floor={printFloor}
+          isLoading={printMutation.isPending}
+          errorMessage={printMessage}
+          onFloorChange={changePrintFloor}
+          onClose={() => {
+            setPrintDialogOpen(false);
+            setPrintBatch(null);
+            setPrintMessage('');
+          }}
+        />
       ) : null}
     </PageScaffold>
   );

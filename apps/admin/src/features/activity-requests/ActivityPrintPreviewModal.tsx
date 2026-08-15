@@ -1,14 +1,29 @@
 import { useEffect, useRef } from 'react';
 import { Printer, X } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
-import type { ActivityRequestPrintBatch } from '@jshsus/types';
+import type { ActivityPrintFloor, ActivityRequestPrintBatch } from '@jshsus/types';
 import { ActivityPrintBatch } from './ActivityPrintBatch';
+
+const floorTabs: readonly { value: ActivityPrintFloor; label: string }[] = [
+  { value: 'all', label: '전체' },
+  { value: 2, label: '2층' },
+  { value: 3, label: '3층' },
+  { value: 4, label: '4층' },
+];
 
 export function ActivityPrintPreviewModal({
   batch,
+  floor,
+  isLoading = false,
+  errorMessage,
+  onFloorChange,
   onClose,
 }: {
-  batch: ActivityRequestPrintBatch;
+  batch: ActivityRequestPrintBatch | null;
+  floor: ActivityPrintFloor;
+  isLoading?: boolean;
+  errorMessage?: string;
+  onFloorChange: (floor: ActivityPrintFloor) => void;
   onClose: () => void;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -45,16 +60,47 @@ export function ActivityPrintPreviewModal({
             <X size={20} aria-hidden="true" />
           </button>
         </header>
+        <div className="activity-print-preview-modal__tabs" role="tablist" aria-label="인쇄 범위">
+          {floorTabs.map((tab) => (
+            <button
+              key={tab.value}
+              className={tab.value === floor ? 'is-active' : undefined}
+              type="button"
+              role="tab"
+              aria-selected={tab.value === floor}
+              disabled={isLoading}
+              onClick={() => onFloorChange(tab.value)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
         <div className="activity-print-preview-modal__body">
-          <div ref={contentRef} className="activity-print-printable">
-            <ActivityPrintBatch batch={batch} preview />
-          </div>
+          {isLoading ? (
+            <p className="activity-print-preview-modal__state">인쇄 자료를 준비하는 중입니다.</p>
+          ) : null}
+          {!isLoading && errorMessage ? (
+            <p className="activity-print-preview-modal__state is-error">{errorMessage}</p>
+          ) : null}
+          {!isLoading && !errorMessage && batch?.documents.length ? (
+            <div ref={contentRef} className="activity-print-printable">
+              <ActivityPrintBatch batch={batch} preview />
+            </div>
+          ) : null}
+          {!isLoading && !errorMessage && !batch?.documents.length ? (
+            <p className="activity-print-preview-modal__state">인쇄할 자료가 없습니다.</p>
+          ) : null}
         </div>
         <footer className="activity-print-preview-modal__actions">
           <button className="secondary-button" type="button" onClick={onClose}>
             취소
           </button>
-          <button className="primary-button" type="button" onClick={handlePrint}>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={handlePrint}
+            disabled={isLoading || !batch?.documents.length}
+          >
             <Printer size={16} aria-hidden="true" />
             인쇄
           </button>

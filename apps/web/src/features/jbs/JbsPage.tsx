@@ -76,7 +76,7 @@ export function JbsPage() {
       <section className="jbs-list" aria-label="JBS 영상 목록">
         <DataTableToolbar
           total={result?.total ?? 0}
-          page={result?.page ?? search.page}
+          page={search.page}
           totalPages={result?.totalPages ?? 0}
           pageSize={search.pageSize}
           field={search.field}
@@ -157,7 +157,7 @@ export function JbsPage() {
               ))}
             </div>
             <DataTablePagination
-              page={result.page}
+              page={search.page}
               totalPages={result.totalPages}
               total={result.total}
               pageSize={search.pageSize}

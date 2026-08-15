@@ -227,7 +227,7 @@ export function LoginPage() {
     mode === 'login'
       ? (requestQuery.data?.serviceName ?? (ssoRequestId ? undefined : '과구리'))
       : undefined;
-  const title = mode === 'login' ? (serviceName ?? '전남과학고 통합로그인') : '새 비밀번호 설정';
+  const title = mode === 'login' ? (serviceName ?? '') : '새 비밀번호 설정';
   const normalizedUsername = username.trim();
   const forgotPasswordSearch = {
     username: normalizedUsername || undefined,

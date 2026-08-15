@@ -73,32 +73,17 @@ function formatActivityMobileDate(request: ActivityRequestAdminSummary) {
   return `${date}(${weekday})`;
 }
 
-function ActivityPrintMenu({
-  disabled,
-  onSelect,
-}: {
-  disabled?: boolean;
-  onSelect: (floor: ActivityPrintFloor) => void;
-}) {
+function ActivityPrintMenu({ disabled, onOpen }: { disabled?: boolean; onOpen: () => void }) {
   return (
-    <div className="activity-print-select-wrap">
+    <button
+      className="secondary-button activity-print-trigger"
+      type="button"
+      disabled={disabled}
+      onClick={onOpen}
+    >
       <Printer size={15} aria-hidden="true" />
-      <AdminSelect
-        className="activity-print-select"
-        value="all"
-        aria-label="인쇄할 층 선택"
-        onChange={(event) => {
-          const value = event.target.value;
-          if (value) onSelect(value === 'all' ? 'all' : (Number(value) as ActivityPrintFloor));
-        }}
-        disabled={disabled}
-      >
-        <option value="all">전체</option>
-        <option value="2">2층</option>
-        <option value="3">3층</option>
-        <option value="4">4층</option>
-      </AdminSelect>
-    </div>
+      인쇄
+    </button>
   );
 }
 
@@ -252,6 +237,8 @@ export function ActivityOverviewPage() {
   const [pageSize, setPageSize] = useState(20);
   const [sorting, setSorting] = useState<SortingState>([{ id: 'startsAt', desc: true }]);
   const [selectedRequest, setSelectedRequest] = useState<ActivityRequestAdminSummary | null>(null);
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [printFloor, setPrintFloor] = useState<ActivityPrintFloor>('all');
   const [printBatch, setPrintBatch] = useState<ActivityRequestPrintBatch | null>(null);
   const [printMessage, setPrintMessage] = useState('');
   const sort = sorting[0];
@@ -282,6 +269,19 @@ export function ActivityOverviewPage() {
     },
     onError: () => showToast({ title: '인쇄 자료를 준비하지 못했습니다.', tone: 'danger' }),
   });
+  const openPrintDialog = () => {
+    setPrintDialogOpen(true);
+    setPrintFloor('all');
+    setPrintBatch(null);
+    setPrintMessage('');
+    printMutation.mutate('all');
+  };
+  const changePrintFloor = (floor: ActivityPrintFloor) => {
+    setPrintFloor(floor);
+    setPrintBatch(null);
+    setPrintMessage('');
+    printMutation.mutate(floor);
+  };
   const resetPage = () => setPage(1);
 
   return (
@@ -350,10 +350,7 @@ export function ActivityOverviewPage() {
                 </option>
               ))}
             </AdminSelect>
-            <ActivityPrintMenu
-              disabled={printMutation.isPending}
-              onSelect={(floor) => printMutation.mutate(floor)}
-            />
+            <ActivityPrintMenu disabled={printMutation.isPending} onOpen={openPrintDialog} />
           </TableToolbar>
         }
       >
@@ -427,8 +424,19 @@ export function ActivityOverviewPage() {
           </dl>
         ) : null}
       </Drawer>
-      {printBatch?.documents.length ? (
-        <ActivityPrintPreviewModal batch={printBatch} onClose={() => setPrintBatch(null)} />
+      {printDialogOpen ? (
+        <ActivityPrintPreviewModal
+          batch={printBatch}
+          floor={printFloor}
+          isLoading={printMutation.isPending}
+          errorMessage={printMessage}
+          onFloorChange={changePrintFloor}
+          onClose={() => {
+            setPrintDialogOpen(false);
+            setPrintBatch(null);
+            setPrintMessage('');
+          }}
+        />
       ) : null}
     </div>
   );
