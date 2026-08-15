@@ -90,6 +90,11 @@ const rejectSchema = z.object({
   reason: z.string().trim().min(1).max(500),
 });
 
+const adminStatusSchema = z.object({
+  status: z.enum(['pending', 'approved', 'rejected']),
+  reason: z.string().trim().max(500).optional(),
+});
+
 const printBatchSchema = z.object({
   date: z
     .string()
@@ -1182,6 +1187,108 @@ export class ActivityRequestsService {
         };
       });
     });
+  }
+
+  async updateAdminStatus(id: number, body: unknown, actorId?: number | null) {
+    this.assertId(id);
+    const parsed = adminStatusSchema.safeParse(body ?? {});
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    if (parsed.data.status === 'rejected' && !parsed.data.reason) {
+      throw new BadRequestException({ reason: ['반려 사유를 입력해 주세요.'] });
+    }
+    if (!actorId || actorId <= 0) {
+      throw new BadRequestException('A persisted reviewer account is required.');
+    }
+
+    return this.database.query('activity-requests.update-admin-status', async (db) =>
+      db.transaction(async (tx) => {
+        const [request] = await tx
+          .select({
+            status: schema.activityRequests.status,
+            representativeStudentId: schema.activityRequests.representativeStudentId,
+            location: schema.activityRequests.location,
+          })
+          .from(schema.activityRequests)
+          .where(eq(schema.activityRequests.id, id))
+          .limit(1)
+          .for('update');
+        if (!request) throw new NotFoundException('Activity request does not exist.');
+        if (request.status === 'canceled') {
+          throw new ConflictException('Canceled activity requests cannot be reviewed.');
+        }
+
+        const workflowStatus =
+          parsed.data.status === 'pending' ? ('submitted' as const) : parsed.data.status;
+        const issuedAt = workflowStatus === 'approved' ? new Date() : null;
+        const issuedNumber = workflowStatus === 'approved' ? issueNumber(id) : null;
+        const rejectionReason = workflowStatus === 'rejected' ? (parsed.data.reason ?? null) : null;
+
+        await tx
+          .update(schema.activityRequests)
+          .set({
+            status: workflowStatus,
+            reviewedById: workflowStatus === 'submitted' ? null : actorId,
+            issuedNumber,
+            issuedAt,
+            rejectionReason,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.activityRequests.id, id));
+        await tx.insert(schema.activityRequestEvents).values({
+          activityRequestId: id,
+          actorId,
+          type: workflowStatus === 'submitted' ? 'submitted' : workflowStatus,
+          note: workflowStatus === 'approved' ? issuedNumber : rejectionReason,
+        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId,
+            action: 'activity_request.status',
+            targetType: 'activity_requests',
+            targetId: id,
+          }),
+        );
+
+        if (workflowStatus === 'approved' || workflowStatus === 'rejected') {
+          const [representative] = await tx
+            .select({ userId: schema.students.userId })
+            .from(schema.students)
+            .where(eq(schema.students.id, request.representativeStudentId))
+            .limit(1);
+          if (representative?.userId) {
+            await this.notifications.createForUser(
+              {
+                userId: representative.userId,
+                type:
+                  workflowStatus === 'approved'
+                    ? 'activity_request_approved'
+                    : 'activity_request_rejected',
+                title:
+                  workflowStatus === 'approved'
+                    ? `'${request.location}' 탐구활동서가 승인되었습니다.`
+                    : `'${request.location}' 탐구활동서가 반려되었습니다.`,
+                link: `/activity-requests/${id}`,
+                metadata: {
+                  activityRequestId: id,
+                  location: request.location,
+                },
+                dedupeKey: `activity-request:${id}:${workflowStatus}`,
+              },
+              tx,
+            );
+          }
+        }
+
+        return {
+          ok: true,
+          id,
+          status: parsed.data.status,
+          workflowStatus,
+          ...(issuedNumber ? { issuedNumber } : {}),
+          ...(rejectionReason ? { rejectionReason } : {}),
+        };
+      }),
+    );
   }
 
   async printToday(body: unknown, actorId?: number | null): Promise<ActivityRequestPrintBatch> {

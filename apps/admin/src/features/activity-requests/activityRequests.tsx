@@ -9,7 +9,7 @@ import { api } from '../../shared/api/adminApi';
 export const activityRequestsQueryKey = ['activity-requests'] as const;
 
 export const activityStatusLabels: Record<ActivityRequestAdminStatus, string> = {
-  pending: '승인 대기',
+  pending: '대기',
   approved: '승인',
   rejected: '반려',
 };

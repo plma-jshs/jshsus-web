@@ -31,7 +31,7 @@ export function ActivityParticipants({
     const trigger = triggerRef.current;
     if (!trigger) return;
     const rect = trigger.getBoundingClientRect();
-    const width = Math.min(300, window.innerWidth - 24);
+    const width = Math.min(280, window.innerWidth - 24);
     const left = Math.min(Math.max(12, rect.left), Math.max(12, window.innerWidth - width - 12));
     const popoverHeight = popoverRef.current?.offsetHeight ?? 180;
     const top =
@@ -115,7 +115,7 @@ export function ActivityParticipants({
               onClick={(event) => event.stopPropagation()}
             >
               <strong>참여 학생 {students.length}명</strong>
-              <ul>
+              <ul style={{ gridTemplateRows: `repeat(${Math.ceil(students.length / 2)}, auto)` }}>
                 {students.map((student) => (
                   <li key={student.studentId}>
                     <span>{formatActivityParticipant(student)}</span>

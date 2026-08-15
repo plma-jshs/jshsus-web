@@ -141,7 +141,7 @@
 .activity-participants-popover {
   position: fixed;
   z-index: 90;
-  width: min(320px, calc(100vw - 24px));
+  width: min(280px, calc(100vw - 24px));
   max-height: min(300px, calc(100vh - 24px));
   padding: 12px 14px;
   overflow-y: auto;
@@ -166,16 +166,18 @@
 .activity-participants-popover ul {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: column;
   padding: 0;
   margin: 0;
-  column-gap: 18px;
-  row-gap: 3px;
+  column-gap: 14px;
+  row-gap: 2px;
   list-style: none;
 }
 
 .activity-participants-popover li {
   min-width: 0;
   padding: 2px 0;
+  border: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -331,7 +333,8 @@
     white-space: normal;
   }
 
-  .operation-activity-mobile-card .operation-status {
+  .operation-activity-mobile-card .operation-status,
+  .operation-activity-mobile-card .operation-status-select {
     min-height: 22px;
     padding-inline: 7px;
     font-size: 10px;
@@ -523,6 +526,48 @@
   font-size: 11px;
   font-weight: 800;
   white-space: nowrap;
+}
+
+.operation-status-select {
+  min-height: 28px;
+  max-width: 104px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+}
+
+.operation-status-select:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.operation-status-select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.operation-status-select--pending {
+  border-color: #f1d897;
+  background: #fff4d8;
+  color: #7a5510;
+}
+
+.operation-status-select--approved {
+  border-color: #c4dbf0;
+  background: #e8f2ff;
+  color: #245a8c;
+}
+
+.operation-status-select--rejected {
+  border-color: #e7caca;
+  background: #f5eeee;
+  color: #8b4545;
 }
 
 .operation-status--submitted,

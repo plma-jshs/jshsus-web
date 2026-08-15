@@ -5,6 +5,7 @@ import type {
   AcademicEvent,
   ActivityPrintFloor,
   ActivityRequestAdminListQuery,
+  ActivityRequestAdminStatus,
   ActivityRequestAdminSummary,
   ActivityRequestPrintBatch,
   ActivityRequestStudentOption,
@@ -566,6 +567,18 @@ export const api = {
         body: { reason },
       },
     ),
+  updateActivityRequestStatus: (id: number, status: ActivityRequestAdminStatus, reason?: string) =>
+    request<{
+      ok: true;
+      id: number;
+      status: ActivityRequestAdminStatus;
+      workflowStatus: 'submitted' | 'approved' | 'rejected';
+      rejectionReason?: string;
+      issuedNumber?: string;
+    }>(`/api/admin/activity-requests/${id}/status`, {
+      method: 'PUT',
+      body: { status, reason },
+    }),
   printTodayActivityRequests: (options?: { date?: string; floor?: ActivityPrintFloor }) =>
     request<ActivityRequestPrintBatch>('/api/admin/activity-requests/print/today', {
       method: 'POST',

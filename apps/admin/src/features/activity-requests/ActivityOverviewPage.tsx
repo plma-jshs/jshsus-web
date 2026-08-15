@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import type {
   ActivityPrintFloor,
   ActivityRequestAdminListQuery,
@@ -14,6 +14,7 @@ import {
   AdminListPanel,
   AdminSelect,
   DateRangeField,
+  Dialog,
   Drawer,
   MobileSortSelect,
   TableToolbar,
@@ -25,6 +26,7 @@ import {
   ActivityStatusBadge,
   activityStatusOptions,
   useActivityRequests,
+  useRefreshActivityRequests,
 } from './activityRequests';
 import {
   formatActivityPeriodLabel,
@@ -90,12 +92,49 @@ function ActivityPrintMenu({ disabled, onOpen }: { disabled?: boolean; onOpen: (
   );
 }
 
+function ActivityStatusSelect({
+  status,
+  label,
+  disabled,
+  onChange,
+}: {
+  status: ActivityRequestAdminStatus;
+  label: string;
+  disabled?: boolean;
+  onChange: (status: ActivityRequestAdminStatus) => void;
+}) {
+  return (
+    <select
+      aria-label={label}
+      className={`operation-status-select operation-status-select--${status}`}
+      disabled={disabled}
+      value={status}
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => event.stopPropagation()}
+      onChange={(event) => onChange(event.target.value as ActivityRequestAdminStatus)}
+    >
+      {activityStatusOptions.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function ActivityMobileCard({
   request,
   onOpen,
+  onStatusChange,
+  statusUpdating,
 }: {
   request: ActivityRequestAdminSummary;
   onOpen: () => void;
+  onStatusChange: (
+    request: ActivityRequestAdminSummary,
+    status: ActivityRequestAdminStatus,
+  ) => void;
+  statusUpdating: boolean;
 }) {
   const participants = activityParticipants(request);
   const date = koreaDateInput(new Date(request.startsAt));
@@ -113,7 +152,12 @@ function ActivityMobileCard({
       }}
     >
       <span className="operation-activity-mobile-card__heading">
-        <ActivityStatusBadge status={request.status} />
+        <ActivityStatusSelect
+          status={request.status}
+          label={`${request.studentNo} ${request.studentName} 상태`}
+          disabled={statusUpdating}
+          onChange={(status) => onStatusChange(request, status)}
+        />
         <strong>{request.purpose}</strong>
         <ChevronRight size={17} aria-hidden="true" />
       </span>
@@ -154,97 +198,113 @@ function ActivityMobileCard({
   );
 }
 
-const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
-  {
-    accessorKey: 'id',
-    header: '번호',
-    cell: ({ row }) => `#${row.original.id}`,
-    meta: { widthPreset: 'index', hideOnMobile: true },
-  },
-  {
-    id: 'startsAt',
-    accessorFn: (request) => request.startsAt,
-    header: '날짜',
-    enableSorting: true,
-    cell: ({ row }) =>
-      formatKoreanDate(row.original.startsAt, { month: '2-digit', day: '2-digit' }),
-    meta: { width: 76, align: 'center' },
-  },
-  {
-    id: 'time',
-    accessorFn: (request) => request.startsAt,
-    header: '시간',
-    enableSorting: false,
-    cell: ({ row }) => {
-      const request = row.original;
-      const date = koreaDateInput(new Date(request.startsAt));
-      return (
-        <span className="operation-activity-time">
-          <strong>
-            {formatActivityPeriodLabel(
-              date,
-              request.startsAt,
-              request.endsAt,
-              request.activitySlotIds,
-            )}
-          </strong>
-          <span>
-            {formatActivityTimeRanges(
-              date,
-              request.startsAt,
-              request.endsAt,
-              request.activitySlotIds,
-            )}
-          </span>
-        </span>
-      );
+function createColumns(
+  onStatusChange: (
+    request: ActivityRequestAdminSummary,
+    status: ActivityRequestAdminStatus,
+  ) => void,
+  statusUpdating: boolean,
+): ColumnDef<ActivityRequestAdminSummary>[] {
+  return [
+    {
+      accessorKey: 'id',
+      header: '번호',
+      cell: ({ row }) => `#${row.original.id}`,
+      meta: { widthPreset: 'index', hideOnMobile: true },
     },
-    meta: { minWidth: 164, align: 'center' },
-  },
-  {
-    accessorKey: 'location',
-    header: '장소',
-    enableSorting: false,
-    meta: { minWidth: 160, maxWidth: 250, truncate: true },
-  },
-  {
-    accessorKey: 'purpose',
-    header: '내용',
-    enableSorting: false,
-    meta: { minWidth: 220, maxWidth: 380, truncate: true, mobileRole: 'title' },
-  },
-  {
-    id: 'participants',
-    accessorFn: formatParticipants,
-    header: '인원',
-    enableSorting: false,
-    cell: ({ row }) => (
-      <ActivityParticipants
-        participants={row.original.participants}
-        fallback={row.original}
-        className="operation-activity-participants"
-      />
-    ),
-    meta: { minWidth: 180, maxWidth: 260 },
-  },
-  {
-    accessorKey: 'advisorTeacherName',
-    header: '지도교사',
-    enableSorting: false,
-    cell: ({ getValue }) => getValue<string | undefined>() ?? '-',
-    meta: { width: 110, align: 'left' },
-  },
-  {
-    accessorKey: 'status',
-    header: '상태',
-    enableSorting: false,
-    cell: ({ getValue }) => <ActivityStatusBadge status={getValue<ActivityRequestAdminStatus>()} />,
-    meta: { width: 88, align: 'center', mobileRole: 'badge' },
-  },
-];
+    {
+      id: 'startsAt',
+      accessorFn: (request) => request.startsAt,
+      header: '날짜',
+      enableSorting: true,
+      cell: ({ row }) =>
+        formatKoreanDate(row.original.startsAt, { month: '2-digit', day: '2-digit' }),
+      meta: { width: 76, align: 'center' },
+    },
+    {
+      id: 'time',
+      accessorFn: (request) => request.startsAt,
+      header: '시간',
+      enableSorting: false,
+      cell: ({ row }) => {
+        const request = row.original;
+        const date = koreaDateInput(new Date(request.startsAt));
+        return (
+          <span className="operation-activity-time">
+            <strong>
+              {formatActivityPeriodLabel(
+                date,
+                request.startsAt,
+                request.endsAt,
+                request.activitySlotIds,
+              )}
+            </strong>
+            <span>
+              {formatActivityTimeRanges(
+                date,
+                request.startsAt,
+                request.endsAt,
+                request.activitySlotIds,
+              )}
+            </span>
+          </span>
+        );
+      },
+      meta: { minWidth: 164, align: 'center' },
+    },
+    {
+      accessorKey: 'location',
+      header: '장소',
+      enableSorting: false,
+      meta: { minWidth: 160, maxWidth: 250, truncate: true },
+    },
+    {
+      accessorKey: 'purpose',
+      header: '내용',
+      enableSorting: false,
+      meta: { minWidth: 220, maxWidth: 380, truncate: true, mobileRole: 'title' },
+    },
+    {
+      id: 'participants',
+      accessorFn: formatParticipants,
+      header: '인원',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <ActivityParticipants
+          participants={row.original.participants}
+          fallback={row.original}
+          className="operation-activity-participants"
+        />
+      ),
+      meta: { minWidth: 180, maxWidth: 260 },
+    },
+    {
+      accessorKey: 'advisorTeacherName',
+      header: '지도교사',
+      enableSorting: false,
+      cell: ({ getValue }) => getValue<string | undefined>() ?? '-',
+      meta: { width: 110, align: 'left' },
+    },
+    {
+      accessorKey: 'status',
+      header: '상태',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <ActivityStatusSelect
+          status={row.original.status}
+          label={`${row.original.studentNo} ${row.original.studentName} 상태`}
+          disabled={statusUpdating}
+          onChange={(status) => onStatusChange(row.original, status)}
+        />
+      ),
+      meta: { width: 104, align: 'center', mobileRole: 'badge' },
+    },
+  ];
+}
 
 export function ActivityOverviewPage() {
   const { showToast } = useToast();
+  const refreshActivityRequests = useRefreshActivityRequests();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -253,6 +313,8 @@ export function ActivityOverviewPage() {
   const [pageSize, setPageSize] = useState(20);
   const [sorting, setSorting] = useState<SortingState>([{ id: 'startsAt', desc: true }]);
   const [selectedRequest, setSelectedRequest] = useState<ActivityRequestAdminSummary | null>(null);
+  const [rejectRequest, setRejectRequest] = useState<ActivityRequestAdminSummary | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [printFloor, setPrintFloor] = useState<ActivityPrintFloor>('all');
   const [printBatch, setPrintBatch] = useState<ActivityRequestPrintBatch | null>(null);
@@ -268,18 +330,57 @@ export function ActivityOverviewPage() {
     sortBy: (sort?.id as ActivityRequestAdminListQuery['sortBy']) ?? 'startsAt',
     sortOrder: sort ? (sort.desc ? 'desc' : 'asc') : 'desc',
   });
+  const statusMutation = useMutation({
+    mutationFn: ({
+      id,
+      status,
+      reason,
+    }: {
+      id: number;
+      status: ActivityRequestAdminStatus;
+      reason?: string;
+    }) => api.updateActivityRequestStatus(id, status, reason),
+    onSuccess: async (_result, variables) => {
+      setRejectRequest(null);
+      setRejectReason('');
+      await refreshActivityRequests();
+      showToast({
+        title: `탐구활동서를 ${activityStatusOptions.find((option) => option.value === variables.status)?.label ?? '변경'} 처리했습니다.`,
+        tone: 'success',
+      });
+    },
+    onError: () => showToast({ title: '탐구활동서 상태를 변경하지 못했습니다.', tone: 'danger' }),
+  });
+  const handleStatusChange = (
+    request: ActivityRequestAdminSummary,
+    nextStatus: ActivityRequestAdminStatus,
+  ) => {
+    if (request.status === nextStatus || statusMutation.isPending) return;
+    statusMutation.reset();
+    if (nextStatus === 'rejected') {
+      setRejectRequest(request);
+      setRejectReason('');
+      return;
+    }
+    statusMutation.mutate({ id: request.id, status: nextStatus });
+  };
+  const submitReject = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!rejectRequest || !rejectReason.trim() || statusMutation.isPending) return;
+    statusMutation.mutate({
+      id: rejectRequest.id,
+      status: 'rejected',
+      reason: rejectReason.trim(),
+    });
+  };
+  const columns = createColumns(handleStatusChange, statusMutation.isPending);
   const printMutation = useMutation({
     mutationFn: (floor: ActivityPrintFloor) => api.printTodayActivityRequests({ floor }),
     onSuccess: (result) => {
       setPrintBatch(result);
       setPrintMessage('');
-      if (!result.documents.length) return;
-      showToast({
-        title: `${result.floor === 'all' ? '전체' : `${result.floor}층`} ${result.documents.length}건의 인쇄 화면을 준비했습니다.`,
-        tone: 'success',
-      });
     },
-    onError: () => showToast({ title: '인쇄 자료를 준비하지 못했습니다.', tone: 'danger' }),
+    onError: () => setPrintMessage('인쇄 자료를 준비하지 못했습니다. 잠시 후 다시 시도해 주세요.'),
   });
   const openPrintDialog = () => {
     setPrintDialogOpen(true);
@@ -396,7 +497,12 @@ export function ActivityOverviewPage() {
             caption="탐구활동서 현황"
             getRowId={(request) => String(request.id)}
             renderMobileRow={(request) => (
-              <ActivityMobileCard request={request} onOpen={() => setSelectedRequest(request)} />
+              <ActivityMobileCard
+                request={request}
+                onOpen={() => setSelectedRequest(request)}
+                onStatusChange={handleStatusChange}
+                statusUpdating={statusMutation.isPending}
+              />
             )}
           />
         )}
@@ -436,6 +542,50 @@ export function ActivityOverviewPage() {
           </dl>
         ) : null}
       </Drawer>
+      <Dialog
+        open={Boolean(rejectRequest)}
+        onClose={() => {
+          if (statusMutation.isPending) return;
+          setRejectRequest(null);
+          setRejectReason('');
+          statusMutation.reset();
+        }}
+        title="반려 사유"
+        description="반려 처리할 탐구활동서의 사유를 입력해 주세요."
+        size="sm"
+        className="activity-reject-dialog"
+      >
+        <form className="operation-reject-form" onSubmit={submitReject}>
+          <label>
+            <span>반려 사유</span>
+            <textarea
+              autoFocus
+              value={rejectReason}
+              onChange={(event) => setRejectReason(event.target.value)}
+              maxLength={500}
+              required
+            />
+          </label>
+          <div className="button-row">
+            <button
+              className="quiet-button"
+              type="button"
+              onClick={() => {
+                setRejectRequest(null);
+                setRejectReason('');
+                statusMutation.reset();
+              }}
+              disabled={statusMutation.isPending}
+            >
+              취소
+            </button>
+            <button className="primary-button" type="submit" disabled={statusMutation.isPending}>
+              반려
+            </button>
+          </div>
+          {statusMutation.isError ? <p className="form-error">반려 처리에 실패했습니다.</p> : null}
+        </form>
+      </Dialog>
       {printDialogOpen ? (
         <ActivityPrintPreviewModal
           batch={printBatch}

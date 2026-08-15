@@ -4,6 +4,7 @@ const actionLabels: Record<string, string> = {
   'activity_request.issue': '탐구활동서 발급',
   'activity_request.print_batch': '탐구활동서 일괄 인쇄',
   'activity_request.reject': '탐구활동서 반려',
+  'activity_request.status': '탐구활동서 상태 변경',
   'admin.account-activation.bulk-issue': '계정 인증코드 일괄 발급',
   'admin.account-activation.issue': '계정 인증코드 발급',
   'admin.account.deactivate': '계정 비활성화',

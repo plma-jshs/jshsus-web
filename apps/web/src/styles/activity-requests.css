@@ -365,7 +365,7 @@
 .activity-participants-popover {
   position: fixed;
   z-index: var(--j-layer-popover);
-  width: min(320px, calc(100vw - 24px));
+  width: min(280px, calc(100vw - 24px));
   max-height: min(300px, calc(100vh - 24px));
   padding: 12px 14px;
   overflow-y: auto;
@@ -391,16 +391,18 @@
 .activity-participants-popover ul {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: column;
   padding: 0;
   margin: 0;
-  column-gap: 18px;
-  row-gap: 3px;
+  column-gap: 14px;
+  row-gap: 2px;
   list-style: none;
 }
 
 .activity-participants-popover li {
   min-width: 0;
   padding: 2px 0;
+  border: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

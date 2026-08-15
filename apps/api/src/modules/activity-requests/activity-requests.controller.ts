@@ -133,4 +133,19 @@ export class ActivityRequestsController {
   reject(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthenticatedRequest) {
     return this.activityRequestsService.reject(Number(id), body, request.authSession?.userId);
   }
+
+  @Put('admin/activity-requests/:id/status')
+  @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
+  @RequirePermissions('activity.review')
+  updateStatus(
+    @Param('id') id: string,
+    @Body() body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.activityRequestsService.updateAdminStatus(
+      Number(id),
+      body,
+      request.authSession?.userId,
+    );
+  }
 }
