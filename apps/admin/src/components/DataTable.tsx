@@ -389,46 +389,51 @@ export function DataTable<T>({
                 : `${currentPage} / ${resolvedPageCount} 페이지`}
             </span>
           </div>
-          <button
-            className="admin-table-pagination__previous"
-            type="button"
-            aria-label="이전 페이지"
-            onClick={() => moveToPage(currentPageIndex - 1)}
-            disabled={currentPage <= 1}
-          >
-            <ChevronLeft size={16} aria-hidden="true" />
-          </button>
-          <label className="admin-table-pagination__input-label">
-            <span className="sr-only">현재 페이지</span>
-            <input
-              key={currentPage}
-              inputMode="numeric"
-              type="text"
-              defaultValue={String(currentPage)}
-              onChange={(event) => {
-                event.currentTarget.value = event.currentTarget.value.replace(/\D/g, '');
-              }}
-              onBlur={(event) => submitPageInput(event.currentTarget.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  submitPageInput(event.currentTarget.value);
-                  event.currentTarget.blur();
-                }
-              }}
-              aria-label="페이지 번호"
-            />
-          </label>
-          <span aria-hidden="true">/ {resolvedPageCount}</span>
-          <button
-            className="admin-table-pagination__next"
-            type="button"
-            aria-label="다음 페이지"
-            onClick={() => moveToPage(currentPageIndex + 1)}
-            disabled={currentPage >= resolvedPageCount}
-          >
-            <ChevronRight size={16} aria-hidden="true" />
-          </button>
+          <div className="admin-table-pagination__controls">
+            <button
+              className="admin-table-pagination__previous"
+              type="button"
+              aria-label="이전 페이지"
+              onClick={() => moveToPage(currentPageIndex - 1)}
+              disabled={currentPage <= 1}
+            >
+              <ChevronLeft size={16} aria-hidden="true" />
+            </button>
+            <label className="admin-table-pagination__input-label">
+              <span className="sr-only">현재 페이지</span>
+              <input
+                key={currentPage}
+                inputMode="numeric"
+                type="text"
+                defaultValue={String(currentPage)}
+                onChange={(event) => {
+                  event.currentTarget.value = event.currentTarget.value.replace(/\D/g, '');
+                }}
+                onBlur={(event) => submitPageInput(event.currentTarget.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    submitPageInput(event.currentTarget.value);
+                    event.currentTarget.blur();
+                  }
+                }}
+                aria-label="페이지 번호"
+              />
+            </label>
+            <span className="admin-table-pagination__total-pages" aria-hidden="true">
+              <span>/</span>
+              <span>{resolvedPageCount}</span>
+            </span>
+            <button
+              className="admin-table-pagination__next"
+              type="button"
+              aria-label="다음 페이지"
+              onClick={() => moveToPage(currentPageIndex + 1)}
+              disabled={currentPage >= resolvedPageCount}
+            >
+              <ChevronRight size={16} aria-hidden="true" />
+            </button>
+          </div>
         </nav>
       ) : null}
     </div>

@@ -1,0 +1,145 @@
+import { createPortal } from 'react-dom';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import type { ActivityRequestParticipant } from '@jshsus/types';
+import { formatActivityParticipant, resolveActivityParticipants } from './presentation';
+
+type FallbackParticipant = { studentNo: number; studentName: string };
+
+export function ActivityParticipants({
+  participants,
+  fallback,
+  className,
+}: {
+  participants?: ActivityRequestParticipant[];
+  fallback: FallbackParticipant;
+  className?: string;
+}) {
+  const students = resolveActivityParticipants(participants, fallback);
+  const representativeIndex = Math.max(
+    0,
+    students.findIndex((student) => student.isRepresentative),
+  );
+  const representative = students[representativeIndex];
+  const others = students.filter((_, index) => index !== representativeIndex);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<number | undefined>(undefined);
+  const popoverId = `activity-participants-popover-${useId().replace(/:/g, '')}`;
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
+
+  const clearCloseTimer = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+  };
+  const scheduleClose = () => {
+    clearCloseTimer();
+    closeTimer.current = window.setTimeout(() => setOpen(false), 140);
+  };
+  const updatePosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const width = Math.min(300, window.innerWidth - 24);
+    const left = Math.min(Math.max(12, rect.left), Math.max(12, window.innerWidth - width - 12));
+    const popoverHeight = popoverRef.current?.offsetHeight ?? 180;
+    const top =
+      rect.bottom + 8 + popoverHeight <= window.innerHeight
+        ? rect.bottom + 8
+        : Math.max(12, rect.top - popoverHeight - 8);
+    setPosition({ top, left });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    updatePosition();
+    const frame = window.requestAnimationFrame(updatePosition);
+    return () => window.cancelAnimationFrame(frame);
+  }, [open, updatePosition]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const handleOutsidePointer = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (triggerRef.current?.contains(target) || popoverRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', handleOutsidePointer);
+    document.addEventListener('keydown', handleEscape);
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsidePointer);
+      document.removeEventListener('keydown', handleEscape);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [open, updatePosition]);
+
+  useEffect(() => () => clearCloseTimer(), []);
+
+  if (!representative) return <span className={className}>-</span>;
+  if (students.length < 3) {
+    return <span className={className}>{students.map(formatActivityParticipant).join(', ')}</span>;
+  }
+
+  const summaryClassName = ['activity-participants-summary', className].filter(Boolean).join(' ');
+  return (
+    <span
+      className="activity-participants-popover-anchor"
+      onMouseEnter={() => {
+        clearCloseTimer();
+        setOpen(true);
+      }}
+      onMouseLeave={scheduleClose}
+    >
+      <span className={summaryClassName}>
+        {formatActivityParticipant(representative)}{' '}
+        <button
+          ref={triggerRef}
+          aria-controls={popoverId}
+          aria-expanded={open}
+          className="activity-participants-popover-trigger"
+          type="button"
+          onBlur={() => undefined}
+          onClick={(event) => {
+            event.stopPropagation();
+            clearCloseTimer();
+            setOpen((current) => !current);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          외 {others.length}명
+        </button>
+      </span>
+      {open && position && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              className="activity-participants-popover"
+              id={popoverId}
+              role="tooltip"
+              style={{ top: position.top, left: position.left }}
+              onMouseEnter={clearCloseTimer}
+              onMouseLeave={scheduleClose}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <strong>참여 학생 {students.length}명</strong>
+              <ul>
+                {students.map((student) => (
+                  <li key={student.studentId}>
+                    <span>{formatActivityParticipant(student)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>,
+            document.body,
+          )
+        : null}
+    </span>
+  );
+}

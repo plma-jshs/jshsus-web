@@ -236,6 +236,8 @@
 
 .admin-table-pagination {
   display: flex;
+  min-width: 0;
+  max-width: 100%;
   min-height: 48px;
   margin-top: 12px;
   align-items: center;
@@ -258,8 +260,19 @@
 .admin-table-pagination__summary {
   display: flex;
   min-width: 0;
+  flex: 0 0 auto;
   align-items: center;
   gap: 12px;
+}
+
+.admin-table-pagination__controls {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font: inherit;
 }
 
 .admin-table-pagination--compact .ui-page-size-select {
@@ -273,6 +286,14 @@
   margin-right: 4px;
   white-space: nowrap;
   font: inherit;
+}
+
+.admin-table-pagination__total-pages {
+  display: inline-flex;
+  min-width: max-content;
+  padding-inline: 4px;
+  align-items: center;
+  gap: 7px;
 }
 
 .admin-table-pagination__input-label {

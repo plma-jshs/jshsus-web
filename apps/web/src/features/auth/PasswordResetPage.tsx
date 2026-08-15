@@ -2,7 +2,7 @@ import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { ArrowLeft, Eye, EyeOff, KeyRound, LockKeyhole, UserRound } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, LockKeyhole, UserRound } from 'lucide-react';
 import {
   confirmPasswordReset,
   getAuthErrorMessage,
@@ -11,6 +11,7 @@ import {
   type PasswordResetDelivery,
 } from './api';
 import { AuthLayout } from './AuthLayout';
+import { OtpInput } from './OtpInput';
 
 type ResetStep = 'request' | 'verify' | 'confirm';
 
@@ -104,11 +105,13 @@ export function PasswordResetPage() {
   const [username, setUsername] = useState(initialUsername);
   const [delivery, setDelivery] = useState<PasswordResetDelivery>('phone');
   const [confirmationCode, setConfirmationCode] = useState('');
+  const [verificationExpiresAt, setVerificationExpiresAt] = useState(0);
   const [resetToken, setResetToken] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [verificationNow, setVerificationNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (!toastMessage) return undefined;
@@ -142,6 +145,8 @@ export function PasswordResetPage() {
       confirmMutation.reset();
       setStep('verify');
       setConfirmationCode('');
+      setVerificationExpiresAt(Date.now() + 179_000);
+      setVerificationNow(Date.now());
       setResetToken(null);
       setNewPassword('');
       setNewPasswordConfirm('');
@@ -188,13 +193,28 @@ export function PasswordResetPage() {
 
   const submitVerify = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!/^\d{6}$/.test(confirmationCode) || verificationExpiresAt <= Date.now()) return;
     setValidationError(null);
     verifyMutation.mutate({ username: username.trim(), code: confirmationCode });
   };
 
+  useEffect(() => {
+    if (step !== 'verify' || !verificationExpiresAt) return undefined;
+    const timer = window.setInterval(() => {
+      setVerificationNow(Date.now());
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [step, verificationExpiresAt]);
+
+  const verificationRemaining = Math.max(0, verificationExpiresAt - verificationNow);
+  const verificationTotalSeconds = Math.ceil(verificationRemaining / 1_000);
+  const verificationMinutes = Math.floor(verificationTotalSeconds / 60);
+  const verificationSeconds = (verificationTotalSeconds % 60).toString().padStart(2, '0');
+  const verificationTimerLabel = `${verificationMinutes}:${verificationSeconds}`;
+
   const activeError =
     validationError ??
-    (step === 'request' && requestMutation.isError
+    ((step === 'request' || step === 'verify') && requestMutation.isError
       ? getAuthErrorMessage(requestMutation.error, '인증 코드를 요청하지 못했습니다.')
       : step === 'verify' && verifyMutation.isError
         ? getAuthErrorMessage(verifyMutation.error, '인증 코드를 확인해 주세요.')
@@ -250,9 +270,11 @@ export function PasswordResetPage() {
                 <span>이메일</span>
               </label>
             </fieldset>
-            <p className="auth-inline-error" role={activeError ? 'alert' : undefined}>
-              {activeError ?? '\u00a0'}
-            </p>
+            {activeError ? (
+              <p className="auth-error" role="alert">
+                {activeError}
+              </p>
+            ) : null}
             <button className="auth-submit" type="submit" disabled={requestMutation.isPending}>
               {requestMutation.isPending ? '전송 중' : '인증 코드 받기'}
             </button>
@@ -274,32 +296,48 @@ export function PasswordResetPage() {
 
         {step === 'verify' ? (
           <form key="verify" className="auth-form auth-password-reset-form" onSubmit={submitVerify}>
-            <label htmlFor="confirmation-code">
-              <span className="sr-only">인증 코드</span>
-              <span className="auth-input-shell">
-                <KeyRound className="auth-field-icon" size={17} aria-hidden="true" />
-                <input
-                  id="confirmation-code"
-                  value={confirmationCode}
-                  onChange={(event) => setConfirmationCode(event.target.value.replace(/\s/g, ''))}
-                  autoComplete="one-time-code"
-                  inputMode="numeric"
-                  placeholder="인증코드를 입력해주세요."
-                  autoFocus
-                  required
-                />
-              </span>
-            </label>
+            <OtpInput
+              value={confirmationCode}
+              error={Boolean(activeError)}
+              disabled={verifyMutation.isPending}
+              label="인증번호"
+              onChange={(value) => {
+                setConfirmationCode(value);
+                if (validationError) setValidationError(null);
+                if (verifyMutation.isError) verifyMutation.reset();
+              }}
+              onComplete={(value) => {
+                if (verifyMutation.isPending) return;
+                if (verificationExpiresAt <= Date.now()) {
+                  setValidationError('인증 코드가 만료되었습니다. 다시 요청해 주세요.');
+                  return;
+                }
+                setValidationError(null);
+                verifyMutation.mutate({ username: username.trim(), code: value });
+              }}
+            />
+            <div className="auth-otp-resend" aria-live="polite">
+              <span>인증번호가 오지 않았나요?&nbsp;&nbsp;</span>
+              <button
+                type="button"
+                disabled={requestMutation.isPending || verifyMutation.isPending}
+                onClick={() => {
+                  setValidationError(null);
+                  requestMutation.mutate({ username: username.trim(), delivery });
+                }}
+              >
+                재전송
+              </button>
+              <span> ({verificationTimerLabel})</span>
+            </div>
             <p className="auth-inline-error" role={activeError ? 'alert' : undefined}>
               {activeError ?? '\u00a0'}
             </p>
-            <button
-              className="auth-submit"
-              type="submit"
-              disabled={verifyMutation.isPending || !/^\d{4,16}$/.test(confirmationCode)}
-            >
-              {verifyMutation.isPending ? '확인 중' : '인증 코드 확인'}
-            </button>
+            {verifyMutation.isPending ? (
+              <p className="auth-otp-status" role="status">
+                인증번호 확인 중입니다.
+              </p>
+            ) : null}
             <button
               className="auth-back-button"
               type="button"
@@ -308,6 +346,8 @@ export function PasswordResetPage() {
                 setValidationError(null);
                 setResetToken(null);
                 setConfirmationCode('');
+                setVerificationExpiresAt(0);
+                setVerificationNow(Date.now());
               }}
             >
               <ArrowLeft size={15} aria-hidden="true" /> 이전으로

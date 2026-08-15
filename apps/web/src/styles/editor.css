@@ -330,6 +330,7 @@
   border-radius: 10px;
   background: var(--j-color-surface);
   box-shadow: var(--j-shadow-dropdown);
+  overflow-x: hidden;
 }
 
 .rich-text-toolbar-palette__menu--portal {
@@ -340,11 +341,13 @@
   width: min(238px, calc(100vw - 24px));
   max-height: calc(100dvh - 24px);
   box-sizing: border-box;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 
 .rich-text-toolbar-palette__grid {
   display: grid;
+  min-width: 0;
   grid-template-columns: repeat(8, 1fr);
   gap: 6px;
 }
@@ -376,6 +379,7 @@
 
 .rich-text-toolbar-palette__hex {
   display: grid;
+  min-width: 0;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 6px;
 }
@@ -386,6 +390,7 @@
 
 .rich-text-editor .rich-text-toolbar .rich-text-toolbar-palette__hex input,
 .rich-text-toolbar-palette__menu--portal .rich-text-toolbar-palette__hex input {
+  min-width: 0;
   width: 100%;
   height: 36px;
   min-height: 36px;

@@ -329,6 +329,80 @@
   line-height: 1.35;
 }
 
+.activity-participants-popover-anchor {
+  position: relative;
+  display: inline;
+  min-width: 0;
+  overflow: visible;
+}
+
+.activity-table__participants > .activity-participants-popover-anchor {
+  display: inline;
+  overflow: visible;
+  white-space: normal;
+}
+
+.activity-participants-summary {
+  display: inline;
+  white-space: normal;
+}
+
+.activity-participants-popover-trigger {
+  padding: 0;
+  border: 0;
+  color: var(--j-color-brand-strong);
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.activity-participants-popover-trigger:hover,
+.activity-participants-popover-trigger:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.activity-participants-popover {
+  position: fixed;
+  z-index: var(--j-layer-popover);
+  width: min(300px, calc(100vw - 24px));
+  max-height: min(300px, calc(100vh - 24px));
+  padding: 12px 14px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  border: 1px solid var(--j-color-border);
+  border-radius: 10px;
+  color: var(--j-color-text);
+  background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-overlay);
+  font-size: 12px;
+  line-height: 1.5;
+  pointer-events: auto;
+}
+
+.activity-participants-popover strong {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--j-color-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.activity-participants-popover ul {
+  display: grid;
+  padding: 0;
+  margin: 0;
+  gap: 4px;
+  list-style: none;
+}
+
+.activity-participants-popover li {
+  padding-top: 4px;
+  border-top: 1px solid var(--j-color-border);
+  white-space: nowrap;
+}
+
 .activity-table__period {
   display: grid;
   justify-content: center;
@@ -1277,6 +1351,18 @@
     min-width: 0;
   }
 
+  .activity-table__participants > .activity-participants-popover-anchor {
+    display: block;
+    overflow: visible;
+  }
+
+  .activity-table__participants
+    > .activity-participants-popover-anchor
+    > .activity-participants-summary {
+    display: block;
+    min-width: 0;
+  }
+
   .activity-definition-list > div {
     grid-template-columns: 104px minmax(0, 1fr);
     gap: 12px;
@@ -1580,6 +1666,13 @@
   font-size: 18px;
 }
 
+.activity-print-preview-modal__heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 22px;
+}
+
 .activity-print-preview-modal__header button {
   display: grid;
   width: 36px;
@@ -1595,16 +1688,16 @@
 
 .activity-print-preview-modal__tabs {
   display: flex;
-  padding: 10px 20px 0;
+  padding: 0;
   align-items: center;
   gap: 6px;
-  border-bottom: 1px solid var(--j-color-border);
-  background: var(--j-color-surface);
+  border: 0;
+  background: transparent;
 }
 
 .activity-print-preview-modal__tabs button {
-  min-height: 36px;
-  padding: 0 16px;
+  min-height: 34px;
+  padding: 0 10px;
   border: 0;
   border-bottom: 2px solid transparent;
   color: var(--j-color-text-secondary);

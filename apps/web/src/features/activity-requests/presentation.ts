@@ -60,7 +60,16 @@ export function formatActivityParticipants(
   participants: ActivityRequestSummary['participants'],
   fallback: Pick<ActivityRequestSummary, 'studentName' | 'studentNo'>,
 ) {
-  const students = participants?.length
+  return resolveActivityParticipants(participants, fallback)
+    .map(formatActivityParticipant)
+    .join(', ');
+}
+
+export function resolveActivityParticipants(
+  participants: ActivityRequestSummary['participants'],
+  fallback: Pick<ActivityRequestSummary, 'studentName' | 'studentNo'>,
+) {
+  return participants?.length
     ? participants
     : [
         {
@@ -70,12 +79,14 @@ export function formatActivityParticipants(
           studentNo: fallback.studentNo,
         },
       ];
-  return students
-    .map(
-      (student) =>
-        `${student.studentNo}${student.studentName}${student.isRepresentative ? '(대표)' : ''}`,
-    )
-    .join(', ');
+}
+
+export function formatActivityParticipant(student: {
+  studentNo: number;
+  studentName: string;
+  isRepresentative: boolean;
+}) {
+  return `${student.studentNo} ${student.studentName}${student.isRepresentative ? '(대표)' : ''}`;
 }
 
 export function searchActivityRequestStudents(

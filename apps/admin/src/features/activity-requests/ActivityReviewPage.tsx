@@ -32,6 +32,7 @@ import {
   koreaDateInput,
   type ActivityTimeSlotId,
 } from './activitySchedule';
+import { ActivityParticipants } from './ActivityParticipants';
 import './operations.css';
 
 type CreateActivityForm = {
@@ -215,8 +216,17 @@ export function ActivityReviewPage() {
       accessorFn: (request) => request.participants.length,
       header: '참여 인원',
       enableSorting: false,
-      cell: ({ getValue }) => `${getValue<number>()}명`,
-      meta: { width: 125, align: 'right' },
+      cell: ({ row }) => (
+        <ActivityParticipants
+          participants={row.original.participants}
+          fallback={{
+            studentNo: row.original.studentNo,
+            studentName: row.original.studentName,
+          }}
+          className="operation-activity-participants"
+        />
+      ),
+      meta: { minWidth: 220, maxWidth: 320 },
     },
     {
       accessorKey: 'purpose',

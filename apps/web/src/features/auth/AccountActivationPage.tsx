@@ -1,5 +1,5 @@
 import type { FormEvent, ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type { AccountActivationIdentityType, StudentGender } from '@jshsus/types';
@@ -16,6 +16,7 @@ import {
 } from './api';
 import { AuthLayout } from './AuthLayout';
 import { AuthSelect } from './AuthSelect';
+import { OtpInput } from './OtpInput';
 
 function PasswordField(props: {
   id: string;
@@ -82,6 +83,10 @@ function FormMessage({ children, success = false }: { children: ReactNode; succe
 
 type VerificationTarget = 'email' | 'phone';
 
+function verificationExpiry() {
+  return Date.now() + 179_000;
+}
+
 function VerificationDialog({
   target,
   destination,
@@ -106,6 +111,7 @@ function VerificationDialog({
   onConfirm: () => void;
 }) {
   const [remaining, setRemaining] = useState(() => Math.max(0, expiresAt - Date.now()));
+  const lastSubmittedCode = useRef<string | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -114,10 +120,18 @@ function VerificationDialog({
     return () => window.clearInterval(timer);
   }, [expiresAt]);
 
-  const minutes = Math.floor(remaining / 60_000);
-  const seconds = Math.floor((remaining % 60_000) / 1_000)
-    .toString()
-    .padStart(2, '0');
+  useEffect(() => {
+    if (code.length < 6) lastSubmittedCode.current = null;
+    if (code.length !== 6 || remaining <= 0 || pending || code === lastSubmittedCode.current) {
+      return;
+    }
+    lastSubmittedCode.current = code;
+    onConfirm();
+  }, [code, onConfirm, pending, remaining]);
+
+  const totalSeconds = Math.ceil(remaining / 1_000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = (totalSeconds % 60).toString().padStart(2, '0');
   const label = target === 'email' ? '이메일' : '전화번호';
 
   return (
@@ -158,35 +172,26 @@ function VerificationDialog({
             onConfirm();
           }}
         >
-          <div className="auth-verification-modal__code-field">
-            <input
-              autoFocus
-              className={error ? 'auth-input-invalid' : undefined}
-              value={code}
-              onChange={(event) => onCodeChange(event.target.value.replace(/\D/g, '').slice(0, 6))}
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              placeholder="인증번호 6자리"
-              aria-label={`${label} 인증번호`}
-              aria-invalid={Boolean(error)}
-            />
-            <span aria-live="polite">{remaining > 0 ? `${minutes}:${seconds}` : '만료됨'}</span>
-          </div>
+          <OtpInput
+            value={code}
+            error={Boolean(error)}
+            disabled={pending}
+            label={`${label} 인증번호`}
+            onChange={onCodeChange}
+          />
           <FieldError message={error} />
-          <button type="button" className="auth-verification-modal__resend" onClick={onResend}>
-            인증번호를 못 받으셨나요? <strong>재전송</strong>
-          </button>
+          <div className="auth-verification-modal__resend" aria-live="polite">
+            <span>인증번호가 오지 않았나요?&nbsp;&nbsp;</span>
+            <button type="button" onClick={onResend} disabled={pending}>
+              재전송
+            </button>
+            <span> ({remaining > 0 ? `${minutes}:${seconds}` : '00:00'})</span>
+          </div>
           <div className="auth-verification-modal__actions">
             <button type="button" className="auth-verification-modal__cancel" onClick={onClose}>
               취소
             </button>
-            <button
-              type="submit"
-              className="auth-submit"
-              disabled={pending || remaining <= 0 || !/^\d{6}$/.test(code)}
-            >
-              {pending ? '확인 중' : '완료'}
-            </button>
+            {pending ? <span className="auth-otp-status">인증번호 확인 중입니다.</span> : null}
           </div>
         </form>
       </section>
@@ -254,7 +259,8 @@ export function AccountActivationPage() {
       setPhoneVerificationCode('');
       setPhoneVerified(false);
       setVerificationTarget('phone');
-      setVerificationExpiresAt(Date.now() + 300_000);
+      phoneVerificationMutation.reset();
+      setVerificationExpiresAt(verificationExpiry());
       setPhoneFieldError(null);
       setValidationError(null);
     },
@@ -266,7 +272,8 @@ export function AccountActivationPage() {
       setEmailVerificationCode('');
       setEmailVerified(false);
       setVerificationTarget('email');
-      setVerificationExpiresAt(Date.now() + 300_000);
+      emailVerificationMutation.reset();
+      setVerificationExpiresAt(verificationExpiry());
       setEmailFieldError(null);
       setValidationError(null);
     },
@@ -628,8 +635,13 @@ export function AccountActivationPage() {
                 : null
           }
           onCodeChange={(value) => {
-            if (verificationTarget === 'email') setEmailVerificationCode(value);
-            else setPhoneVerificationCode(value);
+            if (verificationTarget === 'email') {
+              emailVerificationMutation.reset();
+              setEmailVerificationCode(value);
+            } else {
+              phoneVerificationMutation.reset();
+              setPhoneVerificationCode(value);
+            }
           }}
           onClose={() => setVerificationTarget(null)}
           onResend={verificationTarget === 'email' ? requestEmailCode : requestPhoneCode}

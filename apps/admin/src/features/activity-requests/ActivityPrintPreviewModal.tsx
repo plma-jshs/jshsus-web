@@ -55,26 +55,32 @@ export function ActivityPrintPreviewModal({
       />
       <div className="activity-print-preview-modal__dialog">
         <header className="activity-print-preview-modal__header">
-          <h2 id="activity-print-preview-title">인쇄 미리보기</h2>
+          <div className="activity-print-preview-modal__heading">
+            <h2 id="activity-print-preview-title">인쇄 미리보기</h2>
+            <div
+              className="activity-print-preview-modal__tabs"
+              role="tablist"
+              aria-label="인쇄 범위"
+            >
+              {floorTabs.map((tab) => (
+                <button
+                  key={tab.value}
+                  className={tab.value === floor ? 'is-active' : undefined}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab.value === floor}
+                  disabled={isLoading}
+                  onClick={() => onFloorChange(tab.value)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <button type="button" aria-label="인쇄 미리보기 닫기" onClick={onClose}>
             <X size={20} aria-hidden="true" />
           </button>
         </header>
-        <div className="activity-print-preview-modal__tabs" role="tablist" aria-label="인쇄 범위">
-          {floorTabs.map((tab) => (
-            <button
-              key={tab.value}
-              className={tab.value === floor ? 'is-active' : undefined}
-              type="button"
-              role="tab"
-              aria-selected={tab.value === floor}
-              disabled={isLoading}
-              onClick={() => onFloorChange(tab.value)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
         <div className="activity-print-preview-modal__body">
           {isLoading ? (
             <p className="activity-print-preview-modal__state">인쇄 자료를 준비하는 중입니다.</p>
@@ -92,7 +98,7 @@ export function ActivityPrintPreviewModal({
           ) : null}
         </div>
         <footer className="activity-print-preview-modal__actions">
-          <button className="secondary-button" type="button" onClick={onClose}>
+          <button className="quiet-button" type="button" onClick={onClose}>
             취소
           </button>
           <button

@@ -21,10 +21,10 @@ import {
   type ActivityRequestFilter,
   type ActivityRequestSearchField,
   activityStatusLabels,
-  formatActivityParticipants,
   matchesActivityFilter,
   matchesActivityQuery,
 } from './presentation';
+import { ActivityParticipants } from './ActivityParticipants';
 import { ActivityPrintPreviewModal } from './ActivityPrintPreviewModal';
 import '../../styles/activity-requests.css';
 
@@ -60,7 +60,7 @@ export function ActivityRequestsPage() {
   );
   const [query, setQuery] = useState(routeSearch.q ?? '');
   const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [endDate, setEndDate] = useState(() => koreaDateInput());
   const page = routeSearch.page ?? 1;
   const pageSize: DataTablePageSize = routeSearch.size ?? 20;
   const [mobileVisibleState, setMobileVisibleState] = useState<{ key: string; count: number }>({
@@ -354,7 +354,10 @@ export function ActivityRequestsPage() {
                         }`}
                         data-label="인원"
                       >
-                        <span>{formatActivityParticipants(request.participants, request)}</span>
+                        <ActivityParticipants
+                          participants={request.participants}
+                          fallback={request}
+                        />
                       </td>
                       <td className="activity-table__advisor" data-label="지도교사">
                         {request.advisorTeacherName ?? request.teacherName ?? '-'}
@@ -387,8 +390,6 @@ export function ActivityRequestsPage() {
                 request.endsAt,
                 request.activitySlotIds,
               );
-              const participants = formatActivityParticipants(request.participants, request);
-
               return (
                 <article
                   className="activity-request-card"
@@ -426,7 +427,13 @@ export function ActivityRequestsPage() {
                     </div>
                     <div className="activity-request-card__detail activity-request-card__detail--participants">
                       <Users size={15} aria-hidden="true" />
-                      <span>참여자: {participants}</span>
+                      <span>
+                        참여자:{' '}
+                        <ActivityParticipants
+                          participants={request.participants}
+                          fallback={request}
+                        />
+                      </span>
                     </div>
                   </div>
                 </article>

@@ -227,7 +227,8 @@ export function LoginPage() {
     mode === 'login'
       ? (requestQuery.data?.serviceName ?? (ssoRequestId ? undefined : '과구리'))
       : undefined;
-  const title = mode === 'login' ? (serviceName ?? '') : '새 비밀번호 설정';
+  // Keep the heading line occupied while the SSO service name is loading so the form does not jump.
+  const title = mode === 'login' ? (serviceName ?? '\u00a0') : '새 비밀번호 설정';
   const normalizedUsername = username.trim();
   const forgotPasswordSearch = {
     username: normalizedUsername || undefined,

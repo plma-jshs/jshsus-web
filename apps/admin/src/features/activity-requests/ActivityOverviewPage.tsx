@@ -31,6 +31,7 @@ import {
   formatActivityTimeRanges,
   koreaDateInput,
 } from './activitySchedule';
+import { ActivityParticipants } from './ActivityParticipants';
 import { ActivityPrintPreviewModal } from './ActivityPrintPreviewModal';
 import './operations.css';
 
@@ -39,6 +40,7 @@ function formatParticipants(request: ActivityRequestAdminSummary) {
     ? request.participants
     : [
         {
+          studentId: request.studentNo,
           studentNo: request.studentNo,
           studentName: request.studentName,
           isRepresentative: true,
@@ -57,6 +59,7 @@ function activityParticipants(request: ActivityRequestAdminSummary) {
     ? request.participants
     : [
         {
+          studentId: request.studentNo,
           studentNo: request.studentNo,
           studentName: request.studentName,
           isRepresentative: true,
@@ -76,7 +79,7 @@ function formatActivityMobileDate(request: ActivityRequestAdminSummary) {
 function ActivityPrintMenu({ disabled, onOpen }: { disabled?: boolean; onOpen: () => void }) {
   return (
     <button
-      className="secondary-button activity-print-trigger"
+      className="quiet-button activity-print-trigger"
       type="button"
       disabled={disabled}
       onClick={onOpen}
@@ -95,12 +98,20 @@ function ActivityMobileCard({
   onOpen: () => void;
 }) {
   const participants = activityParticipants(request);
-  const representative =
-    participants.find((participant) => participant.isRepresentative) ?? participants[0];
   const date = koreaDateInput(new Date(request.startsAt));
 
   return (
-    <button className="operation-activity-mobile-card" type="button" onClick={onOpen}>
+    <div
+      className="operation-activity-mobile-card"
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        onOpen();
+      }}
+    >
       <span className="operation-activity-mobile-card__heading">
         <ActivityStatusBadge status={request.status} />
         <strong>{request.purpose}</strong>
@@ -133,12 +144,13 @@ function ActivityMobileCard({
       </span>
       <span className="operation-activity-mobile-card__people">
         <Users size={14} aria-hidden="true" />
-        <span>
-          {representative ? `${representative.studentNo} ${representative.studentName}(대표)` : '-'}
-          {participants.length > 1 ? ` 외 ${participants.length - 1}명` : ''}
-        </span>
+        <ActivityParticipants
+          participants={participants}
+          fallback={request}
+          className="operation-activity-participants"
+        />
       </span>
-    </button>
+    </div>
   );
 }
 
@@ -207,7 +219,11 @@ const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
     header: '인원',
     enableSorting: false,
     cell: ({ row }) => (
-      <span className="operation-activity-participants">{formatParticipants(row.original)}</span>
+      <ActivityParticipants
+        participants={row.original.participants}
+        fallback={row.original}
+        className="operation-activity-participants"
+      />
     ),
     meta: { minWidth: 180, maxWidth: 260 },
   },
