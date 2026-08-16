@@ -1,5 +1,6 @@
 -- Keep the public notice number in chronological publication order.
--- Move existing values out of the unique-index range before assigning ranks.
+-- Stage existing values with the primary key before assigning ranks. This
+-- avoids arithmetic overflow when a legacy value is already near INT_MAX.
 CREATE TEMPORARY TABLE `notice_public_number_ranks` AS
 SELECT
   `id`,
@@ -7,7 +8,7 @@ SELECT
 FROM `notices`;
 --> statement-breakpoint
 UPDATE `notices`
-SET `public_no` = `public_no` + 1000000;
+SET `public_no` = -`id`;
 --> statement-breakpoint
 UPDATE `notices` AS `notice`
 INNER JOIN `notice_public_number_ranks` AS `ranked` ON `ranked`.`id` = `notice`.`id`
