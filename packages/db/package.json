@@ -11,7 +11,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "node scripts/migrate-database.cjs",
     "db:bootstrap-core": "node scripts/bootstrap-core-data.cjs",
     "db:seed-local-test-user": "node scripts/seed-local-test-user.cjs",
     "db:prepare-baseline": "node scripts/prepare-baseline-database.cjs",
