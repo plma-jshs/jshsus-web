@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { PenLine } from 'lucide-react';
 import { ContentBadges } from '../../components/page/ContentBadges';
 import { DataTablePagination, ToolbarSelect } from '../../components/page/DataTableControls';
@@ -31,11 +31,30 @@ const dateFormatter = createKoreanDateFormatter({
 });
 
 export function PetitionsPage() {
+  const navigate = useNavigate({ from: '/petitions' });
+  const routeSearch = useSearch({ from: '/petitions' });
   const petitionsQuery = useQuery({ queryKey: ['petitions'], queryFn: getPetitions });
   const [filter, setFilter] = useState<PetitionFilter>('all');
-  const [query, setQuery] = useState('');
-  const [searchField, setSearchField] = useState<PetitionSearchField>('title_content');
-  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState(routeSearch.q ?? '');
+  const [searchField, setSearchField] = useState<PetitionSearchField>(
+    (routeSearch.field as PetitionSearchField | undefined) ?? 'title_content',
+  );
+  const page = routeSearch.page ?? 1;
+  const pageSize = routeSearch.size ?? 20;
+  const updateTableSearch = useCallback(
+    (next: { page?: number; size?: 20 | 50 | 100; field?: PetitionSearchField; q?: string }) => {
+      void navigate({
+        search: (current) => ({
+          ...current,
+          page: next.page ?? current.page ?? 1,
+          size: next.size ?? current.size ?? 20,
+          field: next.field ?? current.field,
+          q: next.q ?? current.q,
+        }),
+      });
+    },
+    [navigate],
+  );
   const petitions = useMemo(() => petitionsQuery.data ?? [], [petitionsQuery.data]);
   const filtered = useMemo(
     () =>
@@ -46,9 +65,19 @@ export function PetitionsPage() {
       ),
     [filter, petitions, query, searchField],
   );
-  const [pageSize, setPageSize] = useState(20);
   const totalPages = Math.ceil(filtered.length / pageSize);
   const safePage = Math.min(page, Math.max(totalPages, 1));
+  const rawSize =
+    typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('size');
+  const hasInvalidSize = rawSize !== null && ![20, 50, 100].includes(Number(rawSize));
+  useEffect(() => {
+    if (!petitionsQuery.isSuccess) return;
+    if (hasInvalidSize || page !== safePage)
+      updateTableSearch({
+        page: hasInvalidSize ? 1 : safePage,
+        size: hasInvalidSize ? 20 : pageSize,
+      });
+  }, [hasInvalidSize, page, pageSize, petitionsQuery.isSuccess, safePage, updateTableSearch]);
   const [mobileVisibleState, setMobileVisibleState] = useState<{ key: string; count: number }>({
     key: '',
     count: pageSize,
@@ -104,7 +133,7 @@ export function PetitionsPage() {
               value={filter}
               onChange={(value) => {
                 setFilter(value);
-                setPage(1);
+                updateTableSearch({ page: 1 });
               }}
               label="청원 상태"
               options={filterOptions}
@@ -123,14 +152,14 @@ export function PetitionsPage() {
                 ]}
                 onChange={(value) => {
                   setSearchField(value);
-                  setPage(1);
+                  updateTableSearch({ page: 1, field: value });
                 }}
               />
               <SearchField
                 value={query}
                 onChange={(value) => {
                   setQuery(value);
-                  setPage(1);
+                  updateTableSearch({ page: 1, q: value });
                 }}
                 label="청원 검색"
                 placeholder="검색어를 입력하세요"
@@ -185,7 +214,7 @@ export function PetitionsPage() {
                     setFilter('all');
                     setQuery('');
                     setSearchField('title_content');
-                    setPage(1);
+                    updateTableSearch({ page: 1, field: 'title_content', q: '' });
                   }}
                 >
                   검색 초기화
@@ -258,8 +287,7 @@ export function PetitionsPage() {
             total={filtered.length}
             pageSize={pageSize}
             onPageSizeChange={(nextSize) => {
-              setPageSize(nextSize);
-              setPage(1);
+              updateTableSearch({ page: 1, size: nextSize });
             }}
             hasMore={safePage === 1 && mobileVisibleCount < filtered.length}
             onLoadMore={() =>
@@ -268,7 +296,7 @@ export function PetitionsPage() {
                 count: mobileVisibleCount + pageSize,
               })
             }
-            onChange={setPage}
+            onChange={(nextPage) => updateTableSearch({ page: nextPage })}
           />
         ) : null}
       </section>

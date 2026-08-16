@@ -10,7 +10,7 @@ export type ActivityRequestSearchField =
 
 export const activityStatusLabels: Record<ActivityRequestStatus, string> = {
   draft: '임시저장',
-  submitted: '승인 대기',
+  submitted: '대기',
   approved: '승인',
   rejected: '반려',
   canceled: '취소',

@@ -15,6 +15,22 @@ import { OtpInput } from './OtpInput';
 
 type ResetStep = 'request' | 'verify' | 'confirm';
 
+function maskedResetDestination(value: string, delivery: PasswordResetDelivery) {
+  const normalized = value.trim();
+  if (delivery === 'email' && /^\S+@\S+\.\S+$/.test(normalized)) {
+    const [local, domainWithSuffix] = normalized.toLocaleLowerCase('en-US').split('@');
+    const dotIndex = domainWithSuffix.lastIndexOf('.');
+    const domain = domainWithSuffix.slice(0, dotIndex);
+    const suffix = domainWithSuffix.slice(dotIndex);
+    return `${local.slice(0, 2)}******@${domain.slice(0, 1)}******${suffix}`;
+  }
+  const digits = normalized.replace(/\D/g, '');
+  if (delivery === 'phone' && /^010\d{8}$/.test(digits)) {
+    return `010-${digits.slice(3, 4)}***-${digits.slice(-4, -3)}***`;
+  }
+  return delivery === 'email' ? 'ki******@g******.com' : '010-7***-1***';
+}
+
 function PasswordField(props: {
   id: string;
   label: string;
@@ -223,7 +239,16 @@ export function PasswordResetPage() {
           : null);
 
   return (
-    <AuthLayout active="password" title="비밀번호 재설정" className="auth-page--password-reset">
+    <AuthLayout
+      active="password"
+      title="비밀번호 재설정"
+      description={
+        step === 'verify'
+          ? `${maskedResetDestination(username, delivery)}로 발송된 6자리 번호를 입력해주세요`
+          : undefined
+      }
+      className="auth-page--password-reset"
+    >
       {toastMessage ? (
         <div className="auth-toast" role="status">
           {toastMessage}

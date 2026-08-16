@@ -422,7 +422,7 @@
 
 .auth-verification-modal__sheet {
   width: min(100%, 460px);
-  padding: 26px;
+  padding: 34px 32px 30px;
   border: 1px solid rgb(0 0 0 / 6%);
   border-radius: 16px;
   background: #fff;
@@ -430,10 +430,16 @@
 }
 
 .auth-verification-modal__header {
+  position: relative;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
+  text-align: center;
+}
+
+.auth-verification-modal__header > div {
+  width: 100%;
 }
 
 .auth-verification-modal__eyebrow {
@@ -451,11 +457,14 @@
 }
 
 .auth-verification-modal__close {
+  position: absolute;
+  top: -8px;
+  right: -8px;
   display: grid;
   width: 32px;
   height: 32px;
   place-items: center;
-  margin: -4px -4px 0 0;
+  margin: 0;
   flex: none;
   padding: 0;
   border: 0;
@@ -471,13 +480,12 @@
 }
 
 .auth-verification-modal__description {
-  padding: 14px 15px;
-  margin: 21px 0 14px;
-  border-radius: 8px;
+  padding: 0;
+  margin: 20px 0 18px;
   color: var(--j-color-text-secondary);
-  background: #f3f7fa;
   font-size: 13px;
   line-height: 1.6;
+  text-align: center;
 }
 
 .auth-verification-modal__description strong {
@@ -492,25 +500,25 @@
 
 .auth-otp {
   display: grid;
-  width: fit-content;
+  width: min(100%, 360px);
   max-width: 100%;
   margin: 0 auto;
-  grid-template-columns: repeat(6, 42px);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 10px;
 }
 
 .auth-otp__input {
-  width: 42px !important;
-  height: 42px !important;
-  min-height: 42px !important;
+  width: 100% !important;
+  height: 56px !important;
+  min-height: 56px !important;
   padding: 0 !important;
   border: 1px solid var(--j-color-border-strong) !important;
-  border-radius: 6px !important;
+  border-radius: 9px !important;
   color: var(--j-color-text) !important;
-  background: #fff !important;
-  font-size: 20px !important;
+  background: #f4f6f7 !important;
+  font-size: 24px !important;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   line-height: 1;
@@ -521,16 +529,23 @@
     background-color 120ms ease;
 }
 
-.auth-otp__input:focus {
-  border-color: #087f88 !important;
+.auth-otp__input:focus,
+.auth-otp__input:focus-visible {
+  border-color: var(--j-color-border-strong) !important;
   outline: 0;
-  box-shadow: 0 0 0 3px rgb(8 127 136 / 12%) !important;
+  box-shadow: none !important;
 }
 
-.auth-otp.is-error .auth-otp__input {
+.auth-otp__input.is-filled {
+  border-color: #69757c !important;
+  background: #f4f6f7 !important;
+}
+
+.auth-otp.is-error .auth-otp__input,
+.auth-otp.is-error .auth-otp__input.is-filled {
   border-color: var(--j-color-danger) !important;
   background: #fffafa !important;
-  box-shadow: 0 0 0 3px rgb(209 60 52 / 9%);
+  box-shadow: none;
 }
 
 .auth-otp.is-shaking {
@@ -558,7 +573,7 @@
 
 .auth-otp-resend,
 .auth-otp-status {
-  margin: 0;
+  margin: 0 0 4px;
   color: var(--j-color-text-muted);
   font-size: 11px;
   line-height: 1.5;
@@ -858,6 +873,30 @@
   box-shadow: none;
 }
 
+.auth-form .auth-recovery-method input:focus,
+.auth-form .auth-recovery-method input:focus-visible {
+  border-color: transparent !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+.auth-form input[name='password-reset-delivery']:focus,
+.auth-form input[name='password-reset-delivery']:focus-visible {
+  border-color: transparent !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+.auth-page--password-reset .auth-heading {
+  margin-top: 18px;
+}
+
+.auth-page--password-reset .auth-heading p {
+  margin-top: 9px;
+  color: var(--j-color-text-secondary);
+  font-size: 12px;
+}
+
 .auth-recovery-method {
   display: grid;
   padding: 0;
@@ -1118,12 +1157,24 @@
 
   .auth-verification-modal__sheet {
     width: 100%;
-    padding: 24px 20px calc(20px + env(safe-area-inset-bottom));
+    padding: 30px 20px calc(24px + env(safe-area-inset-bottom));
     border-right: 0;
     border-bottom: 0;
     border-left: 0;
     border-radius: 18px 18px 0 0;
     animation: auth-sheet-in 180ms ease-out both;
+  }
+}
+
+@media (max-width: 420px) {
+  .auth-otp {
+    gap: 7px;
+  }
+
+  .auth-otp__input {
+    height: 52px !important;
+    min-height: 52px !important;
+    font-size: 22px !important;
   }
 }
 

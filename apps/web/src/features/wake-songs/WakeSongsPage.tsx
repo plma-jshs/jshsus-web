@@ -1,6 +1,7 @@
 import type { CSSProperties, FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
   CalendarDays,
   Check,
@@ -150,6 +151,8 @@ function describeError(error: unknown) {
 }
 
 export function WakeSongsPage() {
+  const navigate = useNavigate({ from: '/wake-songs' });
+  const routeSearch = useSearch({ from: '/wake-songs' });
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const [form, setForm] = useState<FormState>(initialForm);
@@ -157,7 +160,20 @@ export function WakeSongsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [previewFor, setPreviewFor] = useState('');
   const [previewAttemptFor, setPreviewAttemptFor] = useState('');
-  const [page, setPage] = useState(1);
+  const page = routeSearch.page ?? 1;
+  const pageSize = routeSearch.size ?? 20;
+  const updateTableSearch = useCallback(
+    (next: { page?: number; size?: 20 | 50 | 100 }) => {
+      void navigate({
+        search: (current) => ({
+          ...current,
+          page: next.page ?? current.page ?? 1,
+          size: next.size ?? current.size ?? 20,
+        }),
+      });
+    },
+    [navigate],
+  );
 
   const requestsQuery = useQuery({
     queryKey: ['wake-songs', 'me'],
@@ -180,7 +196,7 @@ export function WakeSongsPage() {
       setPreviewAttemptFor('');
       resetPreview();
       setFormError('');
-      setPage(1);
+      updateTableSearch({ page: 1 });
       await queryClient.invalidateQueries({ queryKey: ['wake-songs', 'me'] });
       showToast({
         title: input.editingId ? '기상곡 신청을 수정했습니다.' : '기상곡 신청을 완료했습니다.',
@@ -233,9 +249,20 @@ export function WakeSongsPage() {
     !editingId && (requestsQuery.data?.pendingCount ?? 0) >= (requestsQuery.data?.maxPending ?? 3);
   const submitDisabled =
     saveMutation.isPending || !preview || !segmentIsValid || pendingLimitReached;
-  const [pageSize, setPageSize] = useState(20);
   const totalPages = Math.max(1, Math.ceil(requests.length / pageSize));
   const safePage = Math.min(page, totalPages);
+  const rawSize =
+    typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('size');
+  const hasInvalidSize = rawSize !== null && ![20, 50, 100].includes(Number(rawSize));
+  useEffect(() => {
+    if (!requestsQuery.isSuccess) return;
+    if (hasInvalidSize || page !== safePage) {
+      updateTableSearch({
+        page: hasInvalidSize ? 1 : safePage,
+        size: hasInvalidSize ? 20 : pageSize,
+      });
+    }
+  }, [hasInvalidSize, page, pageSize, requestsQuery.isSuccess, safePage, updateTableSearch]);
   const visibleRequests = useMemo(
     () => requests.slice((safePage - 1) * pageSize, safePage * pageSize),
     [pageSize, requests, safePage],
@@ -801,8 +828,7 @@ export function WakeSongsPage() {
             total={requests.length}
             pageSize={pageSize}
             onPageSizeChange={(nextSize) => {
-              setPageSize(nextSize);
-              setPage(1);
+              updateTableSearch({ page: 1, size: nextSize });
             }}
             hasMore={safePage === 1 && mobileVisibleCount < requests.length}
             onLoadMore={() =>
@@ -811,7 +837,7 @@ export function WakeSongsPage() {
                 count: mobileVisibleCount + pageSize,
               })
             }
-            onChange={setPage}
+            onChange={(nextPage) => updateTableSearch({ page: nextPage })}
           />
         ) : null}
       </section>

@@ -45,11 +45,6 @@ export function LostItemsPage() {
     <PageScaffold
       breadcrumbs={listBreadcrumbs('lostItems')}
       title="분실물"
-      action={
-        <Link className="detail-primary-button" to="/lost-items/new">
-          등록
-        </Link>
-      }
       width="reading"
       variant="workspace"
     >
@@ -68,12 +63,17 @@ export function LostItemsPage() {
             />
           }
           search={
-            <SearchField
-              value={query}
-              onChange={setQuery}
-              label="분실물 검색"
-              placeholder="물건 이름 또는 장소 검색"
-            />
+            <div className="lost-items-search-controls">
+              <SearchField
+                value={query}
+                onChange={setQuery}
+                label="분실물 검색"
+                placeholder="물건 이름 또는 장소 검색"
+              />
+              <Link className="detail-primary-button" to="/lost-items/new">
+                등록
+              </Link>
+            </div>
           }
         />
 

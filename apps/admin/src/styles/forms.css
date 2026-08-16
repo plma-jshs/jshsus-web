@@ -440,8 +440,8 @@ textarea.ui-control {
 }
 
 .ui-page-size-select {
-  width: 88px !important;
-  min-width: 88px;
+  width: 128px !important;
+  min-width: 128px;
 }
 
 .ui-control--xs {

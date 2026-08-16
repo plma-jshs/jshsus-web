@@ -163,7 +163,7 @@
 }
 
 .identity-filter-bar.is-students {
-  grid-template-columns: minmax(180px, 220px) 92px 92px 88px;
+  grid-template-columns: minmax(180px, 220px) 92px 92px;
 }
 
 .identity-filter-bar.is-staff {

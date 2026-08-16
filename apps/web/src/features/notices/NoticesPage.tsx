@@ -1,3 +1,4 @@
+import { useCallback, useEffect } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { Eye, PenLine } from 'lucide-react';
@@ -43,24 +44,40 @@ export function NoticesPage() {
   const notices = result?.items ?? [];
   const visibleNotices = notices;
 
-  const updateSearch = (
-    next: Partial<{
-      page: number;
-      pageSize: DataTablePageSize;
-      field: DataTableSearchField;
-      q: string;
-    }>,
-  ) => {
-    void navigate({
-      search: (current) => ({
-        ...current,
-        page: next.page ?? search.page,
-        size: next.pageSize ?? search.pageSize,
-        field: next.field ?? search.field,
-        q: next.q ?? search.q,
-      }),
-    });
-  };
+  const updateSearch = useCallback(
+    (
+      next: Partial<{
+        page: number;
+        pageSize: DataTablePageSize;
+        field: DataTableSearchField;
+        q: string;
+      }>,
+    ) => {
+      void navigate({
+        search: (current) => ({
+          ...current,
+          page: next.page ?? search.page,
+          size: next.pageSize ?? search.pageSize,
+          field: next.field ?? search.field,
+          q: next.q ?? search.q,
+        }),
+      });
+    },
+    [navigate, search.field, search.page, search.pageSize, search.q],
+  );
+
+  useEffect(() => {
+    if (!result) return;
+    const safePage = Math.min(search.page, Math.max(result.totalPages, 1));
+    const rawSize = new URLSearchParams(window.location.search).get('size');
+    const hasInvalidSize = rawSize !== null && ![20, 50, 100].includes(Number(rawSize));
+    if (hasInvalidSize || safePage !== search.page) {
+      updateSearch({
+        page: hasInvalidSize ? 1 : safePage,
+        pageSize: hasInvalidSize ? 20 : search.pageSize,
+      });
+    }
+  }, [result, search.page, search.pageSize, updateSearch]);
 
   return (
     <PageScaffold

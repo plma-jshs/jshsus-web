@@ -23,6 +23,15 @@ async function main() {
   } catch (error) {
     console.error('Database migration failed with the following error:');
     console.error(error);
+    if (error && typeof error === 'object') {
+      const details = {};
+      for (const key of ['code', 'errno', 'sqlState', 'sqlMessage', 'cause']) {
+        if (key in error && error[key] !== undefined) details[key] = error[key];
+      }
+      if (Object.keys(details).length > 0) {
+        console.error(`Database migration error details: ${JSON.stringify(details)}`);
+      }
+    }
     throw error;
   } finally {
     await connection.end();

@@ -555,10 +555,10 @@
 
 .detail-comment-form .detail-comment-submit {
   display: grid;
-  width: 32px;
-  min-width: 32px;
-  height: 32px;
-  min-height: 32px;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -570,6 +570,9 @@
 }
 
 .detail-comment-form .detail-comment-submit svg {
+  width: 19px;
+  height: 19px;
+  margin: 0;
   fill: none;
   stroke: currentColor;
   stroke-width: 2.5;
@@ -719,10 +722,10 @@
 
   .detail-comment-form .detail-comment-submit {
     display: grid;
-    width: 30px;
-    min-width: 30px;
-    height: 30px;
-    min-height: 30px;
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    min-height: 34px;
     right: 4px;
     bottom: 7px;
     place-items: center;
@@ -730,8 +733,8 @@
   }
 
   .detail-comment-form .detail-comment-submit svg {
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
     margin: 0;
   }
 

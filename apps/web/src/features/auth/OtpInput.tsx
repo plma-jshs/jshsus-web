@@ -126,7 +126,7 @@ export function OtpInput({
         <input
           aria-label={`${label} ${index + 1}번째 자리`}
           autoComplete={index === 0 ? 'one-time-code' : 'off'}
-          className="auth-otp__input"
+          className={`auth-otp__input${digits[index] ? ' is-filled' : ''}`}
           disabled={disabled}
           inputMode="numeric"
           key={index}

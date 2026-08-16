@@ -28,11 +28,7 @@ import {
   useActivityRequests,
   useRefreshActivityRequests,
 } from './activityRequests';
-import {
-  formatActivityPeriodLabel,
-  formatActivityTimeRanges,
-  koreaDateInput,
-} from './activitySchedule';
+import { formatActivityPeriodLabel, koreaDateInput } from './activitySchedule';
 import { ActivityParticipants } from './ActivityParticipants';
 import { ActivityPrintPreviewModal } from './ActivityPrintPreviewModal';
 import './operations.css';
@@ -113,13 +109,13 @@ function ActivityStatusSelect({
         aria-label={label}
         className={`operation-status-select operation-status-select--${status}`}
         disabled={disabled}
-        menuClassName="operation-status-select__menu"
+        menuClassName={`operation-status-select__menu operation-status-select__menu--${status}`}
         nativeOnMobile={false}
         value={status}
         onChange={(event) => onChange(event.target.value as ActivityRequestAdminStatus)}
       >
         {activityStatusOptions.map((option) => (
-          <option key={option.value} value={option.value} data-badge="●" data-tone={option.value}>
+          <option key={option.value} value={option.value}>
             {option.label}
           </option>
         ))}
@@ -183,14 +179,6 @@ function ActivityMobileCard({
             request.activitySlotIds,
           )}
         </span>
-        <span className="operation-activity-mobile-card__time">
-          {formatActivityTimeRanges(
-            date,
-            request.startsAt,
-            request.endsAt,
-            request.activitySlotIds,
-          )}
-        </span>
       </span>
       <span className="operation-activity-mobile-card__people">
         <Users size={14} aria-hidden="true" />
@@ -224,7 +212,7 @@ function createColumns(
     {
       id: 'time',
       accessorFn: (request) => request.startsAt,
-      header: '시간',
+      header: '교시',
       enableSorting: false,
       cell: ({ row }) => {
         const request = row.original;
@@ -239,14 +227,6 @@ function createColumns(
                 request.activitySlotIds,
               )}
             </strong>
-            <span>
-              {formatActivityTimeRanges(
-                date,
-                request.startsAt,
-                request.endsAt,
-                request.activitySlotIds,
-              )}
-            </span>
           </span>
         );
       },
@@ -266,7 +246,7 @@ function createColumns(
               {formatAdminDate(request.startsAt, { month: '2-digit', day: '2-digit' })}
             </strong>
             <span>
-              {formatActivityTimeRanges(
+              {formatActivityPeriodLabel(
                 date,
                 request.startsAt,
                 request.endsAt,
@@ -286,7 +266,7 @@ function createColumns(
     },
     {
       id: 'compactLocationTeacher',
-      header: '장소/교사',
+      header: '장소/지도교사',
       accessorFn: (request) => `${request.location} ${request.advisorTeacherName ?? ''}`,
       enableSorting: false,
       cell: ({ row }) => (

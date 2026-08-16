@@ -139,7 +139,6 @@ export function ActivityParticipants({
               onMouseLeave={() => setOpen(false)}
               onClick={(event) => event.stopPropagation()}
             >
-              <strong>참여 학생 {students.length}명</strong>
               <ul
                 className={`activity-participants-popover__list ${
                   students.length <= 4

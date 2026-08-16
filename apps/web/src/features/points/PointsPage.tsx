@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
-import { useState } from 'react';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
+import { useCallback, useEffect, useState } from 'react';
 import { DataTablePagination } from '../../components/page/DataTableControls';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
@@ -18,13 +18,42 @@ function formatRecordDate(value: string) {
 }
 
 export function PointsPage() {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const navigate = useNavigate({ from: '/points' });
+  const routeSearch = useSearch({ from: '/points' });
+  const page = routeSearch.page ?? 1;
+  const pageSize = routeSearch.size ?? 20;
+  const updateTableSearch = useCallback(
+    (next: { page?: number; size?: 20 | 50 | 100 }) => {
+      void navigate({
+        search: (current) => ({
+          ...current,
+          page: next.page ?? current.page ?? 1,
+          size: next.size ?? current.size ?? 20,
+        }),
+      });
+    },
+    [navigate],
+  );
   const [mobileVisibleState, setMobileVisibleState] = useState<{ key: string; count: number }>({
     key: '',
-    count: 20,
+    count: pageSize,
   });
   const statusQuery = useQuery({ queryKey: ['my-status'], queryFn: getMyStatus });
+  const totalRecords = statusQuery.data?.points.records.length ?? 0;
+  const totalPages = Math.ceil(totalRecords / pageSize);
+  const safePage = Math.min(page, Math.max(totalPages, 1));
+  const rawSize =
+    typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('size');
+  const hasInvalidSize = rawSize !== null && ![20, 50, 100].includes(Number(rawSize));
+  useEffect(() => {
+    if (!statusQuery.isSuccess) return;
+    if (hasInvalidSize || page !== safePage) {
+      updateTableSearch({
+        page: hasInvalidSize ? 1 : safePage,
+        size: hasInvalidSize ? 20 : pageSize,
+      });
+    }
+  }, [hasInvalidSize, page, pageSize, safePage, statusQuery.isSuccess, updateTableSearch]);
 
   if (statusQuery.isLoading) {
     return (
@@ -89,8 +118,6 @@ export function PointsPage() {
   }
 
   const status = statusQuery.data;
-  const totalPages = Math.ceil(status.points.records.length / pageSize);
-  const safePage = Math.min(page, Math.max(totalPages, 1));
   const visibleRecords = status.points.records.slice(
     (safePage - 1) * pageSize,
     safePage * pageSize,
@@ -158,8 +185,7 @@ export function PointsPage() {
               total={status.points.records.length}
               pageSize={pageSize}
               onPageSizeChange={(nextSize) => {
-                setPageSize(nextSize);
-                setPage(1);
+                updateTableSearch({ page: 1, size: nextSize });
               }}
               hasMore={safePage === 1 && mobileVisibleCount < status.points.records.length}
               onLoadMore={() =>
@@ -168,7 +194,7 @@ export function PointsPage() {
                   count: mobileVisibleCount + pageSize,
                 })
               }
-              onChange={setPage}
+              onChange={(nextPage) => updateTableSearch({ page: nextPage })}
             />
           ) : null}
         </div>

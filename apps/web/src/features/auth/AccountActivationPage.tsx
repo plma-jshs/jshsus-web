@@ -1,5 +1,5 @@
 import type { FormEvent, ReactNode } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type { AccountActivationIdentityType, StudentGender } from '@jshsus/types';
@@ -83,6 +83,21 @@ function FormMessage({ children, success = false }: { children: ReactNode; succe
 
 type VerificationTarget = 'email' | 'phone';
 
+function maskPhone(value: string) {
+  const digits = normalizedPhone(value);
+  if (!/^010\d{8}$/.test(digits)) return value;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 4)}***-${digits.slice(-4, -3)}***`;
+}
+
+function maskEmail(value: string) {
+  const [local = '', domainWithSuffix = ''] = value.trim().toLocaleLowerCase('en-US').split('@');
+  const dotIndex = domainWithSuffix.lastIndexOf('.');
+  if (!local || dotIndex <= 0) return value;
+  const domain = domainWithSuffix.slice(0, dotIndex);
+  const suffix = domainWithSuffix.slice(dotIndex);
+  return `${local.slice(0, 2)}******@${domain.slice(0, 1)}******${suffix}`;
+}
+
 function verificationExpiry() {
   return Date.now() + 179_000;
 }
@@ -111,7 +126,6 @@ function VerificationDialog({
   onConfirm: () => void;
 }) {
   const [remaining, setRemaining] = useState(() => Math.max(0, expiresAt - Date.now()));
-  const lastSubmittedCode = useRef<string | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -119,15 +133,6 @@ function VerificationDialog({
     }, 1000);
     return () => window.clearInterval(timer);
   }, [expiresAt]);
-
-  useEffect(() => {
-    if (code.length < 6) lastSubmittedCode.current = null;
-    if (code.length !== 6 || remaining <= 0 || pending || code === lastSubmittedCode.current) {
-      return;
-    }
-    lastSubmittedCode.current = code;
-    onConfirm();
-  }, [code, onConfirm, pending, remaining]);
 
   const totalSeconds = Math.ceil(remaining / 1_000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -163,7 +168,7 @@ function VerificationDialog({
           </button>
         </header>
         <p className="auth-verification-modal__description">
-          <strong>{destination}</strong>로 발송된 6자리 인증번호를 입력해 주세요.
+          {destination}로 발송된 6자리 번호를 입력해주세요
         </p>
         <form
           className="auth-verification-modal__form"
@@ -178,9 +183,12 @@ function VerificationDialog({
             disabled={pending}
             label={`${label} 인증번호`}
             onChange={onCodeChange}
+            onComplete={() => {
+              if (!pending && remaining > 0) onConfirm();
+            }}
           />
           <FieldError message={error} />
-          <div className="auth-verification-modal__resend" aria-live="polite">
+          <div className="auth-verification-modal__resend auth-otp-resend" aria-live="polite">
             <span>인증번호가 오지 않았나요?&nbsp;&nbsp;</span>
             <button type="button" onClick={onResend} disabled={pending}>
               재전송
@@ -611,7 +619,9 @@ export function AccountActivationPage() {
       {verificationTarget ? (
         <VerificationDialog
           target={verificationTarget}
-          destination={verificationTarget === 'email' ? email : phone}
+          destination={
+            verificationTarget === 'email' ? maskEmail(email) : maskPhone(normalizedPhone(phone))
+          }
           code={verificationTarget === 'email' ? emailVerificationCode : phoneVerificationCode}
           expiresAt={verificationExpiresAt}
           pending={

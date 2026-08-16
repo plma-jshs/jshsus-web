@@ -19,6 +19,22 @@
   width: min(100%, 240px);
 }
 
+.lost-items-search-controls {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.lost-items-search-controls .page-search-field {
+  width: min(100%, 280px);
+}
+
+.lost-items-search-controls .detail-primary-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .lost-items-view .filter-chips button {
   min-height: 34px;
   font-size: 13px;

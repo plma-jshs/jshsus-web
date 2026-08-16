@@ -54,6 +54,8 @@ function validateActivitySearch(search: Record<string, unknown>): ActivitySearch
   if (Number.isInteger(requestedPage) && requestedPage >= 1) result.page = requestedPage;
   if (tablePageSizes.includes(requestedPageSize as (typeof tablePageSizes)[number])) {
     result.size = requestedPageSize as (typeof tablePageSizes)[number];
+  } else if (search.size !== undefined || search.pageSize !== undefined) {
+    result.size = 20;
   }
   if (activitySearchFields.includes(search.field as (typeof activitySearchFields)[number])) {
     result.field = search.field as ActivitySearch['field'];
@@ -77,6 +79,8 @@ function validateTableSearch(search: Record<string, unknown>): TableSearch {
   if (Number.isInteger(requestedPage) && requestedPage >= 1) result.page = requestedPage;
   if (tablePageSizes.includes(requestedPageSize as (typeof tablePageSizes)[number])) {
     result.size = requestedPageSize as (typeof tablePageSizes)[number];
+  } else if (search.size !== undefined || search.pageSize !== undefined) {
+    result.size = 20;
   }
   if (tableSearchFields.includes(search.field as (typeof tableSearchFields)[number])) {
     result.field = search.field as (typeof tableSearchFields)[number];
@@ -249,6 +253,7 @@ const petitionsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/petitions',
   beforeLoad: ({ location }) => requireSession(location),
+  validateSearch: validateTableSearch,
   component: lazyRouteComponent(
     () => import('../features/petitions/PetitionsPage'),
     'PetitionsPage',
@@ -326,6 +331,7 @@ const wakeSongsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/wake-songs',
   beforeLoad: ({ location }) => requireSession(location),
+  validateSearch: validateTableSearch,
   component: lazyRouteComponent(
     () => import('../features/wake-songs/WakeSongsPage'),
     'WakeSongsPage',
@@ -407,6 +413,7 @@ const pointsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/points',
   beforeLoad: ({ location }) => requireSession(location),
+  validateSearch: validateTableSearch,
   component: lazyRouteComponent(() => import('../features/points/PointsPage'), 'PointsPage'),
 });
 

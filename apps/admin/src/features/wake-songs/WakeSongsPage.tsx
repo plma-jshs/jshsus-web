@@ -219,37 +219,36 @@ export function WakeSongsPage() {
 
   return (
     <div className="admin-stack wake-song-admin">
-      <TableToolbar
-        className="wake-song-admin-toolbar"
-        summary={`총 ${pageData?.total ?? 0}건`}
-        mobileSheetTitle="기상곡 필터"
-        mobileSearch={
-          <div className="wake-song-admin-search">
-            <label>
-              <span className="sr-only">신청 검색</span>
-              <Search size={15} aria-hidden="true" />
-              <input
-                type="text"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="영상, 신청자, 메모 검색"
-              />
-            </label>
-          </div>
-        }
-      >
-        <SegmentedTabs
-          value={status}
-          options={statusOptions}
-          ariaLabel="기상곡 신청 상태"
-          onChange={(nextStatus) => {
-            setStatus(nextStatus);
-            setPage(1);
-          }}
-        />
-      </TableToolbar>
-
       <section className="admin-panel wake-song-admin-list">
+        <TableToolbar
+          className="wake-song-admin-toolbar"
+          summary={`총 ${pageData?.total ?? 0}건`}
+          mobileSheetTitle="기상곡 필터"
+          mobileSearch={
+            <div className="wake-song-admin-search">
+              <label>
+                <span className="sr-only">신청 검색</span>
+                <Search size={15} aria-hidden="true" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="영상, 신청자, 메모 검색"
+                />
+              </label>
+            </div>
+          }
+        >
+          <SegmentedTabs
+            value={status}
+            options={statusOptions}
+            ariaLabel="기상곡 신청 상태"
+            onChange={(nextStatus) => {
+              setStatus(nextStatus);
+              setPage(1);
+            }}
+          />
+        </TableToolbar>
         {requestsQuery.isError ? (
           <div className="admin-panel error compact-empty">
             목록을 불러오지 못했습니다. API 연결과 권한을 확인해 주세요.

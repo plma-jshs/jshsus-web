@@ -1,4 +1,4 @@
-import { useMemo, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import type { ActivityPrintFloor, ActivityRequestPrintBatch } from '@jshsus/types';
@@ -12,11 +12,7 @@ import { FilterChips, PageScaffold, PageState } from '../../components/page/Page
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { getMyActivityRequests, printActivityRequests } from './api';
-import {
-  formatActivityPeriodLabel,
-  formatActivityTimeRanges,
-  koreaDateInput,
-} from './activitySchedule';
+import { formatActivityPeriodLabel, koreaDateInput } from './activitySchedule';
 import {
   type ActivityRequestFilter,
   type ActivityRequestSearchField,
@@ -71,15 +67,18 @@ export function ActivityRequestsPage() {
   const [printFloor, setPrintFloor] = useState<ActivityPrintFloor>('all');
   const [printBatch, setPrintBatch] = useState<ActivityRequestPrintBatch | null>(null);
   const [printMessage, setPrintMessage] = useState('');
-  const updateTableSearch = (next: { page?: number; size?: DataTablePageSize }) => {
-    void navigate({
-      search: (current) => ({
-        ...current,
-        page: next.page ?? current.page ?? 1,
-        size: next.size ?? current.size ?? 20,
-      }),
-    });
-  };
+  const updateTableSearch = useCallback(
+    (next: { page?: number; size?: DataTablePageSize }) => {
+      void navigate({
+        search: (current) => ({
+          ...current,
+          page: next.page ?? current.page ?? 1,
+          size: next.size ?? current.size ?? 20,
+        }),
+      });
+    },
+    [navigate],
+  );
   const printMutation = useMutation({
     mutationFn: (floor: ActivityPrintFloor) => printActivityRequests({ floor }),
     onSuccess: (result) => {
@@ -115,6 +114,17 @@ export function ActivityRequestsPage() {
   );
   const totalPages = Math.ceil(filtered.length / pageSize);
   const safePage = Math.min(page, Math.max(totalPages, 1));
+  useEffect(() => {
+    if (!requestsQuery.isSuccess) return;
+    const rawSize = new URLSearchParams(window.location.search).get('size');
+    const hasInvalidSize = rawSize !== null && ![20, 50, 100].includes(Number(rawSize));
+    if (hasInvalidSize || page !== safePage) {
+      updateTableSearch({
+        page: hasInvalidSize ? 1 : safePage,
+        size: hasInvalidSize ? 20 : pageSize,
+      });
+    }
+  }, [page, pageSize, requestsQuery.isSuccess, safePage, updateTableSearch]);
   const visibleRequests = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
   const mobileVisibleKey = `${endDate}|${filter}|${pageSize}|${query}|${searchField}|${startDate}`;
   const mobileVisibleCount =
@@ -198,7 +208,7 @@ export function ActivityRequestsPage() {
                 value={filter}
                 options={[
                   { value: 'all', label: '전체' },
-                  { value: 'submitted', label: '승인 대기' },
+                  { value: 'submitted', label: '대기' },
                   { value: 'approved', label: '승인' },
                   { value: 'rejected', label: '반려' },
                 ]}
@@ -294,7 +304,7 @@ export function ActivityRequestsPage() {
               <thead>
                 <tr>
                   <th scope="col">날짜</th>
-                  <th scope="col">시간</th>
+                  <th scope="col">교시</th>
                   <th scope="col">장소</th>
                   <th scope="col">내용</th>
                   <th scope="col">인원</th>
@@ -317,7 +327,7 @@ export function ActivityRequestsPage() {
                           {activityDayFormatter.format(new Date(request.startsAt))}
                         </time>
                       </td>
-                      <td className="activity-table__period" data-label="시간">
+                      <td className="activity-table__period" data-label="교시">
                         <strong>
                           {formatActivityPeriodLabel(
                             koreaDateInput(new Date(request.startsAt)),
@@ -326,14 +336,6 @@ export function ActivityRequestsPage() {
                             request.activitySlotIds,
                           )}
                         </strong>
-                        <span>
-                          {formatActivityTimeRanges(
-                            koreaDateInput(new Date(request.startsAt)),
-                            request.startsAt,
-                            request.endsAt,
-                            request.activitySlotIds,
-                          )}
-                        </span>
                       </td>
                       <td className="activity-table__location" data-label="장소">
                         {request.location}
@@ -372,12 +374,6 @@ export function ActivityRequestsPage() {
                 request.endsAt,
                 request.activitySlotIds,
               );
-              const timeRanges = formatActivityTimeRanges(
-                koreaDateInput(new Date(request.startsAt)),
-                request.startsAt,
-                request.endsAt,
-                request.activitySlotIds,
-              );
               return (
                 <article
                   className="activity-request-card"
@@ -400,7 +396,6 @@ export function ActivityRequestsPage() {
                         <strong>
                           {date} ({period})
                         </strong>
-                        <em>{timeRanges}</em>
                       </span>
                     </div>
                     <div className="activity-request-card__detail">

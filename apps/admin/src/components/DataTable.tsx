@@ -10,12 +10,14 @@ import {
   type RowData,
   type SortingState,
 } from '@tanstack/react-table';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   ADMIN_DEFAULT_PAGE_SIZE,
+  ADMIN_PAGE_SIZES,
   DATA_TABLE_COLUMN_ALIGNMENTS,
   DATA_TABLE_COLUMN_WIDTHS,
+  normalizeAdminPageSize,
   type DataTableColumnKind,
   type DataTableWidthPreset,
 } from './dataTableConfig';
@@ -30,6 +32,25 @@ function syncTableQuery(page: number, pageSize: number) {
   url.searchParams.set('page', String(Math.max(page, 1)));
   url.searchParams.set('size', String(pageSize));
   window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+}
+
+function readTableQuery() {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  const rawSize = Number(params.get('size'));
+  const hasSize = params.has('size');
+  const rawPage = Number(params.get('page'));
+  return {
+    hasPage: params.has('page'),
+    hasSize,
+    page: Number.isInteger(rawPage) && rawPage >= 1 ? rawPage : 1,
+    size:
+      hasSize && ADMIN_PAGE_SIZES.includes(rawSize as (typeof ADMIN_PAGE_SIZES)[number])
+        ? rawSize
+        : normalizeAdminPageSize(rawSize),
+    invalidSize:
+      hasSize && !ADMIN_PAGE_SIZES.includes(rawSize as (typeof ADMIN_PAGE_SIZES)[number]),
+  };
 }
 
 declare module '@tanstack/react-table' {
@@ -201,6 +222,40 @@ export function DataTable<T>({
   const resolvedPageCount = Math.max(pagination?.pageCount ?? table.getPageCount(), 1);
   const currentPageIndex = pagination?.pageIndex ?? table.getState().pagination.pageIndex;
   const currentPage = Math.min(currentPageIndex + 1, resolvedPageCount);
+  const hasHydratedTableQuery = useRef(false);
+
+  useEffect(() => {
+    if (!pagination) return;
+    if (loading) return;
+    const query = readTableQuery();
+    if (!query) return;
+    const shouldHydrateFromUrl = !hasHydratedTableQuery.current;
+    hasHydratedTableQuery.current = true;
+    if (shouldHydrateFromUrl && query.invalidSize) {
+      // An unsupported size is normalized to the default and starts a fresh
+      // result set. Keep both the URL and the controlled table state aligned.
+      syncTableQuery(1, query.size);
+      if (currentPageIndex !== 0) pagination.onPageChange(0);
+      return;
+    } else if (shouldHydrateFromUrl && query.hasSize && query.size !== pagination.pageSize) {
+      pagination.onPageSizeChange?.(query.size);
+      return;
+    }
+    if (shouldHydrateFromUrl && query.hasPage && query.page !== currentPageIndex + 1) {
+      const nextPage = Math.min(query.page, resolvedPageCount);
+      syncTableQuery(nextPage, pagination.pageSize);
+      pagination.onPageChange(nextPage - 1);
+      return;
+    }
+    if (currentPageIndex + 1 > resolvedPageCount) {
+      syncTableQuery(resolvedPageCount, pagination.pageSize);
+      pagination.onPageChange(resolvedPageCount - 1);
+      return;
+    }
+    if (!shouldHydrateFromUrl && query.page !== currentPageIndex + 1) {
+      syncTableQuery(currentPageIndex + 1, pagination.pageSize);
+    }
+  }, [currentPageIndex, loading, pagination, resolvedPageCount]);
   const visibleColumnCount = Math.max(table.getVisibleFlatColumns().length, 1);
   const visibleRows = table.getRowModel().rows;
 

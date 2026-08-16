@@ -302,20 +302,7 @@ function AdminShell() {
     )
     .sort((left, right) => right.to.length - left.to.length)[0]?.to;
   const canUseAdmin = isSystemAdmin || visibleNavigation.length > 0;
-  const identitySession = sessionQuery.data as typeof sessionQuery.data & {
-    identifier?: string | number;
-    teacherNo?: string | number;
-  };
-  const isLocalTestSession =
-    import.meta.env.DEV && String(sessionQuery.data.stuid ?? '') === '9999';
-  const accountIdentity = isLocalTestSession
-    ? sessionQuery.data.name
-    : [
-        identitySession.identifier ?? identitySession.teacherNo ?? sessionQuery.data.stuid,
-        sessionQuery.data.name,
-      ]
-        .filter(Boolean)
-        .join(' ');
+  const accountIdentity = sessionQuery.data.name || '관리자';
 
   if (!canUseAdmin) {
     return (
