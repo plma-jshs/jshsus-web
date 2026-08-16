@@ -289,8 +289,25 @@
 }
 
 .admin-table-pagination--compact .ui-page-size-select .admin-select__trigger {
+  width: 128px;
+  min-width: 128px;
+  max-width: 128px;
   box-sizing: border-box;
   padding-inline: 9px;
+}
+
+.admin-table-pagination--compact .ui-page-size-select .admin-select__option-content {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.admin-table-pagination--compact
+  .ui-page-size-select
+  .admin-select__option-content
+  > span:last-child {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 .admin-table-pagination__range {
@@ -441,6 +458,12 @@
 .admin-table-toolbar__controls > .admin-select:not(.ui-page-size-select) {
   min-width: 112px;
   max-width: 180px;
+}
+
+.admin-table-toolbar__controls > .admin-select.admin-select--status {
+  width: 96px;
+  min-width: 96px;
+  max-width: 96px;
 }
 
 .admin-table-toolbar__summary {

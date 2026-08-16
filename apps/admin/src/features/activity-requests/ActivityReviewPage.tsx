@@ -11,7 +11,6 @@ import { Check, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
-  AdminSelect,
   Button,
   Drawer,
   MobileSortSelect,
@@ -44,16 +43,6 @@ type CreateActivityForm = {
   purpose: string;
 };
 
-type ActivityReviewSearchBy = NonNullable<ActivityRequestAdminListQuery['searchBy']>;
-
-const activityReviewSearchOptions: Array<{ value: ActivityReviewSearchBy; label: string }> = [
-  { value: 'all', label: '전체' },
-  { value: 'student', label: '학생' },
-  { value: 'advisor', label: '담당 교사' },
-  { value: 'location', label: '장소' },
-  { value: 'purpose', label: '내용' },
-];
-
 function createInitialActivityForm(): CreateActivityForm {
   const activityDate = koreaDateInput();
   const [firstSlot] = availableActivityTimeSlots(activityDate);
@@ -72,14 +61,12 @@ export function ActivityReviewPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
-  const [searchBy, setSearchBy] = useState<ActivityReviewSearchBy>('all');
   const [sorting, setSorting] = useState<SortingState>([{ id: 'startsAt', desc: true }]);
   const sort = sorting[0];
   const requestsQuery = useActivityRequests({
     page,
     pageSize: pageSize as 20 | 50 | 100,
     search: search || undefined,
-    searchBy,
     status: 'pending',
     assignedToMe: true,
     sortBy: (sort?.id as ActivityRequestAdminListQuery['sortBy']) ?? 'startsAt',
@@ -300,10 +287,7 @@ export function ActivityReviewPage() {
                   setSearch(event.target.value);
                   setPage(1);
                 }}
-                placeholder={`${
-                  activityReviewSearchOptions.find((option) => option.value === searchBy)?.label ??
-                  '전체'
-                } 검색`}
+                placeholder="학생, 장소, 내용 검색"
                 aria-label="대기 탐구활동서 검색"
               />
             }
@@ -333,23 +317,7 @@ export function ActivityReviewPage() {
                 }}
               />
             }
-          >
-            <AdminSelect
-              mobileLabel="검색 기준"
-              aria-label="검색 기준"
-              value={searchBy}
-              onChange={(event) => {
-                setSearchBy(event.target.value as ActivityReviewSearchBy);
-                setPage(1);
-              }}
-            >
-              {activityReviewSearchOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </AdminSelect>
-          </TableToolbar>
+          />
         }
         className="operation-review-list"
       >
@@ -509,7 +477,7 @@ export function ActivityReviewPage() {
             className="activity-create-section activity-selected-students"
             aria-label="선택한 학생"
           >
-            <h3>선택한 학생</h3>
+            <h3 className="sr-only">선택한 학생</h3>
             {createForm.representativeStudentNo ? (
               <div className="activity-student-chip activity-student-chip--representative">
                 <span>
@@ -545,7 +513,7 @@ export function ActivityReviewPage() {
 
           <section className="activity-create-section activity-create-schedule">
             <header>
-              <h3>시간</h3>
+              <h3>일시</h3>
             </header>
             <div className="activity-create-form__grid">
               <label>
@@ -575,7 +543,7 @@ export function ActivityReviewPage() {
                 />
               </label>
               <fieldset className="activity-slot-picker">
-                <legend>면학 시간</legend>
+                <legend className="sr-only">면학 시간</legend>
                 <div className="activity-slot-pill-list">
                   {availableSlots.map((slot) => {
                     const checked = createForm.activitySlotIds.includes(slot.id);

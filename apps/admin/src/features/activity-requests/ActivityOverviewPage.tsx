@@ -115,7 +115,7 @@ function ActivityStatusSelect({
         onChange={(event) => onChange(event.target.value as ActivityRequestAdminStatus)}
       >
         {activityStatusOptions.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option key={option.value} value={option.value} data-badge="•" data-tone={option.value}>
             {option.label}
           </option>
         ))}
@@ -478,7 +478,12 @@ export function ActivityOverviewPage() {
             >
               <option value="all">전체</option>
               {activityStatusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
+                <option
+                  key={option.value}
+                  value={option.value}
+                  data-badge="•"
+                  data-tone={option.value}
+                >
                   {option.label}
                 </option>
               ))}

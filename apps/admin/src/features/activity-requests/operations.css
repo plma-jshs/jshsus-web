@@ -251,8 +251,9 @@
 }
 
 .operation-list-toolbar .admin-select.operation-status-filter {
-  width: 84px;
-  max-width: 84px;
+  width: 78px !important;
+  min-width: 78px !important;
+  max-width: 78px !important;
 }
 
 .activity-print-trigger {
@@ -267,8 +268,9 @@
 @media (min-width: 768px) and (max-width: 1023px) {
   .operation-list-toolbar .admin-table-toolbar__controls {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: 220px 78px max-content;
     align-items: center;
+    justify-content: end;
     gap: 8px;
   }
 
@@ -282,8 +284,22 @@
     width: 100%;
   }
 
-  .operation-list-toolbar .operation-status-filter,
+  .operation-list-toolbar .ui-date-range {
+    width: 220px;
+    min-width: 220px;
+    max-width: 220px;
+    grid-column: auto;
+  }
+
+  .operation-list-toolbar .operation-status-filter {
+    width: 78px !important;
+    min-width: 78px !important;
+    max-width: 78px !important;
+    grid-column: auto;
+  }
+
   .operation-list-toolbar .activity-print-trigger {
+    grid-column: auto;
     justify-self: end;
   }
 }
@@ -600,8 +616,8 @@
 }
 
 .operation-status-select {
-  width: 60px;
-  max-width: 60px;
+  width: 72px;
+  max-width: 72px;
   height: 30px;
   min-height: 30px;
 }
@@ -631,12 +647,47 @@
 
 .operation-status-select .admin-select__trigger {
   min-height: 30px;
-  padding: 0 6px 0 10px;
+  padding: 0 6px 0 8px;
   border-radius: 8px;
   border-color: transparent !important;
   box-shadow: none;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.operation-status-select .admin-select__trigger > .admin-select__option-content,
+.operation-status-select .admin-select__trigger .admin-select__option-content > span:last-child,
+.operation-status-select__menu .admin-select__option-content > span:last-child {
+  min-width: max-content;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.operation-status-select .admin-select__badge,
+.operation-status-select__menu .admin-select__badge {
+  width: 7px;
+  height: 7px;
+  min-height: 7px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 0;
+  line-height: 0;
+}
+
+.operation-status-select .admin-select__badge.is-pending,
+.operation-status-select__menu .admin-select__badge.is-pending {
+  background: #aeb7bd;
+}
+
+.operation-status-select .admin-select__badge.is-approved,
+.operation-status-select__menu .admin-select__badge.is-approved {
+  background: #28a269;
+}
+
+.operation-status-select .admin-select__badge.is-rejected,
+.operation-status-select__menu .admin-select__badge.is-rejected {
+  background: #d05a5a;
 }
 
 .operation-status-select .admin-select__trigger:focus-visible,
@@ -656,7 +707,8 @@
 }
 
 .operation-status-select__menu {
-  min-width: 98px;
+  min-width: 92px;
+  width: 92px !important;
   padding: 5px;
   border: 1px solid var(--j-color-border);
   border-radius: 10px;
@@ -675,9 +727,21 @@
   background: #f0faf4;
 }
 
+.operation-status-select__menu button.is-selected:hover,
+.operation-status-select__menu button.is-selected.is-active {
+  color: #12623d;
+  background: #dff3e7;
+}
+
 .operation-status-select__menu--pending button.is-selected {
   color: #7a5510;
   background: #fff9eb;
+}
+
+.operation-status-select__menu--pending button.is-selected:hover,
+.operation-status-select__menu--pending button.is-selected.is-active {
+  color: #65460b;
+  background: #ffedbf;
 }
 
 .operation-status-select__menu--approved button.is-selected {
@@ -690,9 +754,15 @@
   background: #fbf2f2;
 }
 
+.operation-status-select__menu--rejected button.is-selected:hover,
+.operation-status-select__menu--rejected button.is-selected.is-active {
+  color: #713737;
+  background: #f2dcdc;
+}
+
 .operation-status-filter {
-  width: 84px;
-  max-width: 84px;
+  width: 78px;
+  max-width: 78px;
 }
 
 .operation-status-filter .admin-select__trigger {
@@ -781,6 +851,20 @@
 }
 
 .operation-activity-time strong {
+  font-weight: 400;
+}
+
+.operation-activity-time > span {
+  color: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  font-variant-numeric: normal;
+  white-space: nowrap;
+}
+
+.operation-activity-compact-meta span {
+  color: inherit;
+  font-size: 13px;
   font-weight: 400;
 }
 

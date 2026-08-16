@@ -71,6 +71,12 @@ select.ui-control:not([multiple]) {
   vertical-align: middle;
 }
 
+.admin-select--status {
+  width: 96px;
+  min-width: 96px;
+  max-width: 96px;
+}
+
 .admin-select__native {
   position: absolute !important;
   width: 1px !important;

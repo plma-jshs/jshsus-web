@@ -94,6 +94,7 @@ export function AdminSelect({
   const useNativeSelect = nativeOnMobile && mobile;
   const resolvedAriaLabel = ariaLabel ?? '선택';
   const resolvedMobileLabel = mobileLabel ?? ariaLabel;
+  const isStatusSelect = /상태/.test(`${resolvedAriaLabel} ${resolvedMobileLabel ?? ''}`);
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return undefined;
@@ -164,7 +165,7 @@ export function AdminSelect({
 
   return (
     <div
-      className={`admin-select${open ? ' is-open' : ''}${nativeOnMobile ? ' admin-select--native-mobile' : ''}${className ? ` ${className}` : ''}`}
+      className={`admin-select${open ? ' is-open' : ''}${nativeOnMobile ? ' admin-select--native-mobile' : ''}${isStatusSelect ? ' admin-select--status' : ''}${className ? ` ${className}` : ''}`}
       ref={rootRef}
     >
       {resolvedMobileLabel ? (

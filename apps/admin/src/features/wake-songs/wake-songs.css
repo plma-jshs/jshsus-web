@@ -62,7 +62,7 @@
 }
 
 .wake-song-admin-list {
-  margin-top: 16px;
+  margin-top: 0;
   padding: 0;
   overflow: hidden;
 }
@@ -73,7 +73,7 @@
 }
 
 .wake-song-admin-list > .admin-data-table {
-  padding: 18px;
+  padding: 0 18px 18px;
 }
 
 @media (max-width: 767px) {

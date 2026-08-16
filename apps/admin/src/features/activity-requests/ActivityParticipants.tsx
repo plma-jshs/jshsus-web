@@ -146,12 +146,12 @@ export function ActivityParticipants({
                     : 'activity-participants-popover__list--double'
                 }`}
                 style={
-                  students.length > 4
-                    ? { gridTemplateRows: `repeat(${Math.ceil(students.length / 2)}, auto)` }
+                  others.length > 2
+                    ? { gridTemplateRows: `repeat(${Math.ceil(others.length / 2)}, auto)` }
                     : undefined
                 }
               >
-                {students.map((student) => (
+                {others.map((student) => (
                   <li key={student.studentId}>
                     <span className="activity-participants-popover__student-number">
                       {student.studentNo}

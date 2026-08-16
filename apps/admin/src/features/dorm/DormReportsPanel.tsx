@@ -168,7 +168,7 @@ export function DormReportsPanel({
           aria-label="민원 상태"
           mobileLabel="상태"
         >
-          <option value="">전체 상태</option>
+          <option value="">전체</option>
           {dormReportStatusOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
