@@ -499,18 +499,24 @@
   gap: 8px;
 }
 
+.activity-slot-picker__controls {
+  display: grid;
+  gap: 3px;
+}
+
 .activity-slot-pill-list label {
   display: grid;
-  min-height: 58px;
+  min-height: 40px;
   grid-template-columns: 17px minmax(0, 1fr);
   grid-template-rows: auto auto;
   align-items: center;
-  gap: 2px 8px;
-  padding: 8px 10px;
+  gap: 0 6px;
+  padding: 4px 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: white;
   color: #334241;
+  font-weight: 400;
   cursor: pointer;
 }
 
@@ -521,8 +527,8 @@
 }
 
 .activity-slot-pill-list input {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   accent-color: var(--primary);
   grid-row: 1 / span 2;
 }
@@ -530,8 +536,8 @@
 .activity-slot-pill-list span {
   min-width: 0;
   overflow: hidden;
-  font-size: 13px;
-  font-weight: 750;
+  font-size: 12px;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -540,10 +546,30 @@
   min-width: 0;
   overflow: hidden;
   color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 400;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.activity-slot-more {
+  min-height: 24px;
+  justify-self: end;
+  padding: 0 5px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--primary-dark);
+  font-size: 11px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.activity-slot-more:hover,
+.activity-slot-more:focus-visible {
+  background: var(--j-color-surface-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .operation-toolbar {
@@ -917,6 +943,11 @@
   width: min(100%, 720px);
 }
 
+.activity-create-drawer .ui-drawer__footer {
+  border-top: 0;
+  background: transparent;
+}
+
 .activity-create-drawer .ui-drawer__layout {
   width: 100%;
 }
@@ -977,6 +1008,20 @@
 .activity-create-form textarea {
   min-height: 110px;
   resize: vertical;
+}
+
+.activity-create-schedule .activity-create-form__grid > label,
+.activity-create-details .activity-create-form__grid > label {
+  font-weight: 400;
+}
+
+.activity-create-schedule .activity-slot-pill-list label {
+  font-weight: 400;
+}
+
+.activity-create-details .activity-create-form__grid input,
+.activity-create-details .activity-create-form__grid textarea {
+  font-weight: 400;
 }
 
 .activity-create-form__grid {

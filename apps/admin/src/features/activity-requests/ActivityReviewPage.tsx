@@ -28,6 +28,7 @@ import {
 import {
   activitySlotsDateTimes,
   availableActivityTimeSlots,
+  isWeekendActivityDate,
   koreaDateInput,
   type ActivityTimeSlotId,
 } from './activitySchedule';
@@ -77,6 +78,7 @@ export function ActivityReviewPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateActivityForm>(createInitialActivityForm);
   const [studentSearch, setStudentSearch] = useState('');
+  const [showDaytimeSlots, setShowDaytimeSlots] = useState(false);
   const pendingRequests = useMemo(
     () => requestsQuery.data?.items ?? [],
     [requestsQuery.data?.items],
@@ -104,9 +106,10 @@ export function ActivityReviewPage() {
     [students],
   );
   const availableSlots = useMemo(
-    () => availableActivityTimeSlots(createForm.activityDate),
-    [createForm.activityDate],
+    () => availableActivityTimeSlots(createForm.activityDate, showDaytimeSlots),
+    [createForm.activityDate, showDaytimeSlots],
   );
+  const hasMoreActivitySlots = !showDaytimeSlots && !isWeekendActivityDate(createForm.activityDate);
 
   const approveMutation = useMutation({
     mutationFn: api.approveActivityRequest,
@@ -299,7 +302,10 @@ export function ActivityReviewPage() {
                 className="operation-review-create"
                 type="button"
                 variant="primary"
-                onClick={() => setCreateOpen(true)}
+                onClick={() => {
+                  setShowDaytimeSlots(false);
+                  setCreateOpen(true);
+                }}
               >
                 신규 작성
               </Button>
@@ -396,12 +402,19 @@ export function ActivityReviewPage() {
         open={createOpen}
         onClose={() => {
           setCreateOpen(false);
+          setShowDaytimeSlots(false);
           createMutation.reset();
         }}
         title="탐구활동서 작성"
         footer={
           <>
-            <Button type="button" onClick={() => setCreateOpen(false)}>
+            <Button
+              type="button"
+              onClick={() => {
+                setCreateOpen(false);
+                setShowDaytimeSlots(false);
+              }}
+            >
               취소
             </Button>
             <Button
@@ -542,29 +555,42 @@ export function ActivityReviewPage() {
                             : ['evening-1'],
                       };
                     });
+                    setShowDaytimeSlots(false);
                   }}
                   required
                 />
               </label>
               <fieldset className="activity-slot-picker">
                 <legend className="sr-only">면학 시간</legend>
-                <div className="activity-slot-pill-list">
-                  {availableSlots.map((slot) => {
-                    const checked = createForm.activitySlotIds.includes(slot.id);
-                    return (
-                      <label className={checked ? 'is-selected' : undefined} key={slot.id}>
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleCreateActivitySlot(slot.id)}
-                        />
-                        <span>{slot.label}</span>
-                        <small>
-                          {slot.startsAt}~{slot.endsAt}
-                        </small>
-                      </label>
-                    );
-                  })}
+                <div className="activity-slot-picker__controls">
+                  <div className="activity-slot-pill-list">
+                    {availableSlots.map((slot) => {
+                      const checked = createForm.activitySlotIds.includes(slot.id);
+                      return (
+                        <label className={checked ? 'is-selected' : undefined} key={slot.id}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleCreateActivitySlot(slot.id)}
+                          />
+                          <span>{slot.label.replace(/^저녁\s*/, '')}</span>
+                          <small>
+                            {slot.startsAt}~{slot.endsAt}
+                          </small>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {hasMoreActivitySlots ? (
+                    <button
+                      className="activity-slot-more"
+                      type="button"
+                      aria-expanded={showDaytimeSlots}
+                      onClick={() => setShowDaytimeSlots(true)}
+                    >
+                      더보기
+                    </button>
+                  ) : null}
                 </div>
               </fieldset>
             </div>
