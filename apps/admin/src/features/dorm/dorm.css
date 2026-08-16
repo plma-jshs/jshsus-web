@@ -17,6 +17,14 @@
   width: var(--dorm-control-sm);
 }
 
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dorm-page .admin-table-toolbar__controls > .dorm-search-control {
+    width: 100% !important;
+    min-width: 0;
+    flex: 1 0 100%;
+  }
+}
+
 .dorm-resident-summary {
   display: flex;
   min-width: 260px;

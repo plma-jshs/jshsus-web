@@ -559,6 +559,31 @@
   }
 }
 
+@media (min-width: 768px) and (max-width: 1023px) {
+  .identity-panel > .admin-table-toolbar {
+    width: 100%;
+  }
+
+  .identity-panel > .admin-table-toolbar .admin-table-toolbar__controls {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .identity-panel
+    > .admin-table-toolbar
+    .admin-table-toolbar__controls
+    > .identity-field:first-child {
+    width: 100%;
+    min-width: 0;
+    flex: 1 0 100%;
+  }
+
+  .identity-panel > .admin-table-toolbar .identity-filter-bar {
+    margin-left: 0;
+  }
+}
+
 @media (min-width: 1001px) {
   .identity-panel > .admin-table-toolbar {
     display: grid;

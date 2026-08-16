@@ -61,6 +61,21 @@
   padding-left: 36px;
 }
 
+@media (min-width: 768px) and (max-width: 1023px) {
+  .wake-song-admin-toolbar .admin-table-toolbar__controls {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .wake-song-admin-toolbar .admin-table-toolbar__controls > .wake-song-admin-search {
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    flex: 1 0 100%;
+  }
+}
+
 .wake-song-admin-list {
   margin-top: 0;
   padding: 0;

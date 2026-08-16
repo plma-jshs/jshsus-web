@@ -476,7 +476,7 @@ export function ActivityOverviewPage() {
               }}
               aria-label="상태 필터"
             >
-              <option value="all">전체 상태</option>
+              <option value="all">전체</option>
               {activityStatusOptions.map((option) => (
                 <option
                   key={option.value}

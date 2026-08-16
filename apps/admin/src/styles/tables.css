@@ -543,14 +543,29 @@
     width: 100%;
   }
 
+  .content-panel-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .content-panel-actions {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .content-panel-actions .admin-table-toolbar {
+    flex: 1 1 100%;
+  }
+
   .content-panel-actions .admin-table-toolbar__controls {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .content-panel-actions .content-search-field {
-    width: auto;
+    width: 100%;
     min-width: 0;
-    flex: 1 1 auto;
+    flex: 1 0 100%;
   }
 
   .content-panel-actions .content-toolbar {
@@ -562,22 +577,20 @@
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .admin-table-toolbar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
+    display: flex;
+    width: 100%;
     align-items: stretch;
     gap: 8px;
     min-height: 0;
   }
 
   .admin-table-toolbar__controls {
-    display: grid;
-    grid-column: 1;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    display: flex;
     align-items: center;
     width: 100%;
     min-width: 0;
-    flex-wrap: nowrap;
-    justify-content: initial;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .admin-table-toolbar__controls:has(
@@ -585,15 +598,19 @@
         .admin-search-field,
         .content-search-field,
         .operation-search-field,
+        .audit-log-search,
+        .identity-field,
+        .wake-song-admin-search,
+        .dorm-search-control,
         .point-filter--search,
         input[type='search'],
         input[type='text']
       )
     )
     > :first-child {
-    width: 100%;
+    width: 100% !important;
     min-width: 0;
-    grid-column: 1 / -1;
+    flex: 1 0 100%;
   }
 
   .admin-table-toolbar__controls
@@ -603,8 +620,7 @@
       input:not([type]),
       .admin-search-field,
       .content-search-field,
-      .operation-search-field,
-      .point-filter
+      .operation-search-field
     ) {
     min-width: 0;
     width: auto;
@@ -635,43 +651,8 @@
   }
 
   .operation-list-toolbar .admin-table-toolbar__controls {
-    display: grid;
-    flex-wrap: initial;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 860px) {
-  .admin-table-toolbar {
-    grid-template-columns: minmax(0, 1fr);
-    align-items: stretch;
-  }
-
-  .admin-table-toolbar__controls {
-    width: 100%;
-    grid-column: 1 / -1;
-  }
-
-  .admin-table-toolbar__controls {
     flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-
-  .admin-table-toolbar__controls
-    > :where(
-      input[type='text'],
-      input[type='search'],
-      input:not([type]),
-      .admin-search-field,
-      .content-search-field,
-      .operation-search-field,
-      .point-filter
-    ) {
-    width: 100%;
-    flex: 1 0 100%;
-  }
-
-  .admin-table-toolbar__controls > :last-child {
-    margin-left: auto;
+    justify-content: flex-end;
   }
 }
 
