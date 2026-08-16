@@ -37,7 +37,7 @@ export function ContentAdminPanel({
       <header className="content-panel-header">
         <div>
           <div className="content-panel-heading">
-            <h2>{title}</h2>
+            <h2 className="sr-only">{title}</h2>
             {typeof count === 'number' ? <span>총 {count.toLocaleString('ko-KR')}건</span> : null}
           </div>
           {description ? <p>{description}</p> : null}

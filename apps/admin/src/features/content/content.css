@@ -31,13 +31,21 @@
 }
 
 .content-panel-header {
-  min-height: 44px;
+  min-height: 38px;
   margin: 0 0 14px;
-  padding-bottom: 13px;
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .content-panel-header p {
   max-width: 680px;
+}
+
+.content-panel-heading > span {
+  color: var(--j-color-text-muted);
+  font-size: 12px;
+  font-weight: var(--j-weight-regular);
+  line-height: 1.4;
 }
 
 .content-panel-actions,
@@ -428,7 +436,7 @@ a.content-table-primary:focus-visible {
   .content-panel-heading span {
     color: var(--j-color-text-muted);
     font-size: 12px;
-    font-weight: var(--j-weight-medium);
+    font-weight: var(--j-weight-regular);
   }
 
   .content-panel-actions {

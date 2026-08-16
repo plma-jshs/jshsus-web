@@ -37,11 +37,13 @@ export function SystemPage() {
     systemStatus.processes.every((process) => process.status === 'running');
 
   return (
-    <section className="admin-panel system-status-panel">
+    <section className="admin-panel system-status-panel" aria-labelledby="system-status-title">
       <div className="panel-title system-status-heading">
         <div className="panel-title-copy">
           <div>
-            <h2>시스템 상태</h2>
+            <h2 id="system-status-title" className="sr-only">
+              시스템 상태
+            </h2>
             <span className={`system-status-badge ${healthy ? 'healthy' : 'unhealthy'}`}>
               {healthy ? '정상' : systemStatusQuery.isLoading ? '확인 중' : '점검 필요'}
             </span>

@@ -88,12 +88,12 @@ export function AuditLogsPage() {
   );
 
   return (
-    <section className="admin-panel audit-log-panel">
-      <div className="panel-title audit-log-heading">
-        <h2>감사 로그</h2>
-      </div>
+    <section className="admin-panel audit-log-panel" aria-labelledby="audit-log-title">
+      <h2 id="audit-log-title" className="sr-only">
+        감사 로그
+      </h2>
+      <p className="audit-log-total">총 {(logsQuery.data?.total ?? 0).toLocaleString('ko-KR')}건</p>
       <TableToolbar
-        summary={`총 ${logsQuery.data?.total ?? 0}건`}
         mobileSearch={
           <label className="audit-log-search">
             <Search size={16} aria-hidden="true" />

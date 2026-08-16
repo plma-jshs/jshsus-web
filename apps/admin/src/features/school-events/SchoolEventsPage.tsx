@@ -7,8 +7,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Eye,
-  EyeOff,
   Pencil,
   Trash2,
   Upload,
@@ -457,18 +455,6 @@ export function SchoolEventsPage() {
         tone: 'danger',
       }),
   });
-  const visibilityMutation = useMutation({
-    mutationFn: ({ id, isPublic }: { id: number; isPublic: boolean }) =>
-      api.updateSchoolEvent(id, { isPublic }),
-    onSuccess: async (_, variables) => {
-      await refresh();
-      showToast({
-        title: variables.isPublic ? '일정을 공개했습니다.' : '일정을 비공개로 전환했습니다.',
-        tone: 'success',
-      });
-    },
-    onError: () => showToast({ title: '공개 상태를 변경하지 못했습니다.', tone: 'danger' }),
-  });
   const deleteMutation = useMutation({
     mutationFn: api.deleteSchoolEvent,
     onSuccess: async () => {
@@ -910,24 +896,6 @@ export function SchoolEventsPage() {
                 icon={<Pencil aria-hidden="true" />}
                 label={`${selectedEvent.title} 수정`}
                 onClick={() => openEdit(selectedEvent)}
-              />
-              <RowActionButton
-                icon={
-                  selectedEvent.isPublic ? (
-                    <EyeOff aria-hidden="true" />
-                  ) : (
-                    <Eye aria-hidden="true" />
-                  )
-                }
-                label={selectedEvent.isPublic ? '비공개 전환' : '공개'}
-                variant="primary"
-                disabled={visibilityMutation.isPending}
-                onClick={() =>
-                  visibilityMutation.mutate({
-                    id: selectedEvent.managedId!,
-                    isPublic: !selectedEvent.isPublic,
-                  })
-                }
               />
               <RowActionButton
                 icon={<Trash2 aria-hidden="true" />}

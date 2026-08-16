@@ -10,7 +10,7 @@
   --muted: var(--j-color-text-muted);
   --primary: var(--j-color-brand);
   --primary-dark: var(--j-color-brand-strong);
-  --action-primary: #2563eb;
+  --action-primary: rgb(49 130 246);
   --action-primary-hover: #1d4ed8;
   --action-primary-active: #1e40af;
   --action-primary-subtle: #eff6ff;

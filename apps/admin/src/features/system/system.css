@@ -8,8 +8,8 @@
 }
 
 .system-status-heading {
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--line);
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .system-status-heading .panel-title-copy {
