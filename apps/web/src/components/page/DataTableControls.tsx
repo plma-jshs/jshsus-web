@@ -35,12 +35,6 @@ type DataTableToolbarProps<TField extends string = DataTableSearchField> = {
   searchFieldOptions?: readonly DataTableSearchFieldOption<TField>[];
 };
 
-const defaultSearchFieldOptions: readonly DataTableSearchFieldOption[] = [
-  { value: 'title_content', label: '제목+내용' },
-  { value: 'title', label: '제목' },
-  { value: 'author', label: '작성자' },
-];
-
 function useCompactViewport() {
   const [isCompact, setIsCompact] = useState(() =>
     typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -196,8 +190,8 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
   onSearch,
   searchFieldOptions,
 }: DataTableToolbarProps<TField>) {
-  const effectiveSearchFieldOptions = (searchFieldOptions ??
-    defaultSearchFieldOptions) as readonly DataTableSearchFieldOption<TField>[];
+  void showSearchField;
+  void searchFieldOptions;
   const [draftField, setDraftField] = useState(field);
   const [draftQuery, setDraftQuery] = useState(query);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -208,6 +202,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
   const onSearchRef = useRef(onSearch);
   const externalSearchRef = useRef({ field, query });
   const lastSearchRef = useRef({ field, query: query.trim() });
+  const hasFilters = Boolean(extraControls || (groupActionWithPageSize && action));
 
   useEffect(() => {
     onSearchRef.current = onSearch;
@@ -269,37 +264,30 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
         </span>
       </div>
       <div className="data-table-toolbar__controls">
-        <div
-          className="data-table-toolbar__filters"
-          id={filterPanelId}
-          aria-label="목록 필터"
-          role={isFilterOpen ? 'dialog' : undefined}
-          aria-modal={isFilterOpen ? true : undefined}
-        >
-          <div className="data-table-toolbar__filters-heading">
-            <strong>필터</strong>
-            <button type="button" aria-label="필터 닫기" onClick={() => requestClose()}>
-              <X size={17} aria-hidden="true" />
-            </button>
+        {hasFilters ? (
+          <div
+            className="data-table-toolbar__filters"
+            id={filterPanelId}
+            aria-label="목록 필터"
+            role={isFilterOpen ? 'dialog' : undefined}
+            aria-modal={isFilterOpen ? true : undefined}
+          >
+            <div className="data-table-toolbar__filters-heading">
+              <strong>필터</strong>
+              <button type="button" aria-label="필터 닫기" onClick={() => requestClose()}>
+                <X size={17} aria-hidden="true" />
+              </button>
+            </div>
+            {groupActionWithPageSize && action ? (
+              <div className="data-table-toolbar__primary-actions">
+                <div className="data-table-toolbar__action">{action}</div>
+              </div>
+            ) : null}
+            {extraControls ? (
+              <div className="data-table-toolbar__extra">{extraControls}</div>
+            ) : null}
           </div>
-          {groupActionWithPageSize && action ? (
-            <div className="data-table-toolbar__primary-actions">
-              <div className="data-table-toolbar__action">{action}</div>
-            </div>
-          ) : null}
-          {extraControls ? <div className="data-table-toolbar__extra">{extraControls}</div> : null}
-          {showSearchField ? (
-            <div className="data-table-toolbar__search-field">
-              <ToolbarSelect
-                ariaLabel="검색 범위"
-                label="검색"
-                value={draftField}
-                options={effectiveSearchFieldOptions}
-                onChange={setDraftField}
-              />
-            </div>
-          ) : null}
-        </div>
+        ) : null}
         <div className="data-table-toolbar__query">
           <Search size={15} aria-hidden="true" />
           <input
@@ -320,22 +308,24 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
             </button>
           ) : null}
         </div>
-        <button
-          className="data-table-toolbar__filter-trigger"
-          type="button"
-          aria-controls={filterPanelId}
-          aria-expanded={isFilterOpen}
-          aria-label={isFilterOpen ? '필터 닫기' : '필터 열기'}
-          onClick={() => {
-            if (isFilterOpen) requestClose();
-            else {
-              resetClosing();
-              setIsFilterOpen(true);
-            }
-          }}
-        >
-          <SlidersHorizontal size={17} aria-hidden="true" />
-        </button>
+        {hasFilters ? (
+          <button
+            className="data-table-toolbar__filter-trigger"
+            type="button"
+            aria-controls={filterPanelId}
+            aria-expanded={isFilterOpen}
+            aria-label={isFilterOpen ? '필터 닫기' : '필터 열기'}
+            onClick={() => {
+              if (isFilterOpen) requestClose();
+              else {
+                resetClosing();
+                setIsFilterOpen(true);
+              }
+            }}
+          >
+            <SlidersHorizontal size={17} aria-hidden="true" />
+          </button>
+        ) : null}
         {!groupActionWithPageSize && action ? (
           <div className="data-table-toolbar__action">{action}</div>
         ) : null}

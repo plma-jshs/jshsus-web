@@ -48,8 +48,8 @@
 }
 
 .point-filter--search:focus-within {
-  border-color: var(--j-color-focus);
-  box-shadow: var(--j-shadow-focus);
+  border-color: var(--j-color-brand);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
 }
 
 .point-filter--search > input,
@@ -222,6 +222,18 @@
 .point-dialog-form {
   display: grid;
   gap: 16px;
+}
+
+.point-dialog-fields-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(100px, 140px);
+  gap: 12px;
+}
+
+@media (max-width: 520px) {
+  .point-dialog-fields-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .point-dialog-copy {
@@ -558,8 +570,8 @@
   }
 
   .admin-table-toolbar__mobile-search .point-filter--search:focus-within {
-    border-color: var(--j-color-focus);
-    box-shadow: var(--j-shadow-focus);
+    border-color: var(--j-color-brand);
+    box-shadow: inset 0 0 0 1px var(--j-color-brand);
   }
   .admin-table-toolbar__mobile-search .point-filter {
     width: 100%;

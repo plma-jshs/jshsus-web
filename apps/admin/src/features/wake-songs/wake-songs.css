@@ -1,6 +1,6 @@
 .wake-song-admin-toolbar {
-  min-height: 62px;
-  padding: 10px 14px;
+  min-height: 40px;
+  padding: 0;
 }
 
 .wake-song-admin-toolbar .admin-table-toolbar__controls {

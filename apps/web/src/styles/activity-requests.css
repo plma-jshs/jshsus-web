@@ -1732,8 +1732,18 @@
   background: transparent;
   font: inherit;
   font-size: 13px;
+  font-weight: 400;
   white-space: nowrap;
   cursor: pointer;
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    font-weight 180ms ease;
+}
+
+.activity-print-preview-modal__tabs button:hover:not(:disabled) {
+  color: var(--j-color-text);
+  font-weight: 700;
 }
 
 .activity-print-preview-modal__tabs button.is-active {

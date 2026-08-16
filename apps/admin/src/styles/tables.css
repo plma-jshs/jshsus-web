@@ -436,6 +436,15 @@
   gap: 12px;
 }
 
+.admin-table-toolbar__summary {
+  min-width: max-content;
+  color: var(--j-color-text-muted);
+  font-size: 12px;
+  font-weight: var(--j-weight-regular);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
 .admin-table-toolbar__controls,
 .admin-table-toolbar__mobile-row,
 .admin-table-toolbar__mobile-search,
@@ -449,6 +458,7 @@
 .admin-table-toolbar__controls {
   flex-wrap: nowrap;
   justify-content: flex-end;
+  margin-left: auto;
 }
 
 .admin-table-toolbar__controls > * {
@@ -462,7 +472,7 @@
 
 .admin-table-toolbar__controls
   > :where(input[type='text'], input[type='search'], input:not([type])) {
-  width: min(280px, 28vw);
+  width: min(440px, 38vw);
 }
 
 .admin-table-toolbar__controls > .admin-select:not(.ui-page-size-select) {
@@ -499,12 +509,27 @@
   font-weight: var(--j-weight-semibold);
   white-space: nowrap;
   cursor: pointer;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    font-weight 180ms ease;
+}
+
+.ui-segmented-tabs button:not([aria-selected='true']) {
+  font-weight: var(--j-weight-regular);
+}
+
+.ui-segmented-tabs button:hover:not(:disabled) {
+  color: var(--primary-dark);
+  font-weight: var(--j-weight-semibold);
 }
 
 .ui-segmented-tabs button[aria-selected='true'] {
   background: var(--surface);
   color: var(--primary-dark);
   box-shadow: var(--j-shadow-card);
+  font-weight: var(--j-weight-semibold);
 }
 
 .ui-segmented-tabs button:disabled {
@@ -537,7 +562,7 @@
   font-size: 13px;
 }
 
-@media (min-width: 768px) and (max-width: 1100px) {
+@media (min-width: 768px) and (max-width: 1023px) {
   .content-panel-actions .admin-table-toolbar,
   .content-panel-actions .admin-table-toolbar__controls {
     width: 100%;
@@ -609,7 +634,20 @@
         input[type='text']
       )
     )
-    > :first-child {
+    > :where(
+      .admin-search-field,
+      .content-search-field,
+      .operation-search-field,
+      .audit-log-search,
+      .identity-field,
+      .wake-song-admin-search,
+      .dorm-search-control,
+      .dorm-search-field,
+      .identity-search-field,
+      .point-filter--search,
+      input[type='search'],
+      input[type='text']
+    ) {
     width: 100% !important;
     min-width: 0;
     flex: 1 0 100%;
@@ -626,7 +664,7 @@
     ) {
     min-width: 0;
     width: auto;
-    flex: 1 1 auto;
+    flex: 0 0 auto;
   }
 
   .admin-table-toolbar__controls > :where(button, a) {

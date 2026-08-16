@@ -76,6 +76,14 @@ const GENDER_LABELS: Record<StudentGender, string> = {
   male: '남',
   female: '여',
 };
+const ROLE_LABELS: Record<string, string> = {
+  student: '학생',
+  teacher: '교사',
+  student_council: '학생회',
+  broadcast_club: '방송부',
+  student_affairs_head: '학생부장',
+  system_admin: '시스템 관리자',
+};
 const ROSTER_ACTION_LABELS: Record<RosterImportAction, string> = {
   create: '생성',
   update: '수정',
@@ -165,6 +173,10 @@ function studentNumberParts(value: FormDataEntryValue | null, allowTestAccount =
 function contactText(email?: string, phone?: string) {
   const normalizedPhone = normalizeDisplayPhone(phone);
   return [email, normalizedPhone].filter(Boolean).join(' · ') || '-';
+}
+
+function rolesText(roles: readonly string[] | undefined) {
+  return roles?.length ? roles.map((role) => ROLE_LABELS[role] ?? role).join(', ') : '-';
 }
 
 function normalizeDisplayPhone(value?: string) {
@@ -668,6 +680,13 @@ export function UsersPage() {
       meta: { align: 'left', width: 150, mobileRole: 'title' },
     },
     {
+      id: 'roles',
+      header: '역할',
+      enableSorting: false,
+      cell: ({ row }) => rolesText(row.original.roles),
+      meta: { align: 'left', width: 150, truncate: true, hideOnMobile: true },
+    },
+    {
       id: 'gender',
       header: '성별',
       enableSorting: false,
@@ -744,6 +763,13 @@ export function UsersPage() {
       accessorKey: 'name',
       header: '이름',
       meta: { align: 'left', width: 140, mobileRole: 'title' },
+    },
+    {
+      id: 'roles',
+      header: '역할',
+      enableSorting: false,
+      cell: ({ row }) => rolesText(row.original.roles),
+      meta: { align: 'left', width: 150, truncate: true, hideOnMobile: true },
     },
     {
       id: 'managedClasses',
@@ -1069,7 +1095,7 @@ export function UsersPage() {
                 value={filters.q ?? ''}
                 aria-label="학생·교직원 검색"
                 onChange={(event) => updateFilters({ q: event.currentTarget.value })}
-                placeholder="학번·교사번호 또는 이름"
+                placeholder="학번·교사번호, 이름 또는 역할 검색"
               />
             </label>
           }
@@ -1110,7 +1136,9 @@ export function UsersPage() {
                   >
                     <option value="">전체 학년</option>
                     {[1, 2, 3].map((value) => (
-                      <option key={value}>{value}</option>
+                      <option key={value} value={value}>
+                        {value}학년
+                      </option>
                     ))}
                   </AdminSelect>
                 </Field>
@@ -1128,7 +1156,9 @@ export function UsersPage() {
                   >
                     <option value="">전체 반</option>
                     {[1, 2, 3, 4].map((value) => (
-                      <option key={value}>{value}</option>
+                      <option key={value} value={value}>
+                        {value}반
+                      </option>
                     ))}
                   </AdminSelect>
                 </Field>

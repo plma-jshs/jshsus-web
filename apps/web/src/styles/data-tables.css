@@ -363,8 +363,8 @@
 
 .data-table-toolbar-select__trigger:focus-visible,
 .data-table-toolbar-select.is-open .data-table-toolbar-select__trigger {
-  border-color: var(--j-color-focus);
-  box-shadow: var(--j-shadow-focus);
+  border-color: var(--j-color-brand);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
   outline: 0;
 }
 
@@ -446,7 +446,8 @@
 
 .data-table-toolbar__query {
   position: relative;
-  width: min(28vw, 260px);
+  width: min(440px, 38vw);
+  max-width: 100%;
 }
 
 .data-table-toolbar__query > svg {
@@ -490,7 +491,7 @@
 
 .data-table-toolbar__clear:focus-visible {
   outline: 0;
-  box-shadow: var(--j-shadow-focus);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
 }
 
 /* Keep toolbar controls visually identical even when the global form selector

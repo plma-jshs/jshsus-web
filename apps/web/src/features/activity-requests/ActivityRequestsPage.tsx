@@ -51,9 +51,7 @@ export function ActivityRequestsPage() {
     queryFn: getMyActivityRequests,
   });
   const [filter, setFilter] = useState<ActivityRequestFilter>('all');
-  const [searchField, setSearchField] = useState<ActivityRequestSearchField>(
-    routeSearch.field ?? 'all',
-  );
+  const [searchField, setSearchField] = useState<ActivityRequestSearchField>('all');
   const [query, setQuery] = useState(routeSearch.q ?? '');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState(() => koreaDateInput());
@@ -186,19 +184,12 @@ export function ActivityRequestsPage() {
             </div>
           }
           groupActionWithPageSize
-          searchPlaceholder="검색어를 입력하세요"
-          searchFieldOptions={[
-            { value: 'all', label: '전체' },
-            { value: 'activity', label: '내용' },
-            { value: 'participants', label: '인원' },
-            { value: 'location', label: '장소' },
-            { value: 'advisor', label: '지도교사' },
-          ]}
+          searchPlaceholder="내용, 인원, 장소, 지도교사 검색"
           onPageSizeChange={(nextPageSize) => {
             updateTableSearch({ page: 1, size: nextPageSize });
           }}
-          onSearch={(nextField, nextQuery) => {
-            setSearchField(nextField);
+          onSearch={(_nextField, nextQuery) => {
+            setSearchField('all');
             setQuery(nextQuery);
             updateTableSearch({ page: 1 });
           }}

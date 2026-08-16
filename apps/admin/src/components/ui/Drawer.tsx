@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { useId, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useAnimatedDialog } from './useAnimatedDialog';
 
 export type DrawerProps = {
@@ -28,8 +28,35 @@ export function Drawer({
   const { ref, requestClose } = useAnimatedDialog(open, onClose);
   const titleId = useId();
   const descriptionId = useId();
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [scrollable, setScrollable] = useState(false);
 
-  const classes = ['ui-drawer', `ui-drawer--${side}`, className ?? ''].filter(Boolean).join(' ');
+  useEffect(() => {
+    if (!open) {
+      setScrollable(false);
+      return undefined;
+    }
+    const body = bodyRef.current;
+    if (!body) return undefined;
+    const update = () => setScrollable(body.scrollHeight > body.clientHeight + 1);
+    update();
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : null;
+    observer?.observe(body);
+    window.addEventListener('resize', update);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, [open]);
+
+  const classes = [
+    'ui-drawer',
+    `ui-drawer--${side}`,
+    scrollable ? 'is-scrollable' : '',
+    className ?? '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <dialog
@@ -60,7 +87,9 @@ export function Drawer({
             <X size={19} aria-hidden="true" />
           </button>
         </header>
-        <div className="ui-drawer__body">{children}</div>
+        <div className="ui-drawer__body" ref={bodyRef}>
+          {children}
+        </div>
         {footer ? <footer className="ui-drawer__footer">{footer}</footer> : null}
       </div>
     </dialog>

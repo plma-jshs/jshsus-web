@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { PenLine } from 'lucide-react';
 import { ContentBadges } from '../../components/page/ContentBadges';
-import { DataTablePagination, ToolbarSelect } from '../../components/page/DataTableControls';
+import { DataTablePagination } from '../../components/page/DataTableControls';
 import {
   FilterChips,
   PageScaffold,
@@ -36,9 +36,7 @@ export function PetitionsPage() {
   const petitionsQuery = useQuery({ queryKey: ['petitions'], queryFn: getPetitions });
   const [filter, setFilter] = useState<PetitionFilter>('all');
   const [query, setQuery] = useState(routeSearch.q ?? '');
-  const [searchField, setSearchField] = useState<PetitionSearchField>(
-    (routeSearch.field as PetitionSearchField | undefined) ?? 'title_content',
-  );
+  const [searchField, setSearchField] = useState<PetitionSearchField>('title_content');
   const page = routeSearch.page ?? 1;
   const pageSize = routeSearch.size ?? 20;
   const updateTableSearch = useCallback(
@@ -48,7 +46,7 @@ export function PetitionsPage() {
           ...current,
           page: next.page ?? current.page ?? 1,
           size: next.size ?? current.size ?? 20,
-          field: next.field ?? current.field,
+          field: 'title_content',
           q: next.q ?? current.q,
         }),
       });
@@ -141,20 +139,6 @@ export function PetitionsPage() {
           }
           search={
             <div className="petition-search-controls">
-              <ToolbarSelect
-                ariaLabel="검색 기준"
-                label="검색"
-                value={searchField}
-                options={[
-                  { value: 'title_content', label: '제목+내용' },
-                  { value: 'title', label: '제목' },
-                  { value: 'author', label: '작성자' },
-                ]}
-                onChange={(value) => {
-                  setSearchField(value);
-                  updateTableSearch({ page: 1, field: value });
-                }}
-              />
               <SearchField
                 value={query}
                 onChange={(value) => {
@@ -162,7 +146,7 @@ export function PetitionsPage() {
                   updateTableSearch({ page: 1, q: value });
                 }}
                 label="청원 검색"
-                placeholder="검색어를 입력하세요"
+                placeholder="제목, 내용, 작성자 검색"
               />
               <Link
                 className="detail-primary-button data-table-toolbar__create petition-compose-inline"

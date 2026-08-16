@@ -135,10 +135,7 @@ export function ActivityParticipants({
                     <span className="activity-participants-popover__student-number">
                       {student.studentNo}
                     </span>
-                    <span>
-                      {student.studentName}
-                      {student.isRepresentative ? '(대표)' : ''}
-                    </span>
+                    <span>{student.studentName}</span>
                   </li>
                 ))}
               </ul>

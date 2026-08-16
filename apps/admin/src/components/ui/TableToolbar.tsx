@@ -28,6 +28,7 @@ function useMobileToolbar() {
 }
 
 export function TableToolbar({
+  summary,
   mobileSearch,
   mobileActions,
   mobileSort,
@@ -37,10 +38,7 @@ export function TableToolbar({
   mobileSheetTitle = '필터',
   ...props
 }: TableToolbarProps) {
-  // `summary` is retained in the public props for existing callers, but toolbar
-  // summaries are no longer rendered above the controls.
-  const { summary: _summary, ...divProps } = props;
-  void _summary;
+  const { ...divProps } = props;
   const classes = ['admin-table-toolbar', className ?? ''].filter(Boolean).join(' ');
   const mobile = useMobileToolbar();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -61,6 +59,7 @@ export function TableToolbar({
 
   return (
     <div {...divProps} className={classes}>
+      {summary ? <div className="admin-table-toolbar__summary">{summary}</div> : null}
       {mobile ? (
         <>
           <div className="admin-table-toolbar__mobile-row">

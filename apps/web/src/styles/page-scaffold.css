@@ -224,7 +224,7 @@
   color: #64748b;
   background: transparent;
   font-size: var(--j-text-sm);
-  font-weight: var(--j-weight-medium);
+  font-weight: var(--j-weight-regular);
   white-space: nowrap;
   cursor: pointer;
   transition:
@@ -236,6 +236,7 @@
 .filter-chips button:hover {
   color: var(--j-color-text);
   background: var(--j-color-surface-hover);
+  font-weight: var(--j-weight-semibold);
 }
 
 .filter-chips button.is-active {
@@ -246,7 +247,7 @@
 
 .filter-chips button:focus-visible {
   outline: 0;
-  box-shadow: var(--j-shadow-focus);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
 }
 
 .filter-chips button span {

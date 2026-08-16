@@ -21,8 +21,17 @@
   color: var(--j-color-text-muted);
   background: transparent;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 400;
   cursor: pointer;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    font-weight 180ms ease;
+}
+
+.thanks-tabs button:hover {
+  color: var(--j-color-text);
+  font-weight: 700;
 }
 
 .thanks-tabs button.is-active {

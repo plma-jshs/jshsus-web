@@ -255,6 +255,7 @@ export function PointRecordsPage() {
       className="point-panel"
       toolbar={
         <TableToolbar
+          summary={recordsQuery.data ? `총 ${recordsQuery.data.total}건` : undefined}
           mobileActions={
             selectedCount > 0 ? (
               <button

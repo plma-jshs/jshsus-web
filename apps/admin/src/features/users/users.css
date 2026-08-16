@@ -191,8 +191,8 @@
 }
 
 .identity-search-field:focus-within {
-  border-color: var(--j-color-focus);
-  box-shadow: var(--j-shadow-focus);
+  border-color: var(--j-color-brand);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
 }
 
 .identity-search-field > svg {
@@ -228,8 +228,8 @@
 }
 .identity-field input:focus,
 .identity-field .admin-select__trigger:focus-visible {
-  border-color: var(--j-color-focus);
-  box-shadow: var(--j-shadow-focus);
+  border-color: var(--j-color-brand);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
 }
 .identity-field input[readonly] {
   background: #f5f8f7;
@@ -362,8 +362,28 @@
 }
 .identity-dialog-actions {
   justify-content: flex-end;
-  padding-top: 16px;
-  border-top: 1px solid #e6eceb;
+  padding-top: 8px;
+  border-top: 0;
+}
+
+.identity-dialog-actions > button {
+  min-width: 55px;
+  min-height: 22px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.identity-dialog-actions .identity-primary-button {
+  border-color: rgb(49 130 246);
+  background: rgb(49 130 246);
+}
+
+.identity-dialog-actions .identity-secondary-button {
+  border-color: var(--line-strong);
+  background: var(--surface);
+  color: var(--j-color-text-secondary);
 }
 .identity-role-grid {
   display: grid;

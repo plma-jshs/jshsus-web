@@ -10,12 +10,8 @@
   gap: 6px;
 }
 
-.petition-search-controls .data-table-toolbar-select {
-  min-width: 112px;
-}
-
 .petition-search-controls .page-search-field {
-  width: min(28vw, 260px);
+  width: min(440px, 38vw);
   flex: 1 1 auto;
 }
 

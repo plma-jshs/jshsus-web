@@ -1438,8 +1438,8 @@
 }
 
 .content-search-field:focus-within {
-  border-color: var(--j-color-focus);
-  box-shadow: var(--j-shadow-focus);
+  border-color: var(--j-color-brand);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
 }
 
 .content-search-field input {
@@ -1453,7 +1453,7 @@
 }
 
 .content-search-field input {
-  width: 220px;
+  width: min(400px, 34vw);
 }
 
 .content-select-field {

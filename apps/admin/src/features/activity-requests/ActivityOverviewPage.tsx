@@ -219,7 +219,7 @@ function createColumns(
         const date = koreaDateInput(new Date(request.startsAt));
         return (
           <span className="operation-activity-time">
-            <span>
+            <span className="operation-activity-period">
               {formatActivityPeriodLabel(
                 date,
                 request.startsAt,
@@ -245,7 +245,7 @@ function createColumns(
             <strong>
               {formatAdminDate(request.startsAt, { month: '2-digit', day: '2-digit' })}
             </strong>
-            <span>
+            <span className="operation-activity-period">
               {formatActivityPeriodLabel(
                 date,
                 request.startsAt,

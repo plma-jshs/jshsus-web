@@ -1,8 +1,14 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import type { BoardCommentSummary, BoardPostSummary, ContentReportSummary } from '@jshsus/types';
-import { Eye, EyeOff, Pin, PinOff, Search, Settings2, ShieldAlert } from 'lucide-react';
+import type {
+  BoardCommentSummary,
+  BoardPostSummary,
+  ContentReportSummary,
+  RichTextDocument,
+  RichTextNode,
+} from '@jshsus/types';
+import { Eye, EyeOff, Paperclip, Pin, PinOff, Search, Settings2, ShieldAlert } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
@@ -78,6 +84,97 @@ const reportTargetLabel: Record<ContentReportSummary['targetType'], string> = {
 
 const COMMUNITY_REPORT_TARGETS = ['post', 'comment'] as const;
 
+const RICH_BOARD_PREFIX = 'jshsus-rich-text:v1\n';
+
+function fallbackBoardText(content: string) {
+  if (!content.startsWith(RICH_BOARD_PREFIX)) return content;
+  try {
+    const parsed = JSON.parse(content.slice(RICH_BOARD_PREFIX.length)) as { plainText?: unknown };
+    return typeof parsed.plainText === 'string' ? parsed.plainText : '';
+  } catch {
+    return '';
+  }
+}
+
+function renderBoardNode(
+  node: RichTextNode,
+  key: string,
+  imageSources: ReadonlyMap<string, string>,
+): ReactNode {
+  const children = node.content?.map((child, index) =>
+    renderBoardNode(child, `${key}-${index}`, imageSources),
+  );
+  switch (node.type) {
+    case 'text':
+      return <span key={key}>{node.text}</span>;
+    case 'hardBreak':
+      return <br key={key} />;
+    case 'image': {
+      const source = node.attrs?.src;
+      if (!source) return null;
+      return (
+        <img
+          key={key}
+          src={imageSources.get(source) ?? source}
+          alt={node.attrs?.alt ?? ''}
+          loading="lazy"
+        />
+      );
+    }
+    case 'heading':
+      return node.attrs?.level === 3 ? (
+        <h4 key={key}>{children}</h4>
+      ) : (
+        <h3 key={key}>{children}</h3>
+      );
+    case 'bulletList':
+      return <ul key={key}>{children}</ul>;
+    case 'orderedList':
+      return <ol key={key}>{children}</ol>;
+    case 'listItem':
+      return <li key={key}>{children}</li>;
+    case 'blockquote':
+      return <blockquote key={key}>{children}</blockquote>;
+    case 'poll':
+      return (
+        <div key={key} className="content-detail-rich-poll">
+          <strong>{node.attrs?.question ?? '투표'}</strong>
+          {node.attrs?.options?.length ? (
+            <ul>
+              {node.attrs.options.map((option) => (
+                <li key={option.id}>{option.text}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      );
+    case 'paragraph':
+    default:
+      return <p key={key}>{children}</p>;
+  }
+}
+
+function BoardContentPreview({ post }: { post: BoardPostSummary }) {
+  const imageSources = new Map<string, string>();
+  for (const attachment of post.attachments ?? []) {
+    imageSources.set(attachment.inlineUrl, attachment.inlineUrl);
+    imageSources.set(attachment.url, attachment.inlineUrl);
+  }
+  const document = post.contentDoc as RichTextDocument | undefined;
+  if (!document) {
+    return (
+      <div className="content-detail-copy">
+        {fallbackBoardText(post.content) || '본문이 없습니다.'}
+      </div>
+    );
+  }
+  return (
+    <div className="content-detail-copy content-detail-copy--rich">
+      {document.content.map((node, index) => renderBoardNode(node, String(index), imageSources))}
+    </div>
+  );
+}
+
 export function CommunityModerationPage({
   sources = [freeBoardSource],
   initialBoardSlug = sources[0]?.slug ?? 'free',
@@ -93,7 +190,6 @@ export function CommunityModerationPage({
   const [postVisibility, setPostVisibility] = useState<CommunityPostVisibility>('all');
   const [reportStatus, setReportStatus] = useState('all');
   const [postPageSize, setPostPageSize] = useState(20);
-  const [commentPageSize, setCommentPageSize] = useState(20);
   const [reportPageSize, setReportPageSize] = useState(20);
   const [selectedReportIds, setSelectedReportIds] = useState<Set<number>>(() => new Set());
   const [postSorting, setPostSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
@@ -234,7 +330,13 @@ export function CommunityModerationPage({
         cell: ({ row }) =>
           row.original.isAnonymous ? '익명' : row.original.authorName || '알 수 없음',
         enableSorting: false,
-        meta: { align: 'left', width: 120, mobileRole: 'subtitle' },
+        meta: {
+          align: 'left',
+          width: 120,
+          mobileRole: 'subtitle',
+          hideAtCompact: true,
+          hideOnMobile: true,
+        },
       },
       {
         accessorKey: 'createdAt',
@@ -246,24 +348,31 @@ export function CommunityModerationPage({
         accessorKey: 'viewCount',
         header: '조회',
         cell: ({ row }) => row.original.viewCount.toLocaleString('ko-KR'),
-        meta: { align: 'right', width: 84 },
+        meta: { align: 'right', width: 84, hideAtCompact: true, hideOnMobile: true },
       },
       {
         accessorKey: 'commentCount',
         header: '댓글',
         cell: ({ row }) => row.original.commentCount.toLocaleString('ko-KR'),
-        meta: { align: 'right', width: 84 },
+        meta: { align: 'right', width: 84, hideAtCompact: true, hideOnMobile: true },
       },
       {
-        accessorKey: 'isHidden',
-        header: '상태',
-        cell: ({ row }) => {
-          const tone = row.original.isHidden ? 'danger' : 'success';
-          const label = row.original.isHidden ? '숨김' : '공개';
-          return <span className={`status-chip ${tone}`}>{label}</span>;
-        },
+        id: 'attachments',
+        header: '첨부',
+        cell: ({ row }) =>
+          row.original.attachments?.length ? (
+            <span
+              className="content-attachment-count"
+              title={`첨부 ${row.original.attachments.length}개`}
+            >
+              <Paperclip size={14} aria-hidden="true" />
+              {row.original.attachments.length}
+            </span>
+          ) : (
+            '—'
+          ),
         enableSorting: false,
-        meta: { align: 'center', width: 96, mobileRole: 'badge' },
+        meta: { align: 'center', width: 84, hideAtCompact: true, hideOnMobile: true },
       },
       {
         id: 'actions',
@@ -425,66 +534,6 @@ export function CommunityModerationPage({
     ],
   );
 
-  const commentColumns = useMemo<ColumnDef<BoardCommentSummary>[]>(
-    () => [
-      {
-        accessorKey: 'authorName',
-        header: '작성자',
-        cell: ({ row }) => row.original.authorName || '알 수 없음',
-        enableSorting: false,
-        meta: { align: 'left', width: 112 },
-      },
-      {
-        accessorKey: 'content',
-        header: '댓글 내용',
-        cell: ({ row }) => <span className="content-comment-copy">{row.original.content}</span>,
-        enableSorting: false,
-      },
-      {
-        accessorKey: 'createdAt',
-        header: '작성일',
-        cell: ({ row }) => formatAdminDate(row.original.createdAt),
-        meta: { align: 'center', width: 128 },
-      },
-      {
-        accessorKey: 'isHidden',
-        header: '상태',
-        cell: ({ row }) => (
-          <span className={`status-chip ${row.original.isHidden ? 'danger' : 'success'}`}>
-            {row.original.isHidden ? '숨김' : '공개'}
-          </span>
-        ),
-        enableSorting: false,
-        meta: { align: 'center', width: 88 },
-      },
-      {
-        id: 'actions',
-        header: '작업',
-        cell: ({ row }) => (
-          <RowActions>
-            <RowActionButton
-              icon={
-                row.original.isHidden ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />
-              }
-              label={row.original.isHidden ? '댓글 공개' : '댓글 숨김'}
-              variant={row.original.isHidden ? 'primary' : 'danger'}
-              disabled={toggleCommentMutation.isPending}
-              onClick={() =>
-                toggleCommentMutation.mutate({
-                  id: row.original.id,
-                  isHidden: !row.original.isHidden,
-                })
-              }
-            />
-          </RowActions>
-        ),
-        enableSorting: false,
-        meta: { align: 'center', width: 64 },
-      },
-    ],
-    [toggleCommentMutation],
-  );
-
   return (
     <div className="admin-stack">
       <ContentAdminPanel
@@ -544,7 +593,7 @@ export function CommunityModerationPage({
                 value={postVisibility}
                 onChange={(event) => setPostVisibility(event.target.value as typeof postVisibility)}
               >
-                <option value="all">전체 공개 상태</option>
+                <option value="all">전체</option>
                 <option value="published">공개</option>
                 <option value="hidden">숨김</option>
               </AdminSelect>
@@ -668,7 +717,7 @@ export function CommunityModerationPage({
                 value={reportStatus}
                 onChange={(event) => setReportStatus(event.target.value)}
               >
-                <option value="all">전체 신고 상태</option>
+                <option value="all">전체</option>
                 <option value="reviewing">검토 중</option>
                 <option value="closed">처리 완료</option>
               </AdminSelect>
@@ -707,7 +756,11 @@ export function CommunityModerationPage({
         open={selectedPostId !== null}
         onClose={() => setSelectedPostId(null)}
         title={selectedPost?.title ?? '게시글 관리'}
-        description={selectedPost ? `${activeSource.label} 게시글 #${selectedPost.id}` : undefined}
+        description={
+          selectedPost
+            ? `${selectedPost.isAnonymous ? '익명' : selectedPost.authorName || '알 수 없음'} · ${formatAdminDate(selectedPost.createdAt)} · 조회 ${selectedPost.viewCount.toLocaleString('ko-KR')} · 댓글 ${selectedPost.commentCount.toLocaleString('ko-KR')}`
+            : undefined
+        }
         className="content-drawer content-drawer--wide"
         footer={
           selectedPost ? (
@@ -738,31 +791,9 @@ export function CommunityModerationPage({
       >
         {selectedPost ? (
           <div className="content-detail-stack">
-            <dl className="content-detail-list">
-              <div>
-                <dt>작성자</dt>
-                <dd>
-                  {selectedPost.isAnonymous ? '익명' : selectedPost.authorName || '알 수 없음'}
-                </dd>
-              </div>
-              <div>
-                <dt>작성일</dt>
-                <dd>{formatAdminDate(selectedPost.createdAt)}</dd>
-              </div>
-              <div>
-                <dt>조회</dt>
-                <dd>{selectedPost.viewCount.toLocaleString('ko-KR')}</dd>
-              </div>
-              <div>
-                <dt>댓글</dt>
-                <dd>{selectedPost.commentCount.toLocaleString('ko-KR')}</dd>
-              </div>
-            </dl>
             <section className="content-detail-section">
               <h3>본문</h3>
-              <div className="content-detail-copy">
-                {selectedPost.content || '본문이 없습니다.'}
-              </div>
+              <BoardContentPreview post={selectedPost} />
             </section>
             <section className="content-detail-section">
               <div className="content-detail-section__header">
@@ -776,17 +807,38 @@ export function CommunityModerationPage({
                 emptyText="등록된 댓글이 없습니다."
                 onRetry={() => void commentsQuery.refetch()}
               >
-                <DataTable
-                  columns={commentColumns}
-                  data={commentsQuery.data ?? []}
-                  loading={commentsQuery.isPending}
-                  loadingText="댓글을 불러오는 중입니다."
-                  emptyText="등록된 댓글이 없습니다."
-                  alwaysShowPagination
-                  pageSize={commentPageSize}
-                  onPageSizeChange={setCommentPageSize}
-                  caption="댓글 관리 목록"
-                />
+                <div className="content-comment-feed" aria-label="댓글 목록">
+                  {(commentsQuery.data ?? []).slice(0, 50).map((comment) => (
+                    <article className="content-comment-feed__item" key={comment.id}>
+                      <div className="content-comment-feed__meta">
+                        <span>{comment.authorName || '알 수 없음'}</span>
+                        <time dateTime={comment.createdAt}>
+                          {formatAdminDate(comment.createdAt)}
+                        </time>
+                        <button
+                          className="content-comment-feed__toggle"
+                          type="button"
+                          aria-label={comment.isHidden ? '댓글 공개' : '댓글 숨김'}
+                          title={comment.isHidden ? '댓글 공개' : '댓글 숨김'}
+                          disabled={toggleCommentMutation.isPending}
+                          onClick={() =>
+                            toggleCommentMutation.mutate({
+                              id: comment.id,
+                              isHidden: !comment.isHidden,
+                            })
+                          }
+                        >
+                          {comment.isHidden ? (
+                            <Eye size={16} aria-hidden="true" />
+                          ) : (
+                            <EyeOff size={16} aria-hidden="true" />
+                          )}
+                        </button>
+                      </div>
+                      <p className="content-comment-feed__body">{comment.content}</p>
+                    </article>
+                  ))}
+                </div>
               </ContentQueryState>
               <MutationMessage
                 isPending={toggleCommentMutation.isPending}

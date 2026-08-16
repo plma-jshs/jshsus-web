@@ -91,6 +91,16 @@
   padding: 0;
 }
 
+.school-calendar-navigation .icon-button {
+  border-color: transparent;
+  background: transparent;
+}
+
+.school-calendar-navigation .icon-button:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--j-color-surface-hover);
+}
+
 .school-calendar-legend {
   min-height: 32px;
   padding: 6px 16px;
@@ -701,8 +711,8 @@
 
 .calendar-category-select__trigger:focus-visible,
 .calendar-category-select.is-open .calendar-category-select__trigger {
-  border-color: var(--j-color-focus);
-  box-shadow: var(--j-shadow-focus);
+  border-color: var(--j-color-brand);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
   outline: 0;
 }
 

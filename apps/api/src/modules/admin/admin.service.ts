@@ -618,6 +618,13 @@ export class AdminService {
         or(
           like(schema.students.name, pattern),
           like(sql`cast(${schema.studentEnrollments.studentNo} as char)`, pattern),
+          sql`exists (
+            select 1
+            from ${schema.userRoles}
+            inner join ${schema.roles} on ${schema.userRoles.roleId} = ${schema.roles.id}
+            where ${schema.userRoles.userId} = ${schema.students.userId}
+              and (${schema.roles.name} like ${pattern} or ${schema.roles.label} like ${pattern})
+          )`,
         )!,
       );
     }
@@ -1550,6 +1557,13 @@ export class AdminService {
         or(
           like(schema.staffProfiles.name, pattern),
           like(sql`cast(${schema.staffProfiles.staffNo} as char)`, pattern),
+          sql`exists (
+            select 1
+            from ${schema.userRoles}
+            inner join ${schema.roles} on ${schema.userRoles.roleId} = ${schema.roles.id}
+            where ${schema.userRoles.userId} = ${schema.staffProfiles.userId}
+              and (${schema.roles.name} like ${pattern} or ${schema.roles.label} like ${pattern})
+          )`,
         )!,
       );
     }

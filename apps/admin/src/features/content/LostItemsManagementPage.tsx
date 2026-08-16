@@ -195,11 +195,11 @@ export function LostItemsManagementPage() {
         header: '등록자',
         cell: ({ row }) => row.original.authorName || '알 수 없음',
         enableSorting: false,
-        meta: { align: 'left', width: 116 },
+        meta: { align: 'left', width: 116, hideAtCompact: true, hideOnMobile: true },
       },
       {
         accessorKey: 'occurredAt',
-        header: '발생일',
+        header: '작성일',
         cell: ({ row }) => formatAdminDate(row.original.occurredAt),
         meta: { align: 'center', width: 128 },
       },
@@ -211,7 +211,7 @@ export function LostItemsManagementPage() {
             ? `${row.original.attachments.length.toLocaleString('ko-KR')}개`
             : '-',
         enableSorting: false,
-        meta: { align: 'right', width: 72 },
+        meta: { align: 'right', width: 72, hideAtCompact: true, hideOnMobile: true },
       },
       {
         accessorKey: 'status',
@@ -278,8 +278,8 @@ export function LostItemsManagementPage() {
           <MobileSortSelect
             value={`${itemSorting[0]?.id ?? 'occurredAt'}:${itemSorting[0]?.desc ? 'desc' : 'asc'}`}
             options={[
-              { value: 'occurredAt:desc', label: '발생일 최신순' },
-              { value: 'occurredAt:asc', label: '발생일 오래된순' },
+              { value: 'occurredAt:desc', label: '작성일 최신순' },
+              { value: 'occurredAt:asc', label: '작성일 오래된순' },
             ]}
             onChange={(value) => {
               const [id, direction] = value.split(':');
@@ -414,7 +414,7 @@ export function LostItemsManagementPage() {
                 <dd>{selectedItem.authorName || '알 수 없음'}</dd>
               </div>
               <div>
-                <dt>발생일</dt>
+                <dt>작성일</dt>
                 <dd>{formatAdminDate(selectedItem.occurredAt)}</dd>
               </div>
               <div>

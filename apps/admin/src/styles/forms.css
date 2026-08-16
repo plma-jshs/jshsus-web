@@ -14,7 +14,8 @@
   font-size: 14px;
   transition:
     border-color var(--j-motion-fast),
-    background-color var(--j-motion-fast);
+    background-color var(--j-motion-fast),
+    box-shadow var(--j-motion-fast);
 }
 
 .admin-main
@@ -24,7 +25,8 @@
     textarea
   ):hover,
 .ui-control:hover {
-  border-color: #aebbc1;
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+  background-color: color-mix(in srgb, var(--j-color-surface-hover) 72%, white);
 }
 
 .admin-main
@@ -34,8 +36,8 @@
     textarea
   ):focus,
 .ui-control:focus {
-  border-color: var(--j-color-focus);
-  box-shadow: var(--j-shadow-focus);
+  border-color: var(--j-color-brand);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
 }
 
 .admin-main :where(input, select, textarea):disabled,
@@ -97,18 +99,13 @@ select.ui-control:not([multiple]) {
 
 @media (max-width: 767px) {
   .admin-filter-sheet .admin-select__mobile-label {
-    display: block;
-    color: var(--j-color-text-muted);
-    font-size: 12px;
-    font-weight: var(--j-weight-semibold);
-    line-height: 1.2;
-    pointer-events: none;
+    display: none !important;
   }
 
   .admin-filter-sheet .admin-select:has(> .admin-select__mobile-label) {
-    display: grid;
-    height: auto;
-    gap: 6px;
+    display: inline-flex;
+    height: var(--control-height);
+    gap: 0;
   }
 
   .admin-filter-sheet label:has(> span:not(.sr-only)) .admin-select > .admin-select__mobile-label {
@@ -131,6 +128,14 @@ select.ui-control:not([multiple]) {
 
   .admin-select--native-mobile .admin-select__trigger {
     display: none;
+  }
+
+  .ui-page-size-select.admin-select--native-mobile,
+  .ui-page-size-select.admin-select--native-mobile .admin-select__native {
+    width: 128px !important;
+    min-width: 128px !important;
+    max-width: 128px !important;
+    white-space: nowrap;
   }
 }
 
@@ -217,15 +222,15 @@ select.ui-control:not([multiple]) {
 }
 
 .admin-select__trigger:hover:not(:disabled) {
-  border-color: #aebbc1;
-  background: #fbfcfc;
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+  background: color-mix(in srgb, var(--j-color-surface-hover) 72%, white);
 }
 
 .admin-select__trigger:focus-visible,
 .admin-select.is-open .admin-select__trigger {
-  border-color: var(--j-color-focus);
+  border-color: var(--j-color-brand);
   outline: 0;
-  box-shadow: var(--j-shadow-focus);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
 }
 
 .admin-select.is-open .admin-select__trigger > svg {
@@ -287,7 +292,7 @@ select.ui-control:not([multiple]) {
 
 .admin-select__menu button:focus-visible {
   outline: 0;
-  box-shadow: inset 0 0 0 1px rgb(47 133 133 / 28%);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
 }
 
 .admin-select__menu button:disabled {
@@ -452,6 +457,29 @@ textarea.ui-control {
 .ui-page-size-select {
   width: 128px !important;
   min-width: 128px;
+}
+
+.ui-page-size-select,
+.ui-page-size-select .admin-select__trigger,
+.ui-page-size-select .admin-select__native {
+  flex: 0 0 128px;
+  width: 128px !important;
+  min-width: 128px;
+  max-width: 128px;
+  white-space: nowrap;
+}
+
+.ui-page-size-select .admin-select__trigger {
+  overflow: hidden;
+  flex-wrap: nowrap;
+}
+
+.ui-page-size-select .admin-select__option-content,
+.ui-page-size-select .admin-select__option-content > span:last-child {
+  min-width: 0;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 .ui-control--xs {

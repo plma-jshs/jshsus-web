@@ -304,34 +304,36 @@ export function PointReasonsPage() {
         }
       >
         <div className="point-dialog-form">
-          <FormField label="종류" required>
-            <AdminSelect
-              value={form.type}
-              onChange={(event) => {
-                const nextType = event.target.value as PointReason['type'];
-                setForm((current) => ({
-                  ...current,
-                  type: nextType,
-                  point: nextType === 'MINUS' ? '-1' : '1',
-                }));
-              }}
-            >
-              <option value="PLUS">상점</option>
-              <option value="MINUS">벌점</option>
-              <option value="ETC">기타</option>
-            </AdminSelect>
-          </FormField>
-          <FormField label="점수" required>
-            <input
-              type="number"
-              min={-100}
-              max={100}
-              value={form.point}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, point: event.target.value }))
-              }
-            />
-          </FormField>
+          <div className="point-dialog-fields-row">
+            <FormField label="종류" required>
+              <AdminSelect
+                value={form.type}
+                onChange={(event) => {
+                  const nextType = event.target.value as PointReason['type'];
+                  setForm((current) => ({
+                    ...current,
+                    type: nextType,
+                    point: nextType === 'MINUS' ? '-1' : '1',
+                  }));
+                }}
+              >
+                <option value="PLUS">상점</option>
+                <option value="MINUS">벌점</option>
+                <option value="ETC">기타</option>
+              </AdminSelect>
+            </FormField>
+            <FormField label="점수" required>
+              <input
+                type="number"
+                min={-100}
+                max={100}
+                value={form.point}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, point: event.target.value }))
+                }
+              />
+            </FormField>
+          </div>
           <FormField label="사유" required error={saveMutation.error?.message}>
             <input
               value={form.comment}

@@ -111,8 +111,17 @@
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
+  border-top: 0;
+  background: var(--surface);
+}
+
+.ui-dialog.is-scrollable .ui-dialog__footer,
+.ui-drawer.is-scrollable .ui-drawer__footer {
+  position: sticky;
+  z-index: 2;
+  bottom: 0;
   border-top: 1px solid var(--line);
-  background: var(--j-color-surface-subtle);
+  background: var(--surface);
 }
 
 :is(.ui-dialog, .ui-drawer)
@@ -137,9 +146,9 @@
 :is(.ui-dialog, .ui-drawer)
   :where(.ui-dialog__footer, .ui-drawer__footer, .button-row)
   > :where(.ui-button--secondary, .quiet-button) {
-  border-color: transparent;
-  background: rgb(2 32 71 / 5%);
-  color: rgb(3 18 40 / 70%);
+  border-color: var(--line-strong);
+  background: var(--surface);
+  color: var(--j-color-text-secondary);
 }
 
 .ui-confirm-dialog .ui-dialog__body {
@@ -626,7 +635,8 @@
 
   .ui-dialog__footer > *,
   .ui-drawer__footer > * {
-    flex: 1 1 0;
+    width: fit-content;
+    flex: 0 0 auto;
   }
 }
 

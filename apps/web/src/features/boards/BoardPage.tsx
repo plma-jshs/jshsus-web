@@ -32,7 +32,7 @@ export function BoardPage() {
   const search = {
     page: rawSearch.page ?? 1,
     pageSize: rawSearch.size ?? 20,
-    field: rawSearch.field ?? 'title_content',
+    field: 'title_content' as const,
     q: rawSearch.q ?? '',
   };
   const navigate = useNavigate({ from: '/boards/free' });
@@ -59,7 +59,7 @@ export function BoardPage() {
           ...current,
           page: next.page ?? search.page,
           size: next.pageSize ?? search.pageSize,
-          field: next.field ?? search.field,
+          field: 'title_content',
           q: next.q ?? search.q,
         }),
       });
@@ -114,6 +114,7 @@ export function BoardPage() {
           pageSize={search.pageSize}
           field={search.field}
           query={search.q}
+          searchPlaceholder="제목, 내용, 작성자 검색"
           action={
             <Link
               className="detail-primary-button data-table-toolbar__create"
@@ -123,7 +124,7 @@ export function BoardPage() {
             </Link>
           }
           onPageSizeChange={(pageSize) => updateSearch({ page: 1, pageSize })}
-          onSearch={(field, q) => updateSearch({ page: 1, field, q })}
+          onSearch={(_field, q) => updateSearch({ page: 1, field: 'title_content', q })}
         />
 
         {postsQuery.isLoading ? (

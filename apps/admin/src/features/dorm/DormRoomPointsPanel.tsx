@@ -259,7 +259,7 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
           />
         </label>
       </div>
-      <TableToolbar summary={`${queue.length}건`}>
+      <TableToolbar summary={`총 ${queue.length}건`}>
         <Button
           variant="primary"
           disabled={!canApply}

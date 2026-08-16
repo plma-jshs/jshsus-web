@@ -30,8 +30,8 @@
 }
 
 .audit-log-search:focus-within {
-  border-color: var(--j-color-focus);
-  box-shadow: var(--j-shadow-focus);
+  border-color: var(--j-color-brand);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
 }
 
 .audit-log-search input {

@@ -31,7 +31,7 @@ export function NoticesPage() {
   const search = {
     page: rawSearch.page ?? 1,
     pageSize: rawSearch.size ?? 20,
-    field: rawSearch.field ?? 'title_content',
+    field: 'title_content' as const,
     q: rawSearch.q ?? '',
   };
   const navigate = useNavigate({ from: '/notices' });
@@ -58,7 +58,7 @@ export function NoticesPage() {
           ...current,
           page: next.page ?? search.page,
           size: next.pageSize ?? search.pageSize,
-          field: next.field ?? search.field,
+          field: 'title_content',
           q: next.q ?? search.q,
         }),
       });
@@ -104,6 +104,7 @@ export function NoticesPage() {
           pageSize={search.pageSize}
           field={search.field}
           query={search.q}
+          searchPlaceholder="제목, 작성자 검색"
           action={
             sessionQuery.data?.isLogined &&
             sessionQuery.data.permissions.includes('notices.manage') ? (
@@ -113,7 +114,7 @@ export function NoticesPage() {
             ) : undefined
           }
           onPageSizeChange={(pageSize) => updateSearch({ page: 1, pageSize })}
-          onSearch={(field, q) => updateSearch({ page: 1, field, q })}
+          onSearch={(_field, q) => updateSearch({ page: 1, field: 'title_content', q })}
         />
 
         {noticesQuery.isLoading ? (

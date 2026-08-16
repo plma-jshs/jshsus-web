@@ -595,7 +595,7 @@ export function SchoolEventsPage() {
                 value={visibility}
                 onChange={(event) => setVisibility(event.target.value as typeof visibility)}
               >
-                <option value="all">전체 공개 상태</option>
+                <option value="all">전체</option>
                 <option value="public">공개</option>
                 <option value="private">비공개</option>
               </AdminSelect>

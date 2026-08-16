@@ -187,11 +187,11 @@ export function NoticeManagementPage() {
         accessorKey: 'department',
         header: '작성자',
         enableSorting: false,
-        meta: { align: 'left', width: 150 },
+        meta: { align: 'left', width: 150, hideAtCompact: true, hideOnMobile: true },
       },
       {
         accessorKey: 'publishedAt',
-        header: '게시일',
+        header: '작성일',
         cell: ({ row }) => formatAdminDate(row.original.publishedAt),
         meta: { align: 'center', width: 132 },
       },
@@ -199,7 +199,7 @@ export function NoticeManagementPage() {
         accessorKey: 'viewCount',
         header: '조회',
         cell: ({ row }) => row.original.viewCount.toLocaleString('ko-KR'),
-        meta: { align: 'right', width: 84 },
+        meta: { align: 'right', width: 84, hideAtCompact: true, hideOnMobile: true },
       },
       {
         id: 'attachment',
@@ -214,7 +214,7 @@ export function NoticeManagementPage() {
             '-'
           ),
         enableSorting: false,
-        meta: { align: 'center', width: 72, hideOnMobile: true },
+        meta: { align: 'center', width: 72, hideAtCompact: true, hideOnMobile: true },
       },
       {
         id: 'actions',
@@ -288,8 +288,8 @@ export function NoticeManagementPage() {
           <MobileSortSelect
             value={`${sorting[0]?.id ?? 'publishedAt'}:${sorting[0]?.desc ? 'desc' : 'asc'}`}
             options={[
-              { value: 'publishedAt:desc', label: '게시일 최신순' },
-              { value: 'publishedAt:asc', label: '게시일 오래된순' },
+              { value: 'publishedAt:desc', label: '작성일 최신순' },
+              { value: 'publishedAt:asc', label: '작성일 오래된순' },
               { value: 'viewCount:desc', label: '조회수 높은순' },
               { value: 'viewCount:asc', label: '조회수 낮은순' },
             ]}
@@ -409,7 +409,11 @@ export function NoticeManagementPage() {
         open={selectedNotice !== null}
         onClose={() => setSelectedNotice(null)}
         title={selectedNotice?.title ?? '공지 관리'}
-        description={selectedNotice ? selectedNotice.department || '작성자 미상' : undefined}
+        description={
+          selectedNotice
+            ? `${selectedNotice.department || '알 수 없음'} · ${formatAdminDate(selectedNotice.publishedAt)} · 조회 ${selectedNotice.viewCount.toLocaleString('ko-KR')} · 첨부 ${selectedNotice.attachments?.length ?? 0}개`
+            : undefined
+        }
         className="content-drawer content-drawer--wide"
         footer={
           selectedNotice ? (
@@ -441,24 +445,6 @@ export function NoticeManagementPage() {
       >
         {selectedNotice ? (
           <div className="content-detail-stack">
-            <dl className="content-detail-list">
-              <div>
-                <dt>작성자</dt>
-                <dd>{selectedNotice.department || '알 수 없음'}</dd>
-              </div>
-              <div>
-                <dt>게시일</dt>
-                <dd>{formatAdminDate(selectedNotice.publishedAt)}</dd>
-              </div>
-              <div>
-                <dt>조회</dt>
-                <dd>{selectedNotice.viewCount.toLocaleString('ko-KR')}</dd>
-              </div>
-              <div>
-                <dt>첨부</dt>
-                <dd>{selectedNotice.attachments?.length ?? 0}개</dd>
-              </div>
-            </dl>
             <section className="content-detail-section">
               <h3>본문</h3>
               <NoticeContentPreview notice={selectedNotice} />

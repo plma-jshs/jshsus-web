@@ -146,9 +146,14 @@ export function ActivityPrintBatch({
   };
   const sections: ActivityRequestPrintSection[] =
     batch.floor === 'all'
-      ? [2, 3, 4]
-          .map((floor) => batch.sections?.find((section) => section.floor === floor))
-          .filter((section): section is ActivityRequestPrintSection => Boolean(section))
+      ? ([2, 3, 4] as const).map(
+          (floor) =>
+            batch.sections?.find((section) => section.floor === floor) ?? {
+              floor,
+              documents: [],
+              students: [],
+            },
+        )
       : batch.sections?.length
         ? batch.sections
         : [fallbackSection];

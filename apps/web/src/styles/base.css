@@ -86,15 +86,16 @@ textarea {
   select,
   textarea
 ):hover {
-  border-color: var(--j-color-brand);
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong));
+  background-color: color-mix(in srgb, var(--j-color-surface-hover) 72%, white);
 }
 :where(
   input:not([type='checkbox']):not([type='radio']):not([type='file']),
   select,
   textarea
 ):focus {
-  border-color: var(--j-color-focus);
-  box-shadow: var(--j-shadow-focus);
+  border-color: var(--j-color-brand);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
   outline: 0;
 }
 input::placeholder,

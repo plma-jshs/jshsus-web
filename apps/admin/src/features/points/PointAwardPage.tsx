@@ -831,7 +831,11 @@ export function PointAwardPage() {
       </section>
 
       <section className="admin-panel point-panel">
-        <TableToolbar className="point-import-toolbar" mobileSheet={false}>
+        <TableToolbar
+          className="point-import-toolbar"
+          summary={`총 ${queue.length}건`}
+          mobileSheet={false}
+        >
           <input
             ref={fileInputRef}
             className="sr-only"
