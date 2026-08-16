@@ -177,6 +177,42 @@
   font-size: 13px;
   font-weight: 650;
 }
+
+.identity-search-field {
+  display: flex;
+  min-height: 40px;
+  padding: 0 12px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #cedad7;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--j-color-text-muted);
+}
+
+.identity-search-field:focus-within {
+  border-color: var(--j-color-focus);
+  box-shadow: var(--j-shadow-focus);
+}
+
+.identity-search-field > svg {
+  flex: 0 0 auto;
+}
+
+.identity-search-field input {
+  min-width: 0;
+  flex: 1 1 auto;
+  width: auto;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.identity-panel > .admin-table-toolbar .identity-filter-bar .identity-field > span {
+  display: none;
+}
 .identity-field input,
 .identity-field .admin-select__trigger {
   width: 100%;

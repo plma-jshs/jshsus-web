@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Check, LogOut } from 'lucide-react';
+import { Check, LogOut, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
 import {
@@ -366,10 +366,11 @@ export function PointDeparturesPage() {
                 summary={candidatesQuery.data ? `총 ${candidatesQuery.data.total}명` : undefined}
                 mobileSearch={
                   <label className="point-filter point-filter--search">
-                    <span>검색</span>
+                    <Search size={16} aria-hidden="true" />
                     <input
                       value={search}
                       placeholder="학번 또는 이름"
+                      aria-label="퇴사 대상 검색"
                       onChange={(event) => {
                         setSearch(event.target.value);
                         resetPages();
@@ -379,8 +380,8 @@ export function PointDeparturesPage() {
                 }
               >
                 <label className="point-filter">
-                  <span>학년</span>
                   <AdminSelect
+                    aria-label="학년"
                     value={grade}
                     onChange={(event) => {
                       setGrade(event.target.value);
@@ -396,8 +397,8 @@ export function PointDeparturesPage() {
                   </AdminSelect>
                 </label>
                 <label className="point-filter">
-                  <span>반</span>
                   <AdminSelect
+                    aria-label="반"
                     value={classNo}
                     onChange={(event) => {
                       setClassNo(event.target.value);
@@ -413,8 +414,8 @@ export function PointDeparturesPage() {
                   </AdminSelect>
                 </label>
                 <label className="point-filter">
-                  <span>대상</span>
                   <AdminSelect
+                    aria-label="대상"
                     value={riskStatus}
                     onChange={(event) => {
                       setRiskStatus(event.target.value as typeof riskStatus);

@@ -602,6 +602,8 @@
         .identity-field,
         .wake-song-admin-search,
         .dorm-search-control,
+        .dorm-search-field,
+        .identity-search-field,
         .point-filter--search,
         input[type='search'],
         input[type='text']
@@ -627,27 +629,9 @@
     flex: 1 1 auto;
   }
 
-  .admin-table-toolbar__controls > .admin-select:not(.ui-page-size-select) {
-    min-width: 76px;
-    max-width: 124px;
-  }
-
   .admin-table-toolbar__controls > :where(button, a) {
     flex: 0 0 auto;
     white-space: nowrap;
-  }
-
-  .ui-date-range {
-    min-width: 220px;
-  }
-
-  .ui-date-range__controls {
-    grid-template-columns: 100px auto 100px;
-  }
-
-  .ui-date-range__controls input,
-  .ui-date-input {
-    width: 100px !important;
   }
 
   .operation-list-toolbar .admin-table-toolbar__controls {

@@ -220,7 +220,9 @@
 }
 
 .operation-list-toolbar .admin-table-toolbar__controls {
+  width: 100%;
   flex-wrap: nowrap;
+  justify-content: flex-end;
 }
 
 .operation-search-field {
@@ -286,10 +288,10 @@
   }
 
   .operation-list-toolbar .ui-date-range {
-    width: 220px;
-    min-width: 220px;
-    max-width: 220px;
-    flex: 0 0 220px;
+    width: 326px;
+    min-width: 326px;
+    max-width: 326px;
+    flex: 0 0 326px;
   }
 
   .operation-list-toolbar .operation-status-filter {
@@ -931,6 +933,39 @@
   gap: 7px;
   font-size: 13px;
   font-weight: 600;
+}
+
+.activity-student-search-field {
+  display: flex !important;
+  min-height: 40px;
+  padding: 0 12px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--j-color-text-muted);
+}
+
+.activity-student-search-field:focus-within {
+  border-color: var(--j-color-focus);
+  box-shadow: var(--j-shadow-focus);
+}
+
+.activity-student-search-field > svg {
+  flex: 0 0 auto;
+}
+
+.activity-student-search-field input {
+  min-width: 0;
+  min-height: 38px;
+  flex: 1 1 auto;
+  width: auto;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .activity-create-form input,

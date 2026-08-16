@@ -7,7 +7,7 @@ import type {
 } from '@jshsus/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Check, X } from 'lucide-react';
+import { Check, Search, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
@@ -280,16 +280,19 @@ export function ActivityReviewPage() {
             summary={requestsQuery.data ? `대기 ${requestsQuery.data.total}건` : '대기 탐구활동서'}
             className="operation-list-toolbar operation-review-toolbar"
             mobileSearch={
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  setPage(1);
-                }}
-                placeholder="학생, 장소, 내용 검색"
-                aria-label="대기 탐구활동서 검색"
-              />
+              <label className="operation-search-field">
+                <Search size={15} aria-hidden="true" />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="학생, 장소, 내용 검색"
+                  aria-label="대기 탐구활동서 검색"
+                />
+              </label>
             }
             mobileActions={
               <Button
@@ -425,7 +428,8 @@ export function ActivityReviewPage() {
             <header>
               <h3>참여 학생</h3>
             </header>
-            <label>
+            <label className="activity-student-search-field">
+              <Search size={15} aria-hidden="true" />
               <input
                 type="search"
                 value={studentSearch}

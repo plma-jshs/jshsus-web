@@ -1,7 +1,7 @@
 import type { PointReason } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Check, Pencil, X } from 'lucide-react';
+import { Check, Pencil, Search, X } from 'lucide-react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
@@ -618,6 +618,7 @@ export function PointAwardPage() {
           <div className="point-student-picker-section">
             <FormField label="학생 검색" className="point-student-search">
               <div className="point-search-combobox">
+                <Search size={16} aria-hidden="true" />
                 <input
                   value={search}
                   placeholder="학번 또는 이름"

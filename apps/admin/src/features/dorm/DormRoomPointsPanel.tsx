@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { DormRoom, DormRoomResident, PointReason } from '@jshsus/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
@@ -193,12 +193,15 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
       <div className="dorm-room-point-form">
         <label>
           방
-          <input
-            list="dorm-point-rooms"
-            value={roomInput}
-            onChange={(event) => setRoomInput(event.target.value)}
-            placeholder="생활관 또는 호실 검색"
-          />
+          <span className="dorm-inline-search-field">
+            <Search size={15} aria-hidden="true" />
+            <input
+              list="dorm-point-rooms"
+              value={roomInput}
+              onChange={(event) => setRoomInput(event.target.value)}
+              placeholder="생활관 또는 호실 검색"
+            />
+          </span>
         </label>
         <datalist id="dorm-point-rooms">
           {rooms.map((room) => (

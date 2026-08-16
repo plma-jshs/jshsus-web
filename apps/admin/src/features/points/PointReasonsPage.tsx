@@ -1,7 +1,7 @@
 import type { PointReason } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Search, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { DataTable } from '../../components/DataTable';
 import {
@@ -184,10 +184,11 @@ export function PointReasonsPage() {
             summary={reasonsQuery.data ? `총 ${reasonsQuery.data.total}건` : undefined}
             mobileSearch={
               <label className="point-filter point-filter--search">
-                <span>검색</span>
+                <Search size={16} aria-hidden="true" />
                 <input
                   value={search}
                   placeholder="사유 또는 사유코드"
+                  aria-label="사유 검색"
                   onChange={(event) => {
                     setSearch(event.target.value);
                     resetPage();
@@ -218,8 +219,8 @@ export function PointReasonsPage() {
             }
           >
             <label className="point-filter">
-              <span>종류</span>
               <AdminSelect
+                aria-label="종류"
                 value={type}
                 onChange={(event) => {
                   setType(event.target.value as PointReason['type'] | '');

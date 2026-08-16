@@ -274,6 +274,7 @@ export function PointRecordsPage() {
               <input
                 value={search}
                 placeholder="학번, 이름, 사유 또는 처리자"
+                aria-label="상벌점 기록 검색"
                 onChange={(event) => {
                   setSearch(event.target.value);
                   resetPage();
@@ -301,8 +302,8 @@ export function PointRecordsPage() {
           }
         >
           <label className="point-filter">
-            <span>종류</span>
             <AdminSelect
+              aria-label="종류"
               value={type}
               onChange={(event) => {
                 setType(event.target.value as PointReason['type'] | '');

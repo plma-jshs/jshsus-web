@@ -30,6 +30,7 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
+  Search,
   ShieldAlert,
   ShieldCheck,
 } from 'lucide-react';
@@ -1061,14 +1062,16 @@ export function UsersPage() {
         <TableToolbar
           summary={`총 ${data?.total ?? 0}명`}
           mobileSearch={
-            <Field label="검색">
+            <label className="identity-field identity-search-field">
+              <Search size={16} aria-hidden="true" />
               <input
                 name="q"
                 value={filters.q ?? ''}
+                aria-label="학생·교직원 검색"
                 onChange={(event) => updateFilters({ q: event.currentTarget.value })}
                 placeholder="학번·교사번호 또는 이름"
               />
-            </Field>
+            </label>
           }
         >
           <div className={`identity-filter-bar is-${tab}`}>

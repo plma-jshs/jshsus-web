@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { DormReport, DormReportStatus } from '@jshsus/types';
 import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { ClipboardCheck } from 'lucide-react';
+import { ClipboardCheck, Search } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
@@ -138,13 +138,16 @@ export function DormReportsPanel({
       <TableToolbar
         summary={`총 ${filtered.length}건`}
         mobileSearch={
-          <input
-            className="dorm-search-control"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="호실, 학생, 내용 검색"
-            aria-label="민원 검색"
-          />
+          <label className="dorm-search-field">
+            <Search size={16} aria-hidden="true" />
+            <input
+              className="dorm-search-control"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="호실, 학생, 내용 검색"
+              aria-label="민원 검색"
+            />
+          </label>
         }
         mobileSort={
           <MobileSortSelect
