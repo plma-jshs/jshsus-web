@@ -115,6 +115,33 @@
   background: var(--j-color-surface-subtle);
 }
 
+:is(.ui-dialog, .ui-drawer)
+  :where(.ui-dialog__footer, .ui-drawer__footer, .button-row)
+  > :where(.ui-button, .primary-button, .quiet-button, .danger-button) {
+  min-width: 55px;
+  min-height: 22px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+:is(.ui-dialog, .ui-drawer)
+  :where(.ui-dialog__footer, .ui-drawer__footer, .button-row)
+  > :where(.ui-button--primary, .primary-button) {
+  border-color: rgb(49 130 246);
+  background: rgb(49 130 246);
+  color: #fff;
+}
+
+:is(.ui-dialog, .ui-drawer)
+  :where(.ui-dialog__footer, .ui-drawer__footer, .button-row)
+  > :where(.ui-button--secondary, .quiet-button) {
+  border-color: transparent;
+  background: rgb(2 32 71 / 5%);
+  color: rgb(3 18 40 / 70%);
+}
+
 .ui-confirm-dialog .ui-dialog__body {
   padding: 18px 20px;
 }

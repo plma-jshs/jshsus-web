@@ -250,12 +250,42 @@
   width: 120px;
 }
 
+.operation-list-toolbar .admin-select.operation-status-filter {
+  width: 84px;
+  max-width: 84px;
+}
+
 .activity-print-trigger {
-  min-height: 44px;
+  height: 40px;
+  min-height: 40px;
   padding-inline: 16px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .operation-list-toolbar .admin-table-toolbar__controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .operation-list-toolbar .admin-table-toolbar__controls > .operation-search-field {
+    width: 100%;
+    min-width: 0;
+    grid-column: 1 / -1;
+  }
+
+  .operation-list-toolbar .operation-search-field input[type='search'] {
+    width: 100%;
+  }
+
+  .operation-list-toolbar .operation-status-filter,
+  .operation-list-toolbar .activity-print-trigger {
+    justify-self: end;
+  }
 }
 
 @media (max-width: 767px) {
@@ -570,8 +600,8 @@
 }
 
 .operation-status-select {
-  width: 68px;
-  max-width: 68px;
+  width: 60px;
+  max-width: 60px;
   height: 30px;
   min-height: 30px;
 }
@@ -601,8 +631,8 @@
 
 .operation-status-select .admin-select__trigger {
   min-height: 30px;
-  padding: 0 6px;
-  border-radius: 999px;
+  padding: 0 6px 0 10px;
+  border-radius: 8px;
   border-color: transparent !important;
   box-shadow: none;
   font-size: 11px;
@@ -627,35 +657,46 @@
 
 .operation-status-select__menu {
   min-width: 98px;
-  padding: 6px;
-  border-radius: 12px;
-  box-shadow: 0 12px 28px rgb(15 23 42 / 14%);
+  padding: 5px;
+  border: 1px solid var(--j-color-border);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgb(15 23 42 / 10%);
 }
 
 .operation-status-select__menu button {
-  min-height: 34px;
-  padding: 0 9px;
-  border-radius: 8px;
+  min-height: 33px;
+  padding: 0 9px 0 12px;
+  border-radius: 7px;
 }
 
 .operation-status-select__menu button.is-selected {
-  color: var(--j-color-text);
-  background: var(--j-color-surface-selected);
+  color: #167347;
+  background: #f0faf4;
 }
 
 .operation-status-select__menu--pending button.is-selected {
   color: #7a5510;
-  background: #fff4d8;
+  background: #fff9eb;
 }
 
 .operation-status-select__menu--approved button.is-selected {
   color: #167347;
-  background: #e8f6ee;
+  background: #f0faf4;
 }
 
 .operation-status-select__menu--rejected button.is-selected {
   color: #8b4545;
-  background: #f5eeee;
+  background: #fbf2f2;
+}
+
+.operation-status-filter {
+  width: 84px;
+  max-width: 84px;
+}
+
+.operation-status-filter .admin-select__trigger {
+  padding-inline: 9px;
 }
 
 .operation-status--submitted,
@@ -721,7 +762,26 @@
 .operation-reject-form textarea {
   min-height: 112px;
   padding: 10px;
+  font-weight: 400;
   resize: vertical;
+}
+
+.activity-reject-dialog .operation-reject-form .button-row {
+  justify-content: flex-end;
+}
+
+.operation-activity-time {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: center;
+  font-weight: 400;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.operation-activity-time strong {
+  font-weight: 400;
 }
 
 .operation-document-panel {

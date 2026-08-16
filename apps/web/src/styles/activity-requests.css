@@ -422,10 +422,12 @@
 
 .activity-table__period {
   display: grid;
+  align-content: center;
   justify-content: center;
   gap: 0;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  font-weight: 400;
   line-height: 1.35;
   white-space: nowrap;
 }
@@ -433,6 +435,11 @@
 .activity-table__period strong {
   color: var(--j-color-text);
   font-size: 13px;
+  font-weight: 400;
+}
+
+.activity-table__period span {
+  font-weight: 400;
 }
 
 .activity-table__advisor {

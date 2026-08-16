@@ -60,6 +60,17 @@ describe('activity schedule options', () => {
     ).toBe('09:00~12:00');
   });
 
+  it('groups partial morning and evening selections by study period family', () => {
+    expect(
+      formatActivityPeriodLabel(
+        '2026-07-18',
+        '2026-07-18T00:00:00.000Z',
+        '2026-07-18T12:00:00.000Z',
+        ['morning-1', 'morning-2', 'evening-2'],
+      ),
+    ).toBe('오전 1·2면학, 2면학');
+  });
+
   it('keeps non-contiguous periods as separate compact ranges', () => {
     expect(
       formatActivityTimeRanges(

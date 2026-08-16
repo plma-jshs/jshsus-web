@@ -328,14 +328,14 @@ export function ActivityRequestsPage() {
                         </time>
                       </td>
                       <td className="activity-table__period" data-label="교시">
-                        <strong>
+                        <span>
                           {formatActivityPeriodLabel(
                             koreaDateInput(new Date(request.startsAt)),
                             request.startsAt,
                             request.endsAt,
                             request.activitySlotIds,
                           )}
-                        </strong>
+                        </span>
                       </td>
                       <td className="activity-table__location" data-label="장소">
                         {request.location}
@@ -393,9 +393,7 @@ export function ActivityRequestsPage() {
                     <div className="activity-request-card__detail activity-request-card__detail--schedule">
                       <CalendarDays size={15} aria-hidden="true" />
                       <span className="activity-request-card__schedule-text">
-                        <strong>
-                          {date} ({period})
-                        </strong>
+                        <strong>{date}</strong> <span>({period})</span>
                       </span>
                     </div>
                     <div className="activity-request-card__detail">

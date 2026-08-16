@@ -1,4 +1,4 @@
-@media (max-width: 980px) {
+@media (max-width: 1023px) {
   .admin-shell {
     grid-template-columns: 1fr;
   }

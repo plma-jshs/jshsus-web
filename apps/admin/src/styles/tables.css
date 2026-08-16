@@ -446,6 +446,7 @@
 .admin-table-toolbar__summary {
   color: var(--j-color-text-muted);
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .ui-segmented-tabs {
@@ -535,21 +536,42 @@
 @media (min-width: 768px) and (max-width: 1023px) {
   .admin-table-toolbar {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
-    align-items: end;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 8px;
+    min-height: 0;
   }
 
   .admin-table-toolbar__summary {
     min-width: 0;
-    white-space: nowrap;
+    grid-column: 1;
   }
 
   .admin-table-toolbar__controls {
+    display: grid;
+    grid-column: 1;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
     width: 100%;
     min-width: 0;
-    flex: 1 1 auto;
     flex-wrap: nowrap;
-    justify-content: flex-end;
+    justify-content: initial;
+  }
+
+  .admin-table-toolbar__controls:has(
+      > :where(
+        .admin-search-field,
+        .content-search-field,
+        .operation-search-field,
+        .point-filter--search,
+        input[type='search'],
+        input[type='text']
+      )
+    )
+    > :first-child {
+    width: 100%;
+    min-width: 0;
+    grid-column: 1 / -1;
   }
 
   .admin-table-toolbar__controls
@@ -591,7 +613,8 @@
   }
 
   .operation-list-toolbar .admin-table-toolbar__controls {
-    flex-wrap: nowrap;
+    display: grid;
+    flex-wrap: initial;
   }
 }
 

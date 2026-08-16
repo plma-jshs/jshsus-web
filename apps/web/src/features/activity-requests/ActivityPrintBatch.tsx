@@ -5,7 +5,7 @@ import type {
   ActivityRequestPrintSection,
 } from '@jshsus/types';
 import type { ReactNode } from 'react';
-import { formatActivityPeriodLabel, koreaDateInput } from './activitySchedule';
+import { formatActivityTimeRanges, koreaDateInput } from './activitySchedule';
 
 function participantsText(request: ActivityRequestAdminSummary) {
   const participants = request.participants.length
@@ -169,7 +169,7 @@ export function ActivityPrintBatch({
           <table className="activity-print-activity-table">
             <thead>
               <tr>
-                <th>교시</th>
+                <th>시간</th>
                 <th>활동 장소</th>
                 <th>활동 내용</th>
                 <th>참여 학생</th>
@@ -182,7 +182,7 @@ export function ActivityPrintBatch({
                 return (
                   <tr key={request.id}>
                     <td>
-                      {formatActivityPeriodLabel(
+                      {formatActivityTimeRanges(
                         date,
                         request.startsAt,
                         request.endsAt,

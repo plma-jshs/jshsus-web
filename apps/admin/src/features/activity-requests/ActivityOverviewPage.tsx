@@ -219,14 +219,14 @@ function createColumns(
         const date = koreaDateInput(new Date(request.startsAt));
         return (
           <span className="operation-activity-time">
-            <strong>
+            <span>
               {formatActivityPeriodLabel(
                 date,
                 request.startsAt,
                 request.endsAt,
                 request.activitySlotIds,
               )}
-            </strong>
+            </span>
           </span>
         );
       },
@@ -467,6 +467,7 @@ export function ActivityOverviewPage() {
               }}
             />
             <AdminSelect
+              className="operation-status-filter"
               mobileLabel="상태"
               value={status}
               onChange={(event) => {
@@ -576,9 +577,10 @@ export function ActivityOverviewPage() {
       >
         <form className="operation-reject-form" onSubmit={submitReject}>
           <label>
-            <span>반려 사유</span>
             <textarea
               autoFocus
+              aria-label="반려 사유"
+              placeholder="반려 사유를 입력해 주세요."
               value={rejectReason}
               onChange={(event) => setRejectReason(event.target.value)}
               maxLength={500}
@@ -586,18 +588,6 @@ export function ActivityOverviewPage() {
             />
           </label>
           <div className="button-row">
-            <button
-              className="quiet-button"
-              type="button"
-              onClick={() => {
-                setRejectRequest(null);
-                setRejectReason('');
-                statusMutation.reset();
-              }}
-              disabled={statusMutation.isPending}
-            >
-              취소
-            </button>
             <button className="primary-button" type="submit" disabled={statusMutation.isPending}>
               반려
             </button>

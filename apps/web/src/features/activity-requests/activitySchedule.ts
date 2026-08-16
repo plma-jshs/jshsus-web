@@ -86,6 +86,23 @@ function groupedActivityTimeSlots(slotIds: ActivityTimeSlotId[]) {
   });
 }
 
+function groupedActivityPeriodLabels(slotIds: ActivityTimeSlotId[]) {
+  const selectedIds = new Set(slotIds);
+
+  return activityTimeGroups.flatMap((group) => {
+    const selected = group.slotIds.filter((slotId) => selectedIds.has(slotId));
+    if (!selected.length) return [];
+
+    const periodNumbers = selected
+      .map(
+        (slotId) => activityTimeSlots.find((slot) => slot.id === slotId)?.label.match(/\d+/)?.[0],
+      )
+      .filter(Boolean);
+
+    return `${group.prefix === '저녁' ? '' : `${group.prefix} `}${periodNumbers.join('·')}면학`;
+  });
+}
+
 const timeFormatter = new Intl.DateTimeFormat('ko-KR', {
   timeZone: 'Asia/Seoul',
   hour: '2-digit',
@@ -118,9 +135,7 @@ export function formatActivityPeriodLabel(
 ) {
   const slotIds = inferActivityTimeSlotIds(date, startsAt, endsAt, savedSlotIds);
   if (!slotIds.length) return '직접 입력';
-  return groupedActivityTimeSlots(slotIds)
-    .map((group) => group.label)
-    .join(', ');
+  return groupedActivityPeriodLabels(slotIds).join(', ');
 }
 
 export function inferActivityTimeSlotIds(
