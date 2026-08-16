@@ -121,31 +121,6 @@
   animation: ui-spin 700ms linear infinite;
 }
 
-/* Keep standalone actions in the same compact visual language as dialog actions. */
-.ui-button:not(.ui-button--ghost):not(.ui-button--lg),
-.primary-button,
-.quiet-button {
-  min-height: 22px;
-  padding: 9px 12px;
-  border-radius: 10px;
-  font-size: 13px;
-  line-height: 1;
-}
-
-.ui-button--primary,
-.primary-button {
-  border-color: rgb(49 130 246);
-  background: rgb(49 130 246);
-  color: #fff;
-}
-
-.ui-button--secondary,
-.quiet-button {
-  border-color: transparent;
-  background: rgb(2 32 71 / 5%);
-  color: rgb(3 18 40 / 70%);
-}
-
 .admin-selection-checkbox {
   width: 16px;
   height: 16px;

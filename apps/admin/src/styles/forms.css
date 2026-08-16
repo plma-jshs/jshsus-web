@@ -135,7 +135,7 @@ select.ui-control:not([multiple]) {
 }
 
 .admin-select__trigger {
-  display: inline-flex;
+  display: flex;
   width: 100%;
   min-width: 0;
   min-height: var(--control-height);
@@ -143,13 +143,16 @@ select.ui-control:not([multiple]) {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  box-sizing: border-box;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
   color: var(--j-color-text);
   background: var(--surface);
   font-size: 14px;
   font-weight: var(--j-weight-regular);
+  line-height: 1;
   text-align: left;
+  white-space: nowrap;
   cursor: pointer;
   transition:
     border-color var(--j-motion-fast),
@@ -167,6 +170,7 @@ select.ui-control:not([multiple]) {
 .admin-select__option-content {
   display: inline-flex;
   min-width: 0;
+  flex: 1 1 auto;
   align-items: center;
   gap: 7px;
   white-space: nowrap;

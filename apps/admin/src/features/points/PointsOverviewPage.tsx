@@ -149,7 +149,7 @@ export function PointsOverviewPage() {
                 resetPage();
               }}
             >
-              <option value="">전체</option>
+              <option value="">전체 학년</option>
               {[1, 2, 3].map((value) => (
                 <option key={value} value={value}>
                   {value}학년
@@ -166,7 +166,7 @@ export function PointsOverviewPage() {
                 resetPage();
               }}
             >
-              <option value="">전체</option>
+              <option value="">전체 반</option>
               {Array.from({ length: 4 }, (_, index) => index + 1).map((value) => (
                 <option key={value} value={value}>
                   {value}반

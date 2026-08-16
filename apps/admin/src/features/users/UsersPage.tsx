@@ -1105,7 +1105,7 @@ export function UsersPage() {
                       })
                     }
                   >
-                    <option value="">전체</option>
+                    <option value="">전체 학년</option>
                     {[1, 2, 3].map((value) => (
                       <option key={value}>{value}</option>
                     ))}
@@ -1123,7 +1123,7 @@ export function UsersPage() {
                       })
                     }
                   >
-                    <option value="">전체</option>
+                    <option value="">전체 반</option>
                     {[1, 2, 3, 4].map((value) => (
                       <option key={value}>{value}</option>
                     ))}

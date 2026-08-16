@@ -1332,10 +1332,6 @@
   margin: 0;
 }
 
-.content-panel-actions .admin-table-toolbar__summary {
-  display: none;
-}
-
 @media (max-width: 767px) {
   .content-panel-header {
     min-height: 44px;
@@ -1348,10 +1344,6 @@
   .content-panel-actions .admin-table-toolbar {
     min-height: 38px;
     margin: 0;
-  }
-
-  .content-panel-actions .admin-table-toolbar__summary {
-    display: none;
   }
 
   .admin-filter-sheet__controls .content-toolbar,

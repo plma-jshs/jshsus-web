@@ -387,7 +387,7 @@ export function PointDeparturesPage() {
                       resetPages();
                     }}
                   >
-                    <option value="">전체</option>
+                    <option value="">전체 학년</option>
                     {[1, 2, 3, 9].map((value) => (
                       <option key={value} value={value}>
                         {value}학년
@@ -404,7 +404,7 @@ export function PointDeparturesPage() {
                       resetPages();
                     }}
                   >
-                    <option value="">전체</option>
+                    <option value="">전체 반</option>
                     {Array.from({ length: 4 }, (_, index) => index + 1).map((value) => (
                       <option key={value} value={value}>
                         {value}반
@@ -421,7 +421,7 @@ export function PointDeparturesPage() {
                       setPage(1);
                     }}
                   >
-                    <option value="all">전체</option>
+                    <option value="all">전체 대상</option>
                     <option value="risk">퇴사 위험</option>
                     <option value="departure">승인 가능</option>
                   </AdminSelect>

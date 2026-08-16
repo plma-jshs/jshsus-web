@@ -226,7 +226,7 @@ export function PointReasonsPage() {
                   resetPage();
                 }}
               >
-                <option value="">전체</option>
+                <option value="">전체 유형</option>
                 <option value="PLUS">상점</option>
                 <option value="MINUS">벌점</option>
                 <option value="ETC">기타</option>

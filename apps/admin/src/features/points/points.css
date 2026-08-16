@@ -43,13 +43,6 @@
   width: 142px;
 }
 
-.point-record-summary {
-  display: inline-flex;
-  min-height: 32px;
-  align-items: center;
-  gap: 10px;
-}
-
 .point-record-mobile-delete {
   display: none;
 }

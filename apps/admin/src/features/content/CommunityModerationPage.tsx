@@ -544,7 +544,7 @@ export function CommunityModerationPage({
                 value={postVisibility}
                 onChange={(event) => setPostVisibility(event.target.value as typeof postVisibility)}
               >
-                <option value="all">전체</option>
+                <option value="all">전체 공개 상태</option>
                 <option value="published">공개</option>
                 <option value="hidden">숨김</option>
               </AdminSelect>
@@ -668,7 +668,7 @@ export function CommunityModerationPage({
                 value={reportStatus}
                 onChange={(event) => setReportStatus(event.target.value)}
               >
-                <option value="all">전체</option>
+                <option value="all">전체 신고 상태</option>
                 <option value="reviewing">검토 중</option>
                 <option value="closed">처리 완료</option>
               </AdminSelect>

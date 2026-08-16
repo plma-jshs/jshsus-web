@@ -296,7 +296,7 @@ export function LostItemsManagementPage() {
                 onChange={(event) => setTypeFilter(event.target.value)}
                 aria-label="등록 구분"
               >
-                <option value="all">전체</option>
+                <option value="all">전체 등록 구분</option>
                 <option value="lost">분실</option>
                 <option value="found">습득</option>
               </AdminSelect>
@@ -308,7 +308,7 @@ export function LostItemsManagementPage() {
                 aria-label="처리 상태"
                 onChange={(event) => setStatusFilter(event.target.value)}
               >
-                <option value="all">전체</option>
+                <option value="all">전체 처리 상태</option>
                 {Object.entries(lostItemStatusLabel).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}

@@ -255,22 +255,17 @@ export function PointRecordsPage() {
       className="point-panel"
       toolbar={
         <TableToolbar
-          summary={
-            recordsQuery.data ? (
-              <div className="point-record-summary">
-                <span>총 {recordsQuery.data.total}건</span>
-                {selectedCount > 0 ? (
-                  <button
-                    className="point-record-mobile-delete"
-                    type="button"
-                    onClick={deleteSelectedRecords}
-                    disabled={cancelSelectedMutation.isPending}
-                  >
-                    선택 {selectedCount}건 삭제
-                  </button>
-                ) : null}
-              </div>
-            ) : undefined
+          mobileActions={
+            selectedCount > 0 ? (
+              <button
+                className="point-record-mobile-delete"
+                type="button"
+                onClick={deleteSelectedRecords}
+                disabled={cancelSelectedMutation.isPending}
+              >
+                선택 {selectedCount}건 삭제
+              </button>
+            ) : null
           }
           mobileSearch={
             <label className="point-filter point-filter--search">
@@ -314,7 +309,7 @@ export function PointRecordsPage() {
                 resetPage();
               }}
             >
-              <option value="">전체</option>
+              <option value="">전체 유형</option>
               <option value="PLUS">상점</option>
               <option value="MINUS">벌점</option>
               <option value="ETC">기타</option>

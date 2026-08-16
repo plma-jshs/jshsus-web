@@ -47,10 +47,6 @@
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  .device-cases-toolbar .admin-table-toolbar__summary {
-    width: auto;
-  }
-
   .device-cases-toolbar .admin-table-toolbar__mobile-row {
     width: auto;
     padding: 0;
