@@ -456,6 +456,9 @@ export function ActivityOverviewPage() {
                 }}
               />
             }
+            desktopActions={
+              <ActivityPrintMenu disabled={printMutation.isPending} onOpen={openPrintDialog} />
+            }
           >
             <DateRangeField
               label="활동일"
@@ -487,7 +490,6 @@ export function ActivityOverviewPage() {
                 </option>
               ))}
             </AdminSelect>
-            <ActivityPrintMenu disabled={printMutation.isPending} onOpen={openPrintDialog} />
           </TableToolbar>
         }
       >

@@ -9,7 +9,7 @@ import {
   type RowData,
   type SortingState,
 } from '@tanstack/react-table';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   ADMIN_DEFAULT_PAGE_SIZE,
@@ -171,7 +171,6 @@ export function DataTable<T>({
   onSortingChange,
   manualSorting = false,
   renderMobileRow,
-  mobileLoadMore = false,
 }: DataTableProps<T>) {
   const [uncontrolledSorting, setUncontrolledSorting] = useState<SortingState>([]);
   const isSortingControlled = sorting !== undefined;
@@ -200,8 +199,74 @@ export function DataTable<T>({
     });
   };
 
+  /*
+   * Server pagination normally replaces the current page. On a phone the
+   * shared pagination control is a cumulative "더보기" affordance instead,
+   * so keep the already-rendered pages in a ref while the parent fetches the
+   * next page. Refs are intentional here: changing pages must not introduce
+   * a second render before the query result arrives, and the parent query is
+   * the source of truth for the fetch lifecycle.
+   */
+  const mobileServerRowsRef = useRef<T[]>([]);
+  const mobileServerDataRef = useRef<T[] | null>(null);
+  const mobileServerAppendRef = useRef(false);
+  const mobileServerPendingRef = useRef(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth > 0 && window.innerWidth <= 767,
+  );
+  const hasServerPagination = Boolean(pagination);
+  const serverPaginationPageIndex = pagination?.pageIndex;
+
+  const tableData = useMemo(() => {
+    if (!hasServerPagination) return data;
+
+    const pageIndex = serverPaginationPageIndex ?? 0;
+
+    // A filter, sort, or page-size change always starts a fresh cumulative
+    // list. The parent resets pageIndex to zero for those interactions.
+    if (pageIndex === 0) {
+      mobileServerRowsRef.current = data;
+      mobileServerDataRef.current = data;
+      mobileServerAppendRef.current = false;
+      mobileServerPendingRef.current = false;
+      return data;
+    }
+
+    // Desktop previous/next navigation is still ordinary replacement
+    // pagination. Only the mobile load-more handler enables accumulation.
+    if (!mobileServerAppendRef.current) {
+      mobileServerRowsRef.current = data;
+      mobileServerDataRef.current = data;
+      return data;
+    }
+
+    // While the next page is pending, keep the previous rows visible instead
+    // of flashing a loading table. Once a new result arrives, append it once.
+    if (loading || (mobileServerPendingRef.current && mobileServerDataRef.current === data)) {
+      return mobileServerRowsRef.current;
+    }
+
+    const receivedNewPage = mobileServerDataRef.current !== data;
+    if (receivedNewPage) {
+      const previousRows = mobileServerRowsRef.current;
+      mobileServerRowsRef.current = [...previousRows, ...data];
+      mobileServerDataRef.current = data;
+      mobileServerPendingRef.current = false;
+    }
+
+    return mobileServerRowsRef.current;
+  }, [data, hasServerPagination, loading, serverPaginationPageIndex]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+    const query = window.matchMedia('(max-width: 767px)');
+    const handleChange = (event: MediaQueryListEvent) => setIsMobileViewport(event.matches);
+    query.addEventListener('change', handleChange);
+    return () => query.removeEventListener('change', handleChange);
+  }, []);
+
   const table = useReactTable({
-    data,
+    data: tableData,
     columns,
     state: tableState,
     initialState: pagination ? undefined : { pagination: { pageIndex: 0, pageSize } },
@@ -259,20 +324,34 @@ export function DataTable<T>({
       return;
     }
     if (!shouldHydrateFromUrl && query.page !== currentPageIndex + 1) {
+      // Mobile load-more fetches the next server page without changing the
+      // user's URL. Keep the canonical URL on the first page until a normal
+      // desktop page navigation occurs.
+      if (mobileServerAppendRef.current) return;
       syncTableQuery(currentPageIndex + 1, pagination.pageSize);
     }
   }, [currentPageIndex, loading, pagination, resolvedPageCount]);
   const visibleColumnCount = Math.max(table.getVisibleFlatColumns().length, 1);
   const visibleRows = table.getRowModel().rows;
   const mobileSourceRows = table.getPrePaginationRowModel().rows;
-  const mobileRows =
-    mobileLoadMore && !pagination ? mobileSourceRows.slice(0, mobileVisibleCount) : visibleRows;
-  const hasMobileMore =
-    mobileLoadMore && !pagination && mobileRows.length < mobileSourceRows.length;
+  // Client-side tables can use the same cumulative mobile affordance too;
+  // `mobileLoadMore` remains accepted for backwards compatibility with pages
+  // that explicitly opted into it before the shared behavior existed.
+  const useClientMobileLoadMore = !pagination;
+  const mobileRows = useClientMobileLoadMore
+    ? mobileSourceRows.slice(0, mobileVisibleCount)
+    : visibleRows;
+  const hasMobileMore = useClientMobileLoadMore && mobileRows.length < mobileSourceRows.length;
+  const mobileServerLoadingMore =
+    Boolean(pagination) && mobileServerAppendRef.current && mobileServerPendingRef.current;
+  const isAppendingServerPage = mobileServerLoadingMore && mobileServerRowsRef.current.length > 0;
+  const showLoadingState = loading && !isAppendingServerPage;
 
   const moveToPage = (pageIndex: number) => {
     const nextPageIndex = Math.min(Math.max(pageIndex, 0), resolvedPageCount - 1);
     if (nextPageIndex === currentPageIndex) return;
+    mobileServerAppendRef.current = false;
+    mobileServerPendingRef.current = false;
     syncTableQuery(nextPageIndex + 1, pagination?.pageSize ?? pageSize);
     if (pagination) pagination.onPageChange(nextPageIndex);
     else table.setPageIndex(nextPageIndex);
@@ -291,6 +370,16 @@ export function DataTable<T>({
       setMobileLoadingMore(false);
     }, 180);
   };
+
+  const loadMoreOnServer = () => {
+    if (!pagination || currentPageIndex + 1 >= resolvedPageCount) return;
+    if (mobileServerPendingRef.current) return;
+    mobileServerAppendRef.current = true;
+    mobileServerPendingRef.current = true;
+    pagination.onPageChange(currentPageIndex + 1);
+  };
+
+  const renderedRows = isMobileViewport && !pagination ? mobileRows : visibleRows;
 
   return (
     <div className={`admin-data-table${renderMobileRow ? ' has-mobile-cards' : ''}`}>
@@ -362,7 +451,7 @@ export function DataTable<T>({
             ))}
           </thead>
           <tbody>
-            {loading ? (
+            {showLoadingState ? (
               Array.from({ length: 6 }, (_, index) => (
                 <tr className="admin-data-table__loading-row" key={index}>
                   <td className="admin-data-table__loading-cell" colSpan={visibleColumnCount}>
@@ -382,7 +471,7 @@ export function DataTable<T>({
                 </td>
               </tr>
             ) : (
-              visibleRows.map((row) => (
+              renderedRows.map((row) => (
                 <tr key={row.id}>
                   {row.getVisibleCells().map((cell) => {
                     const meta = cell.column.columnDef.meta;
@@ -425,7 +514,7 @@ export function DataTable<T>({
 
       {renderMobileRow ? (
         <div className="admin-mobile-card-list">
-          {loading ? (
+          {showLoadingState ? (
             <LoadingState className="admin-mobile-card-list__status" compact title={loadingText} />
           ) : mobileRows.length === 0 ? (
             <EmptyState compact title={emptyText} />
@@ -439,7 +528,7 @@ export function DataTable<T>({
         </div>
       ) : null}
 
-      {!loading &&
+      {!showLoadingState &&
       (pagination?.totalCount ?? visibleRows.length) > 0 &&
       (alwaysShowPagination || resolvedPageCount > 1) ? (
         <TablePagination
@@ -448,15 +537,9 @@ export function DataTable<T>({
           pageSize={pagination?.pageSize ?? table.getState().pagination.pageSize}
           totalCount={pagination?.totalCount}
           onPageChange={moveToPage}
-          onLoadMore={
-            mobileLoadMore && !pagination
-              ? loadMoreOnMobile
-              : () => moveToPage(currentPageIndex + 1)
-          }
-          hasMore={
-            mobileLoadMore && !pagination ? hasMobileMore : currentPageIndex + 1 < resolvedPageCount
-          }
-          loadingMore={mobileLoadingMore}
+          onLoadMore={pagination ? loadMoreOnServer : loadMoreOnMobile}
+          hasMore={pagination ? currentPageIndex + 1 < resolvedPageCount : hasMobileMore}
+          loadingMore={pagination ? mobileServerLoadingMore : mobileLoadingMore}
           onPageSizeChange={
             pagination?.onPageSizeChange || onPageSizeChange ? changePageSize : undefined
           }

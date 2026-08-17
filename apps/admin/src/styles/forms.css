@@ -695,6 +695,10 @@ textarea.ui-control {
   border: 0;
 }
 
+.ui-date-range__label {
+  display: none;
+}
+
 .ui-date-range__controls {
   display: grid;
   grid-template-columns: 150px auto 150px;

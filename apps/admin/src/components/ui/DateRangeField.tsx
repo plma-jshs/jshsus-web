@@ -43,6 +43,7 @@ export function DateRangeField({
 }) {
   return (
     <fieldset className="ui-date-range" aria-label={label}>
+      <legend className="ui-date-range__label">{label}</legend>
       <div className="ui-date-range__controls">
         <DateInput
           value={from}

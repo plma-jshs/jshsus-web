@@ -836,6 +836,52 @@
     font-weight: var(--j-weight-regular);
   }
 
+  .admin-mobile-sort-field__row {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .admin-mobile-sort-field__row .admin-select {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .admin-mobile-sort-direction {
+    display: grid;
+    width: 48px;
+    min-width: 48px;
+    min-height: 44px;
+    padding: 0;
+    place-items: center;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--j-color-text-secondary);
+    font: inherit;
+    font-size: 19px;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+      border-color var(--j-motion-fast),
+      background-color var(--j-motion-fast),
+      color var(--j-motion-fast);
+  }
+
+  .admin-mobile-sort-direction:hover {
+    border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+    background: var(--j-color-surface-hover);
+    color: var(--j-color-brand-strong);
+  }
+
+  .admin-mobile-sort-direction:focus-visible {
+    border-color: var(--j-color-brand);
+    outline: 0;
+    box-shadow: inset 0 0 0 1px var(--j-color-brand);
+  }
+
   .admin-data-table.has-mobile-cards > .table-wrap {
     display: none;
   }

@@ -7,6 +7,8 @@ export type TableToolbarProps = HTMLAttributes<HTMLDivElement> & {
   summary?: ReactNode;
   mobileSearch?: ReactNode;
   mobileActions?: ReactNode;
+  /** Actions that belong in the desktop toolbar but should not enter the mobile filter sheet. */
+  desktopActions?: ReactNode;
   mobileSort?: ReactNode;
   children?: ReactNode;
   mobileSheet?: boolean;
@@ -49,6 +51,7 @@ export function TableToolbar({
   summary,
   mobileSearch,
   mobileActions,
+  desktopActions,
   mobileSort,
   children,
   className,
@@ -62,6 +65,7 @@ export function TableToolbar({
     mobileSearch ? 'has-search' : '',
     summary ? 'has-summary' : '',
     mobileActions ? 'has-actions' : '',
+    desktopActions ? 'has-actions' : '',
     className ?? '',
   ]
     .filter(Boolean)
@@ -70,7 +74,9 @@ export function TableToolbar({
   const [sheetOpen, setSheetOpen] = useState(false);
   const { ref: dialogRef, requestClose } = useAnimatedDialog(sheetOpen, () => setSheetOpen(false));
   const useSheet = Boolean(children) && mobileSheet && mobile;
-  const hasToolbarContent = Boolean(mobileSearch || mobileActions || mobileSort || children);
+  const hasToolbarContent = Boolean(
+    mobileSearch || mobileActions || desktopActions || mobileSort || children,
+  );
 
   useEffect(() => {
     if (!sheetOpen) return;
@@ -141,6 +147,7 @@ export function TableToolbar({
         <div className="admin-table-toolbar__controls">
           {mobileSearch ? <div className="admin-table-toolbar__search">{mobileSearch}</div> : null}
           {children}
+          {desktopActions}
           {mobileActions}
         </div>
       )}

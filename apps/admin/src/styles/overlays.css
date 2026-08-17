@@ -398,6 +398,100 @@
   padding: 12px 18px max(12px, env(safe-area-inset-bottom));
 }
 
+/* Every mobile filter sheet uses one predictable full-width column. Feature
+   toolbars may still use desktop flex/grid rules, so these sheet-local rules
+   deliberately win when the controls are rendered inside the bottom sheet. */
+@media (max-width: 767px) {
+  .admin-filter-sheet__controls {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0;
+    box-sizing: border-box;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .admin-filter-sheet__controls > *,
+  .admin-filter-sheet__controls > label,
+  .admin-filter-sheet__controls > fieldset,
+  .admin-filter-sheet__controls > form,
+  .admin-filter-sheet__controls > div {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+  }
+
+  .admin-filter-sheet__controls > .admin-mobile-sort-field {
+    display: grid !important;
+    gap: 6px;
+  }
+
+  .admin-filter-sheet__controls .admin-select:has(> .admin-select__mobile-label) {
+    display: grid !important;
+    height: auto !important;
+    min-height: 0;
+    align-content: start;
+    gap: 6px;
+  }
+
+  .admin-filter-sheet__controls .admin-select__mobile-label {
+    display: block !important;
+    margin: 0;
+    color: var(--j-color-text-muted);
+    font-size: 12px;
+    font-weight: var(--j-weight-semibold);
+    line-height: 1.2;
+  }
+
+  .admin-filter-sheet__controls .admin-select__native,
+  .admin-filter-sheet__controls .admin-select__trigger,
+  .admin-filter-sheet__controls .ui-date-input,
+  .admin-filter-sheet__controls .ui-date-input input {
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box;
+  }
+
+  .admin-filter-sheet__controls .point-filter,
+  .admin-filter-sheet__controls .content-select-field {
+    display: grid !important;
+    gap: 6px;
+  }
+
+  .admin-filter-sheet__controls .content-toolbar,
+  .admin-filter-sheet__controls .content-panel-actions {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .admin-filter-sheet__controls .ui-date-range {
+    display: grid;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .admin-filter-sheet__controls .ui-date-range__label {
+    display: block;
+    margin: 0;
+    color: var(--j-color-text-muted);
+    font-size: 12px;
+    font-weight: var(--j-weight-semibold);
+    line-height: 1.2;
+  }
+
+  .admin-filter-sheet__controls .ui-date-range__controls {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 .admin-filter-sheet footer button {
   width: 100%;
   min-height: 44px;
