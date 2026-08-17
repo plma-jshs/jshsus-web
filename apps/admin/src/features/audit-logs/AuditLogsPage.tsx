@@ -2,13 +2,13 @@ import { useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { AdminAuditLog, AdminAuditLogListQuery } from '@jshsus/types';
-import { MoreHorizontal, Search } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   DateRangeField,
   Drawer,
+  AdminSearchField,
   MobileSortSelect,
-  SearchClearButton,
   TableSummary,
   TableToolbar,
 } from '../../components/ui';
@@ -104,26 +104,20 @@ export function AuditLogsPage() {
       </p>
       <TableToolbar
         mobileSearch={
-          <label className="audit-log-search">
-            <Search size={16} aria-hidden="true" />
-            <span className="sr-only">감사 로그 검색</span>
-            <input
-              type="search"
-              value={filters.q}
-              onChange={(event) => {
-                setFilters((current) => ({ ...current, q: event.target.value }));
-                setPage(1);
-              }}
-              placeholder="수행자, 작업, 대상, IP 검색"
-            />
-            <SearchClearButton
-              visible={Boolean(filters.q)}
-              onClear={() => {
-                setFilters((current) => ({ ...current, q: '' }));
-                setPage(1);
-              }}
-            />
-          </label>
+          <AdminSearchField
+            className="audit-log-search"
+            aria-label="감사 로그 검색"
+            value={filters.q}
+            onChange={(event) => {
+              setFilters((current) => ({ ...current, q: event.target.value }));
+              setPage(1);
+            }}
+            placeholder="수행자, 작업, 대상, IP 검색"
+            onClear={() => {
+              setFilters((current) => ({ ...current, q: '' }));
+              setPage(1);
+            }}
+          />
         }
         mobileSort={
           <MobileSortSelect

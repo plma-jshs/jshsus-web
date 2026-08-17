@@ -1,13 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
   AdminSelect,
+  AdminSearchField,
   MobileSortSelect,
-  SearchClearButton,
   TableSummary,
   TableToolbar,
 } from '../../components/ui';
@@ -119,25 +118,20 @@ export function PointsOverviewPage() {
         <TableToolbar
           summary={<TableSummary count={query.data?.total} suffix="명" loading={query.isPending} />}
           mobileSearch={
-            <label className="point-filter point-filter--search">
-              <Search size={16} aria-hidden="true" />
-              <input
-                value={search}
-                placeholder="학번 또는 이름"
-                aria-label="학생 검색"
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  resetPage();
-                }}
-              />
-              <SearchClearButton
-                visible={Boolean(search)}
-                onClear={() => {
-                  setSearch('');
-                  resetPage();
-                }}
-              />
-            </label>
+            <AdminSearchField
+              className="point-filter point-filter--search"
+              aria-label="학생 검색"
+              value={search}
+              placeholder="학번 또는 이름"
+              onChange={(event) => {
+                setSearch(event.target.value);
+                resetPage();
+              }}
+              onClear={() => {
+                setSearch('');
+                resetPage();
+              }}
+            />
           }
           mobileSort={
             <MobileSortSelect

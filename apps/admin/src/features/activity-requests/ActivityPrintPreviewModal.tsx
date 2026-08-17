@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Printer, X } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import type { ActivityPrintFloor, ActivityRequestPrintBatch } from '@jshsus/types';
+import { DialogActions } from '../../components/ui';
 import { ActivityPrintBatch } from './ActivityPrintBatch';
 
 const floorTabs: readonly { value: ActivityPrintFloor; label: string }[] = [
@@ -102,20 +103,19 @@ export function ActivityPrintPreviewModal({
             <p className="activity-print-preview-modal__state">인쇄할 자료가 없습니다.</p>
           ) : null}
         </div>
-        <footer className="activity-print-preview-modal__actions">
-          <button className="quiet-button" type="button" onClick={onClose}>
-            취소
-          </button>
-          <button
-            className="primary-button"
-            type="button"
-            onClick={handlePrint}
-            disabled={isLoading || !batch}
-          >
-            <Printer size={16} aria-hidden="true" />
-            인쇄
-          </button>
-        </footer>
+        <DialogActions
+          className="activity-print-preview-modal__actions"
+          onClose={onClose}
+          onConfirm={handlePrint}
+          confirmLabel={
+            <>
+              <Printer size={16} aria-hidden="true" />
+              인쇄
+            </>
+          }
+          confirmDisabled={isLoading || !batch}
+          confirmType="button"
+        />
       </div>
     </div>
   );

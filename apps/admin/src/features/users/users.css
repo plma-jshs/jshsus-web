@@ -2,8 +2,7 @@
   display: grid;
   gap: 16px;
 }
-.identity-page-toolbar,
-.identity-dialog-actions {
+.identity-page-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -376,31 +375,6 @@
 .identity-form-error {
   margin: 0;
   font-size: 13px;
-}
-.identity-dialog-actions {
-  justify-content: flex-end;
-  padding-top: 8px;
-  border-top: 0;
-}
-
-.identity-dialog-actions > button {
-  min-width: 55px;
-  min-height: 22px;
-  padding: 9px 12px;
-  border-radius: 10px;
-  font-size: 13px;
-  line-height: 1;
-}
-
-.identity-dialog-actions .identity-primary-button {
-  border-color: rgb(49 130 246);
-  background: rgb(49 130 246);
-}
-
-.identity-dialog-actions .identity-secondary-button {
-  border-color: var(--line-strong);
-  background: var(--surface);
-  color: var(--j-color-text-secondary);
 }
 .identity-role-grid {
   display: grid;

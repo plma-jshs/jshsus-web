@@ -2,19 +2,10 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { NoticeSummary, RichTextDocument, RichTextNode } from '@jshsus/types';
-import {
-  ExternalLink,
-  Eye,
-  Paperclip,
-  Pin,
-  PinOff,
-  Search,
-  Settings2,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { ExternalLink, Eye, Paperclip, Pin, PinOff, Settings2, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSearchField,
   ConfirmDialog,
   Drawer,
   MobileSortSelect,
@@ -285,25 +276,14 @@ export function NoticeManagementPage() {
           </a>
         }
         mobileSearch={
-          <label className="content-search-field">
-            <Search size={16} aria-hidden="true" />
-            <span className="sr-only">공지 검색</span>
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="제목, 작성자 검색"
-            />
-            {search ? (
-              <button
-                className="admin-search-clear"
-                type="button"
-                aria-label="검색어 지우기"
-                onClick={() => setSearch('')}
-              >
-                <X size={15} aria-hidden="true" />
-              </button>
-            ) : null}
-          </label>
+          <AdminSearchField
+            className="content-search-field"
+            aria-label="공지 검색"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="제목, 작성자 검색"
+            onClear={() => setSearch('')}
+          />
         }
         mobileSort={
           <MobileSortSelect

@@ -315,33 +315,6 @@
   color: #72807c;
   font-size: 13px;
 }
-.iam-dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 0;
-}
-
-.iam-dialog-actions > button {
-  min-width: 55px;
-  min-height: 22px;
-  padding: 9px 12px;
-  border-radius: 10px;
-  font-size: 13px;
-  line-height: 1;
-}
-
-.iam-dialog-actions .iam-primary {
-  border-color: rgb(49 130 246);
-  background: rgb(49 130 246);
-}
-
-.iam-dialog-actions .iam-secondary {
-  border-color: var(--line-strong);
-  background: var(--surface);
-  color: var(--j-color-text-secondary);
-}
 @media (max-width: 800px) {
   .iam-policy-layout {
     grid-template-columns: 1fr;

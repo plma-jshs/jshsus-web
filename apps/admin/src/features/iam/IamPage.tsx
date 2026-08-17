@@ -2,7 +2,7 @@ import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AdminRoleSummary } from '@jshsus/types';
 import { Pencil, Plus } from 'lucide-react';
-import { Dialog, useToast } from '../../components/ui';
+import { Dialog, DialogActions, useToast } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 import './iam.css';
 
@@ -330,18 +330,5 @@ export function IamPage() {
         </Dialog>
       ) : null}
     </div>
-  );
-}
-
-function DialogActions({ pending, onClose }: { pending: boolean; onClose: () => void }) {
-  return (
-    <footer className="iam-dialog-actions">
-      <button className="iam-secondary" type="button" onClick={onClose}>
-        취소
-      </button>
-      <button className="iam-primary" type="submit" disabled={pending}>
-        {pending ? '저장 중' : '저장'}
-      </button>
-    </footer>
   );
 }

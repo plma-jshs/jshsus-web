@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { formatDormBedPosition, type DormRoom } from '@jshsus/types';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { CircleAlert, DoorOpen, Eye, Search, X } from 'lucide-react';
+import { CircleAlert, DoorOpen, Eye } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSearchField,
   AdminSelect,
   Drawer,
   EmptyState,
@@ -116,26 +117,15 @@ export function DormOverviewPage() {
         <TableToolbar
           summary={<TableSummary count={rooms.length} suffix="실" loading={roomsQuery.isPending} />}
           mobileSearch={
-            <label className="dorm-search-field">
-              <Search size={16} aria-hidden="true" />
-              <input
-                className="dorm-search-control"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="호실 검색"
-                aria-label="호실 검색"
-              />
-              {search ? (
-                <button
-                  className="admin-search-clear"
-                  type="button"
-                  aria-label="검색어 지우기"
-                  onClick={() => setSearch('')}
-                >
-                  <X size={15} aria-hidden="true" />
-                </button>
-              ) : null}
-            </label>
+            <AdminSearchField
+              className="dorm-search-field"
+              inputClassName="dorm-search-control"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="호실 검색"
+              aria-label="호실 검색"
+              onClear={() => setSearch('')}
+            />
           }
           mobileSort={
             <MobileSortSelect

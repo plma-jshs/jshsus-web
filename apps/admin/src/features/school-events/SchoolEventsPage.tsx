@@ -15,6 +15,7 @@ import {
   AdminSelect,
   ConfirmDialog,
   Dialog,
+  DialogActions,
   Drawer,
   EmptyState,
   RowActionButton,
@@ -947,19 +948,12 @@ export function SchoolEventsPage() {
         title={editingId === null ? '새 일정' : '일정 수정'}
         size="lg"
         footer={
-          <div className="button-row">
-            <button className="quiet-button" type="button" onClick={() => setEditorOpen(false)}>
-              취소
-            </button>
-            <button
-              className="primary-button"
-              type="submit"
-              form="school-event-form"
-              disabled={saveMutation.isPending}
-            >
-              {saveMutation.isPending ? '저장 중' : '저장'}
-            </button>
-          </div>
+          <DialogActions
+            onClose={() => setEditorOpen(false)}
+            confirmLabel="저장"
+            confirmType="submit"
+            confirmDisabled={saveMutation.isPending}
+          />
         }
       >
         <form className="calendar-event-form" id="school-event-form" onSubmit={submit}>

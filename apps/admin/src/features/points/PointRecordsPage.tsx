@@ -2,15 +2,14 @@ import type { PointReason } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useCallback, useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
   AdminListPanel,
+  AdminSearchField,
   DateRangeField,
   MobileSortSelect,
   SelectedRowsHeaderAction,
-  SearchClearButton,
   TableSummary,
   TableSelectionCheckbox,
   TableToolbar,
@@ -277,26 +276,21 @@ export function PointRecordsPage() {
             ) : null
           }
           mobileSearch={
-            <label className="point-filter point-filter--search">
-              <Search size={17} aria-hidden="true" />
-              <span className="sr-only">검색</span>
-              <input
-                value={search}
-                placeholder="학번, 이름, 사유 또는 처리자"
-                aria-label="상벌점 기록 검색"
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  resetPage();
-                }}
-              />
-              <SearchClearButton
-                visible={Boolean(search)}
-                onClear={() => {
-                  setSearch('');
-                  resetPage();
-                }}
-              />
-            </label>
+            <AdminSearchField
+              className="point-filter point-filter--search"
+              iconSize={17}
+              aria-label="상벌점 기록 검색"
+              value={search}
+              placeholder="학번, 이름, 사유 또는 처리자"
+              onChange={(event) => {
+                setSearch(event.target.value);
+                resetPage();
+              }}
+              onClear={() => {
+                setSearch('');
+                resetPage();
+              }}
+            />
           }
           mobileSort={
             <MobileSortSelect

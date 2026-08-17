@@ -14,6 +14,7 @@ import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
   Button,
+  DialogActions,
   Dialog,
   RowActionButton,
   RowActions,
@@ -748,17 +749,15 @@ export function DormAssignmentPanel({
             : undefined
         }
         footer={
-          <>
-            <Button onClick={() => setMovingAssignment(null)}>취소</Button>
-            <Button
-              variant="primary"
-              loading={moveMutation.isPending}
-              disabled={!moveRoomId}
-              onClick={() => moveMutation.mutate()}
-            >
-              이동
-            </Button>
-          </>
+          <DialogActions
+            onClose={() => setMovingAssignment(null)}
+            onConfirm={() => moveMutation.mutate()}
+            confirmLabel="이동"
+            confirmDisabled={!moveRoomId}
+            pending={moveMutation.isPending}
+            pendingLabel="이동 중"
+            confirmType="button"
+          />
         }
       >
         <div className="dorm-dialog-form">
@@ -808,16 +807,16 @@ export function DormAssignmentPanel({
         }
         size="sm"
         footer={
-          <>
-            <Button onClick={() => setCancelTarget(null)}>닫기</Button>
-            <Button
-              variant="danger"
-              loading={cancelMutation.isPending}
-              onClick={() => cancelTarget && cancelMutation.mutate(cancelTarget.id)}
-            >
-              배정 취소
-            </Button>
-          </>
+          <DialogActions
+            onClose={() => setCancelTarget(null)}
+            onConfirm={() => cancelTarget && cancelMutation.mutate(cancelTarget.id)}
+            cancelLabel="닫기"
+            confirmLabel="배정 취소"
+            confirmVariant="danger"
+            pending={cancelMutation.isPending}
+            pendingLabel="처리 중"
+            confirmType="button"
+          />
         }
       >
         <p>취소 후에는 배정 목록에서 제거되며, 필요하면 다시 배정할 수 있습니다.</p>

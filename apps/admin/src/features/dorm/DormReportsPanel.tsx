@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react';
 import type { DormReport, DormReportStatus } from '@jshsus/types';
 import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { ClipboardCheck, Search, X } from 'lucide-react';
+import { ClipboardCheck } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSearchField,
   AdminSelect,
-  Button,
+  DialogActions,
   Drawer,
   MobileSortSelect,
   RowActionButton,
@@ -139,26 +140,15 @@ export function DormReportsPanel({
       <TableToolbar
         summary={<TableSummary count={filtered.length} suffix="건" loading={loading} />}
         mobileSearch={
-          <label className="dorm-search-field">
-            <Search size={16} aria-hidden="true" />
-            <input
-              className="dorm-search-control"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="호실, 학생, 내용 검색"
-              aria-label="민원 검색"
-            />
-            {search ? (
-              <button
-                className="admin-search-clear"
-                type="button"
-                aria-label="검색어 지우기"
-                onClick={() => setSearch('')}
-              >
-                <X size={15} aria-hidden="true" />
-              </button>
-            ) : null}
-          </label>
+          <AdminSearchField
+            className="dorm-search-field"
+            inputClassName="dorm-search-control"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="호실, 학생, 내용 검색"
+            aria-label="민원 검색"
+            onClear={() => setSearch('')}
+          />
         }
         mobileSort={
           <MobileSortSelect
@@ -213,16 +203,12 @@ export function DormReportsPanel({
             : undefined
         }
         footer={
-          <>
-            <Button onClick={() => setSelected(null)}>취소</Button>
-            <Button
-              variant="primary"
-              loading={updateMutation.isPending}
-              onClick={() => updateMutation.mutate()}
-            >
-              저장
-            </Button>
-          </>
+          <DialogActions
+            onClose={() => setSelected(null)}
+            onConfirm={() => updateMutation.mutate()}
+            pending={updateMutation.isPending}
+            confirmType="button"
+          />
         }
       >
         {selected ? (

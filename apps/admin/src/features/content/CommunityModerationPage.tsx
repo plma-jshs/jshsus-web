@@ -8,19 +8,10 @@ import type {
   RichTextDocument,
   RichTextNode,
 } from '@jshsus/types';
-import {
-  Eye,
-  EyeOff,
-  Paperclip,
-  Pin,
-  PinOff,
-  Search,
-  Settings2,
-  ShieldAlert,
-  X,
-} from 'lucide-react';
+import { Eye, EyeOff, Paperclip, Pin, PinOff, Settings2, ShieldAlert } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
+  AdminSearchField,
   AdminSelect,
   ConfirmDialog,
   Drawer,
@@ -551,25 +542,14 @@ export function CommunityModerationPage({
         count={postsQuery.data?.length ?? 0}
         loading={postsQuery.isPending}
         mobileSearch={
-          <label className="content-search-field">
-            <Search size={16} aria-hidden="true" />
-            <span className="sr-only">게시글 검색</span>
-            <input
-              value={postSearch}
-              onChange={(event) => setPostSearch(event.target.value)}
-              placeholder="제목, 작성자 검색"
-            />
-            {postSearch ? (
-              <button
-                className="admin-search-clear"
-                type="button"
-                aria-label="검색어 지우기"
-                onClick={() => setPostSearch('')}
-              >
-                <X size={15} aria-hidden="true" />
-              </button>
-            ) : null}
-          </label>
+          <AdminSearchField
+            className="content-search-field"
+            aria-label="게시글 검색"
+            value={postSearch}
+            onChange={(event) => setPostSearch(event.target.value)}
+            placeholder="제목, 작성자 검색"
+            onClear={() => setPostSearch('')}
+          />
         }
         mobileSort={
           <MobileSortSelect

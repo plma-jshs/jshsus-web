@@ -1,19 +1,20 @@
 import type { PointReason } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Pencil, Search, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
   AdminListPanel,
+  AdminSearchField,
   Button,
   Dialog,
+  DialogActions,
   FormField,
   MobileSortSelect,
   RowActionButton,
   RowActions,
-  SearchClearButton,
   TableSummary,
   TableToolbar,
   useToast,
@@ -191,25 +192,20 @@ export function PointReasonsPage() {
               />
             }
             mobileSearch={
-              <label className="point-filter point-filter--search">
-                <Search size={16} aria-hidden="true" />
-                <input
-                  value={search}
-                  placeholder="사유 또는 사유코드"
-                  aria-label="사유 검색"
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    resetPage();
-                  }}
-                />
-                <SearchClearButton
-                  visible={Boolean(search)}
-                  onClear={() => {
-                    setSearch('');
-                    resetPage();
-                  }}
-                />
-              </label>
+              <AdminSearchField
+                className="point-filter point-filter--search"
+                aria-label="사유 검색"
+                value={search}
+                placeholder="사유 또는 사유코드"
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  resetPage();
+                }}
+                onClear={() => {
+                  setSearch('');
+                  resetPage();
+                }}
+              />
             }
             mobileActions={
               <Button variant="primary" onClick={openCreate}>
@@ -303,19 +299,13 @@ export function PointReasonsPage() {
         onClose={() => setEditor(null)}
         title={editor?.mode === 'edit' ? '사유 수정' : '사유 추가'}
         footer={
-          <>
-            <Button variant="ghost" onClick={() => setEditor(null)}>
-              취소
-            </Button>
-            <Button
-              variant="primary"
-              disabled={!form.comment.trim() || Number.isNaN(Number(form.point))}
-              loading={saveMutation.isPending}
-              onClick={() => saveMutation.mutate()}
-            >
-              저장
-            </Button>
-          </>
+          <DialogActions
+            onClose={() => setEditor(null)}
+            onConfirm={() => saveMutation.mutate()}
+            confirmDisabled={!form.comment.trim() || Number.isNaN(Number(form.point))}
+            pending={saveMutation.isPending}
+            confirmType="button"
+          />
         }
       >
         <div className="point-dialog-form">
@@ -369,18 +359,15 @@ export function PointReasonsPage() {
         description={deleteTarget?.comment}
         size="sm"
         footer={
-          <>
-            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
-              취소
-            </Button>
-            <Button
-              variant="danger"
-              loading={deleteMutation.isPending}
-              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget)}
-            >
-              삭제
-            </Button>
-          </>
+          <DialogActions
+            onClose={() => setDeleteTarget(null)}
+            onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget)}
+            confirmLabel="삭제"
+            confirmVariant="danger"
+            pending={deleteMutation.isPending}
+            pendingLabel="삭제 중"
+            confirmType="button"
+          />
         }
       >
         <p className="point-dialog-copy">

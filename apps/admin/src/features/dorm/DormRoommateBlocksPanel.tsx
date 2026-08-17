@@ -2,13 +2,13 @@ import { useMemo, useState } from 'react';
 import type { DormRoommateBlock, DormStudentOption } from '@jshsus/types';
 import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Search, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   Button,
+  AdminSearchField,
   RowActionButton,
   RowActions,
-  SearchClearButton,
   TableSummary,
   TableToolbar,
   useToast,
@@ -148,22 +148,19 @@ export function DormRoommateBlocksPanel({
       <div className="dorm-block-form">
         <label>
           학생
-          <span className="dorm-inline-search-field">
-            <Search size={15} aria-hidden="true" />
-            <input
-              list="dorm-block-students"
-              value={studentInput}
-              onChange={(event) => {
-                setStudentInput(event.target.value);
-                setBlockedInput('');
-              }}
-              placeholder="학번 또는 이름 검색"
-            />
-            <SearchClearButton
-              visible={Boolean(studentInput)}
-              onClear={() => setStudentInput('')}
-            />
-          </span>
+          <AdminSearchField
+            as="span"
+            className="dorm-inline-search-field"
+            iconSize={15}
+            list="dorm-block-students"
+            value={studentInput}
+            onChange={(event) => {
+              setStudentInput(event.target.value);
+              setBlockedInput('');
+            }}
+            placeholder="학번 또는 이름 검색"
+            onClear={() => setStudentInput('')}
+          />
         </label>
         <datalist id="dorm-block-students">
           {students.map((student) => (
@@ -172,19 +169,16 @@ export function DormRoommateBlocksPanel({
         </datalist>
         <label>
           함께 배정 금지 학생
-          <span className="dorm-inline-search-field">
-            <Search size={15} aria-hidden="true" />
-            <input
-              list="dorm-blocked-students"
-              value={blockedInput}
-              onChange={(event) => setBlockedInput(event.target.value)}
-              placeholder="학번 또는 이름 검색"
-            />
-            <SearchClearButton
-              visible={Boolean(blockedInput)}
-              onClear={() => setBlockedInput('')}
-            />
-          </span>
+          <AdminSearchField
+            as="span"
+            className="dorm-inline-search-field"
+            iconSize={15}
+            list="dorm-blocked-students"
+            value={blockedInput}
+            onChange={(event) => setBlockedInput(event.target.value)}
+            placeholder="학번 또는 이름 검색"
+            onClear={() => setBlockedInput('')}
+          />
         </label>
         <datalist id="dorm-blocked-students">
           {roommateOptions.map((student) => (

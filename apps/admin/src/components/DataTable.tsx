@@ -1,4 +1,3 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   flexRender,
   getCoreRowModel,
@@ -22,7 +21,7 @@ import {
   type DataTableWidthPreset,
 } from './dataTableConfig';
 import { EmptyState, LoadingState } from './ui/EmptyState';
-import { PageSizeSelect } from './ui/PageSizeSelect';
+import { TablePagination } from './ui/TablePagination';
 
 export type DataTableAlignment = 'left' | 'center' | 'right';
 
@@ -221,7 +220,6 @@ export function DataTable<T>({
 
   const resolvedPageCount = Math.max(pagination?.pageCount ?? table.getPageCount(), 1);
   const currentPageIndex = pagination?.pageIndex ?? table.getState().pagination.pageIndex;
-  const currentPage = Math.min(currentPageIndex + 1, resolvedPageCount);
   const hasHydratedTableQuery = useRef(false);
 
   useEffect(() => {
@@ -270,14 +268,6 @@ export function DataTable<T>({
   const changePageSize = (nextPageSize: number) => {
     syncTableQuery(1, nextPageSize);
     (pagination?.onPageSizeChange ?? onPageSizeChange)?.(nextPageSize);
-  };
-
-  const submitPageInput = (value: string) => {
-    const requestedPage = Number(value);
-    if (!Number.isInteger(requestedPage) || requestedPage < 1 || requestedPage === currentPage) {
-      return;
-    }
-    moveToPage(requestedPage - 1);
   };
 
   return (
@@ -430,75 +420,16 @@ export function DataTable<T>({
       {!loading &&
       (pagination?.totalCount ?? visibleRows.length) > 0 &&
       (alwaysShowPagination || resolvedPageCount > 1) ? (
-        <nav
-          className="admin-table-pagination admin-table-pagination--compact"
-          aria-label="페이지 이동"
-        >
-          <div className="admin-table-pagination__summary">
-            {pagination?.onPageSizeChange || onPageSizeChange ? (
-              <PageSizeSelect
-                value={pagination?.pageSize ?? table.getState().pagination.pageSize}
-                onChange={changePageSize}
-                ariaLabel="페이지당 표시 건수"
-              />
-            ) : null}
-            <span className="admin-table-pagination__range admin-table-pagination__mobile-status">
-              {pagination?.totalCount
-                ? `전체 ${pagination.totalCount.toLocaleString('ko-KR')}건 중 ${
-                    currentPageIndex * (pagination.pageSize ?? 0) + 1
-                  }-${Math.min(
-                    (currentPageIndex + 1) * (pagination.pageSize ?? 0),
-                    pagination.totalCount,
-                  )}`
-                : `${currentPage} / ${resolvedPageCount} 페이지`}
-            </span>
-          </div>
-          <div className="admin-table-pagination__controls">
-            <button
-              className="admin-table-pagination__previous"
-              type="button"
-              aria-label="이전 페이지"
-              onClick={() => moveToPage(currentPageIndex - 1)}
-              disabled={currentPage <= 1}
-            >
-              <ChevronLeft size={16} aria-hidden="true" />
-            </button>
-            <label className="admin-table-pagination__input-label">
-              <span className="sr-only">현재 페이지</span>
-              <input
-                key={currentPage}
-                inputMode="numeric"
-                type="text"
-                defaultValue={String(currentPage)}
-                onChange={(event) => {
-                  event.currentTarget.value = event.currentTarget.value.replace(/\D/g, '');
-                }}
-                onBlur={(event) => submitPageInput(event.currentTarget.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault();
-                    submitPageInput(event.currentTarget.value);
-                    event.currentTarget.blur();
-                  }
-                }}
-                aria-label="페이지 번호"
-              />
-            </label>
-            <span className="admin-table-pagination__total-pages" aria-hidden="true">
-              <span>/</span>
-              <span>{resolvedPageCount}</span>
-            </span>
-            <button
-              className="admin-table-pagination__next"
-              type="button"
-              aria-label="다음 페이지"
-              onClick={() => moveToPage(currentPageIndex + 1)}
-              disabled={currentPage >= resolvedPageCount}
-            >
-              <ChevronRight size={16} aria-hidden="true" />
-            </button>
-          </div>
-        </nav>
+        <TablePagination
+          pageIndex={currentPageIndex}
+          pageCount={resolvedPageCount}
+          pageSize={pagination?.pageSize ?? table.getState().pagination.pageSize}
+          totalCount={pagination?.totalCount}
+          onPageChange={moveToPage}
+          onPageSizeChange={
+            pagination?.onPageSizeChange || onPageSizeChange ? changePageSize : undefined
+          }
+        />
       ) : null}
     </div>
   );

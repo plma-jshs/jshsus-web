@@ -12,20 +12,6 @@ export type TableToolbarProps = HTMLAttributes<HTMLDivElement> & {
   mobileSheetTitle?: string;
 };
 
-export function SearchClearButton({ visible, onClear }: { visible: boolean; onClear: () => void }) {
-  if (!visible) return null;
-  return (
-    <button
-      className="admin-search-clear"
-      type="button"
-      aria-label="검색어 지우기"
-      onClick={onClear}
-    >
-      <X size={15} aria-hidden="true" />
-    </button>
-  );
-}
-
 export function TableSummary({
   count,
   suffix,

@@ -1,5 +1,6 @@
 import { AlertTriangle } from 'lucide-react';
 import { Dialog } from './Dialog';
+import { DialogActions } from './DialogActions';
 
 export function ConfirmDialog({
   open,
@@ -28,14 +29,15 @@ export function ConfirmDialog({
       className="ui-confirm-dialog"
       onClose={onClose}
       footer={
-        <div className="button-row">
-          <button className="quiet-button" type="button" onClick={onClose}>
-            취소
-          </button>
-          <button className="danger-button" type="button" disabled={pending} onClick={onConfirm}>
-            {pending ? '처리 중' : confirmLabel}
-          </button>
-        </div>
+        <DialogActions
+          onClose={onClose}
+          onConfirm={onConfirm}
+          pending={pending}
+          confirmLabel={confirmLabel}
+          pendingLabel="처리 중"
+          confirmVariant="danger"
+          confirmType="button"
+        />
       }
     >
       <div className="ui-confirm-dialog__content">

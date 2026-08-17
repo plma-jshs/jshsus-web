@@ -4,6 +4,7 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { Check, ExternalLink, Search, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
+  DialogActions,
   Drawer,
   RowActionButton,
   RowActions,
@@ -375,14 +376,12 @@ export function WakeSongsPage() {
                 required
               />
             </label>
-            <div className="button-row">
-              <button className="primary-button" type="submit" disabled={rejectMutation.isPending}>
-                반려 확정
-              </button>
-              <button className="quiet-button" type="button" onClick={() => setRejectingId(null)}>
-                취소
-              </button>
-            </div>
+            <DialogActions
+              confirmLabel="반려 확정"
+              pendingLabel="처리 중"
+              confirmDisabled={rejectMutation.isPending}
+              onClose={() => setRejectingId(null)}
+            />
           </form>
         </section>
       ) : null}

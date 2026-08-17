@@ -7,16 +7,17 @@ import type {
 } from '@jshsus/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Check, Search, X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
+  AdminSearchField,
   Button,
+  DialogActions,
   Drawer,
   MobileSortSelect,
   RowActionButton,
   RowActions,
-  SearchClearButton,
   TableToolbar,
   useToast,
 } from '../../components/ui';
@@ -284,26 +285,21 @@ export function ActivityReviewPage() {
             summary={requestsQuery.data ? `대기 ${requestsQuery.data.total}건` : '대기 탐구활동서'}
             className="operation-list-toolbar operation-review-toolbar"
             mobileSearch={
-              <label className="operation-search-field">
-                <Search size={15} aria-hidden="true" />
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    setPage(1);
-                  }}
-                  placeholder="학생, 장소, 내용 검색"
-                  aria-label="대기 탐구활동서 검색"
-                />
-                <SearchClearButton
-                  visible={Boolean(search)}
-                  onClear={() => {
-                    setSearch('');
-                    setPage(1);
-                  }}
-                />
-              </label>
+              <AdminSearchField
+                className="operation-search-field"
+                iconSize={15}
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(1);
+                }}
+                placeholder="학생, 장소, 내용 검색"
+                aria-label="대기 탐구활동서 검색"
+                onClear={() => {
+                  setSearch('');
+                  setPage(1);
+                }}
+              />
             }
             mobileActions={
               <Button
@@ -388,19 +384,12 @@ export function ActivityReviewPage() {
                 required
               />
             </label>
-            <div className="button-row">
-              <button className="primary-button" type="submit" disabled={rejectMutation.isPending}>
-                반려
-              </button>
-              <button
-                className="quiet-button"
-                type="button"
-                onClick={() => setRejectForm({ id: 0, reason: '' })}
-                disabled={rejectMutation.isPending}
-              >
-                취소
-              </button>
-            </div>
+            <DialogActions
+              confirmLabel="반려"
+              pendingLabel="처리 중"
+              confirmDisabled={rejectMutation.isPending}
+              onClose={() => setRejectForm({ id: 0, reason: '' })}
+            />
           </form>
           {rejectMutation.isError ? <p className="form-error">반려 처리에 실패했습니다.</p> : null}
         </section>
@@ -415,25 +404,15 @@ export function ActivityReviewPage() {
         }}
         title="탐구활동서 작성"
         footer={
-          <>
-            <Button
-              type="button"
-              onClick={() => {
-                setCreateOpen(false);
-                setShowDaytimeSlots(false);
-              }}
-            >
-              취소
-            </Button>
-            <Button
-              type="submit"
-              form="activity-request-create-form"
-              variant="primary"
-              loading={createMutation.isPending}
-            >
-              작성
-            </Button>
-          </>
+          <DialogActions
+            onClose={() => {
+              setCreateOpen(false);
+              setShowDaytimeSlots(false);
+            }}
+            confirmLabel="작성"
+            confirmType="submit"
+            confirmDisabled={createMutation.isPending}
+          />
         }
         className="activity-create-drawer"
       >
@@ -449,19 +428,15 @@ export function ActivityReviewPage() {
             <header>
               <h3>참여 학생</h3>
             </header>
-            <label className="activity-student-search-field">
-              <Search size={15} aria-hidden="true" />
-              <input
-                type="search"
-                value={studentSearch}
-                onChange={(event) => setStudentSearch(event.target.value)}
-                placeholder="학번 또는 이름"
-              />
-              <SearchClearButton
-                visible={Boolean(studentSearch)}
-                onClear={() => setStudentSearch('')}
-              />
-            </label>
+            <AdminSearchField
+              className="activity-student-search-field"
+              iconSize={15}
+              value={studentSearch}
+              onChange={(event) => setStudentSearch(event.target.value)}
+              placeholder="학번 또는 이름"
+              aria-label="참여 학생 검색"
+              onClear={() => setStudentSearch('')}
+            />
             <div className="activity-student-results" role="list" aria-label="학생 검색 결과">
               {studentsQuery.isPending ? <p>학생을 불러오는 중입니다.</p> : null}
               {studentsQuery.isError ? (

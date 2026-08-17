@@ -8,16 +8,17 @@ import type {
 } from '@jshsus/types';
 import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { ChevronRight, Printer, Search, Users } from 'lucide-react';
+import { ChevronRight, Printer, Users } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
+  AdminSearchField,
   AdminSelect,
   DateRangeField,
   Dialog,
+  DialogActions,
   Drawer,
   MobileSortSelect,
-  SearchClearButton,
   TableSummary,
   TableToolbar,
   useToast,
@@ -432,26 +433,21 @@ export function ActivityOverviewPage() {
             }
             className="operation-list-toolbar"
             mobileSearch={
-              <label className="operation-search-field">
-                <span className="sr-only">탐구활동서 검색</span>
-                <Search size={15} aria-hidden="true" />
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    resetPage();
-                  }}
-                  placeholder="내용, 인원, 장소, 지도교사 검색"
-                />
-                <SearchClearButton
-                  visible={Boolean(search)}
-                  onClear={() => {
-                    setSearch('');
-                    resetPage();
-                  }}
-                />
-              </label>
+              <AdminSearchField
+                className="operation-search-field"
+                iconSize={15}
+                aria-label="탐구활동서 검색"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  resetPage();
+                }}
+                placeholder="내용, 인원, 장소, 지도교사 검색"
+                onClear={() => {
+                  setSearch('');
+                  resetPage();
+                }}
+              />
             }
             mobileSort={
               <MobileSortSelect
@@ -602,11 +598,12 @@ export function ActivityOverviewPage() {
               required
             />
           </label>
-          <div className="button-row">
-            <button className="primary-button" type="submit" disabled={statusMutation.isPending}>
-              반려
-            </button>
-          </div>
+          <DialogActions
+            showCancel={false}
+            confirmLabel="반려"
+            pendingLabel="처리 중"
+            confirmDisabled={statusMutation.isPending}
+          />
           {statusMutation.isError ? <p className="form-error">반려 처리에 실패했습니다.</p> : null}
         </form>
       </Dialog>

@@ -1,19 +1,19 @@
 import type { PointReason } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Check, Pencil, Search, X } from 'lucide-react';
+import { Check, Pencil, X } from 'lucide-react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
 import { loadExcelJs } from '../../shared/lib/excel';
 import {
   AdminSelect,
+  AdminSearchField,
   Button,
   FormField,
   RowActionButton,
   RowActions,
   SelectedRowsHeaderAction,
-  SearchClearButton,
   TableSummary,
   TableSelectionCheckbox,
   TableToolbar,
@@ -619,34 +619,34 @@ export function PointAwardPage() {
         <form className="point-award-combined" onSubmit={addToQueue}>
           <div className="point-student-picker-section">
             <FormField label="학생 검색" className="point-student-search">
-              <div className="point-search-combobox">
-                <Search size={16} aria-hidden="true" />
-                <input
-                  value={search}
-                  placeholder="학번 또는 이름"
-                  autoComplete="off"
-                  disabled={isEditingQueueItem}
-                  onFocus={(event) => {
-                    setSearchOpen(true);
-                    if (search) event.currentTarget.select();
-                  }}
-                  onPointerDown={() => setSearchOpen(true)}
-                  onClick={() => setSearchOpen(true)}
-                  onBlur={() => setSearchOpen(false)}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    setDirect(emptyDirectStudentSelection);
-                    directMutation.reset();
-                    setSearchOpen(true);
-                  }}
-                />
-                <SearchClearButton
-                  visible={Boolean(search) && !isEditingQueueItem}
-                  onClear={() => {
-                    setSearch('');
-                    setSearchOpen(false);
-                  }}
-                />
+              <AdminSearchField
+                as="span"
+                className="point-search-combobox"
+                iconSize={16}
+                aria-label="학생 검색"
+                value={search}
+                placeholder="학번 또는 이름"
+                autoComplete="off"
+                disabled={isEditingQueueItem}
+                onFocus={(event) => {
+                  setSearchOpen(true);
+                  if (search) event.currentTarget.select();
+                }}
+                onPointerDown={() => setSearchOpen(true)}
+                onClick={() => setSearchOpen(true)}
+                onBlur={() => setSearchOpen(false)}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setDirect(emptyDirectStudentSelection);
+                  directMutation.reset();
+                  setSearchOpen(true);
+                }}
+                clearable={!isEditingQueueItem}
+                onClear={() => {
+                  setSearch('');
+                  setSearchOpen(false);
+                }}
+              >
                 {searchOpen && !isEditingQueueItem ? (
                   <div className="point-search-results" role="listbox" aria-label="학생 검색 결과">
                     {searchQuery.isLoading ? <p>불러오는 중입니다.</p> : null}
@@ -670,7 +670,7 @@ export function PointAwardPage() {
                     ) : null}
                   </div>
                 ) : null}
-              </div>
+              </AdminSearchField>
             </FormField>
             <div className="point-direct-picker">
               <FormField label="학년">

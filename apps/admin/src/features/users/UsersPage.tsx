@@ -30,19 +30,19 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
-  Search,
   ShieldAlert,
   ShieldCheck,
 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
+  AdminSearchField,
   Dialog,
+  DialogActions,
   type DialogSize,
   RowActionButton,
   RowActions,
   SegmentedTabs,
-  SearchClearButton,
   TableSummary,
   TableToolbar,
   useToast,
@@ -1090,20 +1090,15 @@ export function UsersPage() {
         <TableToolbar
           summary={<TableSummary count={data?.total} suffix="명" loading={activeQuery.isPending} />}
           mobileSearch={
-            <label className="identity-field identity-search-field">
-              <Search size={16} aria-hidden="true" />
-              <input
-                name="q"
-                value={filters.q ?? ''}
-                aria-label="학생·교직원 검색"
-                onChange={(event) => updateFilters({ q: event.currentTarget.value })}
-                placeholder="학번·교사번호, 이름 또는 역할 검색"
-              />
-              <SearchClearButton
-                visible={Boolean(filters.q)}
-                onClear={() => updateFilters({ q: '' })}
-              />
-            </label>
+            <AdminSearchField
+              className="identity-field identity-search-field"
+              name="q"
+              value={filters.q ?? ''}
+              aria-label="학생·교직원 검색"
+              onChange={(event) => updateFilters({ q: event.currentTarget.value })}
+              placeholder="학번·교사번호, 이름 또는 역할 검색"
+              onClear={() => updateFilters({ q: '' })}
+            />
           }
         >
           <div className={`identity-filter-bar is-${tab}`}>
@@ -1379,16 +1374,15 @@ export function UsersPage() {
             ) : null}
 
             {rosterPreview ? (
-              <footer className="identity-dialog-actions">
-                <button
-                  className="identity-primary-button"
-                  type="button"
-                  disabled={!rosterPreview.canApply || applyRoster.isPending}
-                  onClick={() => applyRoster.mutate(rosterPayload())}
-                >
-                  {applyRoster.isPending ? '반영 중' : '명단 반영'}
-                </button>
-              </footer>
+              <DialogActions
+                showCancel={false}
+                confirmLabel="명단 반영"
+                pendingLabel="반영 중"
+                pending={applyRoster.isPending}
+                confirmDisabled={!rosterPreview.canApply}
+                confirmType="button"
+                onConfirm={() => applyRoster.mutate(rosterPayload())}
+              />
             ) : null}
           </div>
         </IdentityDialog>
@@ -1582,33 +1576,25 @@ export function UsersPage() {
                 인증코드를 발급하지 못했습니다. 번호 형식과 권한을 확인해 주세요.
               </p>
             ) : null}
-            <footer className="identity-dialog-actions">
-              <button
-                className="identity-secondary-button"
-                type="button"
-                onClick={() => setDialog(null)}
-              >
-                닫기
-              </button>
-              <button
-                className="identity-primary-button"
-                type="button"
-                disabled={issueActivation.isPending}
-                onClick={() =>
-                  issueActivation.mutate({
-                    identityType: dialog.identity.kind,
-                    identityNumber: identityNumber(dialog.identity),
-                    schoolYear:
-                      dialog.identity.kind === 'student'
-                        ? dialog.identity.value.schoolYear
-                        : undefined,
-                    force: true,
-                  })
-                }
-              >
-                {issueActivation.isPending ? '발급 중' : issuedActivation ? '재발급' : '발급'}
-              </button>
-            </footer>
+            <DialogActions
+              onClose={() => setDialog(null)}
+              cancelLabel="닫기"
+              confirmLabel={issuedActivation ? '재발급' : '발급'}
+              pendingLabel="발급 중"
+              pending={issueActivation.isPending}
+              confirmType="button"
+              onConfirm={() =>
+                issueActivation.mutate({
+                  identityType: dialog.identity.kind,
+                  identityNumber: identityNumber(dialog.identity),
+                  schoolYear:
+                    dialog.identity.kind === 'student'
+                      ? dialog.identity.value.schoolYear
+                      : undefined,
+                  force: true,
+                })
+              }
+            />
           </div>
         </IdentityDialog>
       ) : null}
@@ -1751,19 +1737,6 @@ function IdentityActions({
         ) : null}
       </div>
     </RowActions>
-  );
-}
-
-function DialogActions({ pending, onClose }: { pending: boolean; onClose: () => void }) {
-  return (
-    <footer className="identity-dialog-actions">
-      <button className="identity-secondary-button" type="button" onClick={onClose}>
-        취소
-      </button>
-      <button className="identity-primary-button" type="submit" disabled={pending}>
-        {pending ? '저장 중' : '저장'}
-      </button>
-    </footer>
   );
 }
 

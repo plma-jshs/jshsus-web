@@ -1,16 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Check, LogOut, Search } from 'lucide-react';
+import { Check, LogOut } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
   AdminListPanel,
+  AdminSearchField,
   Button,
   Dialog,
+  DialogActions,
   FormField,
   RowActions,
-  SearchClearButton,
   SegmentedTabs,
   TableSummary,
   TableToolbar,
@@ -373,25 +374,20 @@ export function PointDeparturesPage() {
                   />
                 }
                 mobileSearch={
-                  <label className="point-filter point-filter--search">
-                    <Search size={16} aria-hidden="true" />
-                    <input
-                      value={search}
-                      placeholder="학번 또는 이름"
-                      aria-label="퇴사 대상 검색"
-                      onChange={(event) => {
-                        setSearch(event.target.value);
-                        resetPages();
-                      }}
-                    />
-                    <SearchClearButton
-                      visible={Boolean(search)}
-                      onClear={() => {
-                        setSearch('');
-                        resetPages();
-                      }}
-                    />
-                  </label>
+                  <AdminSearchField
+                    className="point-filter point-filter--search"
+                    aria-label="퇴사 대상 검색"
+                    value={search}
+                    placeholder="학번 또는 이름"
+                    onChange={(event) => {
+                      setSearch(event.target.value);
+                      resetPages();
+                    }}
+                    onClear={() => {
+                      setSearch('');
+                      resetPages();
+                    }}
+                  />
                 }
               >
                 <label className="point-filter">
@@ -608,19 +604,16 @@ export function PointDeparturesPage() {
         }
         size="sm"
         footer={
-          <>
-            <Button variant="ghost" onClick={() => setSelected(null)}>
-              취소
-            </Button>
-            <Button
-              variant="danger"
-              disabled={!memo.trim()}
-              loading={approveMutation.isPending}
-              onClick={() => approveMutation.mutate()}
-            >
-              퇴사 처리
-            </Button>
-          </>
+          <DialogActions
+            onClose={() => setSelected(null)}
+            onConfirm={() => approveMutation.mutate()}
+            confirmLabel="퇴사 처리"
+            confirmVariant="danger"
+            confirmDisabled={!memo.trim()}
+            pending={approveMutation.isPending}
+            pendingLabel="처리 중"
+            confirmType="button"
+          />
         }
       >
         <div className="point-dialog-form">
@@ -654,19 +647,19 @@ export function PointDeparturesPage() {
         }
         size="sm"
         footer={
-          <>
-            <Button variant="ghost" onClick={() => setApplyOpen(false)}>
-              취소
-            </Button>
-            <Button
-              variant="primary"
-              loading={applyMutation.isPending}
-              onClick={() => applyMutation.mutate()}
-            >
-              <Check size={17} aria-hidden="true" />
-              적용
-            </Button>
-          </>
+          <DialogActions
+            onClose={() => setApplyOpen(false)}
+            onConfirm={() => applyMutation.mutate()}
+            confirmLabel={
+              <>
+                <Check size={17} aria-hidden="true" />
+                적용
+              </>
+            }
+            pending={applyMutation.isPending}
+            pendingLabel="처리 중"
+            confirmType="button"
+          />
         }
       >
         <p className="point-dialog-copy">
