@@ -166,9 +166,7 @@
 }
 
 .admin-dashboard--loading {
-  min-height: 180px;
   gap: 14px;
-  place-items: center;
 }
 
 .admin-dashboard-skeleton__heading,

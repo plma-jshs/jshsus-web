@@ -198,8 +198,8 @@
 }
 
 .admin-data-table__loading-cell {
-  height: 50px;
-  padding-block: 10px !important;
+  height: 116px;
+  padding: 0 !important;
   text-align: center !important;
   vertical-align: middle;
 }
