@@ -716,7 +716,7 @@ textarea.ui-control {
   max-width: 128px;
   height: 36px;
   min-height: 36px;
-  padding: 0;
+  padding: 0 !important;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -760,6 +760,14 @@ textarea.ui-control {
   overflow: visible;
   text-overflow: clip;
   white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .admin-select.ui-page-size-select.admin-select--native-mobile .admin-select__native {
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+  }
 }
 
 .ui-control--xs {
