@@ -9,6 +9,8 @@ export {
 export type { YouTubeIframeApi, YouTubeSegmentPlayerProps } from './YouTubeSegmentPlayer';
 export { ResilientImage } from './ResilientImage';
 export type { ResilientImageProps } from './ResilientImage';
+export { SearchField } from './SearchField';
+export type { SearchFieldProps } from './SearchField';
 export { SegmentedControl } from './SegmentedControl';
 export type { SegmentedControlOption } from './SegmentedControl';
 export { ToastProvider, useToast } from './Toast';

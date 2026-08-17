@@ -1,17 +1,9 @@
 import type { LucideIcon } from 'lucide-react';
-import {
-  ChevronRight,
-  Inbox,
-  PenLine,
-  Search,
-  SlidersHorizontal,
-  TriangleAlert,
-  X,
-} from 'lucide-react';
+import { ChevronRight, Inbox, PenLine, SlidersHorizontal, TriangleAlert, X } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
 import { useEffect, useId, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { SegmentedControl } from '@jshsus/ui';
+import { SearchField as SharedSearchField, SegmentedControl } from '@jshsus/ui';
 import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 import type { BreadcrumbItem } from './pageHierarchy';
 
@@ -164,26 +156,18 @@ export function SearchField({
   label?: string;
 }) {
   return (
-    <div className="page-search-field">
-      <Search size={15} aria-hidden="true" />
-      <input
-        aria-label={label}
-        type="text"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-      />
-      {value ? (
-        <button
-          aria-label="검색어 지우기"
-          className="page-search-field__clear"
-          type="button"
-          onClick={() => onChange('')}
-        >
-          <X size={15} aria-hidden="true" />
-        </button>
-      ) : null}
-    </div>
+    <SharedSearchField
+      as="div"
+      className="page-search-field"
+      type="text"
+      iconSize={15}
+      aria-label={label}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      onClear={() => onChange('')}
+      clearClassName="page-search-field__clear"
+    />
   );
 }
 

@@ -1,4 +1,4 @@
-import { Search, X } from 'lucide-react';
+import { SearchField as SharedSearchField } from '@jshsus/ui';
 import type { InputHTMLAttributes, ReactNode } from 'react';
 
 export type AdminSearchFieldProps = Omit<
@@ -38,25 +38,22 @@ export function AdminSearchField({
   value,
   ...inputProps
 }: AdminSearchFieldProps) {
-  const Wrapper = as;
-  const hasValue = value !== undefined && String(value).length > 0;
   const classes = ['admin-search-field', className ?? ''].filter(Boolean).join(' ');
 
   return (
-    <Wrapper className={classes}>
-      <Search size={iconSize} aria-hidden="true" />
-      <input {...inputProps} type={type} value={value} />
-      {clearable && onClear && hasValue ? (
-        <button
-          className="admin-search-clear"
-          type="button"
-          aria-label={clearLabel}
-          onClick={onClear}
-        >
-          <X size={15} aria-hidden="true" />
-        </button>
-      ) : null}
+    <SharedSearchField
+      {...inputProps}
+      as={as}
+      type={type}
+      iconSize={iconSize}
+      className={classes}
+      value={value}
+      clearable={clearable}
+      onClear={onClear}
+      clearLabel={clearLabel}
+      clearClassName="admin-search-clear"
+    >
       {children}
-    </Wrapper>
+    </SharedSearchField>
   );
 }

@@ -1,14 +1,7 @@
-import {
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  SlidersHorizontal,
-  X,
-} from 'lucide-react';
+import { Check, ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
+import { SearchField } from '@jshsus/ui';
 import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 
 export type DataTableSearchField = 'title_content' | 'title' | 'author';
@@ -288,26 +281,16 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
             ) : null}
           </div>
         ) : null}
-        <div className="data-table-toolbar__query">
-          <Search size={15} aria-hidden="true" />
-          <input
-            aria-label="검색어"
-            type="text"
-            value={draftQuery}
-            onChange={(event) => setDraftQuery(event.target.value)}
-            placeholder={searchPlaceholder}
-          />
-          {draftQuery ? (
-            <button
-              aria-label="검색어 지우기"
-              className="data-table-toolbar__clear"
-              type="button"
-              onClick={() => setDraftQuery('')}
-            >
-              <X size={15} aria-hidden="true" />
-            </button>
-          ) : null}
-        </div>
+        <SearchField
+          className="data-table-toolbar__query"
+          type="text"
+          aria-label="검색어"
+          value={draftQuery}
+          onChange={(event) => setDraftQuery(event.target.value)}
+          placeholder={searchPlaceholder}
+          onClear={() => setDraftQuery('')}
+          clearClassName="data-table-toolbar__clear"
+        />
         {hasFilters ? (
           <button
             className="data-table-toolbar__filter-trigger"
