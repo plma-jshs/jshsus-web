@@ -445,7 +445,7 @@
   white-space: nowrap;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1025px) {
   .admin-table-toolbar.operation-list-toolbar .admin-table-toolbar__controls {
     width: auto;
     flex: 0 1 auto;
@@ -582,7 +582,7 @@
   font-size: 13px;
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1024px) {
   .content-panel-actions .admin-table-toolbar,
   .content-panel-actions .admin-table-toolbar__controls {
     width: 100%;
@@ -621,7 +621,7 @@
   }
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1024px) {
   .admin-table-toolbar {
     display: grid;
     width: 100%;
