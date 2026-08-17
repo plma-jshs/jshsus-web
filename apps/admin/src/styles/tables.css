@@ -378,6 +378,12 @@
   display: none;
 }
 
+/* The range summary is shared with the mobile pagination status class for
+   backwards-compatible selectors, but remains visible on every viewport. */
+.admin-table-pagination__range.admin-table-pagination__mobile-status {
+  display: inline;
+}
+
 .admin-table-pagination button,
 .admin-table-pagination__ellipsis {
   display: grid;

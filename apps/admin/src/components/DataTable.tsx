@@ -442,7 +442,7 @@ export function DataTable<T>({
                 ariaLabel="페이지당 표시 건수"
               />
             ) : null}
-            <span className="admin-table-pagination__range">
+            <span className="admin-table-pagination__range admin-table-pagination__mobile-status">
               {pagination?.totalCount
                 ? `전체 ${pagination.totalCount.toLocaleString('ko-KR')}건 중 ${
                     currentPageIndex * (pagination.pageSize ?? 0) + 1
