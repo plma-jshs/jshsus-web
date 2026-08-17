@@ -56,7 +56,9 @@
     display: grid;
     border: 0;
     background: transparent;
-    transition: background-color 140ms ease, transform 140ms ease;
+    transition:
+      background-color 140ms ease,
+      transform 140ms ease;
   }
 
   .admin-mobile-close:hover,

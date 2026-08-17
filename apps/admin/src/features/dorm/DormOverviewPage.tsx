@@ -215,7 +215,9 @@ export function DormOverviewPage() {
               </header>
               <p>
                 {room.residents?.length
-                  ? room.residents.map((resident) => `${resident.studentNo} ${resident.studentName}`).join(' · ')
+                  ? room.residents
+                      .map((resident) => `${resident.studentNo} ${resident.studentName}`)
+                      .join(' · ')
                   : '미배정'}
               </p>
               <footer>미처리 민원 {room.openReportCount ?? 0}건</footer>

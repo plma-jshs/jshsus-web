@@ -71,10 +71,7 @@
     cursor: grabbing;
   }
 
-  :where(
-    .page-toolbar__filters-heading,
-    .data-table-toolbar__filters-heading
-  ) {
+  :where(.page-toolbar__filters-heading, .data-table-toolbar__filters-heading) {
     padding-top: 10px;
     border-bottom: 1px solid var(--j-color-border);
   }

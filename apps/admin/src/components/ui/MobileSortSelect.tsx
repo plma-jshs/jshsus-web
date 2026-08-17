@@ -15,7 +15,8 @@ export function MobileSortSelect({
   onChange: (value: string) => void;
 }) {
   const visibleOptions = options.filter(
-    (option, index, all) => all.findIndex((candidate) => candidate.value === option.value) === index,
+    (option, index, all) =>
+      all.findIndex((candidate) => candidate.value === option.value) === index,
   );
   const selectedValue = visibleOptions.some((option) => option.value === value)
     ? value
