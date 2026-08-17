@@ -81,10 +81,6 @@
   width: min(440px, 38vw);
 }
 
-.content-search-field:has(> input:not(:placeholder-shown)) > input {
-  padding-right: 28px;
-}
-
 .content-selection-header {
   display: inline-flex;
   min-width: 0;
@@ -97,23 +93,6 @@
   min-height: 28px;
   padding-inline: 7px;
   font-size: 11px;
-}
-
-.content-search-field input {
-  width: auto;
-  flex: 1 1 auto;
-}
-
-.admin-main .content-search-field > input,
-.admin-main .content-search-field > input:hover,
-.admin-main .content-search-field > input:focus {
-  min-height: 36px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  outline: 0;
-  background: transparent;
-  box-shadow: none;
 }
 
 .content-toolbar input,

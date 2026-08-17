@@ -142,7 +142,6 @@ export function DormReportsPanel({
         mobileSearch={
           <AdminSearchField
             className="dorm-search-field"
-            inputClassName="dorm-search-control"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="호실, 학생, 내용 검색"

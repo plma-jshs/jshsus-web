@@ -7,8 +7,6 @@ export type AdminSearchFieldProps = Omit<
 > & {
   /** Classes applied to the shared field wrapper (layout hooks can be added here). */
   className?: string;
-  /** Classes applied to the input itself. */
-  inputClassName?: string;
   /** Use a span when the field is nested inside another label (for example a form row). */
   as?: 'label' | 'span';
   /** Search fields use `search` by default; datalist-backed fields can opt into `text`. */
@@ -30,7 +28,6 @@ export type AdminSearchFieldProps = Omit<
  */
 export function AdminSearchField({
   className,
-  inputClassName,
   as = 'label',
   type = 'search',
   iconSize = 16,
@@ -48,7 +45,7 @@ export function AdminSearchField({
   return (
     <Wrapper className={classes}>
       <Search size={iconSize} aria-hidden="true" />
-      <input {...inputProps} className={inputClassName} type={type} value={value} />
+      <input {...inputProps} type={type} value={value} />
       {clearable && onClear && hasValue ? (
         <button
           className="admin-search-clear"

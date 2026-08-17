@@ -1358,10 +1358,6 @@
     grid-column: 1 / -1;
   }
 
-  .admin-filter-sheet__controls .content-search-field input {
-    width: 100%;
-  }
-
   .ui-segmented-tabs {
     max-width: 100%;
     overflow-x: auto;
@@ -1422,45 +1418,6 @@
   justify-content: center;
   gap: 6px;
   white-space: nowrap;
-}
-
-.content-search-field {
-  position: relative;
-  display: flex;
-  min-height: 38px;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 0 10px;
-  background: var(--surface);
-  color: var(--muted);
-  transition:
-    border-color var(--j-motion-fast),
-    background-color var(--j-motion-fast);
-}
-
-.content-search-field:hover {
-  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
-}
-
-.content-search-field:focus-within {
-  border-color: var(--j-color-brand);
-  box-shadow: none;
-}
-
-.content-search-field input {
-  min-width: 0;
-  min-height: 36px;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: #172120;
-  font: inherit;
-}
-
-.content-search-field input {
-  width: min(400px, 34vw);
 }
 
 .content-select-field {
@@ -1696,10 +1653,6 @@
 
   .content-search-field {
     flex: 1 1 220px;
-  }
-
-  .content-search-field input {
-    width: 100%;
   }
 }
 

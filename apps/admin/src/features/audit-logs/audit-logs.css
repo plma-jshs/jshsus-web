@@ -14,46 +14,9 @@
 }
 
 .audit-log-search {
-  position: relative;
-  display: flex;
   width: min(400px, 100%);
   min-width: 220px;
   flex: 1 1 280px;
-  min-height: 38px;
-  align-items: center;
-  gap: 8px;
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--muted);
-  transition:
-    border-color var(--j-motion-fast),
-    background-color var(--j-motion-fast);
-}
-
-.audit-log-search:hover {
-  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
-}
-
-.audit-log-search:focus-within {
-  border-color: var(--j-color-brand);
-  box-shadow: none;
-}
-
-.audit-log-search input {
-  width: 100%;
-  min-width: 0;
-  min-height: 36px;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-}
-
-.audit-log-search input:not(:placeholder-shown) {
-  padding-right: 28px;
 }
 
 .audit-log-detail-trigger {

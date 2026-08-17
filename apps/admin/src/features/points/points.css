@@ -30,39 +30,7 @@
 }
 
 .point-filter--search {
-  display: flex;
-  min-height: 38px;
   width: min(240px, 100%);
-  padding: 0 12px;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--j-color-text-muted);
-}
-
-.point-filter--search > svg {
-  display: block;
-  flex: 0 0 auto;
-}
-
-.point-filter--search:focus-within {
-  border-color: var(--j-color-brand);
-  box-shadow: none;
-}
-
-.point-filter--search > input,
-.point-filter--search > input:hover,
-.point-filter--search > input:focus {
-  width: 100%;
-  min-width: 0;
-  min-height: 36px;
-  padding: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  box-shadow: none;
 }
 
 .point-filter--date {
@@ -261,29 +229,6 @@
 
 .point-search-combobox {
   position: relative;
-}
-
-.point-search-combobox > svg {
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  left: 12px;
-  color: var(--j-color-text-muted);
-  pointer-events: none;
-  transform: translateY(-50%);
-}
-
-.point-search-combobox > input {
-  padding-left: 36px;
-}
-
-.point-search-combobox > input:hover {
-  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
-}
-
-.point-search-combobox > input:focus {
-  border-color: var(--j-color-brand);
-  box-shadow: none;
 }
 
 .point-search-results {
@@ -552,40 +497,8 @@
 
 @media (max-width: 767px) {
   .admin-table-toolbar__mobile-search .point-filter--search {
-    display: flex;
     width: 100%;
     min-width: 0;
-    min-height: 44px;
-    padding: 0 12px;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid var(--line);
-    border-radius: 9px;
-    background: #fff;
-  }
-
-  .admin-table-toolbar__mobile-search .point-filter--search > svg {
-    display: block;
-    flex: 0 0 auto;
-    color: var(--j-color-text-muted);
-  }
-
-  .admin-table-toolbar__mobile-search .point-filter--search > input,
-  .admin-table-toolbar__mobile-search .point-filter--search > input:hover,
-  .admin-table-toolbar__mobile-search .point-filter--search > input:focus {
-    width: 100%;
-    min-width: 0;
-    min-height: 42px;
-    padding: 0;
-    border: 0;
-    outline: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .admin-table-toolbar__mobile-search .point-filter--search:focus-within {
-    border-color: var(--j-color-brand);
-    box-shadow: none;
   }
   .admin-table-toolbar__mobile-search .point-filter {
     width: 100%;

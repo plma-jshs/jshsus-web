@@ -8,66 +8,7 @@
 }
 
 .dorm-search-field {
-  display: flex;
   width: 240px !important;
-  min-width: 0;
-  min-height: 38px;
-  padding: 0 12px;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--j-color-text-muted);
-  transition:
-    border-color var(--j-motion-fast),
-    background-color var(--j-motion-fast);
-}
-
-.dorm-search-field:hover {
-  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
-}
-
-.dorm-search-field:focus-within {
-  border-color: var(--j-color-brand);
-  box-shadow: none;
-}
-
-.dorm-search-field > svg {
-  flex: 0 0 auto;
-}
-
-.dorm-search-control {
-  width: 100% !important;
-  min-width: 0;
-  min-height: 36px;
-  padding: 0 !important;
-  border: 0 !important;
-  outline: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.dorm-inline-search-field {
-  position: relative;
-}
-
-.dorm-inline-search-field:focus-within {
-  border-color: var(--j-color-brand);
-  box-shadow: none;
-}
-
-.dorm-inline-search-field:has(> .admin-search-clear) input {
-  padding-right: 32px;
-}
-
-.dorm-inline-search-field input:hover {
-  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
-}
-
-.dorm-inline-search-field input:focus {
-  border-color: var(--j-color-brand);
-  box-shadow: none;
 }
 
 .dorm-page .admin-table-toolbar__controls > .admin-select,
@@ -308,27 +249,6 @@
   font-weight: var(--j-weight-semibold);
 }
 
-.dorm-inline-search-field {
-  position: relative;
-  display: flex;
-  min-width: 0;
-  align-items: center;
-}
-
-.dorm-inline-search-field > svg {
-  position: absolute;
-  z-index: 1;
-  left: 12px;
-  color: var(--j-color-text-muted);
-  pointer-events: none;
-}
-
-.dorm-inline-search-field input {
-  width: 100%;
-  min-width: 0;
-  padding-left: 36px;
-}
-
 .dorm-room-point-form {
   display: grid;
   grid-template-columns: minmax(180px, 1fr) auto minmax(220px, 1.2fr) 90px 150px;
@@ -398,7 +318,6 @@
   }
 
   .dorm-search-field,
-  .dorm-search-control,
   .dorm-page .admin-table-toolbar__controls > .admin-select,
   .dorm-term-controls .admin-select,
   .dorm-draw-controls .admin-select {

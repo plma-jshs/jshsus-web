@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Check, ExternalLink, Search, X } from 'lucide-react';
+import { Check, ExternalLink, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   DialogActions,
   Drawer,
+  AdminSearchField,
   RowActionButton,
   RowActions,
   SegmentedTabs,
@@ -230,26 +231,15 @@ export function WakeSongsPage() {
           mobileSheetTitle="기상곡 필터"
           mobileSearch={
             <div className="wake-song-admin-search">
-              <label>
-                <span className="sr-only">신청 검색</span>
-                <Search size={15} aria-hidden="true" />
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="영상, 신청자, 메모 검색"
-                />
-                {query ? (
-                  <button
-                    className="admin-search-clear"
-                    type="button"
-                    aria-label="검색어 지우기"
-                    onClick={() => setQuery('')}
-                  >
-                    <X size={15} aria-hidden="true" />
-                  </button>
-                ) : null}
-              </label>
+              <AdminSearchField
+                className="wake-song-admin-search-field"
+                type="text"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="영상, 신청자, 메모 검색"
+                aria-label="신청 검색"
+                onClear={() => setQuery('')}
+              />
             </div>
           }
         >
