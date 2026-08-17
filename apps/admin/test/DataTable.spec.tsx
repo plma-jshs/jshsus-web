@@ -109,7 +109,7 @@ describe('admin page-size policy', () => {
     expect(normalizeAdminPageSize(50)).toBe(50);
   });
 
-  it('renders the page-size control as a fixed-width native select', () => {
+  it('renders the page-size control with a fixed-width native fallback', () => {
     const container = document.createElement('div');
     document.body.append(container);
     const root = createRoot(container);
@@ -131,7 +131,9 @@ describe('admin page-size policy', () => {
       ),
     );
 
-    const select = container.querySelector<HTMLSelectElement>('.ui-page-size-select');
+    const select = container.querySelector<HTMLSelectElement>(
+      '.ui-page-size-select .admin-select__native',
+    );
     expect(select).toBeInstanceOf(HTMLSelectElement);
     expect(select).toHaveValue('20');
     expect([...select!.options].map((option) => option.value)).toEqual(['20', '50', '100']);

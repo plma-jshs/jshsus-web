@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { ADMIN_PAGE_SIZES, normalizeAdminPageSize, type AdminPageSize } from '../dataTableConfig';
+import { AdminSelect } from './AdminSelect';
 
 export { ADMIN_DEFAULT_PAGE_SIZE, ADMIN_PAGE_SIZES } from '../dataTableConfig';
 export type { AdminPageSize } from '../dataTableConfig';
@@ -20,9 +21,9 @@ export function PageSizeSelect({
   }, [normalizedValue, onChange, value]);
 
   return (
-    <select
+    <AdminSelect
       className="ui-page-size-select"
-      value={normalizedValue}
+      value={String(normalizedValue)}
       aria-label={ariaLabel}
       onChange={(event) => onChange(Number(event.target.value) as AdminPageSize)}
     >
@@ -31,6 +32,6 @@ export function PageSizeSelect({
           {size}개씩 보기
         </option>
       ))}
-    </select>
+    </AdminSelect>
   );
 }

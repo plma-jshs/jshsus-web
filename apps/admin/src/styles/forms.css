@@ -26,6 +26,7 @@
   ):hover,
 .ui-control:hover {
   border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
   background-color: color-mix(in srgb, var(--j-color-surface-hover) 72%, white);
 }
 
@@ -121,6 +122,91 @@
   ):has(> .admin-search-clear)
   > input {
   padding-right: 32px !important;
+}
+
+/* Keep every admin search field on the same chrome as the select trigger.
+   Search wrappers own the border; their nested inputs must stay transparent
+   so the browser cannot paint a second, tinted control inside the field. */
+:where(
+  .content-search-field,
+  .identity-search-field,
+  .audit-log-search,
+  .dorm-search-field,
+  .point-filter--search,
+  .activity-student-search-field,
+  .operation-search-field,
+  .wake-song-admin-search > label,
+  .point-search-combobox,
+  .dorm-inline-search-field
+) {
+  box-sizing: border-box;
+  border: 1px solid var(--line-strong) !important;
+  background: var(--surface) !important;
+}
+
+:where(
+  .operation-search-field,
+  .wake-song-admin-search > label,
+  .point-search-combobox,
+  .dorm-inline-search-field
+) {
+  display: flex !important;
+  min-height: var(--control-height);
+  padding: 0 10px;
+  align-items: center;
+  gap: 8px;
+}
+
+:where(
+  .content-search-field,
+  .identity-search-field,
+  .audit-log-search,
+  .dorm-search-field,
+  .point-filter--search,
+  .activity-student-search-field,
+  .operation-search-field,
+  .wake-song-admin-search > label,
+  .point-search-combobox,
+  .dorm-inline-search-field
+):hover {
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong)) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong)) !important;
+}
+
+:where(
+  .content-search-field,
+  .identity-search-field,
+  .audit-log-search,
+  .dorm-search-field,
+  .point-filter--search,
+  .activity-student-search-field,
+  .operation-search-field,
+  .wake-song-admin-search > label,
+  .point-search-combobox,
+  .dorm-inline-search-field
+):focus-within {
+  border-color: var(--j-color-brand) !important;
+  box-shadow: inset 0 0 0 1px var(--j-color-brand) !important;
+}
+
+:where(
+    .content-search-field,
+    .identity-search-field,
+    .audit-log-search,
+    .dorm-search-field,
+    .point-filter--search,
+    .activity-student-search-field,
+    .operation-search-field,
+    .wake-song-admin-search > label,
+    .point-search-combobox,
+    .dorm-inline-search-field
+  )
+  > input,
+:where(.admin-table-toolbar__search) input[type='search'] {
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .admin-search-clear {
@@ -335,6 +421,7 @@ select.ui-control:not([multiple]) {
 
 .admin-select__trigger:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
   background: color-mix(in srgb, var(--j-color-surface-hover) 72%, white);
 }
 
@@ -613,6 +700,62 @@ textarea.ui-control {
 
 .ui-page-size-select .admin-select__option-content,
 .ui-page-size-select .admin-select__option-content > span:last-child {
+  min-width: 0;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+/* Page-size selects use the same custom trigger as every other admin
+   dropdown on desktop. The native select remains available on small screens
+   through AdminSelect's mobile mode. */
+.admin-select.ui-page-size-select {
+  display: inline-flex;
+  width: 128px !important;
+  min-width: 128px;
+  max-width: 128px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--j-color-text-secondary);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.admin-select.ui-page-size-select:hover {
+  background: transparent;
+}
+
+.admin-select.ui-page-size-select .admin-select__trigger {
+  width: 128px;
+  min-width: 128px;
+  max-width: 128px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--j-radius-control);
+  background: var(--surface);
+  color: var(--j-color-text-secondary);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.admin-select.ui-page-size-select .admin-select__trigger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+  background: var(--surface);
+}
+
+.admin-select.ui-page-size-select .admin-select__trigger:focus-visible,
+.admin-select.ui-page-size-select.is-open .admin-select__trigger {
+  border-color: var(--j-color-brand);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
+}
+
+.admin-select.ui-page-size-select .admin-select__option-content {
   min-width: 0;
   overflow: visible;
   text-overflow: clip;

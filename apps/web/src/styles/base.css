@@ -103,6 +103,8 @@ textarea {
   textarea
 ):hover {
   border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong));
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong));
   background-color: color-mix(in srgb, var(--j-color-surface-hover) 72%, white);
 }
 :where(

@@ -275,11 +275,15 @@
 
 .page-search-field input:hover {
   border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong));
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong));
+  background-color: var(--j-color-surface);
 }
 
 .page-search-field input:focus {
   border-color: var(--j-color-brand);
-  box-shadow: none;
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
+  background-color: var(--j-color-surface);
   outline: 0;
 }
 

@@ -37,12 +37,7 @@ export function TableSummary({
 }) {
   return (
     <span className="admin-table-summary">
-      전체{' '}
-      {loading ? (
-        <span className="admin-table-summary__loading" aria-label="불러오는 중" />
-      ) : (
-        (count ?? 0).toLocaleString('ko-KR')
-      )}
+      전체 {loading ? '-' : (count ?? 0).toLocaleString('ko-KR')}
       {suffix}
     </span>
   );
