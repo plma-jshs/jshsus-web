@@ -12,6 +12,7 @@ import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { ResilientImage } from '../../components/page/ResilientImage';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { formatKoreanRelativeTime } from '../../shared/lib/date';
+import { useMobilePaginatedList } from '../../shared/hooks/useMobilePaginatedList';
 import { getSession } from '../auth/api';
 import { getJbsPosts } from './api';
 import './jbs.css';
@@ -36,7 +37,20 @@ export function JbsPage() {
     session?.isLogined &&
     (session.roles?.includes('system_admin') || session.permissions.includes('jbs.publish'));
   const result = postsQuery.data;
-  const visiblePosts = result?.items ?? [];
+  const mobileList = useMobilePaginatedList({
+    key: `${search.pageSize}|${search.q}`,
+    page: search.page,
+    result,
+    isPlaceholderData: postsQuery.isPlaceholderData,
+    fetchPage: (page) =>
+      getJbsPosts({
+        page,
+        pageSize: search.pageSize,
+        field: search.field,
+        q: search.q,
+      }),
+  });
+  const visiblePosts = mobileList.items;
 
   const updateSearch = useCallback(
     (
@@ -182,6 +196,9 @@ export function JbsPage() {
               pageSize={search.pageSize}
               onPageSizeChange={(pageSize) => updateSearch({ page: 1, pageSize })}
               onChange={(page) => updateSearch({ page })}
+              onLoadMore={mobileList.loadMore}
+              loadingMore={mobileList.loadingMore}
+              hasMore={mobileList.hasMore}
               syncUrl={false}
             />
           </>

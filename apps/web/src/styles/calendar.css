@@ -760,12 +760,12 @@
     padding: 0;
     border: 0;
     border-radius: 8px;
-    background: #f1f4f5;
+    background: #fefefe;
   }
 
   .full-calendar__week-days > button.is-selected {
     box-shadow: inset 0 0 0 0.75px #4b5563;
-    background: #e9f4f2;
+    background: #fefefe;
   }
 
   .full-calendar__week-days > button.is-selected .full-calendar__date {
@@ -795,7 +795,7 @@
   }
 
   .full-calendar__week-days > button.is-outside-month {
-    background: #eceff1;
+    background: #fdfefe;
   }
 
   .full-calendar__week-days > button.is-outside-month .full-calendar__date {

@@ -12,6 +12,7 @@ import { ContentBadges } from '../../components/page/ContentBadges';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
+import { useMobilePaginatedList } from '../../shared/hooks/useMobilePaginatedList';
 import { getSession } from '../auth/api';
 import { getNotices } from './api';
 
@@ -41,8 +42,20 @@ export function NoticesPage() {
     placeholderData: keepPreviousData,
   });
   const result = noticesQuery.data;
-  const notices = result?.items ?? [];
-  const visibleNotices = notices;
+  const mobileList = useMobilePaginatedList({
+    key: `${search.pageSize}|${search.q}`,
+    page: search.page,
+    result,
+    isPlaceholderData: noticesQuery.isPlaceholderData,
+    fetchPage: (page) =>
+      getNotices({
+        page,
+        pageSize: search.pageSize,
+        field: search.field,
+        q: search.q,
+      }),
+  });
+  const visibleNotices = mobileList.items;
 
   const updateSearch = useCallback(
     (
@@ -228,6 +241,9 @@ export function NoticesPage() {
               pageSize={search.pageSize}
               onPageSizeChange={(pageSize) => updateSearch({ page: 1, pageSize })}
               onChange={(page) => updateSearch({ page })}
+              onLoadMore={mobileList.loadMore}
+              loadingMore={mobileList.loadingMore}
+              hasMore={mobileList.hasMore}
               syncUrl={false}
             />
           </>

@@ -13,6 +13,7 @@ import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { formatKoreanRelativeTime } from '../../shared/lib/date';
 import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
+import { useMobilePaginatedList } from '../../shared/hooks/useMobilePaginatedList';
 import { getBoardPosts } from './api';
 
 export function BoardPage() {
@@ -42,8 +43,20 @@ export function BoardPage() {
     placeholderData: keepPreviousData,
   });
   const result = postsQuery.data;
-  const posts = result?.items ?? [];
-  const visiblePosts = posts;
+  const mobileList = useMobilePaginatedList({
+    key: `${search.pageSize}|${search.q}`,
+    page: search.page,
+    result,
+    isPlaceholderData: postsQuery.isPlaceholderData,
+    fetchPage: (page) =>
+      getBoardPosts('free', {
+        page,
+        pageSize: search.pageSize,
+        field: search.field,
+        q: search.q,
+      }),
+  });
+  const visiblePosts = mobileList.items;
 
   const updateSearch = useCallback(
     (
@@ -147,7 +160,7 @@ export function BoardPage() {
             }
           />
         ) : null}
-        {postsQuery.isSuccess && posts.length === 0 ? (
+        {postsQuery.isSuccess && visiblePosts.length === 0 ? (
           <PageState
             kind="empty"
             variant="table"
@@ -242,6 +255,9 @@ export function BoardPage() {
               pageSize={search.pageSize}
               onPageSizeChange={(pageSize) => updateSearch({ page: 1, pageSize })}
               onChange={(page) => updateSearch({ page })}
+              onLoadMore={mobileList.loadMore}
+              loadingMore={mobileList.loadingMore}
+              hasMore={mobileList.hasMore}
               syncUrl={false}
             />
           </>

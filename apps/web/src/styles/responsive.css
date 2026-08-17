@@ -195,7 +195,7 @@
   }
 
   .mobile-menu__panel a.is-active {
-    color: var(--j-color-brand-strong);
+    color: var(--j-color-text);
     font-weight: var(--j-weight-semibold);
   }
   .home-community-grid {
