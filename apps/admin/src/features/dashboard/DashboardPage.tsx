@@ -24,7 +24,11 @@ export function DashboardPage() {
   if (dashboardQuery.isLoading) {
     return (
       <section className="admin-dashboard admin-dashboard--loading" aria-busy="true">
-        <LoaderCircle className="ui-status-state__icon admin-loading-spinner" size={24} aria-hidden="true" />
+        <LoaderCircle
+          className="ui-status-state__icon admin-loading-spinner"
+          size={24}
+          aria-hidden="true"
+        />
       </section>
     );
   }
