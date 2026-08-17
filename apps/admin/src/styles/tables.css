@@ -200,6 +200,13 @@
 .admin-data-table__loading-cell {
   height: 50px;
   padding-block: 10px !important;
+  text-align: center !important;
+  vertical-align: middle;
+}
+
+.admin-data-table__loading-cell > .admin-loading-spinner {
+  display: block;
+  margin-inline: auto;
 }
 
 .admin-data-table tbody .admin-data-table__loading-row:hover td {
