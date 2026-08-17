@@ -1435,11 +1435,18 @@
   padding: 0 10px;
   background: var(--surface);
   color: var(--muted);
+  transition:
+    border-color var(--j-motion-fast),
+    background-color var(--j-motion-fast);
+}
+
+.content-search-field:hover {
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
 }
 
 .content-search-field:focus-within {
   border-color: var(--j-color-brand);
-  box-shadow: inset 0 0 0 1px var(--j-color-brand);
+  box-shadow: none;
 }
 
 .content-search-field input {

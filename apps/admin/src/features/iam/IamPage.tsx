@@ -280,7 +280,7 @@ export function IamPage() {
                   <tr key={permission.id}>
                     <td className="align-left code">{permission.name}</td>
                     <td>{permission.label}</td>
-                    <td className="align-left description">{permission.description || '-'}</td>
+                    <td className="align-left description">{permission.description || ''}</td>
                   </tr>
                 ))
               )}

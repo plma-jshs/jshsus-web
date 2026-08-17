@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { formatDormBedPosition, type DormRoom } from '@jshsus/types';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { CircleAlert, DoorOpen, Eye, Search } from 'lucide-react';
+import { CircleAlert, DoorOpen, Eye, Search, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
@@ -10,6 +10,7 @@ import {
   MobileSortSelect,
   RowActionButton,
   RowActions,
+  TableSummary,
   TableToolbar,
 } from '../../components/ui';
 import { DormReportStatusBadge, useDormData } from './dormData';
@@ -113,7 +114,7 @@ export function DormOverviewPage() {
 
       <section className="admin-panel dorm-list-panel">
         <TableToolbar
-          summary={`총 ${rooms.length}실`}
+          summary={<TableSummary count={rooms.length} suffix="실" loading={roomsQuery.isPending} />}
           mobileSearch={
             <label className="dorm-search-field">
               <Search size={16} aria-hidden="true" />
@@ -124,6 +125,16 @@ export function DormOverviewPage() {
                 placeholder="호실 검색"
                 aria-label="호실 검색"
               />
+              {search ? (
+                <button
+                  className="admin-search-clear"
+                  type="button"
+                  aria-label="검색어 지우기"
+                  onClick={() => setSearch('')}
+                >
+                  <X size={15} aria-hidden="true" />
+                </button>
+              ) : null}
             </label>
           }
           mobileSort={

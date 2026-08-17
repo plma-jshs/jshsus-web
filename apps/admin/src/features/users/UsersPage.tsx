@@ -42,6 +42,8 @@ import {
   RowActionButton,
   RowActions,
   SegmentedTabs,
+  SearchClearButton,
+  TableSummary,
   TableToolbar,
   useToast,
 } from '../../components/ui';
@@ -146,7 +148,7 @@ function identityNumber(identity: Identity) {
 }
 
 function formatDate(value?: string) {
-  if (!value) return '-';
+  if (!value) return '';
   return formatAdminDate(value, {
     month: '2-digit',
     day: '2-digit',
@@ -172,11 +174,11 @@ function studentNumberParts(value: FormDataEntryValue | null, allowTestAccount =
 
 function contactText(email?: string, phone?: string) {
   const normalizedPhone = normalizeDisplayPhone(phone);
-  return [email, normalizedPhone].filter(Boolean).join(' · ') || '-';
+  return [email, normalizedPhone].filter(Boolean).join(' · ') || '';
 }
 
 function rolesText(roles: readonly string[] | undefined) {
-  return roles?.length ? roles.map((role) => ROLE_LABELS[role] ?? role).join(', ') : '-';
+  return roles?.length ? roles.map((role) => ROLE_LABELS[role] ?? role).join(', ') : '';
 }
 
 function normalizeDisplayPhone(value?: string) {
@@ -779,7 +781,7 @@ export function UsersPage() {
         const classes = row.original.managedClasses ?? [];
         return classes.length > 0
           ? classes.map(({ grade, classNo }) => `${grade}-${classNo}`).join(', ')
-          : '-';
+          : '';
       },
       meta: { align: 'center', width: 132, truncate: true },
     },
@@ -1086,7 +1088,7 @@ export function UsersPage() {
 
       <section className="identity-panel">
         <TableToolbar
-          summary={`총 ${data?.total ?? 0}명`}
+          summary={<TableSummary count={data?.total} suffix="명" loading={activeQuery.isPending} />}
           mobileSearch={
             <label className="identity-field identity-search-field">
               <Search size={16} aria-hidden="true" />
@@ -1096,6 +1098,10 @@ export function UsersPage() {
                 aria-label="학생·교직원 검색"
                 onChange={(event) => updateFilters({ q: event.currentTarget.value })}
                 placeholder="학번·교사번호, 이름 또는 역할 검색"
+              />
+              <SearchClearButton
+                visible={Boolean(filters.q)}
+                onClear={() => updateFilters({ q: '' })}
               />
             </label>
           }
@@ -1342,9 +1348,9 @@ export function UsersPage() {
                                     {ROSTER_ACTION_LABELS[row.action]}
                                   </span>
                                 </td>
-                                <td>{row.studentNo && row.studentNo > 0 ? row.studentNo : '-'}</td>
-                                <td>{row.previousStudentNo ?? '-'}</td>
-                                <td>{row.name || '-'}</td>
+                                <td>{row.studentNo && row.studentNo > 0 ? row.studentNo : ''}</td>
+                                <td>{row.previousStudentNo ?? ''}</td>
+                                <td>{row.name || ''}</td>
                                 <td>{row.messages.join(' ')}</td>
                               </tr>
                             ))}

@@ -4,7 +4,14 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { AdminAuditLog, AdminAuditLogListQuery } from '@jshsus/types';
 import { MoreHorizontal, Search } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { DateRangeField, Drawer, MobileSortSelect, TableToolbar } from '../../components/ui';
+import {
+  DateRangeField,
+  Drawer,
+  MobileSortSelect,
+  SearchClearButton,
+  TableSummary,
+  TableToolbar,
+} from '../../components/ui';
 import { api, describeAdminApiError } from '../../shared/api/adminApi';
 import { formatAdminDate } from '../../shared/lib/date';
 import './audit-logs.css';
@@ -92,7 +99,9 @@ export function AuditLogsPage() {
       <h2 id="audit-log-title" className="sr-only">
         감사 로그
       </h2>
-      <p className="audit-log-total">총 {(logsQuery.data?.total ?? 0).toLocaleString('ko-KR')}건</p>
+      <p className="audit-log-total">
+        <TableSummary count={logsQuery.data?.total} suffix="건" loading={logsQuery.isPending} />
+      </p>
       <TableToolbar
         mobileSearch={
           <label className="audit-log-search">
@@ -106,6 +115,13 @@ export function AuditLogsPage() {
                 setPage(1);
               }}
               placeholder="수행자, 작업, 대상, IP 검색"
+            />
+            <SearchClearButton
+              visible={Boolean(filters.q)}
+              onClear={() => {
+                setFilters((current) => ({ ...current, q: '' }));
+                setPage(1);
+              }}
             />
           </label>
         }
@@ -217,18 +233,18 @@ export function AuditLogsPage() {
               <dd>
                 {selectedLog.targetLabel}
                 <small>
-                  {selectedLog.targetType || '-'}
+                  {selectedLog.targetType || ''}
                   {selectedLog.targetId ? ` · ${selectedLog.targetId}` : ''}
                 </small>
               </dd>
             </div>
             <div>
               <dt>접속 IP</dt>
-              <dd>{selectedLog.ipAddress || '-'}</dd>
+              <dd>{selectedLog.ipAddress || ''}</dd>
             </div>
             <div>
               <dt>접속 환경</dt>
-              <dd className="audit-log-detail-list__agent">{selectedLog.userAgent || '-'}</dd>
+              <dd className="audit-log-detail-list__agent">{selectedLog.userAgent || ''}</dd>
             </div>
             <div>
               <dt>로그 ID</dt>

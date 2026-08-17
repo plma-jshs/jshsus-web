@@ -39,6 +39,19 @@
   align-items: center;
 }
 
+.wake-song-admin-search label:has(> .admin-search-clear) > input {
+  padding-right: 36px;
+}
+
+.wake-song-admin-search label:hover > input {
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+}
+
+.wake-song-admin-search label:focus-within > input {
+  border-color: var(--j-color-brand);
+  box-shadow: none;
+}
+
 .wake-song-admin-search label > svg {
   position: absolute;
   z-index: 1;
@@ -78,7 +91,7 @@
 
 .wake-song-admin-list {
   margin-top: 0;
-  padding: 0;
+  padding: 18px 18px 0;
   overflow: hidden;
 }
 
@@ -88,7 +101,7 @@
 }
 
 .wake-song-admin-list > .admin-data-table {
-  padding: 0 18px 18px;
+  padding: 0 0 18px;
 }
 
 @media (max-width: 767px) {

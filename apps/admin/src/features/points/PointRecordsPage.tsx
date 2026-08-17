@@ -10,6 +10,8 @@ import {
   DateRangeField,
   MobileSortSelect,
   SelectedRowsHeaderAction,
+  SearchClearButton,
+  TableSummary,
   TableSelectionCheckbox,
   TableToolbar,
   useToast,
@@ -255,7 +257,13 @@ export function PointRecordsPage() {
       className="point-panel"
       toolbar={
         <TableToolbar
-          summary={recordsQuery.data ? `총 ${recordsQuery.data.total}건` : undefined}
+          summary={
+            <TableSummary
+              count={recordsQuery.data?.total}
+              suffix="건"
+              loading={recordsQuery.isPending}
+            />
+          }
           mobileActions={
             selectedCount > 0 ? (
               <button
@@ -278,6 +286,13 @@ export function PointRecordsPage() {
                 aria-label="상벌점 기록 검색"
                 onChange={(event) => {
                   setSearch(event.target.value);
+                  resetPage();
+                }}
+              />
+              <SearchClearButton
+                visible={Boolean(search)}
+                onClear={() => {
+                  setSearch('');
                   resetPage();
                 }}
               />
@@ -382,7 +397,7 @@ export function PointRecordsPage() {
             </header>
             <p className="point-record-card__reason">{record.reason}</p>
             <footer>
-              {formatAdminDate(record.baseDate)} · 처리자: {record.teacherName || '-'}
+              {formatAdminDate(record.baseDate)} · 처리자: {record.teacherName || ''}
             </footer>
           </article>
         )}

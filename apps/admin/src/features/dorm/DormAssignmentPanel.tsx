@@ -17,6 +17,7 @@ import {
   Dialog,
   RowActionButton,
   RowActions,
+  TableSummary,
   TableToolbar,
   useToast,
 } from '../../components/ui';
@@ -480,7 +481,7 @@ export function DormAssignmentPanel({
       {
         accessorKey: 'classNo',
         header: '반',
-        cell: ({ getValue }) => (getValue<number>() > 0 ? `${getValue<number>()}반` : '-'),
+        cell: ({ getValue }) => (getValue<number>() > 0 ? `${getValue<number>()}반` : ''),
         enableSorting: false,
         meta: { width: 70, align: 'center' },
       },
@@ -710,7 +711,10 @@ export function DormAssignmentPanel({
       ) : null}
 
       <section className="admin-panel">
-        <TableToolbar summary={`총 ${assignments.length}명`} mobileSheet={false}>
+        <TableToolbar
+          summary={<TableSummary count={assignments.length} suffix="명" />}
+          mobileSheet={false}
+        >
           <Button
             disabled={selectedAssignments.length !== 2}
             loading={swapMutation.isPending}

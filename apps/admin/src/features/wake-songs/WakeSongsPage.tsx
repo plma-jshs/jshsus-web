@@ -8,6 +8,7 @@ import {
   RowActionButton,
   RowActions,
   SegmentedTabs,
+  TableSummary,
   TableToolbar,
   useToast,
 } from '../../components/ui';
@@ -134,7 +135,7 @@ export function WakeSongsPage() {
     {
       id: 'candidateWeek',
       header: '대상 주차',
-      cell: ({ row }) => row.original.candidateWeekLabel ?? '—',
+      cell: ({ row }) => row.original.candidateWeekLabel ?? '',
       enableSorting: false,
       meta: { align: 'center', width: 190 },
     },
@@ -188,7 +189,7 @@ export function WakeSongsPage() {
       enableSorting: false,
       cell: ({ row }) => {
         const request = row.original;
-        if (request.status !== 'PENDING') return '—';
+        if (request.status !== 'PENDING') return '';
         return (
           <RowActions>
             <RowActionButton
@@ -222,7 +223,9 @@ export function WakeSongsPage() {
       <section className="admin-panel wake-song-admin-list">
         <TableToolbar
           className="wake-song-admin-toolbar"
-          summary={`총 ${pageData?.total ?? 0}건`}
+          summary={
+            <TableSummary count={pageData?.total} suffix="건" loading={requestsQuery.isPending} />
+          }
           mobileSheetTitle="기상곡 필터"
           mobileSearch={
             <div className="wake-song-admin-search">
@@ -235,6 +238,16 @@ export function WakeSongsPage() {
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="영상, 신청자, 메모 검색"
                 />
+                {query ? (
+                  <button
+                    className="admin-search-clear"
+                    type="button"
+                    aria-label="검색어 지우기"
+                    onClick={() => setQuery('')}
+                  >
+                    <X size={15} aria-hidden="true" />
+                  </button>
+                ) : null}
               </label>
             </div>
           }
@@ -310,7 +323,7 @@ export function WakeSongsPage() {
                 </div>
                 <div>
                   <dt>대상 주차</dt>
-                  <dd>{selectedRequest.candidateWeekLabel ?? '—'}</dd>
+                  <dd>{selectedRequest.candidateWeekLabel ?? ''}</dd>
                 </div>
                 <div>
                   <dt>재생</dt>

@@ -81,6 +81,10 @@
   width: min(440px, 38vw);
 }
 
+.content-search-field:has(> input:not(:placeholder-shown)) > input {
+  padding-right: 28px;
+}
+
 .content-selection-header {
   display: inline-flex;
   min-width: 0;

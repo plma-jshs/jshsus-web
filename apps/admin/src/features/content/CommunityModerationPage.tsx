@@ -8,7 +8,17 @@ import type {
   RichTextDocument,
   RichTextNode,
 } from '@jshsus/types';
-import { Eye, EyeOff, Paperclip, Pin, PinOff, Search, Settings2, ShieldAlert } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  Paperclip,
+  Pin,
+  PinOff,
+  Search,
+  Settings2,
+  ShieldAlert,
+  X,
+} from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
@@ -369,7 +379,7 @@ export function CommunityModerationPage({
               {row.original.attachments.length}
             </span>
           ) : (
-            '—'
+            ''
           ),
         enableSorting: false,
         meta: { align: 'center', width: 84, hideAtCompact: true, hideOnMobile: true },
@@ -539,6 +549,7 @@ export function CommunityModerationPage({
       <ContentAdminPanel
         title="자유게시판 관리"
         count={postsQuery.data?.length ?? 0}
+        loading={postsQuery.isPending}
         mobileSearch={
           <label className="content-search-field">
             <Search size={16} aria-hidden="true" />
@@ -548,6 +559,16 @@ export function CommunityModerationPage({
               onChange={(event) => setPostSearch(event.target.value)}
               placeholder="제목, 작성자 검색"
             />
+            {postSearch ? (
+              <button
+                className="admin-search-clear"
+                type="button"
+                aria-label="검색어 지우기"
+                onClick={() => setPostSearch('')}
+              >
+                <X size={15} aria-hidden="true" />
+              </button>
+            ) : null}
           </label>
         }
         mobileSort={

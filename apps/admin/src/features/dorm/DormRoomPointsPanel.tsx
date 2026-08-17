@@ -9,6 +9,8 @@ import {
   Button,
   RowActionButton,
   RowActions,
+  SearchClearButton,
+  TableSummary,
   TableToolbar,
   useToast,
 } from '../../components/ui';
@@ -201,6 +203,7 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
               onChange={(event) => setRoomInput(event.target.value)}
               placeholder="생활관 또는 호실 검색"
             />
+            <SearchClearButton visible={Boolean(roomInput)} onClear={() => setRoomInput('')} />
           </span>
         </label>
         <datalist id="dorm-point-rooms">
@@ -259,7 +262,9 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
           />
         </label>
       </div>
-      <TableToolbar summary={`총 ${queue.length}건`}>
+      <TableToolbar
+        summary={<TableSummary count={queue.length} suffix="건" loading={reasonsQuery.isPending} />}
+      >
         <Button
           variant="primary"
           disabled={!canApply}

@@ -13,6 +13,8 @@ import {
   RowActionButton,
   RowActions,
   SelectedRowsHeaderAction,
+  SearchClearButton,
+  TableSummary,
   TableSelectionCheckbox,
   TableToolbar,
   useToast,
@@ -638,6 +640,13 @@ export function PointAwardPage() {
                     setSearchOpen(true);
                   }}
                 />
+                <SearchClearButton
+                  visible={Boolean(search) && !isEditingQueueItem}
+                  onClear={() => {
+                    setSearch('');
+                    setSearchOpen(false);
+                  }}
+                />
                 {searchOpen && !isEditingQueueItem ? (
                   <div className="point-search-results" role="listbox" aria-label="학생 검색 결과">
                     {searchQuery.isLoading ? <p>불러오는 중입니다.</p> : null}
@@ -833,7 +842,7 @@ export function PointAwardPage() {
       <section className="admin-panel point-panel">
         <TableToolbar
           className="point-import-toolbar"
-          summary={`총 ${queue.length}건`}
+          summary={<TableSummary count={queue.length} suffix="건" />}
           mobileSheet={false}
         >
           <input

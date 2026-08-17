@@ -1,5 +1,11 @@
 import type { ReactNode } from 'react';
-import { EmptyState, ErrorState, LoadingState, TableToolbar } from '../../../components/ui';
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  TableSummary,
+  TableToolbar,
+} from '../../../components/ui';
 import { AdminApiError } from '../../../shared/api/adminApi';
 import { formatAdminDate as formatSharedAdminDate } from '../../../shared/lib/date';
 import '../content.css';
@@ -8,6 +14,7 @@ type ContentAdminPanelProps = {
   title: string;
   description?: string;
   count?: number;
+  loading?: boolean;
   actions?: ReactNode;
   mobileSearch?: ReactNode;
   mobileAction?: ReactNode;
@@ -21,6 +28,7 @@ export function ContentAdminPanel({
   title,
   description,
   count,
+  loading = false,
   actions,
   mobileSearch,
   mobileAction,
@@ -37,7 +45,9 @@ export function ContentAdminPanel({
         <div>
           <div className="content-panel-heading">
             <h2 className="sr-only">{title}</h2>
-            {typeof count === 'number' ? <span>총 {count.toLocaleString('ko-KR')}건</span> : null}
+            {typeof count === 'number' ? (
+              <TableSummary count={count} suffix="건" loading={loading} />
+            ) : null}
           </div>
           {description ? <p>{description}</p> : null}
         </div>
@@ -149,7 +159,7 @@ export function MutationMessage({
 }
 
 export function formatAdminDate(value?: string) {
-  if (!value) return '-';
+  if (!value) return '';
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;

@@ -40,6 +40,118 @@
   box-shadow: inset 0 0 0 1px var(--j-color-brand);
 }
 
+/* Search controls use one border only. The field owns the hover/focus state so
+   nested inputs never create a second, misaligned focus ring. */
+:where(
+  .content-search-field,
+  .identity-search-field,
+  .audit-log-search,
+  .dorm-search-field,
+  .point-filter--search,
+  .activity-student-search-field
+) {
+  position: relative;
+  transition:
+    border-color var(--j-motion-fast),
+    background-color var(--j-motion-fast);
+}
+
+:where(
+  .content-search-field,
+  .identity-search-field,
+  .audit-log-search,
+  .dorm-search-field,
+  .point-filter--search,
+  .activity-student-search-field
+):hover {
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+}
+
+:where(
+  .content-search-field,
+  .identity-search-field,
+  .audit-log-search,
+  .dorm-search-field,
+  .point-filter--search,
+  .activity-student-search-field
+):focus-within {
+  border-color: var(--j-color-brand);
+  box-shadow: none;
+}
+
+:where(
+    .content-search-field,
+    .identity-search-field,
+    .audit-log-search,
+    .dorm-search-field,
+    .point-filter--search,
+    .activity-student-search-field
+  )
+  > input,
+:where(
+    .content-search-field,
+    .identity-search-field,
+    .audit-log-search,
+    .dorm-search-field,
+    .point-filter--search,
+    .activity-student-search-field
+  )
+  > input:hover,
+:where(
+    .content-search-field,
+    .identity-search-field,
+    .audit-log-search,
+    .dorm-search-field,
+    .point-filter--search,
+    .activity-student-search-field
+  )
+  > input:focus {
+  border: 0 !important;
+  outline: 0;
+  box-shadow: none !important;
+}
+
+:where(
+    .content-search-field,
+    .identity-search-field,
+    .audit-log-search,
+    .dorm-search-field,
+    .point-filter--search,
+    .activity-student-search-field
+  ):has(> .admin-search-clear)
+  > input {
+  padding-right: 32px !important;
+}
+
+.admin-search-clear {
+  position: absolute;
+  right: 7px;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--j-color-text-muted);
+  cursor: pointer;
+}
+
+.admin-search-clear:hover {
+  background: var(--j-color-surface-hover);
+  color: var(--j-color-text);
+}
+
+.admin-search-clear:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--j-color-brand) 38%, transparent);
+  outline-offset: 1px;
+}
+
+:where(input[type='search'])::-webkit-search-cancel-button {
+  display: none;
+}
+
 .admin-main :where(input, select, textarea):disabled,
 .ui-control:disabled {
   cursor: not-allowed;

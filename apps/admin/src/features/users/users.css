@@ -188,11 +188,18 @@
   border-radius: 8px;
   background: #fff;
   color: var(--j-color-text-muted);
+  transition:
+    border-color var(--j-motion-fast),
+    background-color var(--j-motion-fast);
+}
+
+.identity-search-field:hover {
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, #cedad7);
 }
 
 .identity-search-field:focus-within {
   border-color: var(--j-color-brand);
-  box-shadow: inset 0 0 0 1px var(--j-color-brand);
+  box-shadow: none;
 }
 
 .identity-search-field > svg {
@@ -208,6 +215,16 @@
   outline: 0;
   background: transparent;
   box-shadow: none;
+}
+
+.identity-search-field input:not(:placeholder-shown) {
+  padding-right: 28px;
+}
+
+.identity-search-field > input:focus,
+.identity-search-field > input:hover {
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
 .identity-panel > .admin-table-toolbar .identity-filter-bar .identity-field > span {

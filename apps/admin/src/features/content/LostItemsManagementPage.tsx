@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { LostItemSummary } from '@jshsus/types';
-import { Search, Settings2, Trash2 } from 'lucide-react';
+import { Search, Settings2, Trash2, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
@@ -209,7 +209,7 @@ export function LostItemsManagementPage() {
         cell: ({ row }) =>
           row.original.attachments?.length
             ? `${row.original.attachments.length.toLocaleString('ko-KR')}개`
-            : '-',
+            : '',
         enableSorting: false,
         meta: { align: 'right', width: 72, hideAtCompact: true, hideOnMobile: true },
       },
@@ -263,6 +263,7 @@ export function LostItemsManagementPage() {
       <ContentAdminPanel
         title="분실물 관리"
         count={lostItemsQuery.data?.length ?? 0}
+        loading={lostItemsQuery.isPending}
         mobileSearch={
           <label className="content-search-field">
             <Search size={16} aria-hidden="true" />
@@ -272,6 +273,16 @@ export function LostItemsManagementPage() {
               onChange={(event) => setSearch(event.target.value)}
               placeholder="물품, 장소, 등록자 검색"
             />
+            {search ? (
+              <button
+                className="admin-search-clear"
+                type="button"
+                aria-label="검색어 지우기"
+                onClick={() => setSearch('')}
+              >
+                <X size={15} aria-hidden="true" />
+              </button>
+            ) : null}
           </label>
         }
         mobileSort={

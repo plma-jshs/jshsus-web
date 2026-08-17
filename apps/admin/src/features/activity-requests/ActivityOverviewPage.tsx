@@ -17,6 +17,8 @@ import {
   Dialog,
   Drawer,
   MobileSortSelect,
+  SearchClearButton,
+  TableSummary,
   TableToolbar,
   useToast,
 } from '../../components/ui';
@@ -166,7 +168,7 @@ function ActivityMobileCard({
       <span className="operation-activity-mobile-card__meta">
         <span>{request.location}</span>
         <i aria-hidden="true">·</i>
-        <span>지도교사 {request.advisorTeacherName ?? '-'}</span>
+        <span>지도교사 {request.advisorTeacherName ?? ''}</span>
       </span>
       <span className="operation-activity-mobile-card__meta">
         <span>{formatActivityMobileDate(request)}</span>
@@ -272,7 +274,7 @@ function createColumns(
       cell: ({ row }) => (
         <span className="operation-activity-compact-meta">
           <strong>{row.original.location}</strong>
-          <span>{row.original.advisorTeacherName ?? '-'}</span>
+          <span>{row.original.advisorTeacherName ?? ''}</span>
         </span>
       ),
       meta: { compactOnly: true, minWidth: 150, maxWidth: 220 },
@@ -301,7 +303,7 @@ function createColumns(
       accessorKey: 'advisorTeacherName',
       header: '지도교사',
       enableSorting: false,
-      cell: ({ getValue }) => getValue<string | undefined>() ?? '-',
+      cell: ({ getValue }) => getValue<string | undefined>() ?? '',
       meta: { width: 110, align: 'left', hideAtCompact: true },
     },
     {
@@ -421,7 +423,13 @@ export function ActivityOverviewPage() {
       <AdminListPanel
         toolbar={
           <TableToolbar
-            summary={requestsQuery.data ? `총 ${requestsQuery.data.total}건` : undefined}
+            summary={
+              <TableSummary
+                count={requestsQuery.data?.total}
+                suffix="건"
+                loading={requestsQuery.isPending}
+              />
+            }
             className="operation-list-toolbar"
             mobileSearch={
               <label className="operation-search-field">
@@ -435,6 +443,13 @@ export function ActivityOverviewPage() {
                     resetPage();
                   }}
                   placeholder="내용, 인원, 장소, 지도교사 검색"
+                />
+                <SearchClearButton
+                  visible={Boolean(search)}
+                  onClear={() => {
+                    setSearch('');
+                    resetPage();
+                  }}
                 />
               </label>
             }
@@ -546,7 +561,7 @@ export function ActivityOverviewPage() {
               <dt>활동 정보</dt>
               <dd>
                 {formatActivityMobileDate(selectedRequest)} · {selectedRequest.location} · 지도교사{' '}
-                {selectedRequest.advisorTeacherName ?? '-'}
+                {selectedRequest.advisorTeacherName ?? ''}
               </dd>
             </div>
             <div>

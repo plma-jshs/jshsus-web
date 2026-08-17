@@ -13,6 +13,8 @@ import {
   MobileSortSelect,
   RowActionButton,
   RowActions,
+  SearchClearButton,
+  TableSummary,
   TableToolbar,
   useToast,
 } from '../../components/ui';
@@ -181,7 +183,13 @@ export function PointReasonsPage() {
         className="point-panel"
         toolbar={
           <TableToolbar
-            summary={reasonsQuery.data ? `총 ${reasonsQuery.data.total}건` : undefined}
+            summary={
+              <TableSummary
+                count={reasonsQuery.data?.total}
+                suffix="건"
+                loading={reasonsQuery.isPending}
+              />
+            }
             mobileSearch={
               <label className="point-filter point-filter--search">
                 <Search size={16} aria-hidden="true" />
@@ -191,6 +199,13 @@ export function PointReasonsPage() {
                   aria-label="사유 검색"
                   onChange={(event) => {
                     setSearch(event.target.value);
+                    resetPage();
+                  }}
+                />
+                <SearchClearButton
+                  visible={Boolean(search)}
+                  onClear={() => {
+                    setSearch('');
                     resetPage();
                   }}
                 />

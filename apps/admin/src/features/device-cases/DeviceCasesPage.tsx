@@ -9,6 +9,7 @@ import {
   Dialog,
   RowActionButton,
   RowActions,
+  TableSummary,
   TableSelectionCheckbox,
   TableToolbar,
 } from '../../components/ui';
@@ -285,9 +286,12 @@ export function DeviceCasesPage() {
         ) : null}
         {commandError ? <p className="form-error">{commandError}</p> : null}
         <TableToolbar
-          summary={`총 ${cases.length.toLocaleString('ko-KR')}대${
-            hasSelectedCases ? ` · 선택 ${selectedCount.toLocaleString('ko-KR')}대` : ''
-          }`}
+          summary={
+            <>
+              <TableSummary count={cases.length} suffix="대" loading={casesQuery.isPending} />
+              {hasSelectedCases ? ` · 선택 ${selectedCount.toLocaleString('ko-KR')}대` : ''}
+            </>
+          }
           className="device-cases-toolbar"
           mobileSheet={false}
           mobileActions={
@@ -351,7 +355,13 @@ export function DeviceCasesPage() {
           </p>
         ) : null}
         <TableToolbar
-          summary={`총 ${commandsQuery.data?.length ?? 0}건`}
+          summary={
+            <TableSummary
+              count={commandsQuery.data?.length}
+              suffix="건"
+              loading={commandsQuery.isPending && Boolean(logCaseId)}
+            />
+          }
           mobileSheet={false}
         ></TableToolbar>
         <DataTable

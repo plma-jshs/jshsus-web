@@ -16,6 +16,7 @@ import {
   MobileSortSelect,
   RowActionButton,
   RowActions,
+  SearchClearButton,
   TableToolbar,
   useToast,
 } from '../../components/ui';
@@ -240,7 +241,7 @@ export function ActivityReviewPage() {
       accessorKey: 'advisorTeacherName',
       header: '담당 교사',
       enableSorting: false,
-      cell: ({ getValue }) => getValue<string | undefined>() ?? '-',
+      cell: ({ getValue }) => getValue<string | undefined>() ?? '',
       meta: { width: 110, align: 'left' },
     },
     {
@@ -294,6 +295,13 @@ export function ActivityReviewPage() {
                   }}
                   placeholder="학생, 장소, 내용 검색"
                   aria-label="대기 탐구활동서 검색"
+                />
+                <SearchClearButton
+                  visible={Boolean(search)}
+                  onClear={() => {
+                    setSearch('');
+                    setPage(1);
+                  }}
                 />
               </label>
             }
@@ -448,6 +456,10 @@ export function ActivityReviewPage() {
                 value={studentSearch}
                 onChange={(event) => setStudentSearch(event.target.value)}
                 placeholder="학번 또는 이름"
+              />
+              <SearchClearButton
+                visible={Boolean(studentSearch)}
+                onClear={() => setStudentSearch('')}
               />
             </label>
             <div className="activity-student-results" role="list" aria-label="학생 검색 결과">

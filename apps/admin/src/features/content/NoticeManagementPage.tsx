@@ -2,7 +2,17 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type { NoticeSummary, RichTextDocument, RichTextNode } from '@jshsus/types';
-import { ExternalLink, Eye, Paperclip, Pin, PinOff, Search, Settings2, Trash2 } from 'lucide-react';
+import {
+  ExternalLink,
+  Eye,
+  Paperclip,
+  Pin,
+  PinOff,
+  Search,
+  Settings2,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   ConfirmDialog,
@@ -211,7 +221,7 @@ export function NoticeManagementPage() {
               {row.original.attachments.length}
             </span>
           ) : (
-            '-'
+            ''
           ),
         enableSorting: false,
         meta: { align: 'center', width: 72, hideAtCompact: true, hideOnMobile: true },
@@ -268,6 +278,7 @@ export function NoticeManagementPage() {
       <ContentAdminPanel
         title="공지 관리"
         count={noticesQuery.data?.length ?? 0}
+        loading={noticesQuery.isPending}
         mobileAction={
           <a className="primary-button notice-mobile-create" href={publicSiteHref('/notices/new')}>
             새 공지
@@ -282,6 +293,16 @@ export function NoticeManagementPage() {
               onChange={(event) => setSearch(event.target.value)}
               placeholder="제목, 작성자 검색"
             />
+            {search ? (
+              <button
+                className="admin-search-clear"
+                type="button"
+                aria-label="검색어 지우기"
+                onClick={() => setSearch('')}
+              >
+                <X size={15} aria-hidden="true" />
+              </button>
+            ) : null}
           </label>
         }
         mobileSort={
@@ -386,7 +407,7 @@ export function NoticeManagementPage() {
                   </RowActions>
                 </header>
                 <div className="notice-mobile-card__meta">
-                  <span>{notice.department || '-'}</span>
+                  <span>{notice.department || ''}</span>
                   <span className="notice-mobile-card__stats">
                     <time>{formatAdminDate(notice.publishedAt)}</time>
                     <span>

@@ -444,7 +444,7 @@ export function DataTable<T>({
             ) : null}
             <span className="admin-table-pagination__range admin-table-pagination__mobile-status">
               {pagination?.totalCount
-                ? `총 ${pagination.totalCount.toLocaleString('ko-KR')}건 중 ${
+                ? `전체 ${pagination.totalCount.toLocaleString('ko-KR')}건 중 ${
                     currentPageIndex * (pagination.pageSize ?? 0) + 1
                   }-${Math.min(
                     (currentPageIndex + 1) * (pagination.pageSize ?? 0),

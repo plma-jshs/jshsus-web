@@ -200,7 +200,7 @@ export function ActivityPrintBatch({
                     <td>{request.location}</td>
                     <td>{request.purpose}</td>
                     <td>{participantsText(request)}</td>
-                    <td>{request.advisorTeacherName ?? '-'}</td>
+                    <td>{request.advisorTeacherName ?? ''}</td>
                   </tr>
                 );
               })}

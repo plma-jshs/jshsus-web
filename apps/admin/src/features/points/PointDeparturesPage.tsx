@@ -10,7 +10,9 @@ import {
   Dialog,
   FormField,
   RowActions,
+  SearchClearButton,
   SegmentedTabs,
+  TableSummary,
   TableToolbar,
   useToast,
 } from '../../components/ui';
@@ -32,7 +34,7 @@ const today = new Intl.DateTimeFormat('en-CA', {
 }).format(new Date());
 
 function formatDateTime(value?: string) {
-  if (!value) return '-';
+  if (!value) return '';
   return formatAdminDate(value, {
     month: '2-digit',
     day: '2-digit',
@@ -266,7 +268,7 @@ export function PointDeparturesPage() {
               </RowActions>
             </span>
           ) : (
-            <span className="point-departure-action-cell">—</span>
+            <span className="point-departure-action-cell" />
           ),
         meta: { align: 'center', width: 92 },
       },
@@ -299,14 +301,14 @@ export function PointDeparturesPage() {
         accessorKey: 'handledBy',
         header: '처리자',
         enableSorting: false,
-        cell: ({ row }) => row.original.handledBy || '-',
+        cell: ({ row }) => row.original.handledBy || '',
         meta: { align: 'center', width: 150 },
       },
       {
         accessorKey: 'memo',
         header: '사유',
         enableSorting: false,
-        cell: ({ row }) => row.original.memo || '-',
+        cell: ({ row }) => row.original.memo || '',
       },
     ],
     [],
@@ -343,7 +345,7 @@ export function PointDeparturesPage() {
   };
 
   return (
-    <>
+    <div className="point-departures-page">
       <SegmentedTabs
         value={tab}
         ariaLabel="퇴사 및 학기 조정"
@@ -363,7 +365,13 @@ export function PointDeparturesPage() {
             title=""
             toolbar={
               <TableToolbar
-                summary={candidatesQuery.data ? `총 ${candidatesQuery.data.total}명` : undefined}
+                summary={
+                  <TableSummary
+                    count={candidatesQuery.data?.total}
+                    suffix="명"
+                    loading={candidatesQuery.isPending}
+                  />
+                }
                 mobileSearch={
                   <label className="point-filter point-filter--search">
                     <Search size={16} aria-hidden="true" />
@@ -373,6 +381,13 @@ export function PointDeparturesPage() {
                       aria-label="퇴사 대상 검색"
                       onChange={(event) => {
                         setSearch(event.target.value);
+                        resetPages();
+                      }}
+                    />
+                    <SearchClearButton
+                      visible={Boolean(search)}
+                      onClear={() => {
+                        setSearch('');
                         resetPages();
                       }}
                     />
@@ -659,6 +674,6 @@ export function PointDeparturesPage() {
         </p>
         {applyMutation.isError ? <p className="form-error">{applyMutation.error.message}</p> : null}
       </Dialog>
-    </>
+    </div>
   );
 }

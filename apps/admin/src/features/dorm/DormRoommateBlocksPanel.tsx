@@ -4,7 +4,15 @@ import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { Search, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
-import { Button, RowActionButton, RowActions, TableToolbar, useToast } from '../../components/ui';
+import {
+  Button,
+  RowActionButton,
+  RowActions,
+  SearchClearButton,
+  TableSummary,
+  TableToolbar,
+  useToast,
+} from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 
 type Props = {
@@ -151,6 +159,10 @@ export function DormRoommateBlocksPanel({
               }}
               placeholder="학번 또는 이름 검색"
             />
+            <SearchClearButton
+              visible={Boolean(studentInput)}
+              onClear={() => setStudentInput('')}
+            />
           </span>
         </label>
         <datalist id="dorm-block-students">
@@ -168,6 +180,10 @@ export function DormRoommateBlocksPanel({
               onChange={(event) => setBlockedInput(event.target.value)}
               placeholder="학번 또는 이름 검색"
             />
+            <SearchClearButton
+              visible={Boolean(blockedInput)}
+              onClear={() => setBlockedInput('')}
+            />
           </span>
         </label>
         <datalist id="dorm-blocked-students">
@@ -183,7 +199,9 @@ export function DormRoommateBlocksPanel({
           추가
         </Button>
       </div>
-      <TableToolbar summary={`총 ${blocks.length}건`}></TableToolbar>
+      <TableToolbar
+        summary={<TableSummary count={blocks.length} suffix="건" loading={loading} />}
+      />
       <DataTable
         columns={columns}
         data={blocks}

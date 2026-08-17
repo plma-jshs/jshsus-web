@@ -3,7 +3,14 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
-import { AdminListPanel, AdminSelect, MobileSortSelect, TableToolbar } from '../../components/ui';
+import {
+  AdminListPanel,
+  AdminSelect,
+  MobileSortSelect,
+  SearchClearButton,
+  TableSummary,
+  TableToolbar,
+} from '../../components/ui';
 import { pointsApi, type PointStudentRow } from './pointsApi';
 import './points.css';
 
@@ -110,7 +117,7 @@ export function PointsOverviewPage() {
       className="point-panel point-overview-panel"
       toolbar={
         <TableToolbar
-          summary={query.data ? `총 ${query.data.total}명` : undefined}
+          summary={<TableSummary count={query.data?.total} suffix="명" loading={query.isPending} />}
           mobileSearch={
             <label className="point-filter point-filter--search">
               <Search size={16} aria-hidden="true" />
@@ -120,6 +127,13 @@ export function PointsOverviewPage() {
                 aria-label="학생 검색"
                 onChange={(event) => {
                   setSearch(event.target.value);
+                  resetPage();
+                }}
+              />
+              <SearchClearButton
+                visible={Boolean(search)}
+                onClear={() => {
+                  setSearch('');
                   resetPage();
                 }}
               />
