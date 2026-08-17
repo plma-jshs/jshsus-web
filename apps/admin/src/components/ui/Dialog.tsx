@@ -34,10 +34,7 @@ export function Dialog({
   const [scrollable, setScrollable] = useState(false);
 
   useEffect(() => {
-    if (!open) {
-      setScrollable(false);
-      return undefined;
-    }
+    if (!open) return undefined;
     const body = bodyRef.current;
     if (!body) return undefined;
     const update = () => setScrollable(body.scrollHeight > body.clientHeight + 1);
@@ -54,7 +51,7 @@ export function Dialog({
   const classes = [
     'ui-dialog',
     `ui-dialog--${size}`,
-    scrollable ? 'is-scrollable' : '',
+    open && scrollable ? 'is-scrollable' : '',
     className ?? '',
   ]
     .filter(Boolean)

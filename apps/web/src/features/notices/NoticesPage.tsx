@@ -63,7 +63,7 @@ export function NoticesPage() {
         }),
       });
     },
-    [navigate, search.field, search.page, search.pageSize, search.q],
+    [navigate, search.page, search.pageSize, search.q],
   );
 
   useEffect(() => {

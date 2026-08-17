@@ -32,10 +32,7 @@ export function Drawer({
   const [scrollable, setScrollable] = useState(false);
 
   useEffect(() => {
-    if (!open) {
-      setScrollable(false);
-      return undefined;
-    }
+    if (!open) return undefined;
     const body = bodyRef.current;
     if (!body) return undefined;
     const update = () => setScrollable(body.scrollHeight > body.clientHeight + 1);
@@ -52,7 +49,7 @@ export function Drawer({
   const classes = [
     'ui-drawer',
     `ui-drawer--${side}`,
-    scrollable ? 'is-scrollable' : '',
+    open && scrollable ? 'is-scrollable' : '',
     className ?? '',
   ]
     .filter(Boolean)
