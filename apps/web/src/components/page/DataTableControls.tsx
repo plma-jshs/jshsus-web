@@ -1,4 +1,12 @@
-import { Check, ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal, X } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  LoaderCircle,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { SearchField } from '@jshsus/ui';
@@ -408,8 +416,11 @@ export function DataTablePagination({
           onClick={onLoadMore}
           disabled={loadingMore}
         >
-          {loadingMore ? '불러오는 중…' : '더보기'}
-          <ChevronDown size={15} aria-hidden="true" />
+          {loadingMore ? (
+            <LoaderCircle className="is-spinning" size={15} aria-hidden="true" />
+          ) : null}
+          <span>{loadingMore ? '불러오는 중…' : '더보기'}</span>
+          {!loadingMore ? <ChevronDown size={15} aria-hidden="true" /> : null}
         </button>
       ) : null}
       <div className="data-table-pagination__controls">

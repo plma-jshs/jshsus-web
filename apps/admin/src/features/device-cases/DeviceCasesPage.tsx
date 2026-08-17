@@ -324,6 +324,7 @@ export function DeviceCasesPage() {
           pageSize={casePageSize}
           onPageSizeChange={setCasePageSize}
           alwaysShowPagination
+          mobileLoadMore
           caption="휴대폰 보관함 상태 목록"
           renderMobileRow={(deviceCase) => (
             <article className="device-mobile-card">
@@ -348,6 +349,7 @@ export function DeviceCasesPage() {
         onClose={() => setLogCaseId(null)}
         title={logCase ? `${deviceCaseLabel(logCase.id)} 명령 기록` : '명령 기록'}
         size="lg"
+        className="device-command-dialog"
       >
         {commandsQuery.isError ? (
           <p className="form-error">

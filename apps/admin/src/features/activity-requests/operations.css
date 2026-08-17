@@ -442,7 +442,8 @@
   }
 
   .ui-drawer.operation-activity-mobile-drawer {
-    height: auto;
+    height: min(82dvh, 680px);
+    min-height: min(360px, 82dvh);
     max-height: min(82dvh, 680px);
   }
 

@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, LoaderCircle } from 'lucide-react';
 import { PageSizeSelect } from './PageSizeSelect';
 
 export type TablePaginationProps = {
@@ -63,8 +63,11 @@ export function TablePagination({
           onClick={onLoadMore}
           disabled={loadingMore}
         >
-          {loadingMore ? '불러오는 중…' : '더보기'}
-          <ChevronDown size={15} aria-hidden="true" />
+          {loadingMore ? (
+            <LoaderCircle className="is-spinning" size={15} aria-hidden="true" />
+          ) : null}
+          <span>{loadingMore ? '불러오는 중…' : '더보기'}</span>
+          {!loadingMore ? <ChevronDown size={15} aria-hidden="true" /> : null}
         </button>
       ) : null}
       <div className="admin-table-pagination__controls">

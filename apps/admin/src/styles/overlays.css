@@ -671,6 +671,13 @@
     border-radius: 18px 18px 0 0;
   }
 
+  /* A dialog that is used as a mobile sheet keeps a stable viewport budget
+     while async content (tables, history, or details) is loading. */
+  .ui-dialog.device-command-dialog {
+    height: min(82dvh, 680px);
+    min-height: min(360px, 82dvh);
+  }
+
   .ui-dialog__header,
   .ui-drawer__header {
     min-height: 60px;

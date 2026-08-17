@@ -104,6 +104,11 @@ export type DataTableProps<T> = {
   onSortingChange?: OnChangeFn<SortingState>;
   manualSorting?: boolean;
   renderMobileRow?: (row: T, index: number) => ReactNode;
+  /**
+   * On phones, show the first 20 client-side rows and append another 20 when
+   * the user taps 더보기. Desktop keeps the normal page-size controls.
+   */
+  mobileLoadMore?: boolean;
 };
 
 function SortDirectionGlyph({ direction }: { direction: false | 'asc' | 'desc' }) {
@@ -166,6 +171,7 @@ export function DataTable<T>({
   onSortingChange,
   manualSorting = false,
   renderMobileRow,
+  mobileLoadMore = false,
 }: DataTableProps<T>) {
   const [uncontrolledSorting, setUncontrolledSorting] = useState<SortingState>([]);
   const isSortingControlled = sorting !== undefined;
@@ -221,6 +227,8 @@ export function DataTable<T>({
   const resolvedPageCount = Math.max(pagination?.pageCount ?? table.getPageCount(), 1);
   const currentPageIndex = pagination?.pageIndex ?? table.getState().pagination.pageIndex;
   const hasHydratedTableQuery = useRef(false);
+  const [mobileVisibleCount, setMobileVisibleCount] = useState(20);
+  const [mobileLoadingMore, setMobileLoadingMore] = useState(false);
 
   useEffect(() => {
     if (!pagination) return;
@@ -256,6 +264,11 @@ export function DataTable<T>({
   }, [currentPageIndex, loading, pagination, resolvedPageCount]);
   const visibleColumnCount = Math.max(table.getVisibleFlatColumns().length, 1);
   const visibleRows = table.getRowModel().rows;
+  const mobileSourceRows = table.getPrePaginationRowModel().rows;
+  const mobileRows =
+    mobileLoadMore && !pagination ? mobileSourceRows.slice(0, mobileVisibleCount) : visibleRows;
+  const hasMobileMore =
+    mobileLoadMore && !pagination && mobileRows.length < mobileSourceRows.length;
 
   const moveToPage = (pageIndex: number) => {
     const nextPageIndex = Math.min(Math.max(pageIndex, 0), resolvedPageCount - 1);
@@ -268,6 +281,15 @@ export function DataTable<T>({
   const changePageSize = (nextPageSize: number) => {
     syncTableQuery(1, nextPageSize);
     (pagination?.onPageSizeChange ?? onPageSizeChange)?.(nextPageSize);
+  };
+
+  const loadMoreOnMobile = () => {
+    if (!hasMobileMore || mobileLoadingMore) return;
+    setMobileLoadingMore(true);
+    window.setTimeout(() => {
+      setMobileVisibleCount((current) => current + 20);
+      setMobileLoadingMore(false);
+    }, 180);
   };
 
   return (
@@ -405,10 +427,10 @@ export function DataTable<T>({
         <div className="admin-mobile-card-list">
           {loading ? (
             <LoadingState className="admin-mobile-card-list__status" compact title={loadingText} />
-          ) : visibleRows.length === 0 ? (
+          ) : mobileRows.length === 0 ? (
             <EmptyState compact title={emptyText} />
           ) : (
-            visibleRows.map((row, index) => (
+            mobileRows.map((row, index) => (
               <div className="admin-mobile-data-card" key={row.id}>
                 {renderMobileRow(row.original, index)}
               </div>
@@ -426,8 +448,15 @@ export function DataTable<T>({
           pageSize={pagination?.pageSize ?? table.getState().pagination.pageSize}
           totalCount={pagination?.totalCount}
           onPageChange={moveToPage}
-          onLoadMore={() => moveToPage(currentPageIndex + 1)}
-          hasMore={currentPageIndex + 1 < resolvedPageCount}
+          onLoadMore={
+            mobileLoadMore && !pagination
+              ? loadMoreOnMobile
+              : () => moveToPage(currentPageIndex + 1)
+          }
+          hasMore={
+            mobileLoadMore && !pagination ? hasMobileMore : currentPageIndex + 1 < resolvedPageCount
+          }
+          loadingMore={mobileLoadingMore}
           onPageSizeChange={
             pagination?.onPageSizeChange || onPageSizeChange ? changePageSize : undefined
           }

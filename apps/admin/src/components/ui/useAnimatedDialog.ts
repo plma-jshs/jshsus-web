@@ -14,13 +14,33 @@ export function useAnimatedDialog(open: boolean, onClose: () => void) {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (open) {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
       dialog.classList.remove('is-closing');
       if (!dialog.open) dialog.showModal();
       return undefined;
     }
 
     if (!dialog.open) return undefined;
-    if (!dialog.classList.contains('is-closing') || !mobile || reducedMotion) dialog.close();
+    if (!mobile || reducedMotion) {
+      dialog.close();
+      dialog.classList.remove('is-closing');
+      return undefined;
+    }
+
+    // The parent can also close a sheet by changing `open` directly (for
+    // example after a row action). Keep the same exit animation in that path
+    // instead of snapping the native dialog closed immediately.
+    if (!dialog.classList.contains('is-closing')) {
+      dialog.classList.add('is-closing');
+      timerRef.current = window.setTimeout(() => {
+        timerRef.current = null;
+        dialog.close();
+        dialog.classList.remove('is-closing');
+      }, MOBILE_SHEET_DURATION_MS);
+    }
     return undefined;
   }, [open]);
 

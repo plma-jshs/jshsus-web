@@ -19,7 +19,7 @@
   height: 40px;
   min-height: 40px;
   padding-right: 36px;
-  padding-left: 36px;
+  padding-left: 0 !important;
   border-radius: 8px;
 }
 

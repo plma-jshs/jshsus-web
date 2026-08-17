@@ -1085,10 +1085,21 @@
   }
 
   .admin-table-pagination {
-    min-height: 46px;
-    margin-top: 10px;
-    justify-content: space-between;
+    min-height: 0;
+    margin-top: 12px;
+    justify-content: center;
     gap: 8px;
+  }
+
+  /* Phones use one cumulative list. Keep desktop's page-size/range controls
+     out of the way so the only mobile affordance is the centered 더보기 action. */
+  .admin-table-pagination:not(:has(.admin-table-pagination__load-more)) {
+    display: none;
+  }
+
+  .admin-table-pagination__summary,
+  .admin-table-pagination__controls {
+    display: none !important;
   }
 
   .admin-table-pagination__first,
@@ -1111,32 +1122,6 @@
     background: transparent !important;
   }
 
-  .admin-table-pagination__mobile-label,
-  .admin-table-pagination__mobile-status {
-    display: inline;
-  }
-
-  .admin-table-pagination__mobile-status {
-    color: var(--j-color-text-secondary);
-    font-size: 12px;
-    font-weight: var(--j-weight-medium);
-    white-space: nowrap;
-  }
-
-  .admin-table-pagination:has(.admin-table-pagination__load-more)
-    .admin-table-pagination__controls {
-    display: none;
-  }
-
-  .admin-table-pagination:has(.admin-table-pagination__load-more) .admin-table-pagination__summary {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .admin-table-pagination:has(.admin-table-pagination__load-more) .ui-page-size-select {
-    display: none;
-  }
-
   .admin-table-pagination__load-more {
     display: inline-flex;
     min-height: 32px;
@@ -1154,6 +1139,10 @@
     cursor: pointer;
   }
 
+  .admin-table-pagination__load-more .is-spinning {
+    animation: admin-table-pagination-spin 700ms linear infinite;
+  }
+
   .admin-table-pagination__load-more:hover:not(:disabled) {
     background: var(--j-color-surface-hover);
   }
@@ -1161,5 +1150,17 @@
   .admin-table-pagination__load-more:disabled {
     cursor: wait;
     opacity: 0.56;
+  }
+}
+
+@keyframes admin-table-pagination-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-table-pagination__load-more .is-spinning {
+    animation: none;
   }
 }
