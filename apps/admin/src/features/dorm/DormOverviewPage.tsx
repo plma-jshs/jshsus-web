@@ -191,7 +191,6 @@ export function DormOverviewPage() {
           sorting={sorting}
           onSortingChange={setSorting}
           loading={roomsQuery.isPending}
-          loadingText="방 정보를 불러오는 중입니다."
           emptyText="조건에 맞는 방이 없습니다."
           alwaysShowPagination
           caption="기숙사 방 조회"

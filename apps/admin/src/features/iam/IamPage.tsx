@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AdminRoleSummary } from '@jshsus/types';
-import { Pencil, Plus } from 'lucide-react';
+import { LoaderCircle, Pencil, Plus } from 'lucide-react';
 import { Dialog, DialogActions, useToast } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
 import './iam.css';
@@ -185,7 +185,11 @@ export function IamPage() {
                   {permissionsQuery.isPending || rolePermissionsQuery.isPending ? (
                     <tr>
                       <td colSpan={3} className="iam-empty">
-                        불러오는 중입니다.
+                        <LoaderCircle
+                          className="ui-status-state__icon admin-loading-spinner"
+                          size={18}
+                          aria-hidden="true"
+                        />
                       </td>
                     </tr>
                   ) : (permissionsQuery.data?.length ?? 0) === 0 ? (
@@ -266,7 +270,11 @@ export function IamPage() {
               {permissionsQuery.isPending ? (
                 <tr>
                   <td colSpan={3} className="iam-empty">
-                    불러오는 중입니다.
+                    <LoaderCircle
+                      className="ui-status-state__icon admin-loading-spinner"
+                      size={18}
+                      aria-hidden="true"
+                    />
                   </td>
                 </tr>
               ) : (permissionsQuery.data?.length ?? 0) === 0 ? (

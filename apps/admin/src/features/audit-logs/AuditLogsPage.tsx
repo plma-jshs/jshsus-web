@@ -159,7 +159,6 @@ export function AuditLogsPage() {
         columns={columns}
         data={logsQuery.data?.items ?? []}
         loading={logsQuery.isPending}
-        loadingText="감사 로그를 불러오는 중입니다."
         emptyText="조건에 맞는 감사 로그가 없습니다."
         alwaysShowPagination
         manualSorting

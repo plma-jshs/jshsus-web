@@ -122,9 +122,7 @@ export function ContentQueryState({
   }
 
   if (showState && isPending && !hasData) {
-    return (
-      <LoadingState className="content-state" title={`${resource}을(를) 불러오는 중입니다.`} />
-    );
+    return <LoadingState className="content-state" />;
   }
 
   if (showState && !isPending && !hasData) {

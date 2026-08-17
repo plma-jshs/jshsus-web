@@ -487,7 +487,36 @@
   }
 
   .admin-filter-sheet__controls .ui-date-range__controls {
+    display: grid !important;
     width: 100%;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
+    align-items: center;
+  }
+
+  /* Segmented filters are a single row of choices, rather than four stacked
+     full-width controls. Keep the group full width while letting each choice
+     share that row evenly. */
+  .admin-filter-sheet__controls > .ui-segmented-tabs,
+  .admin-filter-sheet__controls .ui-segmented-tabs {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0;
+    flex-direction: row !important;
+    flex-wrap: nowrap;
+    gap: 4px;
+    overflow-x: auto;
+  }
+
+  .admin-filter-sheet__controls .ui-segmented-tabs > button {
+    width: auto !important;
+    min-width: 0;
+    flex: 1 1 0;
+    white-space: nowrap;
+  }
+
+  .admin-filter-sheet__controls .ui-date-range__controls > .ui-date-input {
+    width: 100% !important;
     min-width: 0;
   }
 }
@@ -511,17 +540,6 @@
   gap: 8px;
   color: var(--muted);
   text-align: center;
-}
-
-.ui-empty-state__icon {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  justify-self: center;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--j-color-surface-subtle);
-  color: var(--primary);
 }
 
 .ui-empty-state strong,
@@ -567,6 +585,10 @@
   color: var(--primary);
 }
 
+.admin-loading-spinner {
+  animation: ui-spin 800ms linear infinite;
+}
+
 .ui-status-state--loading .ui-status-state__icon {
   animation: ui-spin 800ms linear infinite;
 }
@@ -593,7 +615,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ui-status-state--loading .ui-status-state__icon {
+  .ui-status-state--loading .ui-status-state__icon,
+  .admin-loading-spinner {
     animation: none;
   }
 }

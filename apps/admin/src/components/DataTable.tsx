@@ -11,6 +11,7 @@ import {
 } from '@tanstack/react-table';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { LoaderCircle } from 'lucide-react';
 import {
   ADMIN_DEFAULT_PAGE_SIZE,
   ADMIN_PAGE_SIZES,
@@ -93,7 +94,6 @@ export type DataTableProps<T> = {
   data: T[];
   emptyText?: string;
   loading?: boolean;
-  loadingText?: string;
   pageSize?: number;
   onPageSizeChange?: (pageSize: number) => void;
   pagination?: DataTablePagination;
@@ -160,7 +160,6 @@ export function DataTable<T>({
   data,
   emptyText = '조회된 기록이 없습니다.',
   loading = false,
-  loadingText = '불러오는 중입니다.',
   pageSize = ADMIN_DEFAULT_PAGE_SIZE,
   onPageSizeChange,
   pagination,
@@ -452,18 +451,15 @@ export function DataTable<T>({
           </thead>
           <tbody>
             {showLoadingState ? (
-              Array.from({ length: 6 }, (_, index) => (
-                <tr className="admin-data-table__loading-row" key={index}>
-                  <td className="admin-data-table__loading-cell" colSpan={visibleColumnCount}>
-                    {index === 0 ? <span className="sr-only">{loadingText}</span> : null}
-                    <span
-                      aria-hidden="true"
-                      className="admin-data-table__loading-bar"
-                      style={{ width: `${Math.max(48, 92 - index * 7)}%` }}
-                    />
-                  </td>
-                </tr>
-              ))
+              <tr className="admin-data-table__loading-row">
+                <td className="admin-data-table__loading-cell" colSpan={visibleColumnCount}>
+                  <LoaderCircle
+                    className="ui-status-state__icon admin-loading-spinner"
+                    size={20}
+                    aria-hidden="true"
+                  />
+                </td>
+              </tr>
             ) : visibleRows.length === 0 ? (
               <tr>
                 <td className="admin-data-table__empty-cell" colSpan={visibleColumnCount}>
@@ -515,7 +511,7 @@ export function DataTable<T>({
       {renderMobileRow ? (
         <div className="admin-mobile-card-list">
           {showLoadingState ? (
-            <LoadingState className="admin-mobile-card-list__status" compact title={loadingText} />
+            <LoadingState className="admin-mobile-card-list__status" compact />
           ) : mobileRows.length === 0 ? (
             <EmptyState compact title={emptyText} />
           ) : (

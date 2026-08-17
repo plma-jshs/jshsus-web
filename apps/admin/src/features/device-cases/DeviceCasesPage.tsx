@@ -319,7 +319,6 @@ export function DeviceCasesPage() {
           columns={caseColumns}
           data={cases}
           loading={casesQuery.isPending}
-          loadingText="보관함 상태를 불러오는 중입니다."
           emptyText="등록된 휴대폰 보관함이 없습니다."
           pageSize={casePageSize}
           onPageSizeChange={setCasePageSize}
@@ -370,7 +369,6 @@ export function DeviceCasesPage() {
           columns={commandColumns}
           data={commandsQuery.data ?? []}
           loading={commandsQuery.isPending && Boolean(logCaseId)}
-          loadingText="명령 기록을 불러오는 중입니다."
           emptyText="명령 기록이 없습니다."
           pageSize={commandPageSize}
           onPageSizeChange={setCommandPageSize}

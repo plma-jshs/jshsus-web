@@ -262,7 +262,6 @@ export function WakeSongsPage() {
           columns={columns}
           data={pageData?.items ?? []}
           loading={requestsQuery.isLoading}
-          loadingText="기상곡 신청을 불러오는 중입니다."
           emptyText="조건에 맞는 기상곡 신청이 없습니다."
           alwaysShowPagination
           manualSorting

@@ -517,7 +517,6 @@ export function ActivityOverviewPage() {
               },
             }}
             loading={requestsQuery.isPending}
-            loadingText="탐구활동서 현황을 불러오는 중입니다."
             emptyText="조건에 맞는 탐구활동서가 없습니다."
             alwaysShowPagination
             caption="탐구활동서 현황"

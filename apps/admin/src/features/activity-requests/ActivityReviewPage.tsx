@@ -7,7 +7,7 @@ import type {
 } from '@jshsus/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Check, X } from 'lucide-react';
+import { Check, LoaderCircle, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
@@ -358,7 +358,6 @@ export function ActivityReviewPage() {
               },
             }}
             loading={requestsQuery.isPending}
-            loadingText="승인 대상을 불러오는 중입니다."
             emptyText="대기 중인 탐구활동서가 없습니다."
             alwaysShowPagination
             caption="대기 탐구활동서"
@@ -438,7 +437,15 @@ export function ActivityReviewPage() {
               onClear={() => setStudentSearch('')}
             />
             <div className="activity-student-results" role="list" aria-label="학생 검색 결과">
-              {studentsQuery.isPending ? <p>학생을 불러오는 중입니다.</p> : null}
+              {studentsQuery.isPending ? (
+                <p aria-label="로딩 중">
+                  <LoaderCircle
+                    className="ui-status-state__icon admin-loading-spinner"
+                    size={18}
+                    aria-hidden="true"
+                  />
+                </p>
+              ) : null}
               {studentsQuery.isError ? (
                 <p className="form-error">학생을 불러오지 못했습니다.</p>
               ) : null}

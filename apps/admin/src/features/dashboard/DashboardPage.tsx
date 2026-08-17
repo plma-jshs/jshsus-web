@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   ChevronRight,
   ClipboardCheck,
+  LoaderCircle,
   Smartphone,
   UserRoundSearch,
 } from 'lucide-react';
@@ -23,12 +24,7 @@ export function DashboardPage() {
   if (dashboardQuery.isLoading) {
     return (
       <section className="admin-dashboard admin-dashboard--loading" aria-busy="true">
-        <span className="sr-only" role="status">
-          대시보드를 불러오는 중입니다.
-        </span>
-        <div className="admin-dashboard-skeleton__heading" aria-hidden="true" />
-        <div className="admin-dashboard-skeleton__row" aria-hidden="true" />
-        <div className="admin-dashboard-skeleton__row" aria-hidden="true" />
+        <LoaderCircle className="ui-status-state__icon admin-loading-spinner" size={24} aria-hidden="true" />
       </section>
     );
   }

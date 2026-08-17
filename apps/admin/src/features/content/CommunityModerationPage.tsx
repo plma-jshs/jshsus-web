@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import type {
@@ -8,7 +8,7 @@ import type {
   RichTextDocument,
   RichTextNode,
 } from '@jshsus/types';
-import { Eye, EyeOff, Paperclip, Pin, PinOff, Settings2, ShieldAlert } from 'lucide-react';
+import { Eye, EyeOff, Paperclip, Pin, PinOff, Settings2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSearchField,
@@ -19,8 +19,6 @@ import {
   ResilientImage,
   RowActionButton,
   RowActions,
-  SelectedRowsHeaderAction,
-  TableSelectionCheckbox,
   useToast,
 } from '../../components/ui';
 import { api } from '../../shared/api/adminApi';
@@ -192,7 +190,6 @@ export function CommunityModerationPage({
   const [reportStatus, setReportStatus] = useState('all');
   const [postPageSize, setPostPageSize] = useState(20);
   const [reportPageSize, setReportPageSize] = useState(20);
-  const [selectedReportIds, setSelectedReportIds] = useState<Set<number>>(() => new Set());
   const [postSorting, setPostSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
 
   const activeSource =
@@ -204,16 +201,6 @@ export function CommunityModerationPage({
   });
   const { reports, reportsQuery, updateReportMutation } =
     useContentReports(COMMUNITY_REPORT_TARGETS);
-  const completeSelectedReportsMutation = useMutation({
-    mutationFn: (ids: number[]) =>
-      Promise.all(ids.map((id) => api.updateReportStatus(id, 'closed'))),
-    onSuccess: async (_, ids) => {
-      setSelectedReportIds(new Set());
-      await queryClient.invalidateQueries({ queryKey: ['admin-reports'] });
-      showToast({ title: `신고 ${ids.length}건을 처리 완료했습니다.`, tone: 'success' });
-    },
-    onError: () => showToast({ title: '선택한 신고를 처리하지 못했습니다.', tone: 'danger' }),
-  });
   const commentsQuery = useQuery({
     queryKey: ['admin-board-comments', activeSource.slug, selectedPostId],
     queryFn: () => activeSource.loadComments(selectedPostId ?? 0),
@@ -272,40 +259,8 @@ export function CommunityModerationPage({
     () => reports.filter((report) => reportStatus === 'all' || report.status === reportStatus),
     [reportStatus, reports],
   );
-  const visibleReportIds = useMemo(
-    () => communityReports.map((report) => report.id),
-    [communityReports],
-  );
-  const allVisibleReportsSelected =
-    visibleReportIds.length > 0 && visibleReportIds.every((id) => selectedReportIds.has(id));
-  const someVisibleReportsSelected = visibleReportIds.some((id) => selectedReportIds.has(id));
-  const selectedReportCount = visibleReportIds.filter((id) => selectedReportIds.has(id)).length;
-
   const selectedPost = (postsQuery.data ?? []).find((post) => post.id === selectedPostId);
   const selectedReport = reports.find((report) => report.id === selectedReportId);
-
-  const toggleVisibleReports = useCallback(
-    (checked: boolean) => {
-      setSelectedReportIds(checked ? new Set(visibleReportIds) : new Set());
-    },
-    [visibleReportIds],
-  );
-
-  const toggleReport = useCallback((id: number, checked: boolean) => {
-    setSelectedReportIds((current) => {
-      const next = new Set(current);
-      if (checked) next.add(id);
-      else next.delete(id);
-      return next;
-    });
-  }, []);
-
-  const completeSelectedReports = useCallback(() => {
-    const ids = visibleReportIds.filter((id) => selectedReportIds.has(id));
-    if (ids.length === 0 || completeSelectedReportsMutation.isPending) return;
-    if (!window.confirm(`선택한 신고 ${ids.length}건을 처리 완료하시겠습니까?`)) return;
-    completeSelectedReportsMutation.mutate(ids);
-  }, [completeSelectedReportsMutation, selectedReportIds, visibleReportIds]);
 
   const postColumns = useMemo<ColumnDef<BoardPostSummary>[]>(
     () => [
@@ -434,77 +389,18 @@ export function CommunityModerationPage({
   const reportColumns = useMemo<ColumnDef<ContentReportSummary>[]>(
     () => [
       {
-        id: 'selection',
-        header: () => (
-          <TableSelectionCheckbox
-            label="신고 전체 선택"
-            checked={allVisibleReportsSelected}
-            indeterminate={someVisibleReportsSelected && !allVisibleReportsSelected}
-            disabled={visibleReportIds.length === 0 || completeSelectedReportsMutation.isPending}
-            onChange={toggleVisibleReports}
-          />
-        ),
-        cell: ({ row }) => (
-          <TableSelectionCheckbox
-            label={`신고 #${row.original.id} 선택`}
-            checked={selectedReportIds.has(row.original.id)}
-            disabled={completeSelectedReportsMutation.isPending}
-            onChange={(checked) => toggleReport(row.original.id, checked)}
-          />
-        ),
-        enableSorting: false,
-        meta: { align: 'center', width: 64, hideOnMobile: true },
-      },
-      {
         accessorKey: 'targetType',
-        header: () => (
-          <SelectedRowsHeaderAction
-            selectedCount={selectedReportCount}
-            defaultLabel="대상"
-            deleteLabel="처리 완료"
-            variant="primary"
-            loading={completeSelectedReportsMutation.isPending}
-            loadingLabel="처리 중"
-            onDelete={completeSelectedReports}
-          />
-        ),
+        header: '대상',
         cell: ({ row }) =>
           `${reportTargetLabel[row.original.targetType]} #${row.original.targetId}`,
-        enableSorting: selectedReportCount === 0,
+        enableSorting: true,
         meta: { align: 'center', width: 112, mobileRole: 'subtitle' },
-      },
-      {
-        accessorKey: 'reason',
-        header: '신고 사유',
-        cell: ({ row }) => <strong className="content-table-primary">{row.original.reason}</strong>,
-        enableSorting: false,
-        meta: { mobileRole: 'title' },
-      },
-      {
-        accessorKey: 'reporterName',
-        header: '신고자',
-        cell: ({ row }) => row.original.reporterName || '익명',
-        enableSorting: false,
-        meta: { align: 'left', width: 112 },
       },
       {
         accessorKey: 'createdAt',
         header: '접수일',
         cell: ({ row }) => formatAdminDate(row.original.createdAt),
         meta: { align: 'center', width: 128 },
-      },
-      {
-        accessorKey: 'status',
-        header: '상태',
-        cell: ({ row }) => (
-          <span
-            className={`status-chip ${row.original.status === 'closed' ? 'success' : 'warning'}`}
-          >
-            {reportStatusLabel[row.original.status] ?? row.original.status}
-          </span>
-        ),
-        enableSorting: false,
-        meta: { align: 'center', width: 104, mobileRole: 'badge' },
       },
       {
         id: 'actions',
@@ -522,17 +418,7 @@ export function CommunityModerationPage({
         meta: { align: 'center', width: 64, mobileRole: 'actions' },
       },
     ],
-    [
-      allVisibleReportsSelected,
-      completeSelectedReports,
-      completeSelectedReportsMutation.isPending,
-      selectedReportCount,
-      selectedReportIds,
-      someVisibleReportsSelected,
-      toggleReport,
-      toggleVisibleReports,
-      visibleReportIds.length,
-    ],
+    [],
   );
 
   return (
@@ -616,7 +502,6 @@ export function CommunityModerationPage({
             columns={postColumns}
             data={filteredPosts}
             loading={postsQuery.isPending}
-            loadingText="게시글을 불러오는 중입니다."
             emptyText={
               postSearch ? '검색 조건에 맞는 게시글이 없습니다.' : '등록된 게시글이 없습니다.'
             }
@@ -708,10 +593,10 @@ export function CommunityModerationPage({
       <ContentAdminPanel
         title="신고 처리"
         count={reports.length}
+        className="community-report-panel"
         actions={
           <>
             <label className="content-select-field">
-              <ShieldAlert size={16} aria-hidden="true" />
               <AdminSelect
                 mobileLabel="상태"
                 aria-label="신고 상태 필터"
@@ -738,7 +623,6 @@ export function CommunityModerationPage({
             columns={reportColumns}
             data={communityReports}
             loading={reportsQuery.isPending}
-            loadingText="신고 목록을 불러오는 중입니다."
             emptyText="조건에 맞는 신고가 없습니다."
             alwaysShowPagination
             pageSize={reportPageSize}
@@ -747,8 +631,8 @@ export function CommunityModerationPage({
           />
         </ContentQueryState>
         <MutationMessage
-          isPending={updateReportMutation.isPending || completeSelectedReportsMutation.isPending}
-          error={updateReportMutation.error ?? completeSelectedReportsMutation.error}
+          isPending={updateReportMutation.isPending}
+          error={updateReportMutation.error}
           pendingText="신고 처리 상태를 변경하는 중입니다."
         />
       </ContentAdminPanel>
@@ -918,10 +802,6 @@ export function CommunityModerationPage({
           <div className="content-detail-stack">
             <dl className="content-detail-list">
               <div>
-                <dt>신고자</dt>
-                <dd>{selectedReport.reporterName || '익명'}</dd>
-              </div>
-              <div>
                 <dt>접수일</dt>
                 <dd>{formatAdminDate(selectedReport.createdAt)}</dd>
               </div>
@@ -931,7 +811,7 @@ export function CommunityModerationPage({
               </div>
             </dl>
             <section className="content-detail-section">
-              <h3>{selectedReport.reason}</h3>
+              <h3>신고 내용</h3>
               <div className="content-detail-copy">
                 {selectedReport.detail || '추가 상세 내용이 없습니다.'}
               </div>

@@ -800,11 +800,6 @@ export function SchoolEventsPage() {
                 ))}
               </div>
             </div>
-            {calendarQuery.isLoading ? (
-              <p className="sr-only" role="status">
-                달력을 불러오는 중입니다.
-              </p>
-            ) : null}
             {calendarQuery.isError ? (
               <div className="calendar-status error" role="alert">
                 <span>학사일정을 불러오지 못했습니다.</span>

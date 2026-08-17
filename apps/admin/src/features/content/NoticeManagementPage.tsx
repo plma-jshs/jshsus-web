@@ -325,7 +325,6 @@ export function NoticeManagementPage() {
             columns={columns}
             data={filteredNotices}
             loading={noticesQuery.isPending}
-            loadingText="공지 목록을 불러오는 중입니다."
             emptyText={search ? '검색 조건에 맞는 공지가 없습니다.' : '등록된 공지가 없습니다.'}
             pageSize={pageSize}
             onPageSizeChange={(nextSize) => {

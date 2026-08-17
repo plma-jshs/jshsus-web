@@ -359,8 +359,8 @@ a.content-table-primary:focus-visible {
 
 .content-comment-feed__item {
   display: grid;
-  gap: 7px;
-  padding: 12px 14px;
+  gap: 3px;
+  padding: 7px 10px;
   border-bottom: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
 }
 
@@ -414,7 +414,7 @@ a.content-table-primary:focus-visible {
 .content-comment-feed__body {
   color: var(--j-color-text-secondary);
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.4;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
@@ -536,10 +536,11 @@ a.content-table-primary:focus-visible {
   }
 
   .notice-mobile-create {
-    min-height: 36px;
-    padding-inline: 13px;
-    font-size: 13px;
-    white-space: nowrap;
+    display: none !important;
+  }
+
+  .community-report-panel {
+    display: none;
   }
 
   .content-panel-actions .admin-table-toolbar {

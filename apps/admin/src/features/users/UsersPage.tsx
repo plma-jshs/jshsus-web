@@ -1173,7 +1173,6 @@ export function UsersPage() {
             columns={studentColumns}
             data={studentsQuery.data?.items ?? []}
             loading={studentsQuery.isPending}
-            loadingText="학생 목록을 불러오는 중입니다."
             emptyText={
               studentsQuery.isError ? '학생 목록을 불러오지 못했습니다.' : '조회된 학생이 없습니다.'
             }
@@ -1200,7 +1199,6 @@ export function UsersPage() {
             columns={staffColumns}
             data={staffQuery.data?.items ?? []}
             loading={staffQuery.isPending}
-            loadingText="교직원 목록을 불러오는 중입니다."
             emptyText={
               staffQuery.isError
                 ? '교직원 목록을 불러오지 못했습니다.'

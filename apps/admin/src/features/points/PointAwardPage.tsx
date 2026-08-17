@@ -1,7 +1,7 @@
 import type { PointReason } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Check, Pencil, X } from 'lucide-react';
+import { Check, LoaderCircle, Pencil, X } from 'lucide-react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { DataTable } from '../../components/DataTable';
@@ -649,7 +649,15 @@ export function PointAwardPage() {
               >
                 {searchOpen && !isEditingQueueItem ? (
                   <div className="point-search-results" role="listbox" aria-label="학생 검색 결과">
-                    {searchQuery.isLoading ? <p>불러오는 중입니다.</p> : null}
+                    {searchQuery.isLoading ? (
+                      <p aria-label="로딩 중">
+                        <LoaderCircle
+                          className="ui-status-state__icon admin-loading-spinner"
+                          size={18}
+                          aria-hidden="true"
+                        />
+                      </p>
+                    ) : null}
                     {searchQuery.data?.items.map((student) => (
                       <button
                         key={student.id}

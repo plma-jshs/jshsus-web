@@ -1,4 +1,4 @@
-import { AlertCircle, Inbox, LoaderCircle } from 'lucide-react';
+import { AlertCircle, LoaderCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 export type EmptyStateProps = {
@@ -13,7 +13,9 @@ export type EmptyStateProps = {
 export function EmptyState({
   title,
   description,
-  icon = <Inbox size={19} aria-hidden="true" />,
+  // Kept in the public props for backwards compatibility with feature pages.
+  // Empty states intentionally use text only across the admin surface now.
+  icon: _icon,
   action,
   compact = false,
   className,
@@ -24,7 +26,6 @@ export function EmptyState({
 
   return (
     <div className={classes}>
-      <span className="ui-empty-state__icon">{icon}</span>
       <strong>{title}</strong>
       {description ? <p>{description}</p> : null}
       {action}
@@ -33,7 +34,7 @@ export function EmptyState({
 }
 
 export function LoadingState({
-  title = '불러오는 중입니다.',
+  title: _title,
   compact = false,
   className,
 }: {
@@ -55,7 +56,6 @@ export function LoadingState({
       aria-live="polite"
     >
       <LoaderCircle className="ui-status-state__icon" size={20} aria-hidden="true" />
-      <strong>{title}</strong>
     </div>
   );
 }
