@@ -1,315 +1,53 @@
-import {
-  Children,
-  isValidElement,
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  useCallback,
-  type CSSProperties,
-  type OptionHTMLAttributes,
-  type ReactElement,
-  type ReactNode,
-  type SelectHTMLAttributes,
-} from 'react';
-import { createPortal } from 'react-dom';
-import { Check, ChevronDown } from 'lucide-react';
+import type { SelectHTMLAttributes } from 'react';
+import { SelectPrimitive, type SelectPrimitiveProps } from '@jshsus/ui';
 
-type SelectOption = {
-  value: string;
-  label: ReactNode;
-  disabled: boolean;
-  badge?: string;
-  tone?: string;
-};
-
-type AdminSelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, 'multiple' | 'size'> & {
-  children: ReactNode;
+export type AdminSelectProps = Omit<SelectPrimitiveProps, 'classPrefix' | 'portal'> & {
+  children: SelectHTMLAttributes<HTMLSelectElement>['children'];
   nativeOnMobile?: boolean;
   mobileLabel?: string;
   menuClassName?: string;
 };
 
-function toOptions(children: ReactNode): SelectOption[] {
-  return Children.toArray(children).flatMap((child) => {
-    if (!isValidElement(child) || child.type !== 'option') return [];
-    const option = child as ReactElement<OptionHTMLAttributes<HTMLOptionElement>>;
-    const decoratedProps = option.props as OptionHTMLAttributes<HTMLOptionElement> & {
-      'data-badge'?: string;
-      'data-tone'?: string;
-    };
-    const implicitValue =
-      typeof option.props.children === 'string' || typeof option.props.children === 'number'
-        ? option.props.children
-        : '';
-    return [
-      {
-        value: String(option.props.value ?? implicitValue),
-        label: option.props.children,
-        disabled: Boolean(option.props.disabled),
-        badge: decoratedProps['data-badge'],
-        tone: decoratedProps['data-tone'],
-      },
-    ];
-  });
-}
-
-export function AdminSelect({
-  children,
-  className,
-  value,
-  defaultValue,
-  disabled,
-  onChange,
-  onInvalid,
-  nativeOnMobile = true,
-  mobileLabel,
-  menuClassName,
-  'aria-label': ariaLabel,
-  ...selectProps
-}: AdminSelectProps) {
-  const options = useMemo(() => toOptions(children), [children]);
-  const fallbackValue = String(
-    defaultValue ?? options.find((option) => !option.disabled)?.value ?? options[0]?.value ?? '',
-  );
-  const [uncontrolledValue, setUncontrolledValue] = useState(fallbackValue);
-  const [open, setOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [menuStyle, setMenuStyle] = useState<CSSProperties>();
-  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
-  const [mobile, setMobile] = useState(() =>
-    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
-      ? window.matchMedia('(max-width: 767px)').matches
-      : nativeOnMobile,
-  );
-  const rootRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const selectRef = useRef<HTMLSelectElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const listboxId = useId();
-  const selectedValue = value === undefined ? uncontrolledValue : String(value);
-  const selected = options.find((option) => option.value === selectedValue) ?? options[0];
-  const useNativeSelect = nativeOnMobile && mobile;
-  const resolvedAriaLabel = ariaLabel ?? '선택';
-  const resolvedMobileLabel = mobileLabel ?? ariaLabel;
-  const isStatusSelect = /상태/.test(`${resolvedAriaLabel} ${resolvedMobileLabel ?? ''}`);
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return undefined;
-    const query = window.matchMedia('(max-width: 767px)');
-    const handleChange = (event: MediaQueryListEvent) => setMobile(event.matches);
-    query.addEventListener('change', handleChange);
-    return () => query.removeEventListener('change', handleChange);
-  }, []);
-
-  const positionMenu = useCallback(() => {
-    const trigger = triggerRef.current;
-    if (!trigger) return;
-    const rect = trigger.getBoundingClientRect();
-    const roomBelow = window.innerHeight - rect.bottom;
-    const estimatedHeight = Math.min(280, options.length * 40 + 12);
-    const opensUpward = roomBelow < estimatedHeight && rect.top > roomBelow;
-    setMenuStyle({
-      left: rect.left,
-      width: rect.width,
-      ...(opensUpward ? { bottom: window.innerHeight - rect.top + 6 } : { top: rect.bottom + 6 }),
-    });
-  }, [options.length]);
-
-  useLayoutEffect(() => {
-    if (open) positionMenu();
-  }, [open, positionMenu]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node)) return;
-      if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) return;
-      setOpen(false);
-    };
-    const handleViewportChange = () => positionMenu();
-    document.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('resize', handleViewportChange);
-    window.addEventListener('scroll', handleViewportChange, true);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('resize', handleViewportChange);
-      window.removeEventListener('scroll', handleViewportChange, true);
-    };
-  }, [open, positionMenu]);
-
-  const choose = (nextValue: string) => {
-    if (value === undefined) setUncontrolledValue(nextValue);
-    const nativeSelect = selectRef.current;
-    const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set;
-    if (nativeSelect && setter) {
-      setter.call(nativeSelect, nextValue);
-      nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-    setOpen(false);
-    triggerRef.current?.focus();
-  };
-
-  const moveActive = (direction: 1 | -1) => {
-    if (options.length === 0) return;
-    let next = activeIndex;
-    for (let count = 0; count < options.length; count += 1) {
-      next = (next + direction + options.length) % options.length;
-      if (!options[next]?.disabled) break;
-    }
-    setActiveIndex(next);
-  };
-
-  const moveActiveToEdge = (edge: 'first' | 'last') => {
-    const indexes = options
-      .map((option, index) => (option.disabled ? -1 : index))
-      .filter((index) => index >= 0);
-    const next = edge === 'first' ? indexes[0] : indexes[indexes.length - 1];
-    if (next !== undefined) setActiveIndex(next);
-  };
-
-  const chooseActive = () => {
-    const option = options[activeIndex];
-    if (option && !option.disabled) choose(option.value);
-  };
+/**
+ * Admin adapter for the shared SelectPrimitive.
+ *
+ * The admin surface keeps its portal menu and existing class prefix so the
+ * portal positioning/status styles remain unchanged, while option parsing,
+ * keyboard behavior and native-mobile fallback are shared with public selects.
+ */
+export function AdminSelect(props: AdminSelectProps) {
+  const {
+    children,
+    className,
+    value,
+    defaultValue,
+    nativeOnMobile = true,
+    mobileLabel,
+    menuClassName,
+    'aria-label': ariaLabel,
+    ...selectProps
+  } = props;
+  const nativeAlways = props.nativeOnMobile === true;
+  const isStatusSelect = /상태/.test(`${ariaLabel ?? ''} ${mobileLabel ?? ''}`);
+  const classes = [isStatusSelect ? 'admin-select--status' : '', className ?? '']
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <div
-      className={`admin-select${open ? ' is-open' : ''}${nativeOnMobile ? ' admin-select--native-mobile' : ''}${isStatusSelect ? ' admin-select--status' : ''}${className ? ` ${className}` : ''}`}
-      ref={rootRef}
+    <SelectPrimitive
+      {...selectProps}
+      aria-label={ariaLabel}
+      className={classes}
+      classPrefix="admin-select"
+      defaultValue={defaultValue}
+      mobileLabel={mobileLabel ?? ariaLabel}
+      nativeOnMobile={nativeOnMobile}
+      nativeAlways={nativeAlways}
+      portal
+      value={value}
+      menuClassName={menuClassName}
     >
-      {resolvedMobileLabel ? (
-        <span className="admin-select__mobile-label">{resolvedMobileLabel}</span>
-      ) : null}
-      <select
-        {...selectProps}
-        aria-hidden={useNativeSelect ? undefined : true}
-        className="admin-select__native"
-        disabled={disabled}
-        ref={selectRef}
-        tabIndex={useNativeSelect ? undefined : -1}
-        value={value}
-        defaultValue={value === undefined ? defaultValue : undefined}
-        onChange={onChange}
-        onInvalid={(event) => {
-          onInvalid?.(event);
-          triggerRef.current?.focus();
-        }}
-      >
-        {children}
-      </select>
-      <button
-        aria-controls={listboxId}
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        aria-label={`${resolvedAriaLabel}: ${
-          typeof selected?.label === 'string' ? selected.label : selectedValue
-        }`}
-        className="admin-select__trigger"
-        disabled={disabled}
-        ref={triggerRef}
-        type="button"
-        onClick={() => {
-          const selectedIndex = Math.max(
-            0,
-            options.findIndex((option) => option.value === selectedValue),
-          );
-          setActiveIndex(selectedIndex);
-          setPortalTarget(triggerRef.current?.closest('dialog[open]') ?? document.body);
-          setOpen((current) => !current);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            if (!open) return;
-            event.preventDefault();
-            setOpen(false);
-            return;
-          }
-          if ((event.key === 'Enter' || event.key === ' ') && open) {
-            event.preventDefault();
-            chooseActive();
-            return;
-          }
-          if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-            event.preventDefault();
-            if (!open) {
-              setPortalTarget(triggerRef.current?.closest('dialog[open]') ?? document.body);
-              setOpen(true);
-            }
-            moveActive(event.key === 'ArrowDown' ? 1 : -1);
-            return;
-          }
-          if (event.key === 'Home' || event.key === 'End') {
-            event.preventDefault();
-            if (!open) {
-              setPortalTarget(triggerRef.current?.closest('dialog[open]') ?? document.body);
-              setOpen(true);
-            }
-            moveActiveToEdge(event.key === 'Home' ? 'first' : 'last');
-          } else if (event.key === 'Tab' && open) {
-            setOpen(false);
-          }
-        }}
-      >
-        <span className="admin-select__option-content">
-          {selected?.badge ? (
-            <span className={`admin-select__badge is-${selected.tone ?? 'neutral'}`}>
-              {selected.badge}
-            </span>
-          ) : null}
-          <span>{selected?.label ?? '선택'}</span>
-        </span>
-        <ChevronDown size={16} aria-hidden="true" />
-      </button>
-      {open && menuStyle && portalTarget
-        ? createPortal(
-            <div
-              aria-label={ariaLabel}
-              className={`admin-select__menu${menuClassName ? ` ${menuClassName}` : ''}`}
-              id={listboxId}
-              ref={menuRef}
-              role="listbox"
-              style={menuStyle}
-              onKeyDown={(event) => {
-                if (event.key === 'Escape') {
-                  event.preventDefault();
-                  setOpen(false);
-                  triggerRef.current?.focus();
-                }
-              }}
-            >
-              {options.map((option, index) => {
-                const isSelected = option.value === selectedValue;
-                return (
-                  <button
-                    aria-selected={isSelected}
-                    className={`${isSelected ? 'is-selected' : ''}${activeIndex === index ? ' is-active' : ''}`}
-                    disabled={option.disabled}
-                    key={`${option.value}:${index}`}
-                    role="option"
-                    type="button"
-                    onClick={() => choose(option.value)}
-                    onMouseEnter={() => setActiveIndex(index)}
-                  >
-                    <span className="admin-select__option-content">
-                      {option.badge ? (
-                        <span className={`admin-select__badge is-${option.tone ?? 'neutral'}`}>
-                          {option.badge}
-                        </span>
-                      ) : null}
-                      <span>{option.label}</span>
-                    </span>
-                    {isSelected ? <Check size={15} aria-hidden="true" /> : null}
-                  </button>
-                );
-              })}
-            </div>,
-            portalTarget,
-          )
-        : null}
-    </div>
+      {children}
+    </SelectPrimitive>
   );
 }

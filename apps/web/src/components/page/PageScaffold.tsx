@@ -1,9 +1,9 @@
 import type { LucideIcon } from 'lucide-react';
-import { ChevronRight, Inbox, PenLine, SlidersHorizontal, TriangleAlert, X } from 'lucide-react';
+import { ChevronRight, Inbox, PenLine, SlidersHorizontal, TriangleAlert } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
 import { useEffect, useId, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { SearchField as SharedSearchField, SegmentedControl } from '@jshsus/ui';
+import { FilterSheet, SearchField as SharedSearchField, SegmentedControl } from '@jshsus/ui';
 import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 import type { BreadcrumbItem } from './pageHierarchy';
 
@@ -103,15 +103,18 @@ export function PageToolbar({
       }${isFilterOpen ? ' is-filter-open' : ''}${isClosing ? ' is-closing' : ''}`}
     >
       {hasFilters ? (
-        <div className="page-toolbar__filters-content" id={filterPanelId}>
-          <div className="page-toolbar__filters-heading">
-            <strong>필터</strong>
-            <button type="button" aria-label="필터 닫기" onClick={() => requestClose()}>
-              <X size={17} aria-hidden="true" />
-            </button>
-          </div>
+        <FilterSheet
+          layoutClassName="page-toolbar__filters-content"
+          id={filterPanelId}
+          title="필터"
+          titleAs="strong"
+          headerClassName="page-toolbar__filters-heading"
+          closeLabel="필터 닫기"
+          closeIconSize={17}
+          onClose={requestClose}
+        >
           {filters}
-        </div>
+        </FilterSheet>
       ) : null}
       {hasSearch ? <div className="page-toolbar__search-content">{search}</div> : null}
       {hasFilters ? (

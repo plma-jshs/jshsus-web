@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { DialogShell } from '@jshsus/ui';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useAnimatedDialog } from './useAnimatedDialog';
 
@@ -69,26 +69,23 @@ export function Drawer({
         if (event.target === event.currentTarget) requestClose();
       }}
     >
-      <div className="ui-drawer__layout">
-        <header className="ui-drawer__header">
-          <div>
-            <h2 id={titleId}>{title}</h2>
-            {description ? <p id={descriptionId}>{description}</p> : null}
-          </div>
-          <button
-            className="ui-drawer__close"
-            type="button"
-            aria-label={closeLabel}
-            onClick={requestClose}
-          >
-            <X size={19} aria-hidden="true" />
-          </button>
-        </header>
-        <div className="ui-drawer__body" ref={bodyRef}>
-          {children}
-        </div>
-        {footer ? <footer className="ui-drawer__footer">{footer}</footer> : null}
-      </div>
+      <DialogShell
+        className="ui-drawer__layout"
+        headerClassName="ui-drawer__header"
+        bodyClassName="ui-drawer__body"
+        footerClassName="ui-drawer__footer"
+        closeClassName="ui-drawer__close"
+        title={title}
+        titleId={titleId}
+        description={description}
+        descriptionId={descriptionId}
+        bodyRef={bodyRef}
+        footer={footer}
+        closeLabel={closeLabel}
+        onClose={requestClose}
+      >
+        {children}
+      </DialogShell>
     </dialog>
   );
 }

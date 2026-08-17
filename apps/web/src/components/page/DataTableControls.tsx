@@ -1,15 +1,7 @@
-import {
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  LoaderCircle,
-  SlidersHorizontal,
-  X,
-} from 'lucide-react';
+import { SlidersHorizontal, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
-import { SearchField } from '@jshsus/ui';
+import { PaginationPrimitive, SearchField, SelectPrimitive } from '@jshsus/ui';
 import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 
 export type DataTableSearchField = 'title_content' | 'title' | 'author';
@@ -36,28 +28,10 @@ type DataTableToolbarProps<TField extends string = DataTableSearchField> = {
   searchFieldOptions?: readonly DataTableSearchFieldOption<TField>[];
 };
 
-function useCompactViewport() {
-  const [isCompact, setIsCompact] = useState(() =>
-    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
-      ? window.matchMedia('(max-width: 767px)').matches
-      : false,
-  );
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return undefined;
-    const mediaQuery = window.matchMedia('(max-width: 767px)');
-    const update = () => setIsCompact(mediaQuery.matches);
-    update();
-    mediaQuery.addEventListener?.('change', update);
-    return () => mediaQuery.removeEventListener?.('change', update);
-  }, []);
-
-  return isCompact;
-}
-
 export type ToolbarSelectOption<TValue extends string | number> = {
   value: TValue;
   label: string;
+  disabled?: boolean;
 };
 
 export function ToolbarSelect<TValue extends string | number>({
@@ -77,103 +51,27 @@ export function ToolbarSelect<TValue extends string | number>({
   disabled?: boolean;
   leadingIcon?: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
-  const isCompactViewport = useCompactViewport();
-  const listboxId = useId();
-  const selected = options.find((option) => option.value === value) ?? options[0];
-
-  if (isCompactViewport) {
-    return (
-      <label className="data-table-toolbar-select__native-wrap">
-        {leadingIcon ? (
-          <span className="data-table-toolbar-select__leading-icon" aria-hidden="true">
-            {leadingIcon}
-          </span>
-        ) : null}
-        {label ? <span>{label}</span> : null}
-        <select
-          aria-label={ariaLabel}
-          className="data-table-toolbar-select__native"
-          disabled={disabled}
-          value={String(value)}
-          onChange={(event) => {
-            const nextOption = options.find(
-              (option) => String(option.value) === event.target.value,
-            );
-            if (nextOption) onChange(nextOption.value);
-          }}
-        >
-          {options.map((option) => (
-            <option key={String(option.value)} value={String(option.value)}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
-    );
-  }
-
   return (
-    <div
-      className={`data-table-toolbar-select${open ? ' is-open' : ''}`}
-      onBlur={(event) => {
-        const nextTarget = event.relatedTarget;
-        if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
-          setOpen(false);
-        }
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') setOpen(false);
+    <SelectPrimitive
+      aria-label={ariaLabel}
+      classPrefix="data-table-toolbar-select"
+      disabled={disabled}
+      label={label}
+      leadingIcon={leadingIcon}
+      nativeOnMobile
+      nativeWrapClassName="data-table-toolbar-select__native-wrap"
+      value={String(value)}
+      onChange={(event) => {
+        const nextOption = options.find((option) => String(option.value) === event.target.value);
+        if (nextOption) onChange(nextOption.value);
       }}
     >
-      {label ? <span className="data-table-toolbar-select__label">{label}</span> : null}
-      <button
-        aria-controls={listboxId}
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        aria-label={`${ariaLabel}: ${selected?.label ?? value}`}
-        className="data-table-toolbar-select__trigger"
-        type="button"
-        disabled={disabled}
-        onClick={() => setOpen((current) => !current)}
-      >
-        {leadingIcon ? (
-          <span className="data-table-toolbar-select__leading-icon" aria-hidden="true">
-            {leadingIcon}
-          </span>
-        ) : null}
-        <span>{selected?.label ?? value}</span>
-        <ChevronDown size={15} aria-hidden="true" />
-      </button>
-      {open ? (
-        <div
-          aria-label={ariaLabel}
-          className="data-table-toolbar-select__menu"
-          id={listboxId}
-          role="listbox"
-        >
-          {options.map((option) => {
-            const isSelected = option.value === value;
-            return (
-              <button
-                aria-selected={isSelected}
-                className={isSelected ? 'is-selected' : undefined}
-                key={String(option.value)}
-                role="option"
-                type="button"
-                onClick={() => {
-                  onChange(option.value);
-                  setOpen(false);
-                }}
-              >
-                <span>{option.label}</span>
-                {isSelected ? <Check size={15} aria-hidden="true" /> : null}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-    </div>
+      {options.map((option) => (
+        <option key={String(option.value)} value={String(option.value)} disabled={option.disabled}>
+          {option.label}
+        </option>
+      ))}
+    </SelectPrimitive>
   );
 }
 
@@ -360,39 +258,17 @@ export function DataTablePagination({
 }) {
   const safePage = Math.min(Math.max(page, 1), Math.max(totalPages, 1));
   const resolvedPageSize = pageSize ?? 20;
-  const [draftPage, setDraftPage] = useState(String(safePage));
-  const previousSafePage = useRef(safePage);
-  useEffect(() => {
-    if (previousSafePage.current === safePage) return;
-    previousSafePage.current = safePage;
-    setDraftPage(String(safePage));
-  }, [safePage]);
   if (totalPages <= 1 && !onPageSizeChange) return null;
   const firstItem = total ? (safePage - 1) * resolvedPageSize + 1 : undefined;
   const lastItem = total ? Math.min(safePage * resolvedPageSize, total) : undefined;
-  const changePageSize = (nextPageSize: DataTablePageSize) => {
-    onPageSizeChange?.(nextPageSize);
-  };
-  const changePage = (nextPage: number) => {
-    const resolvedPage = Math.min(Math.max(nextPage, 1), Math.max(totalPages, 1));
-    if (resolvedPage === safePage) return;
-    onChange(resolvedPage);
-  };
-  const commitPage = (value: string) => {
-    const nextPage = Number(value);
-    if (!Number.isInteger(nextPage) || nextPage < 1) {
-      setDraftPage(String(safePage));
-      return;
-    }
-    const resolvedPage = Math.min(nextPage, Math.max(totalPages, 1));
-    setDraftPage(String(resolvedPage));
-    changePage(resolvedPage);
-  };
 
   return (
-    <nav className="data-table-pagination" aria-label="목록 페이지">
-      <div className="data-table-pagination__summary">
-        {onPageSizeChange ? (
+    <PaginationPrimitive
+      classPrefix="data-table-pagination"
+      page={safePage}
+      pageCount={totalPages}
+      pageSizeControl={
+        onPageSizeChange ? (
           <ToolbarSelect
             ariaLabel="페이지당 표시 건수"
             value={pageSize as DataTablePageSize}
@@ -400,72 +276,26 @@ export function DataTablePagination({
               value: size,
               label: `${size}개씩 보기`,
             }))}
-            onChange={changePageSize}
+            onChange={(nextPageSize) => onPageSizeChange(nextPageSize)}
           />
-        ) : null}
-        <span className="data-table-pagination__range">
-          {firstItem !== undefined && lastItem !== undefined
-            ? `총 ${total!.toLocaleString('ko-KR')}건 중 ${firstItem}-${lastItem}`
-            : `${safePage} / ${Math.max(totalPages, 1)}페이지`}
-        </span>
-      </div>
-      {onLoadMore && hasMore ? (
-        <button
-          className="data-table-pagination__load-more"
-          type="button"
-          onClick={onLoadMore}
-          disabled={loadingMore}
-        >
-          {loadingMore ? (
-            <LoaderCircle className="is-spinning" size={15} aria-hidden="true" />
-          ) : null}
-          <span>{loadingMore ? '불러오는 중…' : '더보기'}</span>
-          {!loadingMore ? <ChevronDown size={15} aria-hidden="true" /> : null}
-        </button>
-      ) : null}
-      <div className="data-table-pagination__controls">
-        <button
-          type="button"
-          aria-label="이전 페이지"
-          disabled={safePage === 1}
-          onClick={() => changePage(safePage - 1)}
-        >
-          <ChevronLeft size={18} aria-hidden="true" />
-        </button>
-        <label className="data-table-pagination__page-input">
-          <span className="sr-only">현재 페이지</span>
-          <input
-            inputMode="numeric"
-            type="text"
-            value={draftPage}
-            onChange={(event) => {
-              setDraftPage(event.target.value.replace(/\D/g, ''));
-            }}
-            onBlur={(event) => {
-              commitPage(event.currentTarget.value);
-            }}
-            onKeyDown={(event) => {
-              if (event.key !== 'Enter') return;
-              event.preventDefault();
-              commitPage(event.currentTarget.value);
-              event.currentTarget.blur();
-            }}
-            aria-label="페이지 번호"
-          />
-        </label>
-        <span className="data-table-pagination__total-pages" aria-hidden="true">
-          <span>/</span>
-          <span>{Math.max(totalPages, 1)}</span>
-        </span>
-        <button
-          type="button"
-          aria-label="다음 페이지"
-          disabled={safePage >= totalPages}
-          onClick={() => changePage(safePage + 1)}
-        >
-          <ChevronRight size={18} aria-hidden="true" />
-        </button>
-      </div>
-    </nav>
+        ) : null
+      }
+      range={
+        firstItem !== undefined && lastItem !== undefined
+          ? `총 ${total!.toLocaleString('ko-KR')}건 중 ${firstItem}-${lastItem}`
+          : `${safePage} / ${Math.max(totalPages, 1)}페이지`
+      }
+      loadMore={
+        onLoadMore
+          ? {
+              hasMore,
+              onLoadMore,
+              loading: loadingMore,
+            }
+          : undefined
+      }
+      onPageChange={onChange}
+      ariaLabel="목록 페이지"
+    />
   );
 }

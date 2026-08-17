@@ -763,7 +763,6 @@ export function PointAwardPage() {
             <FormField label="기준 규정" className="point-award-rule" required>
               <AdminSelect
                 className="point-reason-select"
-                nativeOnMobile
                 value={form.reasonId}
                 onChange={(event) => {
                   const reason = activeReasons.find(

@@ -1,5 +1,6 @@
-import { SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import { useEffect, useState, type HTMLAttributes, type ReactNode } from 'react';
+import { FilterSheet } from '@jshsus/ui';
 import { useAnimatedDialog } from './useAnimatedDialog';
 
 export type TableToolbarProps = HTMLAttributes<HTMLDivElement> & {
@@ -117,27 +118,22 @@ export function TableToolbar({
                 if (event.target === event.currentTarget) requestClose();
               }}
             >
-              <div className="admin-filter-sheet__layout">
-                <header>
-                  <h2>{mobileSheetTitle}</h2>
-                  <button
-                    type="button"
-                    aria-label={`${mobileSheetTitle} 닫기`}
-                    onClick={requestClose}
-                  >
-                    <X size={20} aria-hidden="true" />
+              <FilterSheet
+                layoutClassName="admin-filter-sheet__layout"
+                title={mobileSheetTitle}
+                closeLabel={`${mobileSheetTitle} 닫기`}
+                onClose={requestClose}
+                footer={
+                  <button type="button" onClick={requestClose}>
+                    적용
                   </button>
-                </header>
+                }
+              >
                 <div className="admin-table-toolbar__controls admin-filter-sheet__controls">
                   {mobileSort}
                   {children}
                 </div>
-                <footer>
-                  <button type="button" onClick={requestClose}>
-                    적용
-                  </button>
-                </footer>
-              </div>
+              </FilterSheet>
             </dialog>
           ) : null}
         </>
