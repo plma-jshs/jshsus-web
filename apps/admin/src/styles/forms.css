@@ -141,6 +141,7 @@
 ) {
   box-sizing: border-box;
   border: 1px solid var(--line-strong) !important;
+  border-radius: var(--j-radius-control) !important;
   background: var(--surface) !important;
 }
 
