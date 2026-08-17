@@ -1,3 +1,4 @@
+import { SegmentedControl } from '@jshsus/ui';
 import type { ReactNode } from 'react';
 
 export type SegmentedTabOption<T extends string> = {
@@ -20,23 +21,12 @@ export function SegmentedTabs<T extends string>({
   className?: string;
 }) {
   return (
-    <div
+    <SegmentedControl
+      value={value}
+      options={options}
+      onChange={onChange}
+      ariaLabel={ariaLabel}
       className={['ui-segmented-tabs', className].filter(Boolean).join(' ')}
-      role="tablist"
-      aria-label={ariaLabel}
-    >
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          role="tab"
-          aria-selected={value === option.value}
-          disabled={option.disabled}
-          onClick={() => onChange(option.value)}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
+    />
   );
 }

@@ -1,46 +1,13 @@
-import { useState, type ImgHTMLAttributes } from 'react';
+import { ResilientImage as SharedResilientImage } from '@jshsus/ui';
+import type { ResilientImageProps } from '@jshsus/ui';
 
-type ResilientImageProps = ImgHTMLAttributes<HTMLImageElement> & {
-  fallbackLabel?: string;
-};
+export type { ResilientImageProps } from '@jshsus/ui';
 
-export function ResilientImage({
-  src,
-  alt,
-  className,
-  fallbackLabel = '이미지를 불러오지 못했습니다.',
-  loading = 'lazy',
-  decoding = 'async',
-  onError,
-  ...props
-}: ResilientImageProps) {
-  const [failedSource, setFailedSource] = useState<string | undefined>();
-  const failed = Boolean(src && failedSource === src);
-
-  if (failed) {
-    return (
-      <span
-        className={['ui-image-fallback', className ?? ''].filter(Boolean).join(' ')}
-        role="img"
-        aria-label={fallbackLabel}
-      >
-        {fallbackLabel}
-      </span>
-    );
-  }
-
+export function ResilientImage({ fallbackClassName, ...props }: ResilientImageProps) {
   return (
-    <img
+    <SharedResilientImage
       {...props}
-      className={className}
-      src={src}
-      alt={alt ?? ''}
-      loading={loading}
-      decoding={decoding}
-      onError={(event) => {
-        setFailedSource(src);
-        onError?.(event);
-      }}
+      fallbackClassName={['ui-image-fallback', fallbackClassName].filter(Boolean).join(' ')}
     />
   );
 }

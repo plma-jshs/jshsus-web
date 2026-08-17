@@ -352,6 +352,9 @@ export function DataTablePagination({
   pageSize = 20,
   onPageSizeChange,
   onChange,
+  onLoadMore,
+  loadingMore = false,
+  hasMore = false,
 }: {
   page: number;
   totalPages: number;
@@ -415,6 +418,17 @@ export function DataTablePagination({
             : `${safePage} / ${Math.max(totalPages, 1)}페이지`}
         </span>
       </div>
+      {onLoadMore && hasMore ? (
+        <button
+          className="data-table-pagination__load-more"
+          type="button"
+          onClick={onLoadMore}
+          disabled={loadingMore}
+        >
+          {loadingMore ? '불러오는 중…' : '더보기'}
+          <ChevronDown size={15} aria-hidden="true" />
+        </button>
+      ) : null}
       <div className="data-table-pagination__controls">
         <button
           type="button"

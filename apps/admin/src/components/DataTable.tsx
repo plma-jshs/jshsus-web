@@ -426,6 +426,8 @@ export function DataTable<T>({
           pageSize={pagination?.pageSize ?? table.getState().pagination.pageSize}
           totalCount={pagination?.totalCount}
           onPageChange={moveToPage}
+          onLoadMore={() => moveToPage(currentPageIndex + 1)}
+          hasMore={currentPageIndex + 1 < resolvedPageCount}
           onPageSizeChange={
             pagination?.onPageSizeChange || onPageSizeChange ? changePageSize : undefined
           }

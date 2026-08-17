@@ -52,10 +52,46 @@
 }
 
 .notice-editor-pin input {
-  width: 15px;
-  height: 15px;
+  appearance: none;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
   margin: 0;
-  accent-color: var(--j-color-brand);
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--j-color-border-strong);
+  border-radius: 6px;
+  background: var(--j-color-surface);
+  cursor: pointer;
+  transition:
+    border-color var(--j-motion-fast),
+    background-color var(--j-motion-fast),
+    box-shadow var(--j-motion-fast);
+}
+
+.notice-editor-pin input::before {
+  width: 8px;
+  height: 4px;
+  border-bottom: 2px solid var(--j-color-text-inverse);
+  border-left: 2px solid var(--j-color-text-inverse);
+  content: '';
+  transform: translateY(-1px) rotate(-45deg) scale(0);
+  transition: transform var(--j-motion-fast);
+}
+
+.notice-editor-pin input:checked {
+  border-color: var(--j-color-brand);
+  background: var(--j-color-brand);
+}
+
+.notice-editor-pin input:checked::before {
+  transform: translateY(-1px) rotate(-45deg) scale(1);
+}
+
+.notice-editor-pin input:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--j-color-brand) 18%, transparent);
 }
 
 .notice-editor-pin:has(input:checked) strong {
@@ -407,10 +443,22 @@
   width: auto;
   height: 36px;
   padding-inline: 10px;
-  border: 1px solid var(--j-color-border);
-  background: var(--j-color-surface);
+  border: 1px solid var(--j-color-brand);
+  border-radius: var(--j-radius-sm);
+  color: var(--j-color-text-inverse);
+  background: var(--j-color-brand);
   font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color var(--j-motion-fast),
+    background-color var(--j-motion-fast);
+}
+
+.rich-text-toolbar .rich-text-toolbar-palette__hex button:hover,
+.rich-text-toolbar-palette__menu--portal .rich-text-toolbar-palette__hex button:hover {
+  border-color: var(--j-color-brand-strong);
+  background: var(--j-color-brand-strong);
 }
 
 .rich-text-toolbar-more {
@@ -1293,6 +1341,7 @@
     border-bottom: 1px solid var(--j-color-border);
     border-radius: 0;
     background: transparent;
+    padding-left: 0;
   }
 
   .rich-text-toolbar__group {

@@ -1,8 +1,17 @@
 import type { LucideIcon } from 'lucide-react';
-import { ChevronRight, Inbox, Search, SlidersHorizontal, TriangleAlert, X } from 'lucide-react';
-import type { ReactNode } from 'react';
+import {
+  ChevronRight,
+  Inbox,
+  PenLine,
+  Search,
+  SlidersHorizontal,
+  TriangleAlert,
+  X,
+} from 'lucide-react';
+import type { ComponentProps, ReactNode } from 'react';
 import { useEffect, useId, useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { SegmentedControl } from '@jshsus/ui';
 import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 import type { BreadcrumbItem } from './pageHierarchy';
 
@@ -77,7 +86,9 @@ export function PageToolbar({
     setIsFilterOpen(false),
   );
   const filterPanelId = useId();
-  const hasSplitControls = filters !== undefined || search !== undefined;
+  const hasFilters = filters !== undefined;
+  const hasSearch = search !== undefined;
+  const hasSplitControls = hasFilters || hasSearch;
 
   useEffect(() => {
     if (!isFilterOpen) return undefined;
@@ -95,36 +106,40 @@ export function PageToolbar({
 
   return (
     <div
-      className={`page-toolbar page-toolbar--split${isFilterOpen ? ' is-filter-open' : ''}${
-        isClosing ? ' is-closing' : ''
-      }`}
+      className={`page-toolbar page-toolbar--split${hasFilters ? ' page-toolbar--has-filters' : ''}${
+        hasSearch ? ' page-toolbar--has-search' : ''
+      }${isFilterOpen ? ' is-filter-open' : ''}${isClosing ? ' is-closing' : ''}`}
     >
-      <div className="page-toolbar__filters-content" id={filterPanelId}>
-        <div className="page-toolbar__filters-heading">
-          <strong>필터</strong>
-          <button type="button" aria-label="필터 닫기" onClick={() => requestClose()}>
-            <X size={17} aria-hidden="true" />
-          </button>
+      {hasFilters ? (
+        <div className="page-toolbar__filters-content" id={filterPanelId}>
+          <div className="page-toolbar__filters-heading">
+            <strong>필터</strong>
+            <button type="button" aria-label="필터 닫기" onClick={() => requestClose()}>
+              <X size={17} aria-hidden="true" />
+            </button>
+          </div>
+          {filters}
         </div>
-        {filters}
-      </div>
-      <div className="page-toolbar__search-content">{search}</div>
-      <button
-        className="page-toolbar__filter-trigger"
-        type="button"
-        aria-controls={filterPanelId}
-        aria-label={isFilterOpen ? '필터 닫기' : '필터 열기'}
-        aria-expanded={isFilterOpen}
-        onClick={() => {
-          if (isFilterOpen) requestClose();
-          else {
-            resetClosing();
-            setIsFilterOpen(true);
-          }
-        }}
-      >
-        <SlidersHorizontal size={17} aria-hidden="true" />
-      </button>
+      ) : null}
+      {hasSearch ? <div className="page-toolbar__search-content">{search}</div> : null}
+      {hasFilters ? (
+        <button
+          className="page-toolbar__filter-trigger"
+          type="button"
+          aria-controls={filterPanelId}
+          aria-label={isFilterOpen ? '필터 닫기' : '필터 열기'}
+          aria-expanded={isFilterOpen}
+          onClick={() => {
+            if (isFilterOpen) requestClose();
+            else {
+              resetClosing();
+              setIsFilterOpen(true);
+            }
+          }}
+        >
+          <SlidersHorizontal size={17} aria-hidden="true" />
+        </button>
+      ) : null}
       {isFilterOpen ? (
         <button
           className="page-toolbar__filter-scrim"
@@ -184,20 +199,42 @@ export function FilterChips<T extends string>({
   label: string;
 }) {
   return (
-    <div className="filter-chips" role="group" aria-label={label}>
-      {options.map((option) => (
-        <button
-          type="button"
-          className={option.value === value ? 'is-active' : undefined}
-          aria-pressed={option.value === value}
-          onClick={() => onChange(option.value)}
-          key={option.value}
-        >
-          {option.label}
-          {option.count !== undefined ? <span>{option.count}</span> : null}
-        </button>
-      ))}
-    </div>
+    <SegmentedControl
+      value={value}
+      ariaLabel={label}
+      role="group"
+      className="filter-chips"
+      options={options.map((option) => ({
+        value: option.value,
+        label: (
+          <>
+            {option.label}
+            {option.count !== undefined ? <span>{option.count}</span> : null}
+          </>
+        ),
+      }))}
+      onChange={onChange}
+    />
+  );
+}
+
+type PageFloatingActionProps = Omit<ComponentProps<typeof Link>, 'className' | 'children'> & {
+  children: ReactNode;
+  className?: string;
+};
+
+/** Shared page-level create action. It becomes a floating action on phones. */
+export function PageFloatingAction({ children, className, ...props }: PageFloatingActionProps) {
+  return (
+    <Link
+      {...props}
+      className={['page-floating-action', 'detail-primary-button', className]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <PenLine size={16} aria-hidden="true" />
+      <span>{children}</span>
+    </Link>
   );
 }
 

@@ -230,7 +230,8 @@
   transition:
     color var(--j-motion-fast),
     background-color var(--j-motion-fast),
-    box-shadow var(--j-motion-fast);
+    box-shadow var(--j-motion-fast),
+    transform var(--j-motion-fast);
 }
 
 .filter-chips button:hover {
@@ -243,6 +244,7 @@
   color: var(--j-color-brand-strong);
   background: var(--j-color-surface);
   box-shadow: 0 1px 2px rgb(15 23 42 / 10%);
+  transform: translateY(-1px);
 }
 
 .filter-chips button:focus-visible {
@@ -643,5 +645,28 @@
 
   .page-search-field input {
     min-width: 0;
+  }
+
+  /* A toolbar with only a search field must not reserve the absent filter
+     trigger column. This keeps public mobile list pages genuinely full width. */
+  .page-toolbar--split:not(.page-toolbar--has-filters) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page-toolbar--split:not(.page-toolbar--has-filters) .page-toolbar__search-content {
+    grid-column: 1 / -1;
+  }
+
+  .page-toolbar--has-filters .page-toolbar__filters-content > .filter-chips {
+    display: flex;
+    width: 100%;
+    max-width: none;
+    overflow: visible;
+  }
+
+  .page-toolbar--has-filters .page-toolbar__filters-content > .filter-chips button {
+    min-width: 0;
+    flex: 1 1 0;
+    padding-inline: 8px;
   }
 }

@@ -14,6 +14,7 @@ import {
   AdminListPanel,
   AdminSearchField,
   AdminSelect,
+  Button,
   DateRangeField,
   Dialog,
   DialogActions,
@@ -26,7 +27,7 @@ import {
 import { api } from '../../shared/api/adminApi';
 import { formatAdminDate, formatKoreanDate } from '../../shared/lib/date';
 import {
-  ActivityStatusBadge,
+  activityStatusLabels,
   activityStatusOptions,
   useActivityRequests,
   useRefreshActivityRequests,
@@ -130,16 +131,9 @@ function ActivityStatusSelect({
 function ActivityMobileCard({
   request,
   onOpen,
-  onStatusChange,
-  statusUpdating,
 }: {
   request: ActivityRequestAdminSummary;
   onOpen: () => void;
-  onStatusChange: (
-    request: ActivityRequestAdminSummary,
-    status: ActivityRequestAdminStatus,
-  ) => void;
-  statusUpdating: boolean;
 }) {
   const participants = activityParticipants(request);
   const date = koreaDateInput(new Date(request.startsAt));
@@ -157,16 +151,14 @@ function ActivityMobileCard({
       }}
     >
       <span className="operation-activity-mobile-card__heading">
-        <ActivityStatusSelect
-          status={request.status}
-          label={`${request.studentNo} ${request.studentName} 상태`}
-          disabled={statusUpdating}
-          onChange={(status) => onStatusChange(request, status)}
-        />
         <strong>{request.purpose}</strong>
         <ChevronRight size={17} aria-hidden="true" />
       </span>
       <span className="operation-activity-mobile-card__meta">
+        <span className="operation-activity-mobile-card__status">
+          {activityStatusLabels[request.status]}
+        </span>
+        <i aria-hidden="true">·</i>
         <span>{request.location}</span>
         <i aria-hidden="true">·</i>
         <span>지도교사 {request.advisorTeacherName ?? ''}</span>
@@ -365,6 +357,7 @@ export function ActivityOverviewPage() {
     onSuccess: async (_result, variables) => {
       setRejectRequest(null);
       setRejectReason('');
+      setSelectedRequest(null);
       await refreshActivityRequests();
       showToast({
         title: `탐구활동서를 ${activityStatusOptions.find((option) => option.value === variables.status)?.label ?? '변경'} 처리했습니다.`,
@@ -528,12 +521,7 @@ export function ActivityOverviewPage() {
             caption="탐구활동서 현황"
             getRowId={(request) => String(request.id)}
             renderMobileRow={(request) => (
-              <ActivityMobileCard
-                request={request}
-                onOpen={() => setSelectedRequest(request)}
-                onStatusChange={handleStatusChange}
-                statusUpdating={statusMutation.isPending}
-              />
+              <ActivityMobileCard request={request} onOpen={() => setSelectedRequest(request)} />
             )}
           />
         )}
@@ -543,14 +531,58 @@ export function ActivityOverviewPage() {
         open={Boolean(selectedRequest)}
         onClose={() => setSelectedRequest(null)}
         title={selectedRequest?.purpose ?? '탐구활동서 상세'}
-        description={selectedRequest ? formatParticipants(selectedRequest) : undefined}
+        className="operation-activity-mobile-drawer"
+        footer={
+          selectedRequest ? (
+            <div className="operation-mobile-detail-actions">
+              {selectedRequest.status === 'pending' ? (
+                <>
+                  <Button
+                    variant="primary"
+                    block
+                    disabled={statusMutation.isPending}
+                    onClick={() => handleStatusChange(selectedRequest, 'approved')}
+                  >
+                    승인
+                  </Button>
+                  <Button
+                    variant="danger"
+                    block
+                    disabled={statusMutation.isPending}
+                    onClick={() => handleStatusChange(selectedRequest, 'rejected')}
+                  >
+                    반려
+                  </Button>
+                </>
+              ) : selectedRequest.status === 'approved' ? (
+                <Button
+                  variant="danger"
+                  block
+                  disabled={statusMutation.isPending}
+                  onClick={() => handleStatusChange(selectedRequest, 'rejected')}
+                >
+                  반려
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  block
+                  disabled={statusMutation.isPending}
+                  onClick={() => handleStatusChange(selectedRequest, 'approved')}
+                >
+                  승인
+                </Button>
+              )}
+            </div>
+          ) : null
+        }
       >
         {selectedRequest ? (
           <dl className="operation-activity-mobile-detail">
             <div>
               <dt>상태</dt>
-              <dd>
-                <ActivityStatusBadge status={selectedRequest.status} />
+              <dd className="operation-mobile-status-text">
+                {activityStatusLabels[selectedRequest.status]}
               </dd>
             </div>
             <div>

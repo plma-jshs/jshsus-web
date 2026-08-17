@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router';
 import { ImageOff, MapPin } from 'lucide-react';
 import {
   FilterChips,
+  PageFloatingAction,
   PageScaffold,
   PageState,
   PageToolbar,
@@ -71,9 +72,7 @@ export function LostItemsPage() {
                 label="분실물 검색"
                 placeholder="물건 이름 또는 장소 검색"
               />
-              <Link className="detail-primary-button" to="/lost-items/new">
-                등록
-              </Link>
+              <PageFloatingAction to="/lost-items/new">작성</PageFloatingAction>
             </div>
           }
         />

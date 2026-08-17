@@ -367,6 +367,11 @@
     font-style: normal;
   }
 
+  .operation-activity-mobile-card__status {
+    color: var(--j-color-text-secondary);
+    font-weight: var(--j-weight-semibold);
+  }
+
   .operation-activity-mobile-card__time {
     overflow: hidden;
     color: var(--j-color-text-muted);
@@ -402,23 +407,6 @@
     white-space: normal;
   }
 
-  .operation-activity-mobile-card .operation-status,
-  .operation-activity-mobile-card .operation-status-select {
-    min-height: 22px;
-    padding-inline: 7px;
-    font-size: 10px;
-  }
-
-  .operation-activity-mobile-card .operation-status-select-event-guard,
-  .operation-activity-mobile-card .operation-status-select .admin-select__trigger {
-    min-height: 22px;
-  }
-
-  .operation-activity-mobile-card .operation-status-select .admin-select__trigger {
-    padding-inline: 7px;
-    font-size: 10px;
-  }
-
   .operation-activity-mobile-detail {
     display: grid;
     margin: 0;
@@ -446,6 +434,35 @@
     margin: 0;
     font-size: 13px;
     line-height: 1.5;
+  }
+
+  .operation-mobile-status-text {
+    color: var(--j-color-text-secondary);
+    font-weight: var(--j-weight-semibold);
+  }
+
+  .ui-drawer.operation-activity-mobile-drawer {
+    height: auto;
+    max-height: min(82dvh, 680px);
+  }
+
+  .operation-activity-mobile-drawer .ui-drawer__footer {
+    padding: 10px 16px max(10px, env(safe-area-inset-bottom));
+  }
+
+  .operation-mobile-detail-actions {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .operation-mobile-detail-actions > :only-child {
+    grid-column: 1 / -1;
+  }
+
+  .operation-mobile-detail-actions .ui-button {
+    width: 100%;
   }
 }
 

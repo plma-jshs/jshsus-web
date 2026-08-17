@@ -193,6 +193,11 @@
     color: var(--j-color-brand-strong);
     background: var(--j-color-brand-subtle);
   }
+
+  .mobile-menu__panel a.is-active {
+    color: var(--j-color-brand-strong);
+    font-weight: var(--j-weight-semibold);
+  }
   .home-community-grid {
     grid-template-columns: minmax(0, 1fr);
   }

@@ -131,16 +131,23 @@ function isMobileEditorRoute(pathname: string) {
 function PortalNavigationLink({
   item,
   onNavigate,
+  pathname,
 }: {
   item: NavigationItem;
   onNavigate?: () => void;
+  pathname?: string;
 }) {
+  const isActive = 'to' in item && (pathname === item.to || pathname?.startsWith(`${item.to}/`));
+  const linkProps = {
+    className: isActive ? 'is-active' : undefined,
+    'aria-current': isActive ? ('page' as const) : undefined,
+  };
   return 'to' in item ? (
-    <Link to={item.to} onClick={onNavigate}>
+    <Link to={item.to} onClick={onNavigate} {...linkProps}>
       {item.label}
     </Link>
   ) : (
-    <a href={item.href} target="_blank" rel="noreferrer" onClick={onNavigate}>
+    <a href={item.href} target="_blank" rel="noreferrer" onClick={onNavigate} {...linkProps}>
       {item.label}
     </a>
   );
@@ -219,10 +226,12 @@ function MobileMenu({
   displayName,
   profileImageUrl,
   canUseAdmin,
+  pathname,
 }: {
   displayName?: string;
   profileImageUrl?: string;
   canUseAdmin?: boolean;
+  pathname: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -326,7 +335,12 @@ function MobileMenu({
                     <div className="mobile-menu__group" key={category.label}>
                       <strong>{category.label}</strong>
                       {category.links.map((item) => (
-                        <PortalNavigationLink item={item} onNavigate={closeMenu} key={item.label} />
+                        <PortalNavigationLink
+                          item={item}
+                          pathname={pathname}
+                          onNavigate={closeMenu}
+                          key={item.label}
+                        />
                       ))}
                       {canUseAdmin && category.label === '방송·도구' ? (
                         <PortalNavigationLink
@@ -624,6 +638,7 @@ function PortalShell() {
                 displayName={session?.isLogined ? sessionDisplayName : undefined}
                 profileImageUrl={myStatusQuery.data?.student.profileImageUrl}
                 canUseAdmin={canUseAdmin}
+                pathname={normalizedPathname}
               />
             </div>
             {mobileEditorRoute ? (

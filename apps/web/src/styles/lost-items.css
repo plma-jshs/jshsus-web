@@ -35,6 +35,10 @@
   white-space: nowrap;
 }
 
+.lost-items-search-controls .page-floating-action {
+  flex: 0 0 auto;
+}
+
 .lost-items-view .filter-chips button {
   min-height: 34px;
   font-size: 13px;
@@ -734,6 +738,21 @@
 }
 
 @media (max-width: 767px) {
+  .lost-items-search-controls .page-floating-action {
+    position: fixed;
+    z-index: var(--j-layer-sticky);
+    right: 16px;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    min-height: 48px;
+    padding-inline: 18px;
+    border-radius: 999px;
+    box-shadow: var(--j-shadow-overlay);
+  }
+
+  .lost-items-search-controls .page-floating-action span {
+    display: inline;
+  }
+
   .lost-items-view {
     padding: var(--j-space-4);
   }

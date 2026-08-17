@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PageSizeSelect } from './PageSizeSelect';
 
 export type TablePaginationProps = {
@@ -8,6 +8,9 @@ export type TablePaginationProps = {
   totalCount?: number;
   onPageChange: (pageIndex: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  loadingMore?: boolean;
 };
 
 /** Shared pagination controls used by every admin DataTable. */
@@ -18,6 +21,9 @@ export function TablePagination({
   totalCount,
   onPageChange,
   onPageSizeChange,
+  onLoadMore,
+  hasMore = false,
+  loadingMore = false,
 }: TablePaginationProps) {
   const currentPage = Math.min(pageIndex + 1, Math.max(pageCount, 1));
   const submitPageInput = (value: string) => {
@@ -50,6 +56,17 @@ export function TablePagination({
             : `${currentPage} / ${pageCount} 페이지`}
         </span>
       </div>
+      {onLoadMore && hasMore ? (
+        <button
+          className="admin-table-pagination__load-more"
+          type="button"
+          onClick={onLoadMore}
+          disabled={loadingMore}
+        >
+          {loadingMore ? '불러오는 중…' : '더보기'}
+          <ChevronDown size={15} aria-hidden="true" />
+        </button>
+      ) : null}
       <div className="admin-table-pagination__controls">
         <button
           className="admin-table-pagination__previous"
