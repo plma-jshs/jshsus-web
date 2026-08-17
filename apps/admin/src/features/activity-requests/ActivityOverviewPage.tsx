@@ -19,7 +19,6 @@ import {
   Dialog,
   DialogActions,
   Drawer,
-  MobileSortSelect,
   TableSummary,
   TableToolbar,
   useToast,
@@ -438,20 +437,6 @@ export function ActivityOverviewPage() {
                 placeholder="내용, 인원, 장소, 지도교사 검색"
                 onClear={() => {
                   setSearch('');
-                  resetPage();
-                }}
-              />
-            }
-            mobileSort={
-              <MobileSortSelect
-                value={`${sort?.id ?? 'startsAt'}:${sort?.desc ? 'desc' : 'asc'}`}
-                options={[
-                  { value: 'startsAt:desc', label: '활동일 최신순' },
-                  { value: 'startsAt:asc', label: '활동일 오래된순' },
-                ]}
-                onChange={(value) => {
-                  const [id, direction] = value.split(':');
-                  setSorting([{ id: id ?? 'startsAt', desc: direction === 'desc' }]);
                   resetPage();
                 }}
               />

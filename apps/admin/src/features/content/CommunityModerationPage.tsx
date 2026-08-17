@@ -15,7 +15,6 @@ import {
   AdminSelect,
   ConfirmDialog,
   Drawer,
-  MobileSortSelect,
   ResilientImage,
   RowActionButton,
   RowActions,
@@ -435,21 +434,6 @@ export function CommunityModerationPage({
             onChange={(event) => setPostSearch(event.target.value)}
             placeholder="제목, 작성자 검색"
             onClear={() => setPostSearch('')}
-          />
-        }
-        mobileSort={
-          <MobileSortSelect
-            value={`${postSorting[0]?.id ?? 'createdAt'}:${postSorting[0]?.desc ? 'desc' : 'asc'}`}
-            options={[
-              { value: 'createdAt:desc', label: '등록 최신순' },
-              { value: 'createdAt:asc', label: '등록 오래된순' },
-              { value: 'viewCount:desc', label: '조회수 높은순' },
-              { value: 'commentCount:desc', label: '댓글 많은순' },
-            ]}
-            onChange={(value) => {
-              const [id, direction] = value.split(':');
-              setPostSorting([{ id: id ?? 'createdAt', desc: direction === 'desc' }]);
-            }}
           />
         }
         actions={

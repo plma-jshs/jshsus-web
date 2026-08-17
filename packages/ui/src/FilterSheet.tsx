@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode, type TouchEvent } from 'react';
 
 export type FilterSheetProps = {
   title: ReactNode;
@@ -12,6 +12,9 @@ export type FilterSheetProps = {
   titleClassName?: string;
   closeClassName?: string;
   footerClassName?: string;
+  role?: 'dialog' | 'region';
+  ariaModal?: boolean;
+  ariaLabel?: string;
   closeLabel: string;
   closeIconSize?: number;
   onClose: () => void;
@@ -29,13 +32,41 @@ export function FilterSheet({
   titleClassName,
   closeClassName,
   footerClassName,
+  role,
+  ariaModal,
+  ariaLabel,
   closeLabel,
   closeIconSize = 20,
   onClose,
 }: FilterSheetProps) {
   const Title = titleAs;
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (event: TouchEvent<HTMLSpanElement>) => {
+    touchStartY.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const handleTouchEnd = (event: TouchEvent<HTMLSpanElement>) => {
+    const startY = touchStartY.current;
+    touchStartY.current = null;
+    const endY = event.changedTouches[0]?.clientY;
+    if (startY !== null && endY !== undefined && endY - startY > 64) onClose();
+  };
+
   return (
-    <div className={layoutClassName} id={id}>
+    <div
+      className={layoutClassName}
+      id={id}
+      role={role}
+      aria-modal={ariaModal || undefined}
+      aria-label={ariaLabel}
+    >
+      <span
+        className="ui-filter-sheet__handle"
+        aria-hidden="true"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      />
       <header className={headerClassName}>
         <Title className={titleClassName}>{title}</Title>
         <button className={closeClassName} type="button" aria-label={closeLabel} onClick={onClose}>

@@ -32,6 +32,7 @@
 
 .ui-dialog__layout,
 .ui-drawer__layout {
+  position: relative;
   display: grid;
   max-height: inherit;
   grid-template-rows: auto minmax(0, 1fr) auto;
@@ -256,6 +257,7 @@
 }
 
 .admin-filter-sheet__layout {
+  position: relative;
   display: grid;
   max-height: inherit;
   grid-template-rows: auto minmax(0, 1fr) auto;
@@ -267,6 +269,37 @@
   padding: 12px 18px;
   align-items: center;
   justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+
+.ui-filter-sheet__handle,
+.ui-dialog__handle {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  :where(.ui-dialog__handle, .ui-filter-sheet__handle) {
+    position: absolute;
+    z-index: 2;
+    top: 7px;
+    left: 50%;
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--line-strong);
+    cursor: grab;
+    transform: translateX(-50%);
+    touch-action: none;
+  }
+
+  :where(.ui-dialog__handle, .ui-filter-sheet__handle):active {
+    cursor: grabbing;
+  }
+
+  :where(.ui-dialog__header, .ui-drawer__header) {
+    padding-top: 22px;
+  }
 }
 
 .admin-filter-sheet h2 {
@@ -284,6 +317,11 @@
   border-radius: 8px;
   background: transparent;
   color: var(--j-color-text-secondary);
+}
+
+.admin-filter-sheet header button:hover {
+  background: var(--j-color-surface-hover);
+  color: var(--j-color-text);
 }
 
 .admin-filter-sheet__controls {
@@ -425,8 +463,26 @@
   }
 
   .admin-filter-sheet__controls > .admin-mobile-sort-field {
-    display: grid !important;
-    gap: 6px;
+    display: block !important;
+  }
+
+  .admin-filter-sheet__controls .admin-mobile-sort-field__chips,
+  .admin-filter-sheet__controls .admin-mobile-sort-field__chips.ui-segmented-tabs {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0;
+    min-height: 44px;
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding: 4px;
+    overflow-x: auto;
+  }
+
+  .admin-filter-sheet__controls .admin-mobile-sort-field__chips > button {
+    min-width: max-content;
+    min-height: 36px;
+    flex: 1 1 auto;
+    white-space: nowrap;
   }
 
   .admin-filter-sheet__controls .admin-select:has(> .admin-select__mobile-label) {
@@ -757,6 +813,32 @@
 }
 
 @media (max-width: 767px) {
+  .admin-filter-sheet__layout {
+    position: relative;
+  }
+
+  .admin-filter-sheet__layout > .ui-filter-sheet__handle {
+    position: absolute;
+    z-index: 2;
+    top: 7px;
+    left: 50%;
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--line-strong);
+    cursor: grab;
+    transform: translateX(-50%);
+    touch-action: none;
+  }
+
+  .admin-filter-sheet__layout > .ui-filter-sheet__handle:active {
+    cursor: grabbing;
+  }
+
+  .admin-filter-sheet header {
+    padding-top: 18px;
+  }
   .ui-drawer {
     top: auto;
     right: 0;

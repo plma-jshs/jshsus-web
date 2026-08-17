@@ -586,7 +586,8 @@
     min-height: 36px;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 0;
+    border-bottom: 1px solid var(--j-color-border);
+    padding-top: 10px;
   }
 
   .page-toolbar__filters-heading strong {
@@ -620,6 +621,19 @@
     color: var(--j-color-text-secondary);
     background: var(--j-color-surface);
     font-size: 0;
+    transition:
+      border-color var(--j-motion-fast),
+      background-color var(--j-motion-fast),
+      transform var(--j-motion-fast);
+  }
+
+  .page-toolbar__filter-trigger:hover {
+    border-color: var(--j-color-brand);
+    background: var(--j-color-surface-selected);
+  }
+
+  .page-toolbar__filter-trigger:active {
+    transform: scale(0.95);
   }
 
   .page-toolbar__filter-trigger[aria-expanded='true'] {
@@ -688,6 +702,14 @@
   .page-toolbar--has-filters .page-toolbar__filters-content > :not(.page-toolbar__filters-heading) {
     width: 100%;
     min-width: 0;
+  }
+
+  .page-toolbar--has-filters .page-toolbar__filters-content > .ui-filter-sheet__handle {
+    width: 36px;
+    min-width: 36px;
+    height: 4px;
+    min-height: 4px;
+    padding: 0;
   }
 
   .page-toolbar--has-filters .page-toolbar__filters-content > .filter-chips,

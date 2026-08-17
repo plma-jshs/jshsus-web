@@ -43,6 +43,10 @@
 }
 
 @media (max-width: 720px) {
+  .device-cases-toolbar.has-selection .admin-table-toolbar__mobile-actions {
+    display: none;
+  }
+
   .device-cases-toolbar {
     grid-template-columns: minmax(0, 1fr) auto;
   }

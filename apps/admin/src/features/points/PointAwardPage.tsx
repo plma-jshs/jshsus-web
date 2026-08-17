@@ -885,6 +885,18 @@ export function PointAwardPage() {
           getRowId={(row) => row.key}
           renderMobileRow={(record) => (
             <div className="point-award-queue-chip">
+              <TableSelectionCheckbox
+                label={`${record.studentNo} ${record.studentName} 선택`}
+                checked={selectedKeys.has(record.key)}
+                onChange={(checked) =>
+                  setSelectedKeys((current) => {
+                    const next = new Set(current);
+                    if (checked) next.add(record.key);
+                    else next.delete(record.key);
+                    return next;
+                  })
+                }
+              />
               <button
                 className="point-award-queue-chip__content"
                 type="button"

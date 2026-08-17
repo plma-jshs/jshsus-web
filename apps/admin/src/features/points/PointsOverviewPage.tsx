@@ -137,10 +137,9 @@ export function PointsOverviewPage() {
             <MobileSortSelect
               value={`${sort?.id ?? 'studentNo'}:${sort?.desc ? 'desc' : 'asc'}`}
               options={[
-                { value: 'studentNo:asc', label: '학번 오름차순' },
-                { value: 'studentNo:desc', label: '학번 내림차순' },
-                { value: 'currentPoint:asc', label: '총계 낮은 순' },
-                { value: 'currentPoint:desc', label: '총계 높은 순' },
+                { value: 'studentNo:asc', label: '학번순' },
+                { value: 'currentPoint:asc', label: '점수 낮은순' },
+                { value: 'currentPoint:desc', label: '점수 높은순' },
               ]}
               onChange={(value) => {
                 const [id, direction] = value.split(':');

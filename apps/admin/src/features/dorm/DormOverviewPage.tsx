@@ -130,10 +130,8 @@ export function DormOverviewPage() {
             <MobileSortSelect
               value={`${sorting[0]?.id ?? 'name'}:${sorting[0]?.desc ? 'desc' : 'asc'}`}
               options={[
-                { value: 'name:asc', label: '호실 오름차순' },
-                { value: 'name:desc', label: '호실 내림차순' },
-                { value: 'openReportCount:desc', label: '미처리 민원 많은순' },
-                { value: 'openReportCount:asc', label: '미처리 민원 적은순' },
+                { value: 'name:asc', label: '호실순' },
+                { value: 'openReportCount:desc', label: '민원 많은순' },
               ]}
               onChange={(value) => {
                 const [id, direction] = value.split(':');
@@ -195,6 +193,34 @@ export function DormOverviewPage() {
           alwaysShowPagination
           caption="기숙사 방 조회"
           getRowId={(room) => String(room.id)}
+          renderMobileRow={(room) => (
+            <article className="dorm-mobile-card">
+              <header>
+                <div>
+                  <strong>
+                    {room.dormName} {room.name}
+                  </strong>
+                  <span>
+                    {room.grade}학년 · 정원 {room.capacity}명
+                  </span>
+                </div>
+                <RowActions>
+                  <RowActionButton
+                    icon={<Eye aria-hidden="true" />}
+                    label={`${room.dormName} ${room.name} 상세 보기`}
+                    variant="primary"
+                    onClick={() => setSelectedRoom(room)}
+                  />
+                </RowActions>
+              </header>
+              <p>
+                {room.residents?.length
+                  ? room.residents.map((resident) => `${resident.studentNo} ${resident.studentName}`).join(' · ')
+                  : '미배정'}
+              </p>
+              <footer>미처리 민원 {room.openReportCount ?? 0}건</footer>
+            </article>
+          )}
         />
       </section>
 

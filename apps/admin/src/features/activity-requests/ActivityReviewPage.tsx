@@ -15,7 +15,6 @@ import {
   Button,
   DialogActions,
   Drawer,
-  MobileSortSelect,
   RowActionButton,
   RowActions,
   TableToolbar,
@@ -197,16 +196,9 @@ export function ActivityReviewPage() {
 
   const columns: ColumnDef<ActivityRequestAdminSummary>[] = [
     {
-      id: 'representative',
-      accessorFn: (request) => `${request.studentNo} ${request.studentName}`,
-      header: '대표 학생',
-      cell: ({ row }) => `${row.original.studentNo} ${row.original.studentName}`,
-      meta: { minWidth: 120, maxWidth: 150, mobileRole: 'subtitle' },
-    },
-    {
       id: 'participantCount',
       accessorFn: (request) => request.participants.length,
-      header: '참여 인원',
+      header: '인원',
       enableSorting: false,
       cell: ({ row }) => (
         <ActivityParticipants
@@ -222,7 +214,7 @@ export function ActivityReviewPage() {
     },
     {
       accessorKey: 'purpose',
-      header: '활동 목적',
+      header: '내용',
       enableSorting: false,
       meta: { minWidth: 320, maxWidth: 560, truncate: true, mobileRole: 'title' },
     },
@@ -234,16 +226,9 @@ export function ActivityReviewPage() {
     },
     {
       accessorKey: 'startsAt',
-      header: '활동 일시',
+      header: '일시',
       cell: ({ getValue }) => formatActivityDateTime(getValue<string>()),
       meta: { width: 175, align: 'center' },
-    },
-    {
-      accessorKey: 'advisorTeacherName',
-      header: '담당 교사',
-      enableSorting: false,
-      cell: ({ getValue }) => getValue<string | undefined>() ?? '',
-      meta: { width: 110, align: 'left' },
     },
     {
       id: 'actions',
@@ -313,22 +298,6 @@ export function ActivityReviewPage() {
               >
                 신규 작성
               </Button>
-            }
-            mobileSort={
-              <MobileSortSelect
-                value={`${sort?.id ?? 'startsAt'}:${sort?.desc ? 'desc' : 'asc'}`}
-                options={[
-                  { value: 'startsAt:desc', label: '활동일 최신순' },
-                  { value: 'startsAt:asc', label: '활동일 오래된순' },
-                  { value: 'representative:asc', label: '대표 학생 오름차순' },
-                  { value: 'representative:desc', label: '대표 학생 내림차순' },
-                ]}
-                onChange={(value) => {
-                  const [id, direction] = value.split(':');
-                  setSorting([{ id: id ?? 'startsAt', desc: direction === 'desc' }]);
-                  setPage(1);
-                }}
-              />
             }
           />
         }

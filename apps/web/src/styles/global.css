@@ -37,7 +37,48 @@
   }
 }
 
+.ui-filter-sheet__handle,
+.ui-dialog__handle {
+  display: none;
+}
+
 @media (max-width: 767px) {
+  :where(
+    .page-toolbar__filters-content,
+    .data-table-toolbar__filters,
+    .ui-dialog__layout,
+    .ui-drawer__layout
+  ) {
+    position: relative;
+  }
+
+  :where(.ui-filter-sheet__handle, .ui-dialog__handle) {
+    position: absolute;
+    z-index: 2;
+    top: 7px;
+    left: 50%;
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--j-color-border-strong);
+    cursor: grab;
+    transform: translateX(-50%);
+    touch-action: none;
+  }
+
+  :where(.ui-filter-sheet__handle, .ui-dialog__handle):active {
+    cursor: grabbing;
+  }
+
+  :where(
+    .page-toolbar__filters-heading,
+    .data-table-toolbar__filters-heading
+  ) {
+    padding-top: 10px;
+    border-bottom: 1px solid var(--j-color-border);
+  }
+
   :where(
     .data-table-toolbar.is-filter-open .data-table-toolbar__filters,
     .page-toolbar.is-filter-open .page-toolbar__filters-content,

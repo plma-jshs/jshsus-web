@@ -8,7 +8,6 @@ import {
   DateRangeField,
   Drawer,
   AdminSearchField,
-  MobileSortSelect,
   TableSummary,
   TableToolbar,
 } from '../../components/ui';
@@ -115,22 +114,6 @@ export function AuditLogsPage() {
             placeholder="수행자, 작업, 대상, IP 검색"
             onClear={() => {
               setFilters((current) => ({ ...current, q: '' }));
-              setPage(1);
-            }}
-          />
-        }
-        mobileSort={
-          <MobileSortSelect
-            value={`${sorting[0]?.id ?? 'createdAt'}:${sorting[0]?.desc ? 'desc' : 'asc'}`}
-            options={[
-              { value: 'createdAt:desc', label: '최신순' },
-              { value: 'createdAt:asc', label: '오래된순' },
-              { value: 'actorName:asc', label: '수행자 이름순' },
-              { value: 'targetType:asc', label: '대상 이름순' },
-            ]}
-            onChange={(value) => {
-              const [id, direction] = value.split(':');
-              setSorting([{ id: id ?? 'createdAt', desc: direction === 'desc' }]);
               setPage(1);
             }}
           />

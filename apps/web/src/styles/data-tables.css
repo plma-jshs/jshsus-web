@@ -929,7 +929,8 @@
     min-height: 36px;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 0;
+    border-bottom: 1px solid var(--j-color-border);
+    padding-top: 10px;
   }
 
   .data-table-toolbar__filters-heading strong {
@@ -968,6 +969,19 @@
     color: var(--j-color-text-secondary);
     background: var(--j-color-surface);
     font-size: 0;
+    transition:
+      border-color var(--j-motion-fast),
+      background-color var(--j-motion-fast),
+      transform var(--j-motion-fast);
+  }
+
+  .data-table-toolbar__filter-trigger:hover {
+    border-color: var(--j-color-brand);
+    background: var(--j-color-surface-selected);
+  }
+
+  .data-table-toolbar__filter-trigger:active {
+    transform: scale(0.95);
   }
 
   .data-table-toolbar__filter-trigger[aria-expanded='true'] {
@@ -1059,6 +1073,14 @@
   .data-table-toolbar__filters > :not(.data-table-toolbar__filters-heading) {
     width: 100%;
     min-width: 0;
+  }
+
+  .data-table-toolbar__filters > .ui-filter-sheet__handle {
+    width: 36px;
+    min-width: 36px;
+    height: 4px;
+    min-height: 4px;
+    padding: 0;
   }
 
   .data-table-toolbar__filters > .filter-chips,

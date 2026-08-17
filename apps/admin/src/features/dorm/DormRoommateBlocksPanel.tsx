@@ -208,6 +208,33 @@ export function DormRoommateBlocksPanel({
         emptyText="등록된 블랙리스트가 없습니다."
         caption="룸메이트 블랙리스트"
         getRowId={(block) => String(block.id)}
+        renderMobileRow={(block) => (
+          <article className="dorm-mobile-card">
+            <header>
+              <div>
+                <strong>
+                  {block.studentNo} {block.studentName}
+                </strong>
+                <span>
+                  함께 배정 금지 · {block.blockedStudentNo} {block.blockedStudentName}
+                </span>
+              </div>
+              <RowActions>
+                <RowActionButton
+                  icon={<Trash2 aria-hidden="true" />}
+                  label={`${block.studentName}·${block.blockedStudentName} 블랙리스트 삭제`}
+                  variant="danger"
+                  disabled={deleteMutation.isPending}
+                  onClick={() => {
+                    if (window.confirm('이 블랙리스트 항목을 삭제하시겠습니까?')) {
+                      deleteMutation.mutate(block.id);
+                    }
+                  }}
+                />
+              </RowActions>
+            </header>
+          </article>
+        )}
       />
     </section>
   );

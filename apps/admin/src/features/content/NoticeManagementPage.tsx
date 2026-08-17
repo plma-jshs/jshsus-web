@@ -8,7 +8,6 @@ import {
   AdminSearchField,
   ConfirmDialog,
   Drawer,
-  MobileSortSelect,
   ResilientImage,
   RowActionButton,
   RowActions,
@@ -283,21 +282,6 @@ export function NoticeManagementPage() {
             onChange={(event) => setSearch(event.target.value)}
             placeholder="제목, 작성자 검색"
             onClear={() => setSearch('')}
-          />
-        }
-        mobileSort={
-          <MobileSortSelect
-            value={`${sorting[0]?.id ?? 'publishedAt'}:${sorting[0]?.desc ? 'desc' : 'asc'}`}
-            options={[
-              { value: 'publishedAt:desc', label: '작성일 최신순' },
-              { value: 'publishedAt:asc', label: '작성일 오래된순' },
-              { value: 'viewCount:desc', label: '조회수 높은순' },
-              { value: 'viewCount:asc', label: '조회수 낮은순' },
-            ]}
-            onChange={(value) => {
-              const [id, direction] = value.split(':');
-              setSorting([{ id: id ?? 'publishedAt', desc: direction === 'desc' }]);
-            }}
           />
         }
         actions={

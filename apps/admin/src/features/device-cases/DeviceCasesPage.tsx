@@ -7,6 +7,7 @@ import { DataTable } from '../../components/DataTable';
 import {
   Button,
   Dialog,
+  MobileSelectionActionBar,
   RowActionButton,
   RowActions,
   TableSummary,
@@ -292,7 +293,7 @@ export function DeviceCasesPage() {
               {hasSelectedCases ? ` · 선택 ${selectedCount.toLocaleString('ko-KR')}대` : ''}
             </>
           }
-          className="device-cases-toolbar"
+          className={`device-cases-toolbar${hasSelectedCases ? ' has-selection' : ''}`}
           mobileSheet={false}
           mobileActions={
             <div className="device-control-actions">
@@ -315,6 +316,24 @@ export function DeviceCasesPage() {
             </div>
           }
         ></TableToolbar>
+        <MobileSelectionActionBar selectedCount={selectedCount}>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => runBulkCommand('open')}
+            disabled={isCommandPending}
+          >
+            잠금 해제
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => runBulkCommand('close')}
+            disabled={isCommandPending}
+          >
+            잠금
+          </Button>
+        </MobileSelectionActionBar>
         <DataTable
           columns={caseColumns}
           data={cases}
@@ -328,6 +347,12 @@ export function DeviceCasesPage() {
           renderMobileRow={(deviceCase) => (
             <article className="device-mobile-card">
               <header>
+                <TableSelectionCheckbox
+                  label={`${deviceCaseLabel(deviceCase.id)} 선택`}
+                  checked={selectedCaseIdsInList.has(deviceCase.id)}
+                  disabled={isCommandPending}
+                  onChange={(checked) => toggleCaseSelection(deviceCase.id, checked)}
+                />
                 <strong>{deviceCaseLabel(deviceCase.id)}</strong>
                 <span
                   className={`device-status ${

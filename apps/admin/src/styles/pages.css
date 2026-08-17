@@ -142,12 +142,13 @@
 }
 
 .admin-sidebar-account--top {
-  margin: 0 0 16px;
+  margin: auto 0 0;
   min-height: 0;
-  padding: 8px 10px;
+  padding: 14px 10px 0;
   border: 0;
-  border-radius: 11px;
-  background: #f8f9fa;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
 }
 
 .admin-sidebar-profile-menu > summary,
@@ -230,7 +231,7 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: var(--danger);
+  color: var(--j-color-text-secondary);
   cursor: pointer;
 }
 
@@ -243,13 +244,14 @@
   align-items: center;
   gap: 4px;
   border-radius: 7px;
-  color: var(--danger);
+  color: var(--j-color-text-secondary);
   font-size: 11px;
   font-weight: 650;
 }
 
 .admin-sidebar-account--top > button:hover:not(:disabled) {
-  background: rgb(255 255 255 / 72%);
+  background: var(--j-color-surface-hover);
+  color: var(--j-color-text);
 }
 
 .admin-sidebar-account--top > button > span {

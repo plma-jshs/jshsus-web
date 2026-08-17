@@ -794,16 +794,47 @@
     font-size: 13px;
     font-weight: var(--j-weight-semibold);
     margin-left: auto;
+    transition:
+      border-color var(--j-motion-fast),
+      background-color var(--j-motion-fast),
+      transform var(--j-motion-fast);
+  }
+
+  .admin-mobile-filter-button:hover {
+    border-color: var(--j-color-brand);
+    background: var(--j-color-surface-selected);
+  }
+
+  .admin-mobile-filter-button:active {
+    transform: scale(0.95);
   }
 
   .admin-filter-sheet__controls > .admin-mobile-sort-field {
-    display: grid;
+    display: block;
     width: 100%;
     grid-column: 1 / -1;
-    gap: 6px;
     color: var(--j-color-text-secondary);
     font-size: 13px;
     font-weight: var(--j-weight-regular);
+  }
+
+  .admin-mobile-sort-field__chips,
+  .admin-mobile-sort-field__chips.ui-segmented-tabs {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding: 4px;
+    overflow-x: auto;
+  }
+
+  .admin-mobile-sort-field__chips > button {
+    min-width: max-content;
+    min-height: 36px;
+    flex: 1 1 auto;
+    white-space: nowrap;
   }
 
   .admin-mobile-sort-field .admin-select {

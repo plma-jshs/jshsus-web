@@ -1,7 +1,7 @@
-import { SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
-import { PaginationPrimitive, SearchField, SelectPrimitive } from '@jshsus/ui';
+import { FilterSheet, PaginationPrimitive, SearchField, SelectPrimitive } from '@jshsus/ui';
 import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 
 export type DataTableSearchField = 'title_content' | 'title' | 'author';
@@ -164,19 +164,19 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
       </div>
       <div className="data-table-toolbar__controls">
         {hasFilters ? (
-          <div
-            className="data-table-toolbar__filters"
+          <FilterSheet
+            layoutClassName="data-table-toolbar__filters"
             id={filterPanelId}
-            aria-label="목록 필터"
+            title="필터"
+            titleAs="strong"
+            headerClassName="data-table-toolbar__filters-heading"
+            closeLabel="필터 닫기"
+            closeIconSize={17}
             role={isFilterOpen ? 'dialog' : undefined}
-            aria-modal={isFilterOpen ? true : undefined}
+            ariaModal={isFilterOpen}
+            ariaLabel="목록 필터"
+            onClose={requestClose}
           >
-            <div className="data-table-toolbar__filters-heading">
-              <strong>필터</strong>
-              <button type="button" aria-label="필터 닫기" onClick={() => requestClose()}>
-                <X size={17} aria-hidden="true" />
-              </button>
-            </div>
             {groupActionWithPageSize && action ? (
               <div className="data-table-toolbar__primary-actions">
                 <div className="data-table-toolbar__action">{action}</div>
@@ -185,7 +185,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
             {extraControls ? (
               <div className="data-table-toolbar__extra">{extraControls}</div>
             ) : null}
-          </div>
+          </FilterSheet>
         ) : null}
         <SearchField
           className="data-table-toolbar__query"

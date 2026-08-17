@@ -31,16 +31,18 @@
   .admin-sidebar-account {
     display: flex;
     flex: 0 0 auto;
-    margin: 0 0 14px;
-    padding-bottom: 11px;
+    margin: auto 0 0;
+    padding: 14px 10px max(11px, env(safe-area-inset-bottom));
     background: var(--sidebar);
   }
 
   .admin-sidebar-account--top {
     align-items: center;
     flex-direction: row;
-    padding: 8px 10px;
-    background: #f8f9fa;
+    margin: auto 0 0;
+    padding: 14px 10px max(11px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: var(--sidebar);
   }
 
   .admin-sidebar.open {
@@ -52,6 +54,19 @@
   .admin-mobile-close,
   .admin-mobile-menu {
     display: grid;
+    border: 0;
+    background: transparent;
+    transition: background-color 140ms ease, transform 140ms ease;
+  }
+
+  .admin-mobile-close:hover,
+  .admin-mobile-menu:hover {
+    background: var(--j-color-surface-hover);
+  }
+
+  .admin-mobile-close:active,
+  .admin-mobile-menu:active {
+    transform: scale(0.94);
   }
 
   .admin-topbar-title {

@@ -263,18 +263,6 @@ export function PointRecordsPage() {
               loading={recordsQuery.isPending}
             />
           }
-          mobileActions={
-            selectedCount > 0 ? (
-              <button
-                className="point-record-mobile-delete"
-                type="button"
-                onClick={deleteSelectedRecords}
-                disabled={cancelSelectedMutation.isPending}
-              >
-                선택 {selectedCount}건 삭제
-              </button>
-            ) : null
-          }
           mobileSearch={
             <AdminSearchField
               className="point-filter point-filter--search"
@@ -296,10 +284,8 @@ export function PointRecordsPage() {
             <MobileSortSelect
               value={`${sort?.id ?? 'baseDate'}:${sort?.desc ? 'desc' : 'asc'}`}
               options={[
-                { value: 'baseDate:desc', label: '기준일 최신순' },
-                { value: 'baseDate:asc', label: '기준일 오래된순' },
-                { value: 'studentNo:asc', label: '학번 오름차순' },
-                { value: 'studentNo:desc', label: '학번 내림차순' },
+                { value: 'baseDate:desc', label: '최신순' },
+                { value: 'studentNo:asc', label: '학번순' },
                 { value: 'point:asc', label: '점수 낮은순' },
                 { value: 'point:desc', label: '점수 높은순' },
               ]}

@@ -736,6 +736,38 @@ export function DormAssignmentPanel({
           emptyText="배정된 학생이 없습니다."
           caption="기숙사 배정 목록"
           getRowId={(assignment) => String(assignment.id)}
+          renderMobileRow={(assignment) => (
+            <article className="dorm-mobile-card">
+              <header>
+                <div>
+                  <strong>
+                    {assignment.studentNo} {assignment.studentName}
+                  </strong>
+                  <span>
+                    {assignment.dormName} {assignment.roomName} · {assignment.bedPosition}번 침대
+                  </span>
+                </div>
+                <RowActions className="dorm-row-actions">
+                  <RowActionButton
+                    icon={<MoveRight aria-hidden="true" />}
+                    label={`${assignment.studentName} 이동`}
+                    variant="primary"
+                    onClick={() => {
+                      setMovingAssignment(assignment);
+                      setMoveRoomId(String(assignment.roomId));
+                      setMoveBed(String(assignment.bedPosition));
+                    }}
+                  />
+                  <RowActionButton
+                    icon={<X aria-hidden="true" />}
+                    label={`${assignment.studentName} 배정 취소`}
+                    variant="danger"
+                    onClick={() => setCancelTarget(assignment)}
+                  />
+                </RowActions>
+              </header>
+            </article>
+          )}
         />
       </section>
 

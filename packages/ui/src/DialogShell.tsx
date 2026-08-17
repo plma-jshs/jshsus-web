@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import type { ReactNode, Ref } from 'react';
+import { useRef, type ReactNode, type Ref, type TouchEvent } from 'react';
 
 export type DialogShellProps = {
   title: ReactNode;
@@ -35,8 +35,27 @@ export function DialogShell({
   closeLabel,
   onClose,
 }: DialogShellProps) {
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (event: TouchEvent<HTMLSpanElement>) => {
+    touchStartY.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const handleTouchEnd = (event: TouchEvent<HTMLSpanElement>) => {
+    const startY = touchStartY.current;
+    touchStartY.current = null;
+    const endY = event.changedTouches[0]?.clientY;
+    if (startY !== null && endY !== undefined && endY - startY > 64) onClose();
+  };
+
   return (
     <div className={className}>
+      <span
+        className="ui-dialog__handle"
+        aria-hidden="true"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      />
       <header className={headerClassName}>
         <div>
           <h2 id={titleId}>{title}</h2>

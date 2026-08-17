@@ -38,7 +38,7 @@ export function PointReasonsPage() {
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
   const [type, setType] = useState<PointReason['type'] | ''>('');
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'id', desc: false }]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'point', desc: true }]);
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PointReasonRow | null>(null);
   const [form, setForm] = useState<{ type: PointReason['type']; point: string; comment: string }>({
@@ -214,16 +214,14 @@ export function PointReasonsPage() {
             }
             mobileSort={
               <MobileSortSelect
-                value={`${sort?.id ?? 'id'}:${sort?.desc ? 'desc' : 'asc'}`}
+                value={`${sort?.id ?? 'point'}:${sort?.desc ? 'desc' : 'asc'}`}
                 options={[
-                  { value: 'id:asc', label: '사유코드 오름차순' },
-                  { value: 'id:desc', label: '사유코드 내림차순' },
                   { value: 'point:desc', label: '점수 높은순' },
                   { value: 'point:asc', label: '점수 낮은순' },
                 ]}
                 onChange={(value) => {
                   const [id, direction] = value.split(':');
-                  setSorting([{ id: id ?? 'id', desc: direction === 'desc' }]);
+                  setSorting([{ id: id ?? 'point', desc: direction === 'desc' }]);
                   resetPage();
                 }}
               />

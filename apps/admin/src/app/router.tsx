@@ -358,23 +358,6 @@ function AdminShell() {
           </button>
         </div>
 
-        <div className="admin-sidebar-account admin-sidebar-account--top">
-          <span className="admin-sidebar-account__icon">
-            <UserRound size={18} aria-hidden="true" />
-          </span>
-          <div>
-            <strong>{accountIdentity || sessionQuery.data.name || '관리자'}</strong>
-          </div>
-          <button
-            type="button"
-            onClick={() => logoutMutation.mutate()}
-            disabled={logoutMutation.isPending}
-          >
-            <LogOut size={15} aria-hidden="true" />
-            <span>{logoutMutation.isPending ? '처리 중' : '로그아웃'}</span>
-          </button>
-        </div>
-
         <nav className="admin-nav" aria-label="관리자 메뉴">
           {visibleNavigation.map((group) => (
             <section
@@ -400,6 +383,23 @@ function AdminShell() {
             </section>
           ))}
         </nav>
+
+        <div className="admin-sidebar-account admin-sidebar-account--top">
+          <span className="admin-sidebar-account__icon">
+            <UserRound size={18} aria-hidden="true" />
+          </span>
+          <div>
+            <strong>{accountIdentity || sessionQuery.data.name || '관리자'}</strong>
+          </div>
+          <button
+            type="button"
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
+          >
+            <LogOut size={15} aria-hidden="true" />
+            <span>{logoutMutation.isPending ? '처리 중' : '로그아웃'}</span>
+          </button>
+        </div>
       </aside>
 
       {mobileNavigationOpen ? (

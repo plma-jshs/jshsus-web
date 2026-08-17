@@ -153,10 +153,9 @@ export function DormReportsPanel({
           <MobileSortSelect
             value={`${sorting[0]?.id ?? 'createdAt'}:${sorting[0]?.desc ? 'desc' : 'asc'}`}
             options={[
-              { value: 'createdAt:desc', label: '접수 최신순' },
-              { value: 'createdAt:asc', label: '접수 오래된순' },
-              { value: 'roomName:asc', label: '호실 오름차순' },
-              { value: 'studentNo:asc', label: '학번 오름차순' },
+              { value: 'createdAt:desc', label: '최신순' },
+              { value: 'roomName:asc', label: '호실순' },
+              { value: 'studentNo:asc', label: '학번순' },
             ]}
             onChange={(value) => {
               const [id, direction] = value.split(':');
@@ -191,6 +190,32 @@ export function DormReportsPanel({
         emptyText="접수된 민원이 없습니다."
         caption="기숙사 민원"
         getRowId={(report) => String(report.id)}
+        renderMobileRow={(report) => (
+          <article className="dorm-mobile-card">
+            <header>
+              <div>
+                <strong>
+                  {report.dormName} {report.roomName}
+                </strong>
+                <span>
+                  {report.studentNo} {report.studentName} · {formatAdminDate(report.createdAt)}
+                </span>
+              </div>
+              <RowActions>
+                <RowActionButton
+                  icon={<ClipboardCheck aria-hidden="true" />}
+                  label={`${report.studentName} 민원 처리`}
+                  variant="primary"
+                  onClick={() => openReport(report)}
+                />
+              </RowActions>
+            </header>
+            <p>{report.description}</p>
+            <footer>
+              <DormReportStatusBadge status={report.status} />
+            </footer>
+          </article>
+        )}
       />
       <Drawer
         open={Boolean(selected)}

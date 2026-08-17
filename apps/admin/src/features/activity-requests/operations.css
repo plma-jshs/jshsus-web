@@ -517,7 +517,7 @@
   grid-template-columns: 17px minmax(0, 1fr);
   grid-template-rows: auto auto;
   align-items: center;
-  gap: 0 6px;
+  gap: 1px 6px;
   padding: 4px 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -544,7 +544,8 @@
   min-width: 0;
   overflow: hidden;
   font-size: 12px;
-  font-weight: 400;
+  color: var(--j-color-text);
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -555,6 +556,7 @@
   color: var(--muted);
   font-size: 10px;
   font-weight: 400;
+  line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

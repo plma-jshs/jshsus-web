@@ -9,7 +9,6 @@ import {
   AdminSelect,
   ConfirmDialog,
   Drawer,
-  MobileSortSelect,
   RowActionButton,
   RowActions,
   SelectedRowsHeaderAction,
@@ -273,19 +272,6 @@ export function LostItemsManagementPage() {
             onChange={(event) => setSearch(event.target.value)}
             placeholder="물품, 장소, 등록자 검색"
             onClear={() => setSearch('')}
-          />
-        }
-        mobileSort={
-          <MobileSortSelect
-            value={`${itemSorting[0]?.id ?? 'occurredAt'}:${itemSorting[0]?.desc ? 'desc' : 'asc'}`}
-            options={[
-              { value: 'occurredAt:desc', label: '작성일 최신순' },
-              { value: 'occurredAt:asc', label: '작성일 오래된순' },
-            ]}
-            onChange={(value) => {
-              const [id, direction] = value.split(':');
-              setItemSorting([{ id: id ?? 'occurredAt', desc: direction === 'desc' }]);
-            }}
           />
         }
         actions={
