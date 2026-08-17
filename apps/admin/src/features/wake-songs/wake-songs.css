@@ -61,7 +61,7 @@
   padding-left: 36px;
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1024px) {
   .wake-song-admin-toolbar .admin-table-toolbar__controls {
     width: 100%;
     flex-wrap: wrap;

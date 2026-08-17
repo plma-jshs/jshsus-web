@@ -276,7 +276,7 @@
   font-weight: 600;
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1024px) {
   .operation-list-toolbar .admin-table-toolbar__controls {
     display: flex;
     width: 100%;

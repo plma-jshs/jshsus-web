@@ -47,7 +47,7 @@
   width: var(--dorm-control-sm);
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1024px) {
   .dorm-page .admin-table-toolbar__controls > .dorm-search-field,
   .admin-table-toolbar__controls > .dorm-search-field {
     width: 100% !important;
