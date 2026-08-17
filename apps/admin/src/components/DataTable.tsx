@@ -21,7 +21,7 @@ import {
   type DataTableColumnKind,
   type DataTableWidthPreset,
 } from './dataTableConfig';
-import { EmptyState } from './ui/EmptyState';
+import { EmptyState, LoadingState } from './ui/EmptyState';
 import { PageSizeSelect } from './ui/PageSizeSelect';
 
 export type DataTableAlignment = 'left' | 'center' | 'right';
@@ -414,7 +414,7 @@ export function DataTable<T>({
       {renderMobileRow ? (
         <div className="admin-mobile-card-list">
           {loading ? (
-            <div className="admin-mobile-card-list__status">{loadingText}</div>
+            <LoadingState className="admin-mobile-card-list__status" compact title={loadingText} />
           ) : visibleRows.length === 0 ? (
             <EmptyState compact title={emptyText} />
           ) : (

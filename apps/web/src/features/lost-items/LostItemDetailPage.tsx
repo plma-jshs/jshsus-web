@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import { ArrowLeft, Flag, ImageOff, MapPin, Paperclip } from 'lucide-react';
 import { ContentMoreMenu } from '../../components/page/ContentMoreMenu';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
+import { ResilientImage } from '../../components/page/ResilientImage';
 import { detailBreadcrumbs } from '../../components/page/pageHierarchy';
 import { ApiError } from '../../shared/api/http';
 import { createContentReport } from '../../shared/api/reports';
@@ -154,7 +155,7 @@ export function LostItemDetailPage() {
         <div className="lost-item-detail__overview">
           <div className="lost-item-detail__visual">
             {image ? (
-              <img src={image.inlineUrl} alt={`${item.itemName} 사진`} />
+              <ResilientImage src={image.inlineUrl} alt={`${item.itemName} 사진`} loading="eager" />
             ) : (
               <span>
                 <ImageOff size={28} aria-hidden="true" />

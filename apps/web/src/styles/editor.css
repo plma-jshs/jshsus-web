@@ -793,6 +793,20 @@
   object-fit: contain;
 }
 
+.rich-text-image-fallback {
+  display: grid;
+  min-height: 120px;
+  margin: var(--j-space-5) auto;
+  padding: var(--j-space-4);
+  place-items: center;
+  border: 1px dashed var(--j-color-border-strong);
+  border-radius: var(--j-radius-md);
+  color: var(--j-color-text-muted);
+  background: var(--j-color-surface-subtle);
+  font-size: var(--j-text-sm);
+  text-align: center;
+}
+
 .rich-text-poll {
   display: grid;
   margin: var(--j-space-5) 0;

@@ -121,19 +121,25 @@ export function OtpInput({
       className={`auth-otp${error ? ' is-error' : ''}${isShaking ? ' is-shaking' : ''}`}
       role="group"
       aria-label={label}
+      aria-invalid={error || undefined}
     >
       {Array.from({ length: OTP_LENGTH }, (_, index) => (
         <input
           aria-label={`${label} ${index + 1}번째 자리`}
           autoComplete={index === 0 ? 'one-time-code' : 'off'}
+          autoCapitalize="off"
+          autoCorrect="off"
           className={`auth-otp__input${digits[index] ? ' is-filled' : ''}`}
           disabled={disabled}
+          enterKeyHint="done"
           inputMode="numeric"
           key={index}
           maxLength={1}
+          pattern="[0-9]*"
           ref={(element) => {
             inputRefs.current[index] = element;
           }}
+          spellCheck={false}
           type="text"
           value={digits[index] ?? ''}
           onChange={(event) => handleChange(index, event.target.value)}

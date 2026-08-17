@@ -12,6 +12,7 @@ export * from './MobileSortSelect';
 export * from './PageSizeSelect';
 export * from './SegmentedTabs';
 export * from './RowActions';
+export * from './ResilientImage';
 export * from './TableToolbar';
 export * from './TableSelection';
 export * from './Toast';

@@ -163,6 +163,19 @@ export function AdminSelect({
     setActiveIndex(next);
   };
 
+  const moveActiveToEdge = (edge: 'first' | 'last') => {
+    const indexes = options
+      .map((option, index) => (option.disabled ? -1 : index))
+      .filter((index) => index >= 0);
+    const next = edge === 'first' ? indexes[0] : indexes[indexes.length - 1];
+    if (next !== undefined) setActiveIndex(next);
+  };
+
+  const chooseActive = () => {
+    const option = options[activeIndex];
+    if (option && !option.disabled) choose(option.value);
+  };
+
   return (
     <div
       className={`admin-select${open ? ' is-open' : ''}${nativeOnMobile ? ' admin-select--native-mobile' : ''}${isStatusSelect ? ' admin-select--status' : ''}${className ? ` ${className}` : ''}`}
@@ -210,7 +223,14 @@ export function AdminSelect({
         }}
         onKeyDown={(event) => {
           if (event.key === 'Escape') {
+            if (!open) return;
+            event.preventDefault();
             setOpen(false);
+            return;
+          }
+          if ((event.key === 'Enter' || event.key === ' ') && open) {
+            event.preventDefault();
+            chooseActive();
             return;
           }
           if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -220,6 +240,17 @@ export function AdminSelect({
               setOpen(true);
             }
             moveActive(event.key === 'ArrowDown' ? 1 : -1);
+            return;
+          }
+          if (event.key === 'Home' || event.key === 'End') {
+            event.preventDefault();
+            if (!open) {
+              setPortalTarget(triggerRef.current?.closest('dialog[open]') ?? document.body);
+              setOpen(true);
+            }
+            moveActiveToEdge(event.key === 'Home' ? 'first' : 'last');
+          } else if (event.key === 'Tab' && open) {
+            setOpen(false);
           }
         }}
       >

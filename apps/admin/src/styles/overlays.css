@@ -450,6 +450,60 @@
   line-height: 1.55;
 }
 
+.ui-status-state {
+  display: grid;
+  min-height: 132px;
+  padding: 24px;
+  align-content: center;
+  justify-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--j-color-text-secondary);
+  text-align: center;
+}
+
+.ui-status-state--compact {
+  min-height: 88px;
+  padding: 18px;
+}
+
+.ui-status-state__icon {
+  color: var(--primary);
+}
+
+.ui-status-state--loading .ui-status-state__icon {
+  animation: ui-spin 800ms linear infinite;
+}
+
+.ui-status-state--error {
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--line));
+  background: color-mix(in srgb, var(--danger) 4%, var(--surface));
+  color: var(--danger);
+}
+
+.ui-image-fallback {
+  display: inline-flex;
+  min-height: 96px;
+  padding: 12px;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--j-radius-control);
+  background: var(--j-color-surface-subtle);
+  color: var(--j-color-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-status-state--loading .ui-status-state__icon {
+    animation: none;
+  }
+}
+
 .ui-toast-viewport {
   position: fixed;
   z-index: 100;

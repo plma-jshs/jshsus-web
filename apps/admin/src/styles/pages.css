@@ -288,7 +288,7 @@
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  background: #f7faf9;
+  background: var(--j-color-page-admin);
 }
 
 .admin-topbar {

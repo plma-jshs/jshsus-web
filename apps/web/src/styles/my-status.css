@@ -436,10 +436,19 @@
     box-shadow 140ms ease;
 }
 
-.status-avatar__trigger > img {
+.status-avatar__trigger > img,
+.status-avatar__trigger > .resilient-image--fallback {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.status-avatar__trigger > .resilient-image--fallback {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  font-size: 0;
 }
 
 .status-avatar__trigger > svg {
@@ -748,7 +757,8 @@
   background: #d8d8d8;
 }
 
-.my-page .status-avatar__trigger > img {
+.my-page .status-avatar__trigger > img,
+.my-page .status-avatar__trigger > .resilient-image--fallback {
   width: 100%;
   height: 100%;
   transform: scale(1.025);

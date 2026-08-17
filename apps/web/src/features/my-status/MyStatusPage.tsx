@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../../components/feedback/Toast';
 import { PageState } from '../../components/page/PageScaffold';
+import { ResilientImage } from '../../components/page/ResilientImage';
 import { ApiError } from '../../shared/api/http';
 import { getPasswordResetHref } from '../../shared/lib/authSiteHref';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
@@ -492,11 +493,11 @@ export function MyStatusPage() {
                 }}
                 type="button"
               >
-                {status.student.profileImageUrl ? (
-                  <img src={status.student.profileImageUrl} alt="현재 프로필" />
-                ) : (
-                  <img src="/assets/default-avatar.png" alt="기본 프로필" />
-                )}
+                <ResilientImage
+                  src={status.student.profileImageUrl || '/assets/default-avatar.png'}
+                  alt={status.student.profileImageUrl ? '현재 프로필' : '기본 프로필'}
+                  loading="eager"
+                />
               </button>
               {avatarMenuOpen && status.student.profileImageUrl ? (
                 <div className="status-avatar__menu" role="menu">

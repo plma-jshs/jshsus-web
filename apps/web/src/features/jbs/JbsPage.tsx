@@ -9,6 +9,7 @@ import {
   DataTableToolbar,
 } from '../../components/page/DataTableControls';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
+import { ResilientImage } from '../../components/page/ResilientImage';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { formatKoreanRelativeTime } from '../../shared/lib/date';
 import { getSession } from '../auth/api';
@@ -146,7 +147,7 @@ export function JbsPage() {
                     params={{ postId: String(post.id) }}
                     aria-label={`${post.title} 영상 보기`}
                   >
-                    <img src={post.thumbnailUrl} alt="" loading="lazy" />
+                    <ResilientImage src={post.thumbnailUrl} alt="" />
                     <span className="jbs-card__play" aria-hidden="true" />
                   </Link>
                   <div className="jbs-card__body">

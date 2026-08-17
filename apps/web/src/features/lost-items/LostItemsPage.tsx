@@ -9,6 +9,7 @@ import {
   PageToolbar,
   SearchField,
 } from '../../components/page/PageScaffold';
+import { ResilientImage } from '../../components/page/ResilientImage';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { getLostItems } from './api';
@@ -119,7 +120,7 @@ export function LostItemsPage() {
                 >
                   <div className="lost-card__visual">
                     {image ? (
-                      <img src={image.inlineUrl} alt={`${item.itemName} 사진`} loading="lazy" />
+                      <ResilientImage src={image.inlineUrl} alt={`${item.itemName} 사진`} />
                     ) : (
                       <span className="lost-card__placeholder">
                         <ImageOff size={24} aria-hidden="true" />

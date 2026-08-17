@@ -123,7 +123,7 @@ function VerificationDialog({
   onCodeChange: (value: string) => void;
   onClose: () => void;
   onResend: () => void;
-  onConfirm: () => void;
+  onConfirm: (value?: string) => void;
 }) {
   const [remaining, setRemaining] = useState(() => Math.max(0, expiresAt - Date.now()));
 
@@ -133,6 +133,16 @@ function VerificationDialog({
     }, 1000);
     return () => window.clearInterval(timer);
   }, [expiresAt]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const totalSeconds = Math.ceil(remaining / 1_000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -183,8 +193,8 @@ function VerificationDialog({
             disabled={pending}
             label={`${label} 인증번호`}
             onChange={onCodeChange}
-            onComplete={() => {
-              if (!pending && remaining > 0) onConfirm();
+            onComplete={(value) => {
+              if (!pending && remaining > 0) onConfirm(value);
             }}
           />
           <FieldError message={error} />
@@ -337,27 +347,25 @@ export function AccountActivationPage() {
     emailMutation.mutate({ activationCode: activationCode.trim(), email: normalized });
   };
 
-  const verifyCode = () => {
-    if (
-      !verificationTarget ||
-      !/^\d{6}$/.test(
-        verificationTarget === 'email' ? emailVerificationCode : phoneVerificationCode,
-      )
-    ) {
+  const verifyCode = (completedCode?: string) => {
+    const currentCode =
+      completedCode ??
+      (verificationTarget === 'email' ? emailVerificationCode : phoneVerificationCode);
+    if (!verificationTarget || !/^\d{6}$/.test(currentCode)) {
       return;
     }
     if (verificationTarget === 'email') {
       emailVerificationMutation.mutate({
         activationCode: activationCode.trim(),
         email: email.trim().toLocaleLowerCase('en-US'),
-        verificationCode: emailVerificationCode,
+        verificationCode: currentCode,
       });
       return;
     }
     phoneVerificationMutation.mutate({
       activationCode: activationCode.trim(),
       phone: normalizedPhone(phone),
-      verificationCode: phoneVerificationCode,
+      verificationCode: currentCode,
     });
   };
 

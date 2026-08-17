@@ -108,6 +108,37 @@ describe('admin page-size policy', () => {
     expect(normalizeAdminPageSize(30)).toBe(20);
     expect(normalizeAdminPageSize(50)).toBe(50);
   });
+
+  it('renders the page-size control as a fixed-width native select', () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    act(() =>
+      root.render(
+        <DataTable
+          columns={columns}
+          data={rows}
+          alwaysShowPagination
+          pagination={{
+            pageIndex: 0,
+            pageSize: 20,
+            pageCount: 1,
+            onPageChange: () => undefined,
+            onPageSizeChange: () => undefined,
+          }}
+        />,
+      ),
+    );
+
+    const select = container.querySelector<HTMLSelectElement>('.ui-page-size-select');
+    expect(select).toBeInstanceOf(HTMLSelectElement);
+    expect(select).toHaveValue('20');
+    expect([...select!.options].map((option) => option.value)).toEqual(['20', '50', '100']);
+
+    act(() => root.unmount());
+    container.remove();
+  });
 });
 
 describe('mobile table presentation', () => {

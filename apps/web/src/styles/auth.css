@@ -571,6 +571,12 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .auth-otp.is-shaking {
+    animation: none;
+  }
+}
+
 .auth-otp-resend,
 .auth-otp-status {
   margin: 0 0 4px;

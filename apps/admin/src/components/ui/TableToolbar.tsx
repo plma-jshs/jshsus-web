@@ -39,7 +39,15 @@ export function TableToolbar({
   ...props
 }: TableToolbarProps) {
   const { ...divProps } = props;
-  const classes = ['admin-table-toolbar', className ?? ''].filter(Boolean).join(' ');
+  const classes = [
+    'admin-table-toolbar',
+    mobileSearch ? 'has-search' : '',
+    summary ? 'has-summary' : '',
+    mobileActions ? 'has-actions' : '',
+    className ?? '',
+  ]
+    .filter(Boolean)
+    .join(' ');
   const mobile = useMobileToolbar();
   const [sheetOpen, setSheetOpen] = useState(false);
   const { ref: dialogRef, requestClose } = useAnimatedDialog(sheetOpen, () => setSheetOpen(false));
@@ -118,7 +126,7 @@ export function TableToolbar({
         </>
       ) : (
         <div className="admin-table-toolbar__controls">
-          {mobileSearch}
+          {mobileSearch ? <div className="admin-table-toolbar__search">{mobileSearch}</div> : null}
           {children}
           {mobileActions}
         </div>

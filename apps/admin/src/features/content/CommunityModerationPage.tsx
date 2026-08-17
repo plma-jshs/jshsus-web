@@ -15,6 +15,7 @@ import {
   ConfirmDialog,
   Drawer,
   MobileSortSelect,
+  ResilientImage,
   RowActionButton,
   RowActions,
   SelectedRowsHeaderAction,
@@ -113,11 +114,10 @@ function renderBoardNode(
       const source = node.attrs?.src;
       if (!source) return null;
       return (
-        <img
+        <ResilientImage
           key={key}
           src={imageSources.get(source) ?? source}
           alt={node.attrs?.alt ?? ''}
-          loading="lazy"
         />
       );
     }
@@ -806,6 +806,7 @@ export function CommunityModerationPage({
                 resource="댓글 목록"
                 emptyText="등록된 댓글이 없습니다."
                 onRetry={() => void commentsQuery.refetch()}
+                showState
               >
                 <div className="content-comment-feed" aria-label="댓글 목록">
                   {(commentsQuery.data ?? []).slice(0, 50).map((comment) => (

@@ -445,10 +445,18 @@
   white-space: nowrap;
 }
 
+@media (min-width: 1024px) {
+  .admin-table-toolbar.operation-list-toolbar .admin-table-toolbar__controls {
+    width: auto;
+    flex: 0 1 auto;
+  }
+}
+
 .admin-table-toolbar__controls,
 .admin-table-toolbar__mobile-row,
 .admin-table-toolbar__mobile-search,
-.admin-table-toolbar__mobile-actions {
+.admin-table-toolbar__mobile-actions,
+.admin-table-toolbar__search {
   display: flex;
   min-width: 0;
   align-items: end;
@@ -463,6 +471,18 @@
 
 .admin-table-toolbar__controls > * {
   flex: 0 0 auto;
+}
+
+.admin-table-toolbar__controls > .admin-table-toolbar__search {
+  width: min(440px, 38vw);
+  min-width: 0;
+  flex: 0 1 min(440px, 38vw);
+}
+
+.admin-table-toolbar__search > * {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100%;
 }
 
 .admin-table-toolbar__controls
@@ -587,6 +607,7 @@
     justify-content: flex-end;
   }
 
+  .content-panel-actions .admin-table-toolbar__search,
   .content-panel-actions .content-search-field {
     width: 100%;
     min-width: 0;
@@ -602,11 +623,16 @@
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .admin-table-toolbar {
-    display: flex;
+    display: grid;
     width: 100%;
+    grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
     gap: 8px;
     min-height: 0;
+  }
+
+  .admin-table-toolbar__summary {
+    width: 100%;
   }
 
   .admin-table-toolbar__controls {
@@ -616,60 +642,35 @@
     min-width: 0;
     flex-wrap: wrap;
     justify-content: flex-end;
+    row-gap: 8px;
   }
 
-  .admin-table-toolbar__controls:has(
-      > :where(
-        .admin-search-field,
-        .content-search-field,
-        .operation-search-field,
-        .audit-log-search,
-        .identity-field,
-        .wake-song-admin-search,
-        .dorm-search-control,
-        .dorm-search-field,
-        .identity-search-field,
-        .point-filter--search,
-        input[type='search'],
-        input[type='text']
-      )
-    )
-    > :where(
-      .admin-search-field,
-      .content-search-field,
-      .operation-search-field,
-      .audit-log-search,
-      .identity-field,
-      .wake-song-admin-search,
-      .dorm-search-control,
-      .dorm-search-field,
-      .identity-search-field,
-      .point-filter--search,
-      input[type='search'],
-      input[type='text']
-    ) {
+  .admin-table-toolbar.has-search .admin-table-toolbar__controls > .admin-table-toolbar__search {
     width: 100% !important;
     min-width: 0;
-    flex: 1 0 100%;
+    max-width: none;
+    flex: 0 0 100%;
+    order: -1;
   }
 
-  .admin-table-toolbar__controls
-    > :where(
-      input[type='text'],
-      input[type='search'],
-      input:not([type]),
-      .admin-search-field,
-      .content-search-field,
-      .operation-search-field
-    ) {
-    min-width: 0;
-    width: auto;
+  .admin-table-toolbar.has-search
+    .admin-table-toolbar__controls
+    > :not(.admin-table-toolbar__search) {
     flex: 0 0 auto;
+    width: auto;
+    max-width: none;
   }
 
   .admin-table-toolbar__controls > :where(button, a) {
     flex: 0 0 auto;
     white-space: nowrap;
+  }
+
+  .admin-table-toolbar__controls > .admin-select:not(.ui-page-size-select),
+  .admin-table-toolbar__controls > .ui-date-range,
+  .admin-table-toolbar__controls > .activity-print-menu,
+  .admin-table-toolbar__controls > .activity-print-trigger {
+    flex: 0 0 auto;
   }
 
   .operation-list-toolbar .admin-table-toolbar__controls {

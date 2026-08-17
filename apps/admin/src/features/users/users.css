@@ -640,7 +640,7 @@
   }
 }
 
-@media (min-width: 1001px) {
+@media (min-width: 1024px) {
   .identity-panel > .admin-table-toolbar {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);

@@ -105,4 +105,32 @@ describe('AdminSelect', () => {
     expect(container.querySelector('select')).not.toHaveAttribute('aria-hidden');
     expect(container.querySelector('select')).not.toHaveAttribute('tabindex', '-1');
   });
+
+  it('supports keyboard navigation, selection, and Escape dismissal', () => {
+    act(() =>
+      root.render(
+        <AdminSelect aria-label="상태" defaultValue="pending">
+          <option value="pending">대기</option>
+          <option value="completed">완료</option>
+        </AdminSelect>,
+      ),
+    );
+
+    const trigger = container.querySelector<HTMLButtonElement>('.admin-select__trigger')!;
+    trigger.focus();
+    act(() =>
+      trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })),
+    );
+    expect(document.body.querySelector('.admin-select__menu')).not.toBeNull();
+
+    act(() => trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
+    expect(trigger).toHaveTextContent('완료');
+
+    act(() => trigger.click());
+    expect(document.body.querySelector('.admin-select__menu')).not.toBeNull();
+    act(() =>
+      trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })),
+    );
+    expect(document.body.querySelector('.admin-select__menu')).toBeNull();
+  });
 });

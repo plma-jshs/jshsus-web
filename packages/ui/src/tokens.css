@@ -54,6 +54,19 @@
     --j-color-disabled: var(--j-ref-slate-300);
     --j-color-scrim: rgb(23 32 51 / 44%);
 
+    /*
+     * App-facing aliases. Keep these values mapped to the existing reference
+     * palette so pages can migrate incrementally without changing the visual
+     * language of the current admin/public surfaces.
+     */
+    --j-color-page-admin: #f7faf9;
+    --j-color-surface-soft: #f3f7f6;
+    --j-color-action-primary: rgb(49 130 246);
+    --j-color-action-primary-hover: #1d4ed8;
+    --j-color-action-primary-active: #1e40af;
+    --j-color-action-primary-subtle: #eff6ff;
+    --j-color-action-primary-border: #bfdbfe;
+
     --j-font-sans:
       'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', system-ui, -apple-system,
       BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -101,7 +114,11 @@
 
     --j-motion-fast: 120ms ease;
     --j-motion-base: 180ms ease;
+    --j-control-admin: 40px;
     --j-control-public: 44px;
+    --j-radius-control: 8px;
+    --j-radius-menu: 10px;
+    --j-shadow-focus-inset: inset 0 0 0 1px var(--j-color-brand);
     --j-layer-header: 30;
     --j-layer-popover: 50;
     --j-layer-modal: 70;

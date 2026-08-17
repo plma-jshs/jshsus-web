@@ -1,20 +1,20 @@
 :root {
   font-family: var(--j-font-sans);
   color: var(--j-color-text);
-  background: #f7faf9;
+  background: var(--j-color-page-admin);
   --surface: var(--j-color-surface);
   --surface-strong: var(--j-color-surface-subtle);
-  --surface-soft: #f3f7f6;
+  --surface-soft: var(--j-color-surface-soft);
   --line: var(--j-color-border);
   --line-strong: var(--j-color-border-strong);
   --muted: var(--j-color-text-muted);
   --primary: var(--j-color-brand);
   --primary-dark: var(--j-color-brand-strong);
-  --action-primary: rgb(49 130 246);
-  --action-primary-hover: #1d4ed8;
-  --action-primary-active: #1e40af;
-  --action-primary-subtle: #eff6ff;
-  --action-primary-border: #bfdbfe;
+  --action-primary: var(--j-color-action-primary);
+  --action-primary-hover: var(--j-color-action-primary-hover);
+  --action-primary-active: var(--j-color-action-primary-active);
+  --action-primary-subtle: var(--j-color-action-primary-subtle);
+  --action-primary-border: var(--j-color-action-primary-border);
   --secondary: #315aa8;
   --accent: #f2c14e;
   --positive: var(--j-color-positive);
@@ -24,7 +24,7 @@
   --sidebar: #ffffff;
   --sidebar-soft: #eaf6f3;
   --shadow: var(--j-shadow-card);
-  --control-height: 40px;
+  --control-height: var(--j-control-admin);
 }
 
 *,
@@ -36,7 +36,7 @@
 html {
   font-family: var(--j-font-sans);
   color: var(--j-color-text);
-  background: #f7faf9;
+  background: var(--j-color-page-admin);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }

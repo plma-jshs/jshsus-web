@@ -455,8 +455,33 @@ textarea.ui-control {
 }
 
 .ui-page-size-select {
+  display: block;
   width: 128px !important;
   min-width: 128px;
+  max-width: 128px;
+  height: 36px;
+  min-height: 36px;
+  flex: 0 0 128px;
+  padding: 0 34px 0 10px !important;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--j-radius-control);
+  background-color: var(--surface);
+  color: var(--j-color-text-secondary);
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ui-page-size-select:focus-visible {
+  border-color: var(--j-color-brand);
+  outline: 0;
+  box-shadow: var(--j-shadow-focus-inset);
+}
+
+.ui-page-size-select:hover {
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+  background-color: color-mix(in srgb, var(--j-color-surface-hover) 72%, white);
 }
 
 .ui-page-size-select,

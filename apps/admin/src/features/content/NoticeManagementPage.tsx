@@ -8,6 +8,7 @@ import {
   ConfirmDialog,
   Drawer,
   MobileSortSelect,
+  ResilientImage,
   RowActionButton,
   RowActions,
   useToast,
@@ -51,11 +52,10 @@ function renderNoticeNode(
       const source = node.attrs?.src;
       if (!source) return null;
       return (
-        <img
+        <ResilientImage
           key={key}
           src={imageSources.get(source) ?? source}
           alt={node.attrs?.alt ?? ''}
-          loading="lazy"
         />
       );
     }

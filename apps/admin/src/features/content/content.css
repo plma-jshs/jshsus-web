@@ -360,6 +360,10 @@ a.content-table-primary:focus-visible {
   border-radius: 6px;
 }
 
+.content-detail-copy--rich .ui-image-fallback {
+  width: 100%;
+}
+
 .content-comment-feed {
   display: grid;
   max-height: min(52vh, 460px);

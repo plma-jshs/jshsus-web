@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
-import { AlertCircle } from 'lucide-react';
-import { TableToolbar } from '../../../components/ui';
+import { EmptyState, ErrorState, LoadingState, TableToolbar } from '../../../components/ui';
 import { AdminApiError } from '../../../shared/api/adminApi';
 import { formatAdminDate as formatSharedAdminDate } from '../../../shared/lib/date';
 import '../content.css';
@@ -71,6 +70,7 @@ type ContentQueryStateProps = {
   emptyText: string;
   children: ReactNode;
   onRetry?: () => void;
+  showState?: boolean;
 };
 
 function contentErrorMessage(error: unknown, resource: string) {
@@ -93,21 +93,32 @@ export function ContentQueryState({
   emptyText,
   children,
   onRetry,
+  showState = false,
 }: ContentQueryStateProps) {
   if (error) {
     return (
-      <div className="content-state content-state-error" role="alert">
-        <AlertCircle size={22} aria-hidden="true" />
-        <div>
-          <strong>{contentErrorMessage(error, resource)}</strong>
-          {onRetry ? (
+      <ErrorState
+        className="content-state content-state-error"
+        title={contentErrorMessage(error, resource)}
+        action={
+          onRetry ? (
             <button className="quiet-button" type="button" onClick={onRetry}>
               다시 시도
             </button>
-          ) : null}
-        </div>
-      </div>
+          ) : null
+        }
+      />
     );
+  }
+
+  if (showState && isPending && !hasData) {
+    return (
+      <LoadingState className="content-state" title={`${resource}을(를) 불러오는 중입니다.`} />
+    );
+  }
+
+  if (showState && !isPending && !hasData) {
+    return <EmptyState className="content-state" compact title={emptyText} />;
   }
 
   return (

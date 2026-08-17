@@ -1410,6 +1410,37 @@ export function RichTextContent({
 
   useEffect(() => {
     const root = rendererRef.current;
+    if (!root) return undefined;
+
+    const replaceFailedImage = (image: HTMLImageElement) => {
+      if (!image.isConnected) return;
+      const fallback = document.createElement('span');
+      fallback.className = 'rich-text-image-fallback';
+      fallback.setAttribute('role', 'img');
+      fallback.setAttribute('aria-label', image.alt || '이미지를 불러오지 못했습니다.');
+      fallback.textContent = '이미지를 불러오지 못했습니다.';
+      image.replaceWith(fallback);
+    };
+    const handleImageError = (event: Event) => {
+      const image = event.currentTarget;
+      if (image instanceof HTMLImageElement) replaceFailedImage(image);
+    };
+    const images = Array.from(
+      root.querySelectorAll<HTMLImageElement>('.rich-text-renderer__content img'),
+    );
+
+    images.forEach((image) => {
+      image.loading = 'lazy';
+      image.decoding = 'async';
+      image.addEventListener('error', handleImageError);
+      if (image.complete && image.naturalWidth === 0) replaceFailedImage(image);
+    });
+
+    return () => images.forEach((image) => image.removeEventListener('error', handleImageError));
+  }, [contentDoc, editor, plainText]);
+
+  useEffect(() => {
+    const root = rendererRef.current;
     if (!root) return;
     const states = new Map((pollResults ?? []).map((poll) => [poll.pollId, poll]));
 
