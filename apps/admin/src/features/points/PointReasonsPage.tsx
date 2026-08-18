@@ -38,7 +38,7 @@ export function PointReasonsPage() {
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
   const [type, setType] = useState<PointReason['type'] | ''>('');
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'point', desc: true }]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'id', desc: false }]);
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PointReasonRow | null>(null);
   const [form, setForm] = useState<{ type: PointReason['type']; point: string; comment: string }>({
@@ -214,7 +214,7 @@ export function PointReasonsPage() {
             }
             mobileSort={
               <MobileSortSelect
-                value={`${sort?.id ?? 'point'}:${sort?.desc ? 'desc' : 'asc'}`}
+                value={`${sort?.id ?? 'id'}:${sort?.desc ? 'desc' : 'asc'}`}
                 options={[
                   { value: 'id:asc', label: '코드순' },
                   { value: 'comment:asc', label: '가나다순' },

@@ -439,12 +439,9 @@
   font-size: 11px;
   font-weight: 400;
   line-height: 16px;
-  text-align: center;
+  text-align: right;
 }
 
-.meal-column__calories-inline {
-  display: none;
-}
 .meal-column__empty {
   margin-top: 5px;
   color: var(--j-color-text-muted);

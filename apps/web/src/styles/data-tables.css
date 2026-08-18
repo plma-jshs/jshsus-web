@@ -896,6 +896,10 @@
     grid-template-columns: minmax(0, 1fr) 40px;
   }
 
+  .data-table-toolbar--search-only .data-table-toolbar__controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .data-table-toolbar__filters {
     position: fixed;
     z-index: calc(var(--j-layer-modal) + 1);
@@ -1065,6 +1069,10 @@
     grid-column: 1;
   }
 
+  .data-table-toolbar--search-only .data-table-toolbar__query {
+    grid-column: 1 / -1;
+  }
+
   .data-table-toolbar__query input {
     min-width: 0;
     padding-left: 0 !important;
@@ -1083,50 +1091,64 @@
     padding: 0;
   }
 
-  .data-table-toolbar__filters > .filter-chips,
-  .data-table-toolbar__filters > .filter-chips[role='group'],
-  .data-table-toolbar__filters .filter-chips[role='group'] {
+  /* Public filter sheets use the same compact rhythm as the admin sheet:
+     status tabs stay on one row and date ranges stay on one row. */
+  .data-table-toolbar__filters .data-table-toolbar__extra {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 7px;
-    padding: 0;
-    overflow: visible;
-    background: transparent;
+    gap: 16px;
   }
 
-  .data-table-toolbar__filters > .filter-chips::before {
-    color: var(--j-color-text-muted);
-    content: attr(aria-label);
-    font-size: var(--j-text-xs);
-    font-weight: var(--j-weight-semibold);
+  .data-table-toolbar__filters .filter-chips,
+  .data-table-toolbar__filters .filter-chips[role='group'] {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    padding: 4px;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 3px;
+    overflow: visible;
+    background: #f1f5f9;
   }
 
   .data-table-toolbar__filters .filter-chips::before {
-    color: var(--j-color-text-muted);
-    content: attr(aria-label);
-    font-size: var(--j-text-xs);
-    font-weight: var(--j-weight-semibold);
+    display: none;
+    content: none;
   }
 
-  .data-table-toolbar__filters .data-table-toolbar__extra {
-    gap: 16px;
+  .data-table-toolbar__filters .filter-chips button {
+    width: auto;
+    min-width: 0;
+    min-height: 34px;
+    flex: 1 1 0;
+    padding-inline: 8px;
+    white-space: nowrap;
   }
 
   .data-table-toolbar__filters .activity-date-range {
     display: grid;
-    gap: 7px;
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
   }
 
   .data-table-toolbar__filters .activity-date-range::before {
-    color: var(--j-color-text-muted);
-    content: attr(aria-label);
-    font-size: var(--j-text-xs);
-    font-weight: var(--j-weight-semibold);
+    display: none;
+    content: none;
   }
 
-  .data-table-toolbar__filters > .filter-chips button {
+  .data-table-toolbar__filters .activity-date-control,
+  .data-table-toolbar__filters .activity-date-control input {
     width: 100%;
-    min-height: 44px;
+    min-width: 0;
+  }
+
+  .data-table-toolbar__filters .activity-date-separator {
+    width: auto;
+    min-width: 16px;
   }
 
   .data-table-toolbar__filter-trigger {

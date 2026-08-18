@@ -325,6 +325,8 @@
 }
 
 .admin-filter-sheet__controls {
+  --admin-filter-label-gap: 10px;
+  --admin-filter-control-gap: 10px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   padding: 18px;
@@ -387,7 +389,7 @@
   label:not(.checkbox-row):not(.ui-date-input):has(> span:not(.sr-only)) {
   display: grid;
   min-width: 0;
-  gap: 8px;
+  gap: var(--admin-filter-label-gap);
 }
 
 .admin-filter-sheet__controls
@@ -490,7 +492,7 @@
     height: auto !important;
     min-height: 0;
     align-content: start;
-    gap: 8px;
+    gap: var(--admin-filter-label-gap);
   }
 
   .admin-filter-sheet__controls .admin-select__mobile-label {
@@ -514,7 +516,7 @@
   .admin-filter-sheet__controls .point-filter,
   .admin-filter-sheet__controls .content-select-field {
     display: grid !important;
-    gap: 8px;
+    gap: var(--admin-filter-label-gap);
   }
 
   .admin-filter-sheet__controls .content-toolbar,
@@ -530,12 +532,13 @@
   .admin-filter-sheet__controls .ui-date-range {
     display: grid;
     min-width: 0;
-    gap: 8px;
+    gap: 0;
   }
 
   .admin-filter-sheet__controls .ui-date-range__label {
     display: block;
-    margin: 0;
+    padding: 0;
+    margin: 0 0 var(--admin-filter-label-gap);
     color: var(--j-color-text-muted);
     font-size: 12px;
     font-weight: var(--j-weight-semibold);
@@ -548,6 +551,7 @@
     min-width: 0;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
     align-items: center;
+    gap: var(--admin-filter-control-gap);
   }
 
   /* Segmented filters are a single row of choices, rather than four stacked
@@ -813,6 +817,16 @@
 }
 
 @media (max-width: 767px) {
+  :where(.ui-dialog__layout, .ui-drawer__layout, .admin-filter-sheet__layout) {
+    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  :where(.ui-dialog__layout, .ui-drawer__layout, .admin-filter-sheet__layout).is-dragging {
+    animation: none !important;
+    transform: translateY(var(--ui-sheet-drag-offset, 0px));
+    transition: none;
+  }
+
   .admin-filter-sheet__layout {
     position: relative;
   }

@@ -380,7 +380,7 @@ select.ui-control:not([multiple]) {
 .admin-select__menu button.is-selected:hover:not(:disabled),
 .admin-select__menu button.is-selected.is-active {
   color: var(--j-color-brand-strong);
-  background: color-mix(in srgb, var(--j-color-surface-selected) 78%, var(--j-color-brand));
+  background: color-mix(in srgb, var(--j-color-surface-selected) 92%, var(--j-color-brand));
 }
 
 .admin-select__menu button:focus-visible {
@@ -470,7 +470,8 @@ textarea.ui-control {
 .answer-form label {
   display: grid;
   min-width: 0;
-  gap: 8px;
+  /* Keep the label-to-control rhythm consistent across dialogs and forms. */
+  gap: 10px;
 }
 
 .ui-field__label,
@@ -710,7 +711,7 @@ textarea.ui-control {
   display: grid;
   grid-template-columns: 150px auto 150px;
   align-items: center;
-  gap: 7px;
+  gap: 10px;
 }
 
 .ui-date-range__controls input {

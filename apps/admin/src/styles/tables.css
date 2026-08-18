@@ -723,6 +723,12 @@
 }
 
 @media (max-width: 767px) {
+  .activity-print-menu,
+  .activity-print-trigger,
+  .operation-review-print {
+    display: none !important;
+  }
+
   .admin-table-toolbar {
     display: grid;
     min-height: 44px;

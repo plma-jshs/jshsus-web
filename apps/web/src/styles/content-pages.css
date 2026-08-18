@@ -517,25 +517,38 @@
   border: 1px solid var(--j-color-border-strong);
   border-radius: var(--j-radius-md);
   background: var(--j-color-surface);
-  transition: border-color var(--j-motion-fast);
+  background-clip: padding-box;
+  box-shadow: inset 0 0 0 0 transparent;
+  transition:
+    border-color var(--j-motion-fast),
+    box-shadow var(--j-motion-fast),
+    background-color var(--j-motion-fast);
+}
+
+.detail-comment-form:hover {
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong));
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong));
 }
 
 .detail-comment-form:focus-within {
-  border-color: var(--j-color-focus);
-  box-shadow: none;
+  border-color: var(--j-color-brand);
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
 }
 
 .detail-comment-form textarea {
   display: block;
   width: 100%;
+  box-sizing: border-box;
   min-height: 44px;
   max-height: 220px;
   padding: 11px 13px;
   overflow-y: auto;
-  border: 0;
+  border: 0 !important;
   border-radius: 0;
-  outline: 0;
-  background: transparent;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
   field-sizing: content;
   line-height: 22px;
   resize: none;
@@ -552,6 +565,8 @@
   visibility: hidden;
   min-height: 32px;
   min-width: 76px;
+  box-sizing: border-box;
+  line-height: 0;
   opacity: 0;
   pointer-events: none;
   transform: translateY(-50%);
@@ -574,11 +589,13 @@
   top: 50%;
   bottom: auto;
   place-items: center;
+  line-height: 0;
   color: var(--j-color-text-inverse, #fff);
   background: var(--j-color-brand);
 }
 
 .detail-comment-form .detail-comment-submit svg {
+  display: block;
   width: 19px;
   height: 19px;
   margin: 0;
@@ -746,10 +763,6 @@
     width: 18px;
     height: 18px;
     margin: 0;
-  }
-
-  .detail-comment-form:focus-within {
-    box-shadow: none;
   }
 
   .comment-empty {

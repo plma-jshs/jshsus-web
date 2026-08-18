@@ -282,6 +282,13 @@
 
   .admin-row-action-sheet__layout {
     position: relative;
+    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .admin-row-action-sheet__layout.is-dragging {
+    animation: none !important;
+    transform: translateY(var(--ui-sheet-drag-offset, 0px));
+    transition: none;
   }
 
   .admin-row-action-sheet__handle {

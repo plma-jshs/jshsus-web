@@ -168,16 +168,6 @@ function NoticeEditForm({ notice }: { notice: NoticeDetail }) {
             placeholder="작성자명 (예: 학생생활부)"
             required
           />
-          <label className="notice-editor-pin">
-            <input
-              type="checkbox"
-              checked={pinned}
-              onChange={(event) => setPinned(event.target.checked)}
-            />
-            <span>
-              <strong>고정</strong>
-            </span>
-          </label>
         </div>
       </div>
       <div className="editor-field">
@@ -213,6 +203,16 @@ function NoticeEditForm({ notice }: { notice: NoticeDetail }) {
             onChange={addAttachments}
             tabIndex={-1}
           />
+          <label className="notice-editor-pin">
+            <input
+              type="checkbox"
+              checked={pinned}
+              onChange={(event) => setPinned(event.target.checked)}
+            />
+            <span>
+              <strong>고정</strong>
+            </span>
+          </label>
         </div>
         {attachments.length ? (
           <ul className="editor-attachment-list">

@@ -102,6 +102,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
   const externalSearchRef = useRef({ field, query });
   const lastSearchRef = useRef({ field, query: query.trim() });
   const hasFilters = Boolean(extraControls || (groupActionWithPageSize && action));
+  const isSearchOnly = !hasFilters && !action;
 
   useEffect(() => {
     onSearchRef.current = onSearch;
@@ -149,9 +150,9 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
 
   return (
     <form
-      className={`data-table-toolbar${isFilterOpen ? ' is-filter-open' : ''}${
-        isClosing ? ' is-closing' : ''
-      }`}
+      className={`data-table-toolbar${isSearchOnly ? ' data-table-toolbar--search-only' : ''}${
+        isFilterOpen ? ' is-filter-open' : ''
+      }${isClosing ? ' is-closing' : ''}`}
       role="search"
       onSubmit={(event) => {
         event.preventDefault();

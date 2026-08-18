@@ -126,5 +126,6 @@ body .detail-page > .cannon-workspace {
       .page-state--page
     ) {
     border-block: 0;
+    padding-top: 0;
   }
 }

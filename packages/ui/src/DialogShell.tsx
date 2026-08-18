@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
-import { useRef, type PointerEvent, type ReactNode, type Ref } from 'react';
+import { useSheetDrag } from './useSheetDrag';
+import { type ReactNode, type Ref } from 'react';
 
 export type DialogShellProps = {
   title: ReactNode;
@@ -35,39 +36,11 @@ export function DialogShell({
   closeLabel,
   onClose,
 }: DialogShellProps) {
-  const pointerStartY = useRef<number | null>(null);
-
-  const handlePointerDown = (event: PointerEvent<HTMLSpanElement>) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    pointerStartY.current = event.clientY;
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-  };
-
-  const handlePointerUp = (event: PointerEvent<HTMLSpanElement>) => {
-    const startY = pointerStartY.current;
-    pointerStartY.current = null;
-    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-      event.currentTarget.releasePointerCapture?.(event.pointerId);
-    }
-    if (startY !== null && event.clientY - startY > 56) onClose();
-  };
-
-  const handlePointerCancel = (event: PointerEvent<HTMLSpanElement>) => {
-    pointerStartY.current = null;
-    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-      event.currentTarget.releasePointerCapture?.(event.pointerId);
-    }
-  };
+  const { rootRef, handleProps } = useSheetDrag<HTMLDivElement>(onClose);
 
   return (
-    <div className={className}>
-      <span
-        className="ui-dialog__handle"
-        aria-hidden="true"
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
-      />
+    <div className={className} ref={rootRef}>
+      <span className="ui-dialog__handle" aria-hidden="true" {...handleProps} />
       <header className={headerClassName}>
         <div>
           <h2 id={titleId}>{title}</h2>

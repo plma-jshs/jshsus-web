@@ -47,9 +47,23 @@
     .page-toolbar__filters-content,
     .data-table-toolbar__filters,
     .ui-dialog__layout,
-    .ui-drawer__layout
+    .ui-drawer__layout,
+    .calendar-mobile-modal__dialog
   ) {
     position: relative;
+    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  :where(
+    .page-toolbar__filters-content,
+    .data-table-toolbar__filters,
+    .ui-dialog__layout,
+    .ui-drawer__layout,
+    .calendar-mobile-modal__dialog
+  ).is-dragging {
+    animation: none !important;
+    transform: translateY(var(--ui-sheet-drag-offset, 0px));
+    transition: none;
   }
 
   :where(.ui-filter-sheet__handle, .ui-dialog__handle) {

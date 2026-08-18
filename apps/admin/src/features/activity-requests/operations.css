@@ -245,10 +245,12 @@
   width: 120px;
 }
 
-.operation-list-toolbar .admin-select.operation-status-filter {
-  width: 72px !important;
-  min-width: 72px !important;
-  max-width: 72px !important;
+@media (min-width: 1025px) {
+  .operation-list-toolbar .admin-select.operation-status-filter {
+    width: 72px;
+    min-width: 72px;
+    max-width: 72px;
+  }
 }
 
 .activity-print-trigger {
@@ -517,8 +519,8 @@
   grid-template-columns: 17px minmax(0, 1fr);
   grid-template-rows: auto auto;
   align-items: center;
-  gap: 0 5px;
-  padding: 4px 8px;
+  gap: 0 4px;
+  padding: 4px 7px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: white;
@@ -546,7 +548,7 @@
   font-size: 12px;
   color: var(--j-color-text);
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.05;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -557,7 +559,8 @@
   color: var(--muted);
   font-size: 10px;
   font-weight: 400;
-  line-height: 1.1;
+  line-height: 1;
+  margin-top: -1px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -694,6 +697,25 @@
   font-weight: 600;
 }
 
+.operation-status-select--pending .admin-select__trigger:hover:not(:disabled),
+.operation-status-select--approved .admin-select__trigger:hover:not(:disabled),
+.operation-status-select--rejected .admin-select__trigger:hover:not(:disabled) {
+  border-color: transparent !important;
+  box-shadow: none;
+}
+
+.operation-status-select--pending .admin-select__trigger:hover:not(:disabled) {
+  background: #fff1d0;
+}
+
+.operation-status-select--approved .admin-select__trigger:hover:not(:disabled) {
+  background: #e5f4eb;
+}
+
+.operation-status-select--rejected .admin-select__trigger:hover:not(:disabled) {
+  background: #f3e8e8;
+}
+
 .operation-status-select .admin-select__trigger > .admin-select__option-content,
 .operation-status-select .admin-select__trigger .admin-select__option-content > span:last-child,
 .operation-status-select__menu .admin-select__option-content > span:last-child {
@@ -754,7 +776,7 @@
 .operation-status-select__menu button.is-selected:hover,
 .operation-status-select__menu button.is-selected.is-active {
   color: #12623d;
-  background: #dff3e7;
+  background: #e8f6ee;
 }
 
 .operation-status-select__menu--pending button.is-selected {
@@ -765,7 +787,7 @@
 .operation-status-select__menu--pending button.is-selected:hover,
 .operation-status-select__menu--pending button.is-selected.is-active {
   color: #65460b;
-  background: #ffedbf;
+  background: #fff4d8;
 }
 
 .operation-status-select__menu--approved button.is-selected {
@@ -781,7 +803,7 @@
 .operation-status-select__menu--rejected button.is-selected:hover,
 .operation-status-select__menu--rejected button.is-selected.is-active {
   color: #713737;
-  background: #f2dcdc;
+  background: #f7e9e9;
 }
 
 .operation-status-filter {

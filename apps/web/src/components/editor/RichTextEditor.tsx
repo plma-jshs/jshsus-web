@@ -599,7 +599,7 @@ function ToolbarPalette({
               style={{ top: menuPosition.top, left: menuPosition.left }}
             >
               <div className="rich-text-toolbar-palette__grid">
-                {options.map((option) => (
+                {options.slice(0, 8).map((option) => (
                   <button
                     type="button"
                     role="menuitem"

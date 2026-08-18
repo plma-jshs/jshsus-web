@@ -1,4 +1,5 @@
 import type { AcademicEvent } from '@jshsus/types';
+import { useSheetDrag } from '@jshsus/ui';
 import type { CSSProperties, KeyboardEvent, MouseEvent, TouchEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -489,6 +490,8 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
     mobileAgendaClosingRef.current = true;
     setMobileAgendaClosing(true);
   }, [setMobileAgendaClosing]);
+  const { rootRef: mobileAgendaSheetRef, handleProps: mobileAgendaHandleProps } =
+    useSheetDrag<HTMLDivElement>(closeMobileAgenda);
 
   useEffect(() => {
     if (!mobileAgendaClosing) return undefined;
@@ -906,11 +909,17 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
               >
                 <section
                   className="calendar-mobile-modal__dialog"
+                  ref={mobileAgendaSheetRef}
                   role="dialog"
                   aria-modal="true"
                   aria-labelledby="calendar-mobile-modal-title"
                   onClick={(event) => event.stopPropagation()}
                 >
+                  <span
+                    className="ui-dialog__handle"
+                    aria-hidden="true"
+                    {...mobileAgendaHandleProps}
+                  />
                   <header>
                     <strong id="calendar-mobile-modal-title">{selectedDateLabel}</strong>
                     <button type="button" aria-label="일정 닫기" onClick={closeMobileAgenda}>

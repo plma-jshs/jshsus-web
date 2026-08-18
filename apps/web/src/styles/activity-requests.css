@@ -1979,7 +1979,12 @@
 
 @media (max-width: 767px) {
   .activity-page-actions__print {
-    display: block;
+    display: none;
+  }
+
+  .activity-print-menu,
+  .activity-print-trigger {
+    display: none !important;
   }
 }
 

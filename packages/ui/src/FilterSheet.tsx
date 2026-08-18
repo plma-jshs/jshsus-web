@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
-import { useRef, type PointerEvent, type ReactNode } from 'react';
+import { useSheetDrag } from './useSheetDrag';
+import { type ReactNode } from 'react';
 
 export type FilterSheetProps = {
   title: ReactNode;
@@ -40,45 +41,18 @@ export function FilterSheet({
   onClose,
 }: FilterSheetProps) {
   const Title = titleAs;
-  const pointerStartY = useRef<number | null>(null);
-
-  const handlePointerDown = (event: PointerEvent<HTMLSpanElement>) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    pointerStartY.current = event.clientY;
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-  };
-
-  const handlePointerUp = (event: PointerEvent<HTMLSpanElement>) => {
-    const startY = pointerStartY.current;
-    pointerStartY.current = null;
-    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-      event.currentTarget.releasePointerCapture?.(event.pointerId);
-    }
-    if (startY !== null && event.clientY - startY > 56) onClose();
-  };
-
-  const handlePointerCancel = (event: PointerEvent<HTMLSpanElement>) => {
-    pointerStartY.current = null;
-    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-      event.currentTarget.releasePointerCapture?.(event.pointerId);
-    }
-  };
+  const { rootRef, handleProps } = useSheetDrag<HTMLDivElement>(onClose);
 
   return (
     <div
       className={layoutClassName}
       id={id}
+      ref={rootRef}
       role={role}
       aria-modal={ariaModal || undefined}
       aria-label={ariaLabel}
     >
-      <span
-        className="ui-filter-sheet__handle"
-        aria-hidden="true"
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
-      />
+      <span className="ui-filter-sheet__handle" aria-hidden="true" {...handleProps} />
       <header className={headerClassName}>
         <Title className={titleClassName}>{title}</Title>
         <button className={closeClassName} type="button" aria-label={closeLabel} onClick={onClose}>
