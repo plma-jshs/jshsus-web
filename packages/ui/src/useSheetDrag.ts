@@ -30,27 +30,43 @@ export function useSheetDrag<T extends HTMLElement = HTMLDivElement>(
   const rootRef = useRef<T | null>(null);
   const dragRef = useRef<{ pointerId: number; startY: number; offset: number } | null>(null);
 
-  const resetDrag = useCallback(() => {
+  const getTargets = useCallback(() => {
     const root = rootRef.current;
+    if (!root) return [];
+    const dialog = root.closest('dialog');
+    return dialog ? [root, dialog] : [root];
+  }, []);
+
+  const resetDrag = useCallback(() => {
     dragRef.current = null;
-    root?.classList.remove('is-dragging');
-    root?.style.removeProperty('--ui-sheet-drag-offset');
-  }, []);
+    getTargets().forEach((target) => {
+      target.classList.remove('is-dragging');
+      target.style.removeProperty('--ui-sheet-drag-offset');
+    });
+  }, [getTargets]);
 
-  const onPointerDown: PointerEventHandler<HTMLElement> = useCallback((event) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    dragRef.current = { pointerId: event.pointerId, startY: event.clientY, offset: 0 };
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    rootRef.current?.classList.add('is-dragging');
-  }, []);
+  const onPointerDown: PointerEventHandler<HTMLElement> = useCallback(
+    (event) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      dragRef.current = { pointerId: event.pointerId, startY: event.clientY, offset: 0 };
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+      getTargets().forEach((target) => target.classList.add('is-dragging'));
+    },
+    [getTargets],
+  );
 
-  const onPointerMove: PointerEventHandler<HTMLElement> = useCallback((event) => {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    const offset = Math.max(0, event.clientY - drag.startY);
-    drag.offset = offset;
-    rootRef.current?.style.setProperty('--ui-sheet-drag-offset', `${offset}px`);
-  }, []);
+  const onPointerMove: PointerEventHandler<HTMLElement> = useCallback(
+    (event) => {
+      const drag = dragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      const offset = Math.max(0, event.clientY - drag.startY);
+      drag.offset = offset;
+      getTargets().forEach((target) => {
+        target.style.setProperty('--ui-sheet-drag-offset', `${offset}px`);
+      });
+    },
+    [getTargets],
+  );
 
   const finishDrag = useCallback(
     (event: PointerEvent<HTMLElement>) => {
