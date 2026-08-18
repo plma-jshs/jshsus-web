@@ -1078,7 +1078,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .school-calendar-panel {
     border-inline: 0;
     border-radius: 0;

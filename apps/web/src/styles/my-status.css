@@ -1240,7 +1240,7 @@
   opacity: 0.5;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 767px) {
   .my-page {
     width: min(calc(100% - 28px), 900px);
     padding-top: 24px;

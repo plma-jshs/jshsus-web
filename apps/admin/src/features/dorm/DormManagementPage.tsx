@@ -32,6 +32,7 @@ export function DormManagementPage() {
         <div className="dorm-term-controls">
           <AdminSelect
             value={year}
+            nativeOnMobile={false}
             onChange={(event) => setYear(Number(event.target.value))}
             aria-label="연도"
           >
@@ -43,6 +44,7 @@ export function DormManagementPage() {
           </AdminSelect>
           <AdminSelect
             value={semester}
+            nativeOnMobile={false}
             onChange={(event) => setSemester(Number(event.target.value))}
             aria-label="학기"
           >

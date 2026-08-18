@@ -339,6 +339,18 @@
   justify-content: flex-start;
 }
 
+@media (max-width: 767px) {
+  .dorm-row-actions .admin-row-action-sheet__actions .admin-row-action-button.ui-button {
+    color: var(--j-color-text-secondary);
+    font-size: 14px;
+    font-weight: var(--j-weight-medium);
+  }
+
+  .dorm-row-actions .admin-row-action-sheet__actions .admin-row-action-button.ui-button--danger {
+    color: var(--j-color-text-secondary);
+  }
+}
+
 @media (max-width: 980px) {
   .dorm-management-header {
     align-items: stretch;
@@ -354,7 +366,7 @@
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 767px) {
   .dorm-page,
   .dorm-management-header,
   .dorm-term-controls,

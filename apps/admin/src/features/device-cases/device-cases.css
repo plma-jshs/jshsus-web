@@ -42,7 +42,7 @@
   color: #9b3d3d;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .device-cases-toolbar.has-selection .admin-table-toolbar__mobile-actions {
     display: none;
   }

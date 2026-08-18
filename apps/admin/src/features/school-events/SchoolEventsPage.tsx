@@ -391,7 +391,7 @@ function weekdayOf(date: string) {
 }
 
 function isMobileCalendar() {
-  return window.matchMedia('(max-width: 768px)').matches;
+  return window.matchMedia('(max-width: 767px)').matches;
 }
 
 export function SchoolEventsPage() {

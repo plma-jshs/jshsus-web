@@ -1319,7 +1319,7 @@ button.activity-student-chip {
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 767px) {
   .operation-report-editor {
     min-width: 0;
     grid-template-columns: 1fr;

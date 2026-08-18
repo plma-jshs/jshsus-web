@@ -43,12 +43,12 @@ export function DormRoommateBlocksPanel({
   const [sorting, setSorting] = useState<SortingState>([]);
   const selectedStudent = students.find((student) => studentLabel(student) === studentInput);
   const roommateOptions = selectedStudent
-    ? students.filter(
-        (student) =>
-          student.userId !== selectedStudent.userId &&
-          student.dormName === selectedStudent.dormName &&
-          student.grade === selectedStudent.grade,
-      )
+    ? students.filter((student) => {
+        const sameStudent = student.userId === selectedStudent.userId;
+        const sameDorm = student.dormName === selectedStudent.dormName;
+        const sameGrade = Number(student.grade) === Number(selectedStudent.grade);
+        return !sameStudent && sameDorm && sameGrade;
+      })
     : students;
 
   const addMutation = useMutation({

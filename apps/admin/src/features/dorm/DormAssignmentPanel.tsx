@@ -551,6 +551,7 @@ export function DormAssignmentPanel({
             <RowActionButton
               icon={<MoveRight aria-hidden="true" />}
               label={`${row.original.studentName} 이동`}
+              mobileLabel="이동"
               variant="primary"
               onClick={() => {
                 setMovingAssignment(row.original);
@@ -561,6 +562,7 @@ export function DormAssignmentPanel({
             <RowActionButton
               icon={<X aria-hidden="true" />}
               label={`${row.original.studentName} 배정 취소`}
+              mobileLabel="배정 취소"
               variant="danger"
               onClick={() => setCancelTarget(row.original)}
             />
@@ -573,13 +575,30 @@ export function DormAssignmentPanel({
     [selectedAssignments],
   );
 
-  const moveRooms = movingAssignment
-    ? rooms.filter(
-        (room) =>
-          room.grade === movingAssignment.grade && room.dormName === movingAssignment.dormName,
-      )
-    : [];
+  const moveRooms = useMemo(() => {
+    if (!movingAssignment) return [];
+
+    const currentRoom = rooms.find((room) => room.id === movingAssignment.roomId);
+    const targetDormName = movingAssignment.dormName ?? currentRoom?.dormName;
+    const targetGrade = Number(movingAssignment.grade ?? currentRoom?.grade);
+
+    const filteredRooms = rooms.filter((room) => {
+      // Keep the current room even if an old assignment has stale dorm/grade
+      // metadata. It is still a valid option and gives the selector a stable
+      // initial value while the remaining room metadata is normalized.
+      if (room.id === movingAssignment.roomId) return true;
+      const sameDorm = targetDormName ? room.dormName === targetDormName : true;
+      const sameGrade = Number.isFinite(targetGrade) ? Number(room.grade) === targetGrade : true;
+      return sameDorm && sameGrade;
+    });
+
+    // Never render an empty selector just because an older assignment carries
+    // incomplete metadata. The API still validates the destination on submit;
+    // showing all rooms is safer than making the move form unusable.
+    return filteredRooms.length > 0 ? filteredRooms : rooms;
+  }, [movingAssignment, rooms]);
   const selectedMoveRoom = moveRooms.find((room) => room.id === Number(moveRoomId));
+
   const showDrawPanel = !loading && assignments.length === 0;
 
   return (
@@ -751,6 +770,7 @@ export function DormAssignmentPanel({
                   <RowActionButton
                     icon={<MoveRight aria-hidden="true" />}
                     label={`${assignment.studentName} 이동`}
+                    mobileLabel="이동"
                     variant="primary"
                     onClick={() => {
                       setMovingAssignment(assignment);
@@ -761,6 +781,7 @@ export function DormAssignmentPanel({
                   <RowActionButton
                     icon={<X aria-hidden="true" />}
                     label={`${assignment.studentName} 배정 취소`}
+                    mobileLabel="배정 취소"
                     variant="danger"
                     onClick={() => setCancelTarget(assignment)}
                   />
