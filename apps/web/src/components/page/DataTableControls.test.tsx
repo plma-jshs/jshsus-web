@@ -102,6 +102,26 @@ describe('DataTableToolbar', () => {
     const primaryActions = view.container.querySelector('.data-table-toolbar__primary-actions');
     expect(primaryActions).toContainElement(screen.getByRole('button', { name: '작성' }));
   });
+
+  it('does not reserve a hidden mobile filter column for action-only toolbars', () => {
+    const view = render(
+      <DataTableToolbar
+        total={1}
+        page={1}
+        totalPages={1}
+        pageSize={20}
+        field="title_content"
+        query=""
+        action={<button type="button">작성</button>}
+        onPageSizeChange={vi.fn()}
+        onSearch={vi.fn()}
+      />,
+    );
+
+    expect(view.container.querySelector('.data-table-toolbar')).toHaveClass(
+      'data-table-toolbar--search-only',
+    );
+  });
 });
 
 describe('DataTablePagination', () => {

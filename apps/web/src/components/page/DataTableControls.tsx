@@ -102,7 +102,10 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
   const externalSearchRef = useRef({ field, query });
   const lastSearchRef = useRef({ field, query: query.trim() });
   const hasFilters = Boolean(extraControls || (groupActionWithPageSize && action));
-  const isSearchOnly = !hasFilters && !action;
+  // Actions are rendered on desktop but intentionally hidden from the compact
+  // mobile toolbar.  The presence of an action must not reserve the filter
+  // column on mobile when this toolbar has no actual filters.
+  const isSearchOnly = !hasFilters;
 
   useEffect(() => {
     onSearchRef.current = onSearch;
