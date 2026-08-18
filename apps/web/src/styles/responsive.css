@@ -224,7 +224,7 @@
     color: var(--j-color-text);
   }
   .mobile-menu__logout:active:not(:disabled) {
-    transform: scale(0.97);
+    background: var(--j-ref-slate-200);
   }
   .mobile-menu__logout-spinner {
     animation: mobile-menu-spin 0.9s linear infinite;

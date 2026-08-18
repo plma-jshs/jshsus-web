@@ -975,8 +975,7 @@
     font-size: 0;
     transition:
       border-color var(--j-motion-fast),
-      background-color var(--j-motion-fast),
-      transform var(--j-motion-fast);
+      background-color var(--j-motion-fast);
   }
 
   .data-table-toolbar__filter-trigger:hover {
@@ -985,7 +984,7 @@
   }
 
   .data-table-toolbar__filter-trigger:active {
-    transform: scale(0.95);
+    background: var(--j-ref-slate-200);
   }
 
   .data-table-toolbar__filter-trigger[aria-expanded='true'] {

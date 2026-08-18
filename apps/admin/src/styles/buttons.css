@@ -371,7 +371,7 @@
   }
 
   .admin-row-action-sheet__actions .admin-row-action-button.ui-button:active {
-    background: var(--j-color-surface-subtle);
+    background: var(--j-ref-slate-200);
   }
 
   .admin-row-action-sheet__actions .admin-row-action-button.ui-button:focus-visible {

@@ -329,7 +329,7 @@
   }
 
   .operation-activity-mobile-card:active {
-    background: var(--j-color-surface-subtle);
+    background: var(--j-ref-slate-200);
   }
 
   .operation-activity-mobile-card__heading {

@@ -623,8 +623,7 @@
     font-size: 0;
     transition:
       border-color var(--j-motion-fast),
-      background-color var(--j-motion-fast),
-      transform var(--j-motion-fast);
+      background-color var(--j-motion-fast);
   }
 
   .page-toolbar__filter-trigger:hover {
@@ -633,7 +632,7 @@
   }
 
   .page-toolbar__filter-trigger:active {
-    transform: scale(0.95);
+    background: var(--j-ref-slate-200);
   }
 
   .page-toolbar__filter-trigger[aria-expanded='true'] {

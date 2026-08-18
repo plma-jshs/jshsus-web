@@ -808,8 +808,7 @@
     margin-left: auto;
     transition:
       border-color var(--j-motion-fast),
-      background-color var(--j-motion-fast),
-      transform var(--j-motion-fast);
+      background-color var(--j-motion-fast);
   }
 
   .admin-mobile-filter-button:hover {
@@ -818,7 +817,7 @@
   }
 
   .admin-mobile-filter-button:active {
-    transform: scale(0.95);
+    background: var(--j-ref-slate-200);
   }
 
   .admin-filter-sheet__controls > .admin-mobile-sort-field {
