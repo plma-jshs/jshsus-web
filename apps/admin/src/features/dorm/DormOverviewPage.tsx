@@ -115,6 +115,15 @@ export function DormOverviewPage() {
 
       <section className="admin-panel dorm-list-panel">
         <TableToolbar
+          mobileResetDisabled={
+            year === now.getFullYear() &&
+            semester === (now.getMonth() + 1 >= 8 ? 2 : 1) &&
+            !search &&
+            !dormName &&
+            grade === '' &&
+            sorting[0]?.id === 'name' &&
+            sorting[0]?.desc === false
+          }
           mobileReset={() => {
             setYear(now.getFullYear());
             setSemester(now.getMonth() + 1 >= 8 ? 2 : 1);

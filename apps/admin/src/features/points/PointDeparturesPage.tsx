@@ -366,6 +366,16 @@ export function PointDeparturesPage() {
             title=""
             toolbar={
               <TableToolbar
+                mobileResetDisabled={
+                  !search &&
+                  !grade &&
+                  !classNo &&
+                  riskStatus === 'all' &&
+                  sorting[0]?.id === 'currentPoint' &&
+                  sorting[0]?.desc === false &&
+                  historySorting[0]?.id === 'handledAt' &&
+                  historySorting[0]?.desc === true
+                }
                 mobileReset={() => {
                   setSearch('');
                   setGrade('');

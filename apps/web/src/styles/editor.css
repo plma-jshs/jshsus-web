@@ -1225,6 +1225,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .rich-text-link-modal__actions {
+    padding-bottom: calc(18px + env(safe-area-inset-bottom));
+  }
+
   .rich-text-link-modal__actions button,
   .editor-resume-modal__dialog > div > * {
     width: 100%;

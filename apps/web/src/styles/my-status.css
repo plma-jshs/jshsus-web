@@ -1241,6 +1241,11 @@
 }
 
 @media (max-width: 767px) {
+  .status-contact-modal__actions {
+    height: auto;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
   .my-page {
     width: min(calc(100% - 28px), 900px);
     padding-top: 24px;

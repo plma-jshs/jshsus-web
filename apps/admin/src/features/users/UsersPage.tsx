@@ -1088,6 +1088,13 @@ export function UsersPage() {
 
       <section className="identity-panel">
         <TableToolbar
+          mobileResetDisabled={
+            Object.entries(filters).every(([key, value]) =>
+              key === 'pageSize' ? value === 20 : value === undefined || value === '',
+            ) &&
+            sorting[0]?.id === 'identifier' &&
+            sorting[0]?.desc === false
+          }
           mobileReset={() => {
             setFilters({ pageSize: 20 });
             setPage(1);

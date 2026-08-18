@@ -52,6 +52,7 @@ export function Dialog({
   const classes = [
     'ui-dialog',
     `ui-dialog--${size}`,
+    footer ? 'has-footer' : '',
     open && scrollable ? 'is-scrollable' : '',
     className ?? '',
   ]

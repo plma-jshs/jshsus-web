@@ -224,6 +224,13 @@ export function WakeSongsPage() {
     <div className="admin-stack wake-song-admin">
       <section className="admin-panel wake-song-admin-list">
         <TableToolbar
+          mobileResetDisabled={
+            status === 'PENDING' &&
+            !query &&
+            !appliedQuery &&
+            sorting[0]?.id === 'createdAt' &&
+            sorting[0]?.desc === true
+          }
           mobileReset={() => {
             setStatus('PENDING');
             setQuery('');

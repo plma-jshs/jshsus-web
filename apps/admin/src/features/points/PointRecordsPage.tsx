@@ -257,6 +257,14 @@ export function PointRecordsPage() {
       className="point-panel"
       toolbar={
         <TableToolbar
+          mobileResetDisabled={
+            !search &&
+            !type &&
+            !from &&
+            !to &&
+            sorting[0]?.id === 'baseDate' &&
+            sorting[0]?.desc === true
+          }
           mobileReset={() => {
             setSearch('');
             setType('');

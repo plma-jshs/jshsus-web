@@ -859,6 +859,7 @@
 
   .board-rules-modal__body {
     font-size: 13px;
+    padding-bottom: calc(var(--j-space-6) + env(safe-area-inset-bottom));
   }
 
   .data-table-section,

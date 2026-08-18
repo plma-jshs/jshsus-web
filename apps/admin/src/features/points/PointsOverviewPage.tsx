@@ -116,6 +116,13 @@ export function PointsOverviewPage() {
       className="point-panel point-overview-panel"
       toolbar={
         <TableToolbar
+          mobileResetDisabled={
+            !search &&
+            !grade &&
+            !classNo &&
+            sorting[0]?.id === 'studentNo' &&
+            sorting[0]?.desc === false
+          }
           mobileReset={() => {
             setSearch('');
             setGrade('');

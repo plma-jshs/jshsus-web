@@ -548,6 +548,13 @@
   padding: 4px 20px 20px;
 }
 
+@media (max-width: 767px) {
+  .calendar-mobile-modal__dialog > .calendar-agenda__list,
+  .calendar-mobile-modal__dialog > .calendar-agenda__empty {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+}
+
 @keyframes calendar-mobile-modal-in {
   from {
     opacity: 0;

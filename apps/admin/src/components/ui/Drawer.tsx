@@ -50,6 +50,7 @@ export function Drawer({
   const classes = [
     'ui-drawer',
     `ui-drawer--${side}`,
+    footer ? 'has-footer' : '',
     open && scrollable ? 'is-scrollable' : '',
     className ?? '',
   ]

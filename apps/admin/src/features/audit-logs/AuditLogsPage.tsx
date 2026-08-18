@@ -103,6 +103,13 @@ export function AuditLogsPage() {
         <TableSummary count={logsQuery.data?.total} suffix="건" loading={logsQuery.isPending} />
       </p>
       <TableToolbar
+        mobileResetDisabled={
+          !filters.q &&
+          !filters.from &&
+          !filters.to &&
+          sorting[0]?.id === 'createdAt' &&
+          sorting[0]?.desc === true
+        }
         mobileReset={() => {
           setFilters({ q: '', from: '', to: '' });
           setSorting([{ id: 'createdAt', desc: true }]);

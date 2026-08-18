@@ -184,6 +184,9 @@ export function PointReasonsPage() {
         className="point-panel"
         toolbar={
           <TableToolbar
+            mobileResetDisabled={
+              !search && !type && sorting[0]?.id === 'id' && sorting[0]?.desc === false
+            }
             mobileReset={() => {
               setSearch('');
               setType('');

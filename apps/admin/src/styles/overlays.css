@@ -502,6 +502,27 @@
   box-shadow: none;
 }
 
+.admin-filter-sheet__footer-actions .admin-filter-sheet__reset:disabled {
+  cursor: default;
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+@media (max-width: 767px) and (hover: none) {
+  .admin-filter-sheet__footer-actions > button:focus:not(:focus-visible) {
+    outline: 0;
+    box-shadow: none;
+  }
+
+  .admin-filter-sheet__footer-actions .admin-filter-sheet__reset:active {
+    background: var(--j-color-surface-hover);
+  }
+
+  .admin-filter-sheet__footer-actions .admin-filter-sheet__apply:active {
+    background: var(--j-color-brand-hover);
+  }
+}
+
 /* Every mobile filter sheet uses one predictable full-width column. Feature
    toolbars may still use desktop flex/grid rules, so these sheet-local rules
    deliberately win when the controls are rendered inside the bottom sheet. */
@@ -609,27 +630,20 @@
     overflow-x: auto;
   }
 
-  .admin-filter-sheet__controls .ui-date-range__preset {
-    min-width: 0;
-    min-height: 34px;
-    flex: 1 1 0;
-    padding: 0 10px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--surface);
-    color: var(--j-color-text-secondary);
-    font: inherit;
-    font-size: 13px;
-    white-space: nowrap;
+  /* Date presets reuse the exact segmented control used by mobile sorting. */
+  .admin-filter-sheet__controls .ui-date-range__presets.ui-segmented-tabs {
+    width: 100% !important;
+    min-height: 44px;
+    padding: 4px;
+    border-radius: 10px;
+    flex-wrap: nowrap;
   }
 
-  .admin-filter-sheet__controls .ui-date-range__preset:hover,
-  .admin-filter-sheet__controls .ui-date-range__preset:focus-visible,
-  .admin-filter-sheet__controls .ui-date-range__preset[aria-pressed='true'] {
-    border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
-    background: var(--j-color-surface-hover);
-    outline: 0;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+  .admin-filter-sheet__controls .ui-date-range__presets.ui-segmented-tabs > button {
+    min-width: 0;
+    min-height: 36px;
+    flex: 1 1 0;
+    white-space: nowrap;
   }
 
   .admin-filter-sheet__controls .ui-date-range__label {
@@ -1028,6 +1042,14 @@
   .ui-dialog__body,
   .ui-drawer__body {
     padding: 16px;
+  }
+
+  /* Footer surfaces already reserve the safe area in their own padding. A
+     body-only sheet needs the same home-bar clearance at the end of its
+     scrollable content. */
+  .ui-dialog:not(.has-footer) .ui-dialog__body,
+  .ui-drawer:not(.has-footer) .ui-drawer__body {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
   }
 
   .ui-dialog__footer,

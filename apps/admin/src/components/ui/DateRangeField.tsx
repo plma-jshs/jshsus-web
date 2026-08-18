@@ -1,4 +1,5 @@
 import type { InputHTMLAttributes } from 'react';
+import { SegmentedTabs } from './SegmentedTabs';
 
 export type DateRangePreset = 'today' | '7d' | 'month' | 'all';
 
@@ -77,26 +78,22 @@ export function DateRangeField({
     onToChange(range.to);
   };
 
+  const selectedPreset = presets.find((preset) => {
+    const range = getDateRangePreset(preset.value);
+    return from === range.from && to === range.to;
+  })?.value;
+
   return (
     <fieldset className="ui-date-range" aria-label={label}>
       <legend className="ui-date-range__label">{label}</legend>
       {onPresetChange ? (
-        <div className="ui-date-range__presets" role="group" aria-label="빠른 기간 선택">
-          {presets.map((preset) => (
-            <button
-              className="ui-date-range__preset"
-              key={preset.value}
-              type="button"
-              aria-pressed={(() => {
-                const range = getDateRangePreset(preset.value);
-                return from === range.from && to === range.to;
-              })()}
-              onClick={() => applyPreset(preset.value)}
-            >
-              {preset.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedTabs
+          className="ui-date-range__presets"
+          value={selectedPreset ?? ('' as DateRangePreset)}
+          options={presets}
+          ariaLabel="빠른 기간 선택"
+          onChange={applyPreset}
+        />
       ) : null}
       <div className="ui-date-range__controls">
         <DateInput

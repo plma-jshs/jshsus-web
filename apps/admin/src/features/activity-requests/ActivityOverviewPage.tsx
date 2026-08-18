@@ -417,6 +417,14 @@ export function ActivityOverviewPage() {
       <AdminListPanel
         toolbar={
           <TableToolbar
+            mobileResetDisabled={
+              !search &&
+              !startDate &&
+              endDate === koreaDateInput() &&
+              status === 'all' &&
+              sorting[0]?.id === 'startsAt' &&
+              sorting[0]?.desc === true
+            }
             mobileReset={() => {
               setSearch('');
               setStartDate('');

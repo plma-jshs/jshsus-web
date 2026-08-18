@@ -14,6 +14,8 @@ export type TableToolbarProps = HTMLAttributes<HTMLDivElement> & {
   mobileSheet?: boolean;
   mobileSheetTitle?: string;
   mobileReset?: () => void;
+  /** Disable reset while every filter is still at its initial value. */
+  mobileResetDisabled?: boolean;
 };
 
 export function TableSummary({
@@ -59,6 +61,7 @@ export function TableToolbar({
   mobileSheet = true,
   mobileSheetTitle = '필터',
   mobileReset,
+  mobileResetDisabled = false,
   ...props
 }: TableToolbarProps) {
   const { ...divProps } = props;
@@ -138,6 +141,7 @@ export function TableToolbar({
                       <button
                         className="admin-filter-sheet__reset"
                         type="button"
+                        disabled={mobileResetDisabled}
                         onClick={mobileReset}
                       >
                         <RotateCcw size={15} aria-hidden="true" />

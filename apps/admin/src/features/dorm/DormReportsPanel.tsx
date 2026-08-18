@@ -138,6 +138,9 @@ export function DormReportsPanel({
   return (
     <section className="admin-panel">
       <TableToolbar
+        mobileResetDisabled={
+          !search && !status && sorting[0]?.id === 'createdAt' && sorting[0]?.desc === true
+        }
         mobileReset={() => {
           setSearch('');
           setStatus('');
