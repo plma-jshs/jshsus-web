@@ -115,6 +115,14 @@ export function DormOverviewPage() {
 
       <section className="admin-panel dorm-list-panel">
         <TableToolbar
+          mobileReset={() => {
+            setYear(now.getFullYear());
+            setSemester(now.getMonth() + 1 >= 8 ? 2 : 1);
+            setSearch('');
+            setDormName('');
+            setGrade('');
+            setSorting([{ id: 'name', desc: false }]);
+          }}
           summary={<TableSummary count={rooms.length} suffix="실" loading={roomsQuery.isPending} />}
           mobileSearch={
             <AdminSearchField

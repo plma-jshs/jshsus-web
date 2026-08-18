@@ -224,6 +224,13 @@ export function WakeSongsPage() {
     <div className="admin-stack wake-song-admin">
       <section className="admin-panel wake-song-admin-list">
         <TableToolbar
+          mobileReset={() => {
+            setStatus('PENDING');
+            setQuery('');
+            setAppliedQuery('');
+            setPage(1);
+            setSorting([{ id: 'createdAt', desc: true }]);
+          }}
           className="wake-song-admin-toolbar"
           summary={
             <TableSummary count={pageData?.total} suffix="건" loading={requestsQuery.isPending} />

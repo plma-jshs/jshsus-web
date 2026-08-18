@@ -1,12 +1,15 @@
 import {
   useCallback,
+  useEffect,
   useRef,
   type PointerEvent,
   type PointerEventHandler,
   type RefObject,
 } from 'react';
 
-const DEFAULT_DISMISS_DISTANCE = 72;
+// A short accidental swipe should snap back. Requiring a little more travel
+// makes the close gesture deliberate without making the handle feel heavy.
+const DEFAULT_DISMISS_DISTANCE = 104;
 const SHEET_EXIT_DURATION_MS = 180;
 
 export type SheetDragHandleProps = {
@@ -31,6 +34,7 @@ export function useSheetDrag<T extends HTMLElement = HTMLDivElement>(
   const rootRef = useRef<T | null>(null);
   const dragRef = useRef<{ pointerId: number; startY: number; offset: number } | null>(null);
   const cleanupTimerRef = useRef<number | null>(null);
+  const cleanupFrameRef = useRef<number | null>(null);
 
   const getTargets = useCallback(() => {
     const root = rootRef.current;
@@ -43,17 +47,53 @@ export function useSheetDrag<T extends HTMLElement = HTMLDivElement>(
     return dialog ? [dialog] : [root];
   }, []);
 
-  const resetDrag = useCallback(() => {
+  const clearCleanup = useCallback(() => {
     if (cleanupTimerRef.current !== null) {
       window.clearTimeout(cleanupTimerRef.current);
       cleanupTimerRef.current = null;
     }
+    if (cleanupFrameRef.current !== null) {
+      window.cancelAnimationFrame(cleanupFrameRef.current);
+      cleanupFrameRef.current = null;
+    }
+  }, []);
+
+  const resetDrag = useCallback(() => {
+    clearCleanup();
     dragRef.current = null;
     getTargets().forEach((target) => {
       target.classList.remove('is-dragging');
+      target.classList.remove('is-snapping');
       target.style.removeProperty('--ui-sheet-drag-offset');
     });
-  }, [getTargets]);
+  }, [clearCleanup, getTargets]);
+
+  const snapBack = useCallback(() => {
+    const targets = getTargets();
+    if (!targets.length) {
+      resetDrag();
+      return;
+    }
+
+    // Keep the dragged offset for one frame, then let the normal transform
+    // transition carry the surface back to rest. Clearing the offset while
+    // `is-dragging` still disables transitions would visibly snap it upward.
+    cleanupFrameRef.current = window.requestAnimationFrame(() => {
+      cleanupFrameRef.current = null;
+      targets.forEach((target) => {
+        target.classList.add('is-snapping');
+        target.classList.remove('is-dragging');
+      });
+      cleanupTimerRef.current = window.setTimeout(() => {
+        cleanupTimerRef.current = null;
+        dragRef.current = null;
+        targets.forEach((target) => {
+          target.classList.remove('is-snapping');
+          target.style.removeProperty('--ui-sheet-drag-offset');
+        });
+      }, SHEET_EXIT_DURATION_MS);
+    });
+  }, [getTargets, resetDrag]);
 
   const onPointerDown: PointerEventHandler<HTMLElement> = useCallback(
     (event) => {
@@ -62,9 +102,17 @@ export function useSheetDrag<T extends HTMLElement = HTMLDivElement>(
         window.clearTimeout(cleanupTimerRef.current);
         cleanupTimerRef.current = null;
       }
+      if (cleanupFrameRef.current !== null) {
+        window.cancelAnimationFrame(cleanupFrameRef.current);
+        cleanupFrameRef.current = null;
+      }
       dragRef.current = { pointerId: event.pointerId, startY: event.clientY, offset: 0 };
       event.currentTarget.setPointerCapture?.(event.pointerId);
-      getTargets().forEach((target) => target.classList.add('is-dragging'));
+      getTargets().forEach((target) => {
+        target.classList.remove('is-snapping');
+        target.style.setProperty('--ui-sheet-drag-offset', '0px');
+        target.classList.add('is-dragging');
+      });
     },
     [getTargets],
   );
@@ -94,18 +142,24 @@ export function useSheetDrag<T extends HTMLElement = HTMLDivElement>(
         // Keep the last drag offset through the close animation. Clearing it
         // synchronously makes the sheet snap back to its resting position
         // before the exit animation starts.
-        dragRef.current = null;
-        getTargets().forEach((target) => target.classList.remove('is-dragging'));
         onDismiss();
-        cleanupTimerRef.current = window.setTimeout(() => {
-          cleanupTimerRef.current = null;
-          resetDrag();
-        }, SHEET_EXIT_DURATION_MS);
+        // Let the close state land before dropping is-dragging. This avoids a
+        // one-frame snap to the top of the sheet before the exit keyframe.
+        cleanupFrameRef.current = window.requestAnimationFrame(() => {
+          cleanupFrameRef.current = null;
+          getTargets().forEach((target) => {
+            target.classList.remove('is-dragging');
+          });
+          cleanupTimerRef.current = window.setTimeout(() => {
+            cleanupTimerRef.current = null;
+            resetDrag();
+          }, SHEET_EXIT_DURATION_MS);
+        });
         return;
       }
-      resetDrag();
+      snapBack();
     },
-    [dismissDistance, onDismiss, resetDrag],
+    [dismissDistance, getTargets, onDismiss, resetDrag, snapBack],
   );
 
   const onPointerCancel: PointerEventHandler<HTMLElement> = useCallback(
@@ -113,10 +167,15 @@ export function useSheetDrag<T extends HTMLElement = HTMLDivElement>(
       if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
         event.currentTarget.releasePointerCapture?.(event.pointerId);
       }
-      resetDrag();
+      snapBack();
     },
-    [resetDrag],
+    [snapBack],
   );
+
+  // Remove custom drag state if the owner unmounts while a gesture is closing.
+  // This is also useful for native dialogs that are closed immediately when
+  // reduced motion is enabled.
+  useEffect(() => resetDrag, [resetDrag]);
 
   return {
     rootRef: rootRef as RefObject<T>,

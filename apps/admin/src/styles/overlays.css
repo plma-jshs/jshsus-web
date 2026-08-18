@@ -472,7 +472,7 @@
 }
 
 .admin-filter-sheet__footer-actions.has-reset {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) !important;
 }
 
 .admin-filter-sheet__footer-actions > button {
@@ -928,6 +928,12 @@
     transition: none;
   }
 
+  :where(.ui-dialog, .ui-drawer, .admin-filter-sheet).is-snapping {
+    animation: none !important;
+    transform: translateY(0);
+    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
   :where(.ui-dialog, .ui-drawer, .admin-filter-sheet) {
     transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
@@ -940,6 +946,12 @@
     animation: none !important;
     transform: translateY(var(--ui-sheet-drag-offset, 0px));
     transition: none;
+  }
+
+  :where(.ui-dialog__layout, .ui-drawer__layout, .admin-filter-sheet__layout).is-snapping {
+    animation: none !important;
+    transform: translateY(0);
+    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .admin-filter-sheet__layout {
@@ -1071,5 +1083,10 @@
   .ui-drawer[open],
   .ui-dialog:not(.ui-confirm-dialog)[open] {
     animation: none;
+  }
+
+  :where(.ui-dialog, .ui-drawer, .admin-filter-sheet).is-snapping,
+  :where(.ui-dialog__layout, .ui-drawer__layout, .admin-filter-sheet__layout).is-snapping {
+    transition: none;
   }
 }

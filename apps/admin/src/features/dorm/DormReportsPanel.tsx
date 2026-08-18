@@ -138,6 +138,11 @@ export function DormReportsPanel({
   return (
     <section className="admin-panel">
       <TableToolbar
+        mobileReset={() => {
+          setSearch('');
+          setStatus('');
+          setSorting([{ id: 'createdAt', desc: true }]);
+        }}
         summary={<TableSummary count={filtered.length} suffix="건" loading={loading} />}
         mobileSearch={
           <AdminSearchField

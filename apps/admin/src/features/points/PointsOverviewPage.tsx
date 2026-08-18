@@ -116,6 +116,13 @@ export function PointsOverviewPage() {
       className="point-panel point-overview-panel"
       toolbar={
         <TableToolbar
+          mobileReset={() => {
+            setSearch('');
+            setGrade('');
+            setClassNo('');
+            setSorting([{ id: 'studentNo', desc: false }]);
+            setPage(1);
+          }}
           summary={<TableSummary count={query.data?.total} suffix="명" loading={query.isPending} />}
           mobileSearch={
             <AdminSearchField

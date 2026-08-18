@@ -1088,6 +1088,11 @@ export function UsersPage() {
 
       <section className="identity-panel">
         <TableToolbar
+          mobileReset={() => {
+            setFilters({ pageSize: 20 });
+            setPage(1);
+            setSorting([{ id: 'identifier', desc: false }]);
+          }}
           summary={<TableSummary count={data?.total} suffix="명" loading={activeQuery.isPending} />}
           mobileSearch={
             <AdminSearchField

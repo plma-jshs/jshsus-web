@@ -366,6 +366,15 @@ export function PointDeparturesPage() {
             title=""
             toolbar={
               <TableToolbar
+                mobileReset={() => {
+                  setSearch('');
+                  setGrade('');
+                  setClassNo('');
+                  setRiskStatus('all');
+                  setSorting([{ id: 'currentPoint', desc: false }]);
+                  setHistorySorting([{ id: 'handledAt', desc: true }]);
+                  resetPages();
+                }}
                 summary={
                   <TableSummary
                     count={candidatesQuery.data?.total}

@@ -184,6 +184,12 @@ export function PointReasonsPage() {
         className="point-panel"
         toolbar={
           <TableToolbar
+            mobileReset={() => {
+              setSearch('');
+              setType('');
+              setSorting([{ id: 'id', desc: false }]);
+              setPage(1);
+            }}
             summary={
               <TableSummary
                 count={reasonsQuery.data?.total}

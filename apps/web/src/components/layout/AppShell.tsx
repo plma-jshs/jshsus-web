@@ -224,13 +224,19 @@ function DesktopNavigation() {
 
 function MobileMenu({
   displayName,
+  studentNumber,
   profileImageUrl,
   canUseAdmin,
+  loggingOut,
+  onLogout,
   pathname,
 }: {
   displayName?: string;
+  studentNumber?: string;
   profileImageUrl?: string;
   canUseAdmin?: boolean;
+  loggingOut: boolean;
+  onLogout: () => void;
   pathname: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -317,19 +323,6 @@ function MobileMenu({
                     <X aria-hidden="true" size={20} />
                   </button>
                 </div>
-                {displayName ? (
-                  <Link
-                    className="mobile-menu__user"
-                    to="/my-status"
-                    aria-label={`${displayName} 마이페이지로 이동`}
-                    onClick={closeMenu}
-                  >
-                    <UserAvatar imageUrl={profileImageUrl} className="user-avatar--menu" />
-                    <div>
-                      <strong>{displayName}</strong>
-                    </div>
-                  </Link>
-                ) : null}
                 <nav className="mobile-menu__links" aria-label="전체 서비스">
                   {navigationCategories.map((category) => (
                     <div className="mobile-menu__group" key={category.label}>
@@ -351,6 +344,42 @@ function MobileMenu({
                     </div>
                   ))}
                 </nav>
+                {displayName ? (
+                  <div className="mobile-menu__account">
+                    <Link
+                      className="mobile-menu__user"
+                      to="/my-status"
+                      aria-label={`${displayName} 마이페이지로 이동`}
+                      onClick={closeMenu}
+                    >
+                      <UserAvatar imageUrl={profileImageUrl} className="user-avatar--menu" />
+                      <div>
+                        <strong>{displayName}</strong>
+                        {studentNumber ? <span>{studentNumber}</span> : null}
+                      </div>
+                    </Link>
+                    <button
+                      className="mobile-menu__logout"
+                      type="button"
+                      onClick={() => {
+                        closeMenu();
+                        onLogout();
+                      }}
+                      disabled={loggingOut}
+                    >
+                      {loggingOut ? (
+                        <LoaderCircle
+                          className="mobile-menu__logout-spinner"
+                          aria-hidden="true"
+                          size={15}
+                        />
+                      ) : (
+                        <LogOut aria-hidden="true" size={15} />
+                      )}
+                      <span>{loggingOut ? '처리 중' : '로그아웃'}</span>
+                    </button>
+                  </div>
+                ) : null}
               </div>
             </>,
             document.body,
@@ -518,9 +547,11 @@ function PortalShell() {
     },
   });
 
-  const sessionDisplayName = session?.isLogined
-    ? [session.identifier ?? session.stuid, session.name ?? '사용자'].filter(Boolean).join(' ')
+  const sessionStudentNumber = session?.isLogined
+    ? String(session.identifier ?? session.stuid ?? '')
     : '';
+  const sessionName = session?.isLogined ? (session.name ?? '사용자') : '';
+  const sessionDisplayName = [sessionStudentNumber, sessionName].filter(Boolean).join(' ');
   const canUseAdmin = Boolean(
     session?.isLogined &&
     (session.roles?.includes('system_admin') ||
@@ -635,9 +666,12 @@ function PortalShell() {
                 </Link>
               )}
               <MobileMenu
-                displayName={session?.isLogined ? sessionDisplayName : undefined}
+                displayName={session?.isLogined ? sessionName : undefined}
+                studentNumber={session?.isLogined ? sessionStudentNumber : undefined}
                 profileImageUrl={myStatusQuery.data?.student.profileImageUrl}
                 canUseAdmin={canUseAdmin}
+                loggingOut={logoutMutation.isPending}
+                onLogout={() => logoutMutation.mutate()}
                 pathname={normalizedPathname}
               />
             </div>
