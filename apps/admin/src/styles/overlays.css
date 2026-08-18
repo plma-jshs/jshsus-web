@@ -387,7 +387,7 @@
   label:not(.checkbox-row):not(.ui-date-input):has(> span:not(.sr-only)) {
   display: grid;
   min-width: 0;
-  gap: 6px;
+  gap: 8px;
 }
 
 .admin-filter-sheet__controls
@@ -490,7 +490,7 @@
     height: auto !important;
     min-height: 0;
     align-content: start;
-    gap: 6px;
+    gap: 8px;
   }
 
   .admin-filter-sheet__controls .admin-select__mobile-label {
@@ -514,7 +514,7 @@
   .admin-filter-sheet__controls .point-filter,
   .admin-filter-sheet__controls .content-select-field {
     display: grid !important;
-    gap: 6px;
+    gap: 8px;
   }
 
   .admin-filter-sheet__controls .content-toolbar,
@@ -530,7 +530,7 @@
   .admin-filter-sheet__controls .ui-date-range {
     display: grid;
     min-width: 0;
-    gap: 6px;
+    gap: 8px;
   }
 
   .admin-filter-sheet__controls .ui-date-range__label {
@@ -891,12 +891,49 @@
   .ui-dialog__footer,
   .ui-drawer__footer {
     padding: 10px 16px max(10px, env(safe-area-inset-bottom));
+    align-items: stretch;
   }
 
   .ui-dialog__footer > *,
   .ui-drawer__footer > * {
-    width: fit-content;
-    flex: 0 0 auto;
+    width: 100%;
+    flex: 1 1 auto;
+  }
+
+  .ui-dialog__footer > .ui-dialog-actions,
+  .ui-drawer__footer > .ui-dialog-actions,
+  .ui-dialog__footer > .content-drawer__actions,
+  .ui-drawer__footer > .content-drawer__actions {
+    width: 100%;
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .ui-dialog__footer > .ui-dialog-actions > .ui-button,
+  .ui-drawer__footer > .ui-dialog-actions > .ui-button {
+    min-width: 0;
+    min-height: 44px;
+    border-radius: 9px;
+    flex: 1 1 0;
+  }
+
+  .ui-dialog__footer
+    > .content-drawer__actions
+    > :where(.ui-button, .primary-button, .quiet-button, .danger-button),
+  .ui-drawer__footer
+    > .content-drawer__actions
+    > :where(.ui-button, .primary-button, .quiet-button, .danger-button) {
+    min-width: 0;
+    min-height: 44px;
+    border-radius: 9px;
+    flex: 1 1 0;
+  }
+
+  .ui-dialog__footer > :where(.ui-button, .primary-button, .quiet-button, .danger-button),
+  .ui-drawer__footer > :where(.ui-button, .primary-button, .quiet-button, .danger-button) {
+    min-height: 44px;
+    border-radius: 9px;
   }
 }
 

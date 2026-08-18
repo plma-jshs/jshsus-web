@@ -165,13 +165,20 @@ export function ActivityReviewPage() {
   });
 
   const selectRepresentative = (student: ActivityRequestStudentOption) => {
-    setCreateForm((form) => ({
-      ...form,
-      representativeStudentNo: student.studentNo,
-      participantStudentNos: form.participantStudentNos.filter(
-        (studentNo) => studentNo !== student.studentNo,
-      ),
-    }));
+    setCreateForm((form) => {
+      const participants = [...form.participantStudentNos];
+      if (form.representativeStudentNo && form.representativeStudentNo !== student.studentNo) {
+        participants.push(form.representativeStudentNo);
+      }
+
+      return {
+        ...form,
+        representativeStudentNo: student.studentNo,
+        participantStudentNos: [...new Set(participants)].filter(
+          (studentNo) => studentNo !== student.studentNo,
+        ),
+      };
+    });
   };
 
   const addParticipant = (student: ActivityRequestStudentOption) => {
@@ -428,15 +435,22 @@ export function ActivityReviewPage() {
                   </span>
                   <div>
                     {student.studentNo === createForm.representativeStudentNo ? (
-                      <span className="activity-student-result__badge is-representative">대표</span>
+                      <button
+                        className="activity-student-result__badge is-representative"
+                        type="button"
+                        disabled
+                        aria-label={`${student.studentName} 대표 학생`}
+                      >
+                        대표
+                      </button>
                     ) : selectedStudentNos.has(student.studentNo) ? (
                       <button
                         className="activity-student-result__badge"
                         type="button"
-                        aria-label={`${student.studentName}을 대표 학생으로 설정`}
-                        onClick={() => selectRepresentative(student)}
+                        aria-label={`${student.studentName} 참여됨`}
+                        disabled
                       >
-                        참여
+                        추가됨
                       </button>
                     ) : (
                       <button
@@ -459,31 +473,53 @@ export function ActivityReviewPage() {
           >
             <h3 className="sr-only">선택한 학생</h3>
             {createForm.representativeStudentNo ? (
-              <div className="activity-student-chip activity-student-chip--representative">
+              <button
+                className="activity-student-chip activity-student-chip--representative"
+                type="button"
+                disabled
+                aria-label="대표 학생"
+              >
                 <span>
                   대표 · {createForm.representativeStudentNo}{' '}
                   {studentByNo.get(createForm.representativeStudentNo)?.studentName}
                 </span>
-              </div>
+              </button>
             ) : (
               <p className="sr-only">대표 학생이 선택되지 않았습니다.</p>
             )}
             {createForm.participantStudentNos.map((studentNo) => (
-              <div className="activity-student-chip" key={studentNo}>
+              <div
+                className="activity-student-chip"
+                key={studentNo}
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  const student = studentByNo.get(studentNo);
+                  if (student) selectRepresentative(student);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter' && event.key !== ' ') return;
+                  event.preventDefault();
+                  const student = studentByNo.get(studentNo);
+                  if (student) selectRepresentative(student);
+                }}
+                aria-label={`${studentNo} 대표 학생으로 설정`}
+              >
                 <span>
                   {studentNo} {studentByNo.get(studentNo)?.studentName}
                 </span>
                 <button
                   type="button"
                   aria-label={`${studentNo} 참여 학생 제거`}
-                  onClick={() =>
+                  onClick={(event) => {
+                    event.stopPropagation();
                     setCreateForm((form) => ({
                       ...form,
                       participantStudentNos: form.participantStudentNos.filter(
                         (value) => value !== studentNo,
                       ),
-                    }))
-                  }
+                    }));
+                  }}
                 >
                   <X size={14} aria-hidden="true" />
                 </button>

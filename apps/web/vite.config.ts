@@ -15,6 +15,28 @@ export default defineConfig({
   plugins: [
     react(),
     {
+      name: 'google-analytics-head-tag',
+      transformIndexHtml(html) {
+        const measurementId = (process.env.VITE_GA_MEASUREMENT_ID ?? '').trim();
+        if (!measurementId || html.includes('data-jshsus-google-tag')) return html;
+
+        const safeMeasurementId = JSON.stringify(measurementId);
+        const snippet = `
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}" data-jshsus-google-tag></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      window.gtag = window.gtag || gtag;
+      gtag('js', new Date());
+      gtag('config', ${safeMeasurementId}, { send_page_view: false });
+      window.__jshsusGoogleTagConfigured = ${safeMeasurementId};
+    </script>`;
+
+        return html.replace('<head>', `<head>${snippet}`);
+      },
+    },
+    {
       name: 'exclude-source-only-images',
       apply: 'build',
       closeBundle() {

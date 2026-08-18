@@ -517,7 +517,7 @@
   grid-template-columns: 17px minmax(0, 1fr);
   grid-template-rows: auto auto;
   align-items: center;
-  gap: 1px 6px;
+  gap: 0 5px;
   padding: 4px 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -546,6 +546,7 @@
   font-size: 12px;
   color: var(--j-color-text);
   font-weight: 600;
+  line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -556,7 +557,7 @@
   color: var(--muted);
   font-size: 10px;
   font-weight: 400;
-  line-height: 1.2;
+  line-height: 1.1;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -949,7 +950,7 @@
 .activity-create-form__grid > label,
 .activity-student-picker > label {
   display: grid;
-  gap: 7px;
+  gap: 8px;
   font-size: 13px;
   font-weight: 600;
 }
@@ -987,7 +988,7 @@
 }
 
 .activity-create-schedule .activity-create-form__grid {
-  grid-template-columns: minmax(180px, 210px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .activity-create-section {
@@ -1127,14 +1128,38 @@
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--operation-soft);
+  color: var(--j-color-text-secondary);
   font-size: 12px;
   font-weight: 600;
+  font-family: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+button.activity-student-chip {
+  appearance: none;
+}
+
+.activity-student-chip:focus-visible {
+  outline: 0;
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.activity-student-chip:disabled {
+  cursor: default;
+  opacity: 1;
 }
 
 .activity-student-chip--representative {
   border-color: #b9dcd7;
   background: var(--operation-accent-soft);
   color: var(--primary-dark);
+}
+
+.activity-student-chip:not(:disabled):hover {
+  border-color: #8dcfca;
+  background: var(--operation-accent-soft);
 }
 
 .activity-student-chip button {
@@ -1268,7 +1293,7 @@
   }
 
   .activity-slot-pill-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -1315,7 +1340,7 @@
   }
 
   .activity-slot-pill-list {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

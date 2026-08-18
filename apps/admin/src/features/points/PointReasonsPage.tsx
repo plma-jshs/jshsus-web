@@ -29,7 +29,7 @@ const typeLabel: Record<PointReason['type'], string> = {
 };
 
 type EditorState = { mode: 'create' } | { mode: 'edit'; reason: PointReasonRow };
-type ReasonSort = 'id' | 'point';
+type ReasonSort = 'id' | 'comment' | 'point';
 
 export function PointReasonsPage() {
   const queryClient = useQueryClient();
@@ -216,8 +216,9 @@ export function PointReasonsPage() {
               <MobileSortSelect
                 value={`${sort?.id ?? 'point'}:${sort?.desc ? 'desc' : 'asc'}`}
                 options={[
+                  { value: 'id:asc', label: '코드순' },
+                  { value: 'comment:asc', label: '가나다순' },
                   { value: 'point:desc', label: '점수 높은순' },
-                  { value: 'point:asc', label: '점수 낮은순' },
                 ]}
                 onChange={(value) => {
                   const [id, direction] = value.split(':');

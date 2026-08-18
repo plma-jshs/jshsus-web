@@ -1347,3 +1347,10 @@
     opacity: 1;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .school-calendar-grid.is-next,
+  .school-calendar-grid.is-previous {
+    animation: none;
+  }
+}

@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { useRef, type ReactNode, type TouchEvent } from 'react';
+import { useRef, type PointerEvent, type ReactNode } from 'react';
 
 export type FilterSheetProps = {
   title: ReactNode;
@@ -40,17 +40,28 @@ export function FilterSheet({
   onClose,
 }: FilterSheetProps) {
   const Title = titleAs;
-  const touchStartY = useRef<number | null>(null);
+  const pointerStartY = useRef<number | null>(null);
 
-  const handleTouchStart = (event: TouchEvent<HTMLSpanElement>) => {
-    touchStartY.current = event.touches[0]?.clientY ?? null;
+  const handlePointerDown = (event: PointerEvent<HTMLSpanElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    pointerStartY.current = event.clientY;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
   };
 
-  const handleTouchEnd = (event: TouchEvent<HTMLSpanElement>) => {
-    const startY = touchStartY.current;
-    touchStartY.current = null;
-    const endY = event.changedTouches[0]?.clientY;
-    if (startY !== null && endY !== undefined && endY - startY > 64) onClose();
+  const handlePointerUp = (event: PointerEvent<HTMLSpanElement>) => {
+    const startY = pointerStartY.current;
+    pointerStartY.current = null;
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    }
+    if (startY !== null && event.clientY - startY > 56) onClose();
+  };
+
+  const handlePointerCancel = (event: PointerEvent<HTMLSpanElement>) => {
+    pointerStartY.current = null;
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    }
   };
 
   return (
@@ -64,8 +75,9 @@ export function FilterSheet({
       <span
         className="ui-filter-sheet__handle"
         aria-hidden="true"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
       />
       <header className={headerClassName}>
         <Title className={titleClassName}>{title}</Title>

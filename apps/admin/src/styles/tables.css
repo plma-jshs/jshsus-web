@@ -346,11 +346,17 @@
   font-size: inherit;
   font-weight: inherit;
   text-align: center;
+  outline: 0 !important;
+  box-shadow: none;
+  transition:
+    border-color var(--j-motion-fast),
+    box-shadow var(--j-motion-fast);
 }
 
 .admin-table-pagination__input-label input:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--primary) 35%, transparent);
-  outline-offset: 1px;
+  border-color: var(--j-color-brand);
+  outline: 0 !important;
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
 }
 
 .admin-table-pagination__mobile-label,

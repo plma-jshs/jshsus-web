@@ -133,7 +133,7 @@ const reasonPageSchema = z.object({
   pageSize: z.coerce.number().int().min(20).max(100).default(20),
   search: z.string().trim().max(80).optional(),
   type: z.enum(['PLUS', 'MINUS', 'ETC']).optional(),
-  sortBy: z.enum(['id', 'point']).default('id'),
+  sortBy: z.enum(['id', 'comment', 'point']).default('id'),
   sortOrder: z.enum(['asc', 'desc']).default('asc'),
 });
 
@@ -479,7 +479,11 @@ export class PointsService {
       if (type) conditions.push(eq(schema.pointReasons.type, type));
       const where = conditions.length > 0 ? and(...conditions) : undefined;
       const sortExpression =
-        sortBy === 'point' ? schema.pointReasons.point : schema.pointReasons.id;
+        sortBy === 'point'
+          ? schema.pointReasons.point
+          : sortBy === 'comment'
+            ? schema.pointReasons.comment
+            : schema.pointReasons.id;
       const orderExpression = sortOrder === 'asc' ? asc(sortExpression) : desc(sortExpression);
 
       const [{ total }] = await db

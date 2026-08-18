@@ -269,11 +269,7 @@ export function NoticeManagementPage() {
         title="공지 관리"
         count={noticesQuery.data?.length ?? 0}
         loading={noticesQuery.isPending}
-        mobileAction={
-          <a className="primary-button notice-mobile-create" href={publicSiteHref('/notices/new')}>
-            새 공지
-          </a>
-        }
+        mobileSheet={false}
         mobileSearch={
           <AdminSearchField
             className="content-search-field"

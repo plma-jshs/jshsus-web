@@ -5,6 +5,7 @@ declare global {
   interface Window {
     dataLayer?: unknown[];
     gtag?: (...args: unknown[]) => void;
+    __jshsusGoogleTagConfigured?: string;
   }
 }
 
@@ -60,8 +61,11 @@ function configureGoogleAnalytics() {
   }
 
   if (configuredMeasurementId !== measurementId) {
-    window.gtag('js', new Date());
-    window.gtag('config', measurementId, { send_page_view: false });
+    if (window.__jshsusGoogleTagConfigured !== measurementId) {
+      window.gtag('js', new Date());
+      window.gtag('config', measurementId, { send_page_view: false });
+      window.__jshsusGoogleTagConfigured = measurementId;
+    }
     configuredMeasurementId = measurementId;
   }
   return window.gtag;

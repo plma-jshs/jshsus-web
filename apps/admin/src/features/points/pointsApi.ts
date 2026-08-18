@@ -231,7 +231,7 @@ export const pointsApi = {
     pageSize: number;
     search?: string;
     type?: PointReason['type'];
-    sortBy?: 'id' | 'point';
+    sortBy?: 'id' | 'comment' | 'point';
     sortOrder?: SortOrder;
   }) => request<PageResult<PointReasonRow>>(withQuery('/api/admin/points/reasons/page', query)),
   createReason: (body: Pick<PointReason, 'type' | 'point' | 'comment'>) =>

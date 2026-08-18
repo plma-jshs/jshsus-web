@@ -295,26 +295,6 @@ export function DeviceCasesPage() {
           }
           className={`device-cases-toolbar${hasSelectedCases ? ' has-selection' : ''}`}
           mobileSheet={false}
-          mobileActions={
-            <div className="device-control-actions">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => runBulkCommand('open')}
-                disabled={isCommandPending || cases.length === 0}
-              >
-                {hasSelectedCases ? '선택 잠금 해제' : '전체 잠금 해제'}
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => runBulkCommand('close')}
-                disabled={isCommandPending || cases.length === 0}
-              >
-                {hasSelectedCases ? '선택 잠금' : '전체 잠금'}
-              </Button>
-            </div>
-          }
         ></TableToolbar>
         <MobileSelectionActionBar selectedCount={selectedCount}>
           <Button
