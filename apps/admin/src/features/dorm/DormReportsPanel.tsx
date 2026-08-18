@@ -119,7 +119,7 @@ export function DormReportsPanel({
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <RowActions>
+          <RowActions mobileTitle={`${row.original.dormName} ${row.original.roomName} 민원`}>
             <RowActionButton
               icon={<ClipboardCheck aria-hidden="true" />}
               label={`${row.original.studentName} 민원 처리`}
@@ -201,7 +201,7 @@ export function DormReportsPanel({
                   {report.studentNo} {report.studentName} · {formatAdminDate(report.createdAt)}
                 </span>
               </div>
-              <RowActions>
+              <RowActions mobileTitle={`${report.dormName} ${report.roomName} 민원`}>
                 <RowActionButton
                   icon={<ClipboardCheck aria-hidden="true" />}
                   label={`${report.studentName} 민원 처리`}

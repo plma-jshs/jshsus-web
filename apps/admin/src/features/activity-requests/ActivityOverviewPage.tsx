@@ -16,6 +16,7 @@ import {
   AdminSelect,
   Button,
   DateRangeField,
+  getDateRangePreset,
   Dialog,
   DialogActions,
   Drawer,
@@ -416,6 +417,14 @@ export function ActivityOverviewPage() {
       <AdminListPanel
         toolbar={
           <TableToolbar
+            mobileReset={() => {
+              setSearch('');
+              setStartDate('');
+              setEndDate('');
+              setStatus('all');
+              setSorting([{ id: 'startsAt', desc: true }]);
+              resetPage();
+            }}
             summary={
               <TableSummary
                 count={requestsQuery.data?.total}
@@ -446,7 +455,7 @@ export function ActivityOverviewPage() {
             }
           >
             <DateRangeField
-              label="활동일"
+              label="활동 기간"
               from={startDate}
               to={endDate}
               onFromChange={(value) => {
@@ -455,6 +464,12 @@ export function ActivityOverviewPage() {
               }}
               onToChange={(value) => {
                 setEndDate(value);
+                resetPage();
+              }}
+              onPresetChange={(preset) => {
+                const range = getDateRangePreset(preset);
+                setStartDate(range.from);
+                setEndDate(range.to);
                 resetPage();
               }}
             />

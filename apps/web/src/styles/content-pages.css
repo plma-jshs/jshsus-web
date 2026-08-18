@@ -693,13 +693,23 @@
     display: grid;
     width: 100vw;
     min-width: 100vw;
-    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    padding: 30px 16px calc(16px + env(safe-area-inset-bottom));
     border: 0;
     border-radius: 20px 20px 0 0;
     box-shadow:
       0 -100vh 0 100vh rgb(15 23 42 / 34%),
       0 2px 8px rgb(0 0 0 / 4%);
     animation: content-more-sheet-in 160ms ease-out both;
+  }
+
+  .content-more-menu__dropdown .ui-filter-sheet__handle {
+    top: 8px;
+  }
+
+  .content-more-menu__dropdown.is-dragging {
+    animation: none !important;
+    transform: translateY(var(--ui-sheet-drag-offset, 0px));
+    transition: none;
   }
 
   .content-more-menu:has(.content-more-menu__dropdown) {

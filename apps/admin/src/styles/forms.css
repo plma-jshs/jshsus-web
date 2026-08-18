@@ -703,6 +703,10 @@ textarea.ui-control {
   border: 0;
 }
 
+.ui-date-range__presets {
+  display: none;
+}
+
 .ui-date-range__label {
   display: none;
 }

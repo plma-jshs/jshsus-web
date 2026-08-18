@@ -193,7 +193,7 @@ export function WakeSongsPage() {
         const request = row.original;
         if (request.status !== 'PENDING') return '';
         return (
-          <RowActions>
+          <RowActions mobileTitle={`${request.requesterName} 기상곡`}>
             <RowActionButton
               icon={<Check size={14} aria-hidden="true" />}
               label="기상곡 승인"

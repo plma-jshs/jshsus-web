@@ -230,7 +230,7 @@ export function LostItemsManagementPage() {
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <RowActions>
+          <RowActions mobileTitle={row.original.itemName}>
             <RowActionButton
               icon={<Settings2 aria-hidden="true" />}
               label={`${row.original.itemName} 관리`}

@@ -87,7 +87,7 @@ export function DormOverviewPage() {
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <RowActions>
+          <RowActions mobileTitle={`${row.original.dormName} ${row.original.name}`}>
             <RowActionButton
               icon={<Eye aria-hidden="true" />}
               label={`${row.original.dormName} ${row.original.name} 상세 보기`}
@@ -204,7 +204,7 @@ export function DormOverviewPage() {
                     {room.grade}학년 · 정원 {room.capacity}명
                   </span>
                 </div>
-                <RowActions>
+                <RowActions mobileTitle={`${room.dormName} ${room.name}`}>
                   <RowActionButton
                     icon={<Eye aria-hidden="true" />}
                     label={`${room.dormName} ${room.name} 상세 보기`}

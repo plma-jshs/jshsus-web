@@ -565,7 +565,7 @@ export function PointAwardPage() {
         header: '작업',
         enableSorting: false,
         cell: ({ row }) => (
-          <RowActions>
+          <RowActions mobileTitle={`${row.original.studentNo} ${row.original.studentName}`}>
             <RowActionButton
               icon={<Pencil size={15} aria-hidden="true" />}
               label={`${row.original.studentNo} ${row.original.studentName} 수정`}

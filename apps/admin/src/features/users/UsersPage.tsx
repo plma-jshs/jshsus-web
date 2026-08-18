@@ -1666,6 +1666,7 @@ function IdentityActions({
   return (
     <RowActions
       className="identity-row-actions"
+      mobileTitle={`${identity.kind === 'student' ? identity.value.studentNo : identity.value.staffNo} ${identity.value.name}`}
       mobileChildren={
         <>
           <RowActionButton

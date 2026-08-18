@@ -6,6 +6,7 @@ import { MoreHorizontal } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   DateRangeField,
+  getDateRangePreset,
   Drawer,
   AdminSearchField,
   TableSummary,
@@ -102,6 +103,11 @@ export function AuditLogsPage() {
         <TableSummary count={logsQuery.data?.total} suffix="건" loading={logsQuery.isPending} />
       </p>
       <TableToolbar
+        mobileReset={() => {
+          setFilters({ q: '', from: '', to: '' });
+          setSorting([{ id: 'createdAt', desc: true }]);
+          setPage(1);
+        }}
         mobileSearch={
           <AdminSearchField
             className="audit-log-search"
@@ -121,7 +127,7 @@ export function AuditLogsPage() {
       >
         <div className="audit-log-filters">
           <DateRangeField
-            label="생성일"
+            label="조회 기간"
             from={filters.from}
             to={filters.to}
             onFromChange={(from) => {
@@ -130,6 +136,11 @@ export function AuditLogsPage() {
             }}
             onToChange={(to) => {
               setFilters((current) => ({ ...current, to }));
+              setPage(1);
+            }}
+            onPresetChange={(preset) => {
+              const range = getDateRangePreset(preset);
+              setFilters((current) => ({ ...current, from: range.from, to: range.to }));
               setPage(1);
             }}
           />
@@ -180,7 +191,7 @@ export function AuditLogsPage() {
       <Drawer
         open={selectedLog !== null}
         onClose={() => setSelectedLog(null)}
-        title="감사 로그 상세"
+        title={selectedLog?.targetLabel ?? '감사 로그 상세'}
         description={selectedLog?.actionLabel}
         className="audit-log-detail-drawer"
       >
@@ -202,16 +213,6 @@ export function AuditLogsPage() {
               <dd>
                 {selectedLog.actionLabel}
                 <small>{selectedLog.action}</small>
-              </dd>
-            </div>
-            <div>
-              <dt>대상</dt>
-              <dd>
-                {selectedLog.targetLabel}
-                <small>
-                  {selectedLog.targetType || ''}
-                  {selectedLog.targetId ? ` · ${selectedLog.targetId}` : ''}
-                </small>
               </dd>
             </div>
             <div>

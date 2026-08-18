@@ -7,6 +7,7 @@ import {
 } from 'react';
 
 const DEFAULT_DISMISS_DISTANCE = 72;
+const SHEET_EXIT_DURATION_MS = 180;
 
 export type SheetDragHandleProps = {
   onPointerDown: PointerEventHandler<HTMLElement>;
@@ -29,6 +30,7 @@ export function useSheetDrag<T extends HTMLElement = HTMLDivElement>(
 } {
   const rootRef = useRef<T | null>(null);
   const dragRef = useRef<{ pointerId: number; startY: number; offset: number } | null>(null);
+  const cleanupTimerRef = useRef<number | null>(null);
 
   const getTargets = useCallback(() => {
     const root = rootRef.current;
@@ -42,6 +44,10 @@ export function useSheetDrag<T extends HTMLElement = HTMLDivElement>(
   }, []);
 
   const resetDrag = useCallback(() => {
+    if (cleanupTimerRef.current !== null) {
+      window.clearTimeout(cleanupTimerRef.current);
+      cleanupTimerRef.current = null;
+    }
     dragRef.current = null;
     getTargets().forEach((target) => {
       target.classList.remove('is-dragging');
@@ -52,6 +58,10 @@ export function useSheetDrag<T extends HTMLElement = HTMLDivElement>(
   const onPointerDown: PointerEventHandler<HTMLElement> = useCallback(
     (event) => {
       if (event.pointerType === 'mouse' && event.button !== 0) return;
+      if (cleanupTimerRef.current !== null) {
+        window.clearTimeout(cleanupTimerRef.current);
+        cleanupTimerRef.current = null;
+      }
       dragRef.current = { pointerId: event.pointerId, startY: event.clientY, offset: 0 };
       event.currentTarget.setPointerCapture?.(event.pointerId);
       getTargets().forEach((target) => target.classList.add('is-dragging'));
@@ -81,8 +91,16 @@ export function useSheetDrag<T extends HTMLElement = HTMLDivElement>(
         event.currentTarget.releasePointerCapture?.(event.pointerId);
       }
       if (shouldDismiss) {
+        // Keep the last drag offset through the close animation. Clearing it
+        // synchronously makes the sheet snap back to its resting position
+        // before the exit animation starts.
+        dragRef.current = null;
+        getTargets().forEach((target) => target.classList.remove('is-dragging'));
         onDismiss();
-        resetDrag();
+        cleanupTimerRef.current = window.setTimeout(() => {
+          cleanupTimerRef.current = null;
+          resetDrag();
+        }, SHEET_EXIT_DURATION_MS);
         return;
       }
       resetDrag();

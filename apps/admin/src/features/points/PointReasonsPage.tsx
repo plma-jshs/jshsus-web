@@ -125,7 +125,7 @@ export function PointReasonsPage() {
 
   const renderReasonActions = (reason: PointReasonRow) =>
     reason.isSystem ? null : (
-      <RowActions>
+      <RowActions mobileTitle={reason.comment}>
         <RowActionButton
           icon={<Pencil size={15} aria-hidden="true" />}
           label={`${reason.comment} 수정`}

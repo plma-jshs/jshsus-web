@@ -434,11 +434,73 @@
   height: 48px !important;
   min-height: 48px !important;
   padding: 0 34px 0 11px !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--j-radius-control) !important;
+  background-color: var(--surface) !important;
   font-size: 16px;
+  transition:
+    border-color var(--j-motion-fast),
+    box-shadow var(--j-motion-fast),
+    background-color var(--j-motion-fast);
+}
+
+.admin-filter-sheet__controls
+  :where(select, .admin-select--native-mobile .admin-select__native):hover {
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong)) !important;
+  background-color: color-mix(in srgb, var(--j-color-surface-hover) 72%, white) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+}
+
+.admin-filter-sheet__controls
+  :where(select, .admin-select--native-mobile .admin-select__native):focus-visible,
+.admin-filter-sheet__controls
+  :where(select, .admin-select--native-mobile .admin-select__native):focus {
+  border-color: var(--j-color-brand) !important;
+  outline: 0 !important;
+  box-shadow: inset 0 0 0 1px var(--j-color-brand) !important;
 }
 
 .admin-filter-sheet footer {
   padding: 12px 18px max(12px, env(safe-area-inset-bottom));
+}
+
+.admin-filter-sheet__footer-actions {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.admin-filter-sheet__footer-actions.has-reset {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+}
+
+.admin-filter-sheet__footer-actions > button {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font: inherit;
+  font-weight: var(--j-weight-semibold);
+}
+
+.admin-filter-sheet__footer-actions .admin-filter-sheet__reset {
+  border-color: var(--line-strong);
+  background: var(--surface);
+  color: var(--j-color-text-secondary);
+}
+
+.admin-filter-sheet__footer-actions .admin-filter-sheet__reset:hover,
+.admin-filter-sheet__footer-actions .admin-filter-sheet__reset:focus-visible {
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+  background: var(--j-color-surface-hover);
+  outline: 0;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
 }
 
 /* Every mobile filter sheet uses one predictable full-width column. Feature
@@ -538,6 +600,39 @@
     gap: 0;
   }
 
+  .admin-filter-sheet__controls .ui-date-range__presets {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 10px;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+  }
+
+  .admin-filter-sheet__controls .ui-date-range__preset {
+    min-width: 0;
+    min-height: 34px;
+    flex: 1 1 0;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--j-color-text-secondary);
+    font: inherit;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .admin-filter-sheet__controls .ui-date-range__preset:hover,
+  .admin-filter-sheet__controls .ui-date-range__preset:focus-visible,
+  .admin-filter-sheet__controls .ui-date-range__preset[aria-pressed='true'] {
+    border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+    background: var(--j-color-surface-hover);
+    outline: 0;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+  }
+
   .admin-filter-sheet__controls .ui-date-range__label {
     display: block;
     padding: 0;
@@ -584,14 +679,21 @@
   }
 }
 
-.admin-filter-sheet footer button {
+.admin-filter-sheet__footer-actions .admin-filter-sheet__apply {
   width: 100%;
   min-height: 44px;
-  border: 0;
+  border-color: var(--primary);
   border-radius: 9px;
   background: var(--primary);
   color: white;
   font-weight: var(--j-weight-bold);
+}
+
+.admin-filter-sheet__footer-actions .admin-filter-sheet__apply:hover,
+.admin-filter-sheet__footer-actions .admin-filter-sheet__apply:focus-visible {
+  background: var(--j-color-brand-hover);
+  outline: 0;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 34%, var(--j-color-brand-hover));
 }
 
 .ui-empty-state {
@@ -800,12 +902,12 @@
 @keyframes admin-bottom-sheet-exit {
   from {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(var(--ui-sheet-drag-offset, 0px));
   }
 
   to {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(calc(var(--ui-sheet-drag-offset, 0px) + 48px));
   }
 }
 

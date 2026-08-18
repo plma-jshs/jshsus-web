@@ -181,6 +181,17 @@
 .school-calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
+  will-change: transform, opacity;
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.school-calendar-grid.is-next {
+  animation-name: admin-calendar-slide-next;
+}
+
+.school-calendar-grid.is-previous {
+  animation-name: admin-calendar-slide-previous;
 }
 
 .school-calendar-weekday {
@@ -275,7 +286,7 @@
   padding: 0;
   border-right: 1px solid #e5e9ed;
   border-bottom: 1px solid #e5e9ed;
-  background: var(--j-color-surface, #fff);
+  background: #f8fbfa;
 }
 
 .school-calendar-day:nth-child(7n) {
@@ -304,12 +315,12 @@
 }
 
 .school-calendar-day.outside {
-  background: var(--j-color-surface-subtle, #f8fafb);
+  background: #f3f8f5;
 }
 
 .school-calendar-day.selected {
   box-shadow: inset 0 0 0 1.5px rgb(13 148 136 / 40%);
-  background: #f4fbf9;
+  background: #eef9f4;
 }
 
 .school-calendar-date {
@@ -1018,11 +1029,11 @@
     overflow: hidden;
     border: 0;
     border-radius: 6px;
-    background: #fbfcfc;
+    background: #f8fbfa;
   }
 
   .school-calendar-day.outside {
-    background: #fdfefe;
+    background: #f3f8f5;
   }
 
   .school-calendar-date {
@@ -1193,15 +1204,15 @@
     overflow: hidden;
     border: 0;
     border-radius: 8px;
-    background: #fefefe;
+    background: #f8fbfa;
   }
 
   .school-calendar-day.outside {
-    background: #fdfefe;
+    background: #f3f8f5;
   }
 
   .school-calendar-day.selected {
-    background: #fefefe;
+    background: #eef9f4;
     box-shadow: inset 0 0 0 0.75px #4b5563;
   }
 

@@ -75,6 +75,11 @@
 }
 
 @media (max-width: 767px) {
+  .ui-drawer.audit-log-detail-drawer {
+    height: min(72dvh, 560px);
+    max-height: 72dvh;
+  }
+
   .audit-log-filters {
     align-items: stretch;
     flex-direction: column;

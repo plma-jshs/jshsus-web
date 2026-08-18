@@ -1,4 +1,4 @@
-import { SlidersHorizontal } from 'lucide-react';
+import { RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useState, type HTMLAttributes, type ReactNode } from 'react';
 import { FilterSheet } from '@jshsus/ui';
 import { useAnimatedDialog } from './useAnimatedDialog';
@@ -13,6 +13,7 @@ export type TableToolbarProps = HTMLAttributes<HTMLDivElement> & {
   children?: ReactNode;
   mobileSheet?: boolean;
   mobileSheetTitle?: string;
+  mobileReset?: () => void;
 };
 
 export function TableSummary({
@@ -57,6 +58,7 @@ export function TableToolbar({
   className,
   mobileSheet = true,
   mobileSheetTitle = '필터',
+  mobileReset,
   ...props
 }: TableToolbarProps) {
   const { ...divProps } = props;
@@ -127,12 +129,29 @@ export function TableToolbar({
               <FilterSheet
                 layoutClassName="admin-filter-sheet__layout"
                 title={mobileSheetTitle}
-                closeLabel={`${mobileSheetTitle} 닫기`}
                 onClose={requestClose}
                 footer={
-                  <button type="button" onClick={requestClose}>
-                    적용
-                  </button>
+                  <div
+                    className={`admin-filter-sheet__footer-actions${mobileReset ? ' has-reset' : ''}`}
+                  >
+                    {mobileReset ? (
+                      <button
+                        className="admin-filter-sheet__reset"
+                        type="button"
+                        onClick={mobileReset}
+                      >
+                        <RotateCcw size={15} aria-hidden="true" />
+                        초기화
+                      </button>
+                    ) : null}
+                    <button
+                      className="admin-filter-sheet__apply"
+                      type="button"
+                      onClick={requestClose}
+                    >
+                      적용
+                    </button>
+                  </div>
                 }
               >
                 <div className="admin-table-toolbar__controls admin-filter-sheet__controls">

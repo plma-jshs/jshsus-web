@@ -334,7 +334,7 @@ export function CommunityModerationPage({
         header: '작업',
         cell: ({ row }) => (
           <RowActions
-            mobileTitle="작업"
+            mobileTitle={row.original.title}
             mobileChildren={
               <>
                 <RowActionButton
@@ -405,7 +405,7 @@ export function CommunityModerationPage({
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <RowActions>
+          <RowActions mobileTitle={`${reportTargetLabel[row.original.targetType]} 신고`}>
             <RowActionButton
               icon={<Settings2 aria-hidden="true" />}
               label={`${reportTargetLabel[row.original.targetType]} 신고 관리`}
@@ -508,7 +508,7 @@ export function CommunityModerationPage({
                     {post.isHidden ? <span className="status-chip danger">숨김</span> : null}
                   </div>
                   <RowActions
-                    mobileTitle="작업"
+                    mobileTitle={post.title}
                     mobileChildren={
                       <>
                         <RowActionButton

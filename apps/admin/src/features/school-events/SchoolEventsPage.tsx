@@ -676,9 +676,12 @@ export function SchoolEventsPage() {
         <div className="school-calendar-workspace">
           <div className="school-calendar-main">
             <div
+              key={month}
               className={`school-calendar-grid${slideDirection ? ` is-${slideDirection}` : ''}`}
               aria-label={`${monthLabel(month)} 달력`}
-              onAnimationEnd={() => setSlideDirection(null)}
+              onAnimationEnd={(event) => {
+                if (event.target === event.currentTarget) setSlideDirection(null);
+              }}
               onTouchStart={handleCalendarTouchStart}
               onTouchEnd={handleCalendarTouchEnd}
             >
@@ -887,7 +890,7 @@ export function SchoolEventsPage() {
         }
         footer={
           selectedEvent?.editable && selectedEvent.managedId ? (
-            <RowActions className="button-row">
+            <RowActions className="button-row" mobileTitle={selectedEvent.title}>
               <RowActionButton
                 icon={<Pencil aria-hidden="true" />}
                 label={`${selectedEvent.title} 수정`}

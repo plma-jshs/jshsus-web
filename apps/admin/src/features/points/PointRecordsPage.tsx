@@ -8,6 +8,7 @@ import {
   AdminListPanel,
   AdminSearchField,
   DateRangeField,
+  getDateRangePreset,
   MobileSortSelect,
   SelectedRowsHeaderAction,
   TableSummary,
@@ -256,6 +257,14 @@ export function PointRecordsPage() {
       className="point-panel"
       toolbar={
         <TableToolbar
+          mobileReset={() => {
+            setSearch('');
+            setType('');
+            setFrom('');
+            setTo('');
+            setSorting([{ id: 'baseDate', desc: true }]);
+            resetPage();
+          }}
           summary={
             <TableSummary
               count={recordsQuery.data?.total}
@@ -313,7 +322,7 @@ export function PointRecordsPage() {
             </AdminSelect>
           </label>
           <DateRangeField
-            label="기준일"
+            label="조회 기간"
             from={from}
             to={to}
             onFromChange={(value) => {
@@ -322,6 +331,12 @@ export function PointRecordsPage() {
             }}
             onToChange={(value) => {
               setTo(value);
+              resetPage();
+            }}
+            onPresetChange={(preset) => {
+              const range = getDateRangePreset(preset);
+              setFrom(range.from);
+              setTo(range.to);
               resetPage();
             }}
           />

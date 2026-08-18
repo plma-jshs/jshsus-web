@@ -221,7 +221,7 @@ export function NoticeManagementPage() {
         header: '작업',
         cell: ({ row }) => (
           <RowActions
-            mobileTitle="작업"
+            mobileTitle={row.original.title}
             mobileChildren={
               <>
                 <RowActionButton
@@ -329,7 +329,7 @@ export function NoticeManagementPage() {
                     ) : null}
                   </div>
                   <RowActions
-                    mobileTitle="작업"
+                    mobileTitle={notice.title}
                     mobileChildren={
                       <>
                         <RowActionButton

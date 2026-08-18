@@ -1,4 +1,4 @@
-import { MoreVertical, X } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 import { useSheetDrag } from '@jshsus/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button, type ButtonProps } from './Button';
@@ -8,7 +8,7 @@ export function RowActions({
   children,
   mobileChildren,
   className,
-  mobileTitle = '작업',
+  mobileTitle = '선택한 항목',
 }: {
   children: ReactNode;
   mobileChildren?: ReactNode;
@@ -54,9 +54,6 @@ export function RowActions({
           <span className="admin-row-action-sheet__handle" aria-hidden="true" {...handleProps} />
           <header>
             <h2>{mobileTitle}</h2>
-            <button type="button" aria-label="작업 메뉴 닫기" onClick={requestClose}>
-              <X size={20} aria-hidden="true" />
-            </button>
           </header>
           <div
             className="admin-row-action-sheet__actions"

@@ -242,7 +242,7 @@ export function ActivityReviewPage() {
       header: '작업',
       enableSorting: false,
       cell: ({ row }) => (
-        <RowActions>
+        <RowActions mobileTitle={`${row.original.purpose} 탐구활동서`}>
           <RowActionButton
             icon={<Check size={14} aria-hidden="true" />}
             label="탐구활동서 승인"

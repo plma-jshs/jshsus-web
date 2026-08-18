@@ -167,7 +167,7 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <RowActions>
+          <RowActions mobileTitle={`${row.original.studentNo} ${row.original.studentName}`}>
             <RowActionButton
               icon={<X aria-hidden="true" />}
               label={`${row.original.studentName} 제외`}

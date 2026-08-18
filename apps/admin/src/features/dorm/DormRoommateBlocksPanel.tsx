@@ -119,7 +119,9 @@ export function DormRoommateBlocksPanel({
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <RowActions>
+          <RowActions
+            mobileTitle={`${row.original.studentName}·${row.original.blockedStudentName}`}
+          >
             <RowActionButton
               icon={<Trash2 aria-hidden="true" />}
               label={`${row.original.studentName}·${row.original.blockedStudentName} 블랙리스트 삭제`}
@@ -219,7 +221,7 @@ export function DormRoommateBlocksPanel({
                   함께 배정 금지 · {block.blockedStudentNo} {block.blockedStudentName}
                 </span>
               </div>
-              <RowActions>
+              <RowActions mobileTitle={`${block.studentName}·${block.blockedStudentName}`}>
                 <RowActionButton
                   icon={<Trash2 aria-hidden="true" />}
                   label={`${block.studentName}·${block.blockedStudentName} 블랙리스트 삭제`}

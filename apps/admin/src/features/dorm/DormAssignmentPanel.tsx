@@ -427,7 +427,7 @@ export function DormAssignmentPanel({
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <RowActions>
+          <RowActions mobileTitle={`${row.original.studentName} 배정`}>
             <RowActionButton
               icon={<X aria-hidden="true" />}
               label={`${row.original.studentName} 제외`}
@@ -547,7 +547,7 @@ export function DormAssignmentPanel({
         id: 'actions',
         header: '작업',
         cell: ({ row }) => (
-          <RowActions className="dorm-row-actions">
+          <RowActions className="dorm-row-actions" mobileTitle={`${row.original.studentName} 배정`}>
             <RowActionButton
               icon={<MoveRight aria-hidden="true" />}
               label={`${row.original.studentName} 이동`}
@@ -766,7 +766,10 @@ export function DormAssignmentPanel({
                     {assignment.dormName} {assignment.roomName} · {assignment.bedPosition}번 침대
                   </span>
                 </div>
-                <RowActions className="dorm-row-actions">
+                <RowActions
+                  className="dorm-row-actions"
+                  mobileTitle={`${assignment.studentName} 배정`}
+                >
                   <RowActionButton
                     icon={<MoveRight aria-hidden="true" />}
                     label={`${assignment.studentName} 이동`}

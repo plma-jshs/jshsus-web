@@ -109,8 +109,6 @@ export function PageToolbar({
           title="필터"
           titleAs="strong"
           headerClassName="page-toolbar__filters-heading"
-          closeLabel="필터 닫기"
-          closeIconSize={17}
           onClose={requestClose}
         >
           {filters}

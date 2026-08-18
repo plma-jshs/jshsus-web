@@ -1,4 +1,3 @@
-import { X } from 'lucide-react';
 import { useSheetDrag } from './useSheetDrag';
 import { type ReactNode } from 'react';
 
@@ -11,13 +10,10 @@ export type FilterSheetProps = {
   layoutClassName: string;
   headerClassName?: string;
   titleClassName?: string;
-  closeClassName?: string;
   footerClassName?: string;
   role?: 'dialog' | 'region';
   ariaModal?: boolean;
   ariaLabel?: string;
-  closeLabel: string;
-  closeIconSize?: number;
   onClose: () => void;
 };
 
@@ -31,13 +27,10 @@ export function FilterSheet({
   layoutClassName,
   headerClassName,
   titleClassName,
-  closeClassName,
   footerClassName,
   role,
   ariaModal,
   ariaLabel,
-  closeLabel,
-  closeIconSize = 20,
   onClose,
 }: FilterSheetProps) {
   const Title = titleAs;
@@ -55,9 +48,6 @@ export function FilterSheet({
       <span className="ui-filter-sheet__handle" aria-hidden="true" {...handleProps} />
       <header className={headerClassName}>
         <Title className={titleClassName}>{title}</Title>
-        <button className={closeClassName} type="button" aria-label={closeLabel} onClick={onClose}>
-          <X size={closeIconSize} aria-hidden="true" />
-        </button>
       </header>
       {children}
       {footer ? <footer className={footerClassName}>{footer}</footer> : null}

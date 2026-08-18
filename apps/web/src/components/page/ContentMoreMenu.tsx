@@ -1,4 +1,5 @@
 import { MoreVertical, Pencil, Share2, Trash2 } from 'lucide-react';
+import { useSheetDrag } from '@jshsus/ui';
 import { useEffect, useRef, useState } from 'react';
 import { useBottomSheetClose } from '../../shared/hooks/useBottomSheetClose';
 import { useToast } from '../feedback/Toast';
@@ -18,6 +19,7 @@ export function ContentMoreMenu({
 }) {
   const [open, setOpen] = useState(false);
   const { isClosing, requestClose, resetClosing } = useBottomSheetClose(() => setOpen(false));
+  const { rootRef: sheetRootRef, handleProps } = useSheetDrag<HTMLDivElement>(requestClose);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,7 +52,12 @@ export function ContentMoreMenu({
         <MoreVertical size={18} aria-hidden="true" />
       </button>
       {open ? (
-        <div className={`content-more-menu__dropdown${isClosing ? ' is-closing' : ''}`} role="menu">
+        <div
+          className={`content-more-menu__dropdown${isClosing ? ' is-closing' : ''}`}
+          ref={sheetRootRef}
+          role="menu"
+        >
+          <span className="ui-filter-sheet__handle" aria-hidden="true" {...handleProps} />
           <button
             onClick={() => {
               requestClose(onEdit);

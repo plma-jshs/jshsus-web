@@ -252,7 +252,7 @@ export function PointDeparturesPage() {
         cell: ({ row }) =>
           row.original.currentPoint <= -20 ? (
             <span className="point-departure-action-cell">
-              <RowActions>
+              <RowActions mobileTitle={`${row.original.studentNo} ${row.original.name}`}>
                 <Button
                   className="point-departure-action"
                   variant="danger"
