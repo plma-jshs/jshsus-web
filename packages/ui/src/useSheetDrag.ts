@@ -25,9 +25,7 @@ export function clearSheetSnapStates(scope?: ParentNode) {
   if (typeof document === 'undefined') return;
   const candidates = scope
     ? [
-        ...(scope instanceof HTMLElement && scope.classList.contains('is-snapping')
-          ? [scope]
-          : []),
+        ...(scope instanceof HTMLElement && scope.classList.contains('is-snapping') ? [scope] : []),
         ...Array.from(scope.querySelectorAll<HTMLElement>('.is-snapping')),
       ]
     : Array.from(document.querySelectorAll<HTMLElement>('.is-snapping'));
