@@ -1082,7 +1082,7 @@
 .activity-slot-options span {
   display: grid;
   min-width: 0;
-  gap: 1px;
+  gap: 0;
 }
 
 .activity-slot-options strong {
@@ -1097,6 +1097,7 @@
   color: var(--j-color-text-muted);
   font-size: 10px;
   font-variant-numeric: tabular-nums;
+  line-height: 0.95;
   white-space: nowrap;
 }
 

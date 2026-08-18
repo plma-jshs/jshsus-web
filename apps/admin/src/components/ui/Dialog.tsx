@@ -1,5 +1,6 @@
 import { DialogShell } from '@jshsus/ui';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { DialogCloseProvider } from './DialogCloseContext';
 import { useAnimatedDialog } from './useAnimatedDialog';
 
 export type DialogSize = 'sm' | 'md' | 'lg';
@@ -71,23 +72,25 @@ export function Dialog({
         if (event.target === event.currentTarget) requestClose();
       }}
     >
-      <DialogShell
-        className="ui-dialog__layout"
-        headerClassName="ui-dialog__header"
-        bodyClassName="ui-dialog__body"
-        footerClassName="ui-dialog__footer"
-        closeClassName="ui-dialog__close"
-        title={title}
-        titleId={titleId}
-        description={description}
-        descriptionId={descriptionId}
-        bodyRef={bodyRef}
-        footer={footer}
-        closeLabel={closeLabel}
-        onClose={requestClose}
-      >
-        {children}
-      </DialogShell>
+      <DialogCloseProvider onClose={requestClose}>
+        <DialogShell
+          className="ui-dialog__layout"
+          headerClassName="ui-dialog__header"
+          bodyClassName="ui-dialog__body"
+          footerClassName="ui-dialog__footer"
+          closeClassName="ui-dialog__close"
+          title={title}
+          titleId={titleId}
+          description={description}
+          descriptionId={descriptionId}
+          bodyRef={bodyRef}
+          footer={footer}
+          closeLabel={closeLabel}
+          onClose={requestClose}
+        >
+          {children}
+        </DialogShell>
+      </DialogCloseProvider>
     </dialog>
   );
 }

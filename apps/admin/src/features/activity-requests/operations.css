@@ -517,8 +517,9 @@
   display: grid;
   min-height: 40px;
   grid-template-columns: 17px minmax(0, 1fr);
-  grid-template-rows: auto auto;
+  grid-template-rows: max-content max-content;
   align-items: center;
+  align-content: center;
   gap: 0 4px;
   padding: 4px 7px;
   border: 1px solid var(--line);
@@ -548,7 +549,7 @@
   font-size: 12px;
   color: var(--j-color-text);
   font-weight: 600;
-  line-height: 1.05;
+  line-height: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -559,8 +560,8 @@
   color: var(--muted);
   font-size: 10px;
   font-weight: 400;
-  line-height: 1;
-  margin-top: -1px;
+  line-height: 0.95;
+  margin-top: -2px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

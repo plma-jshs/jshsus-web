@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Button, type ButtonVariant } from './Button';
+import { useDialogClose } from './DialogCloseContext';
 
 export type DialogActionsProps = {
   pending?: boolean;
@@ -29,12 +30,14 @@ export function DialogActions({
   className,
   showCancel = true,
 }: DialogActionsProps) {
+  const animatedClose = useDialogClose();
+  const close = animatedClose ?? onClose;
   const classes = ['button-row', 'ui-dialog-actions', className ?? ''].filter(Boolean).join(' ');
 
   return (
     <div className={classes}>
-      {showCancel && onClose ? (
-        <Button variant="secondary" type="button" onClick={onClose}>
+      {showCancel && close ? (
+        <Button variant="secondary" type="button" onClick={close}>
           {cancelLabel}
         </Button>
       ) : null}

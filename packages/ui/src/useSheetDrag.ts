@@ -84,11 +84,14 @@ export function useSheetDrag<T extends HTMLElement = HTMLDivElement>(
         target.classList.add('is-snapping');
         target.classList.remove('is-dragging');
       });
+      // Keep `is-snapping` on the surface after the transition. Native
+      // dialogs have an `[open]` enter animation; removing the class here
+      // would replay that animation and flash the sheet after it has already
+      // settled. A new pointer-down or unmount reset clears the class.
       cleanupTimerRef.current = window.setTimeout(() => {
         cleanupTimerRef.current = null;
         dragRef.current = null;
         targets.forEach((target) => {
-          target.classList.remove('is-snapping');
           target.style.removeProperty('--ui-sheet-drag-offset');
         });
       }, SHEET_EXIT_DURATION_MS);

@@ -193,47 +193,6 @@ export function PointsOverviewPage() {
         </TableToolbar>
       }
     >
-      <div className="point-overview-mobile-table-wrap">
-        <table className="point-overview-mobile-table">
-          <thead>
-            <tr>
-              <th>학생 정보</th>
-              <th>상점</th>
-              <th>벌점</th>
-              <th>총계</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(query.data?.items ?? []).map((student) => (
-              <tr key={student.id}>
-                <td>
-                  <strong>{student.name}</strong>
-                  <a
-                    href={`/points/records?search=${encodeURIComponent(String(student.studentNo))}`}
-                  >
-                    {student.studentNo}
-                  </a>
-                </td>
-                <td>{student.meritPoint}</td>
-                <td className={student.penaltyPoint > 0 ? 'point-value--danger' : undefined}>
-                  {student.penaltyPoint}
-                </td>
-                <td
-                  className={
-                    student.currentPoint < 0
-                      ? 'point-value--danger'
-                      : student.currentPoint > 0
-                        ? 'point-value--positive'
-                        : undefined
-                  }
-                >
-                  <strong>{formatSignedPoint(student.currentPoint)}</strong>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
       <DataTable
         columns={columns}
         data={query.data?.items ?? []}
@@ -258,6 +217,42 @@ export function PointsOverviewPage() {
         }}
         alwaysShowPagination
         getRowId={(row) => String(row.id)}
+        renderMobileRow={(student) => (
+          <article className="point-overview-mobile-card">
+            <div className="point-overview-mobile-card__identity">
+              <strong>{student.name}</strong>
+              <a href={`/points/records?search=${encodeURIComponent(String(student.studentNo))}`}>
+                {student.studentNo}
+              </a>
+            </div>
+            <dl className="point-overview-mobile-card__scores">
+              <div>
+                <dt>상점</dt>
+                <dd>{student.meritPoint}</dd>
+              </div>
+              <div>
+                <dt>벌점</dt>
+                <dd className={student.penaltyPoint > 0 ? 'point-value--danger' : undefined}>
+                  {student.penaltyPoint}
+                </dd>
+              </div>
+              <div>
+                <dt>총계</dt>
+                <dd
+                  className={
+                    student.currentPoint < 0
+                      ? 'point-value--danger'
+                      : student.currentPoint > 0
+                        ? 'point-value--positive'
+                        : undefined
+                  }
+                >
+                  {formatSignedPoint(student.currentPoint)}
+                </dd>
+              </div>
+            </dl>
+          </article>
+        )}
       />
     </AdminListPanel>
   );

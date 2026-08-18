@@ -1,5 +1,6 @@
 import { DialogShell } from '@jshsus/ui';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { DialogCloseProvider } from './DialogCloseContext';
 import { useAnimatedDialog } from './useAnimatedDialog';
 
 export type DrawerProps = {
@@ -69,23 +70,25 @@ export function Drawer({
         if (event.target === event.currentTarget) requestClose();
       }}
     >
-      <DialogShell
-        className="ui-drawer__layout"
-        headerClassName="ui-drawer__header"
-        bodyClassName="ui-drawer__body"
-        footerClassName="ui-drawer__footer"
-        closeClassName="ui-drawer__close"
-        title={title}
-        titleId={titleId}
-        description={description}
-        descriptionId={descriptionId}
-        bodyRef={bodyRef}
-        footer={footer}
-        closeLabel={closeLabel}
-        onClose={requestClose}
-      >
-        {children}
-      </DialogShell>
+      <DialogCloseProvider onClose={requestClose}>
+        <DialogShell
+          className="ui-drawer__layout"
+          headerClassName="ui-drawer__header"
+          bodyClassName="ui-drawer__body"
+          footerClassName="ui-drawer__footer"
+          closeClassName="ui-drawer__close"
+          title={title}
+          titleId={titleId}
+          description={description}
+          descriptionId={descriptionId}
+          bodyRef={bodyRef}
+          footer={footer}
+          closeLabel={closeLabel}
+          onClose={requestClose}
+        >
+          {children}
+        </DialogShell>
+      </DialogCloseProvider>
     </dialog>
   );
 }

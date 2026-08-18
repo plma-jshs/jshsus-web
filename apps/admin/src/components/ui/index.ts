@@ -5,6 +5,7 @@ export * from './AdminSelect';
 export * from './AdminSearchField';
 export * from './DateRangeField';
 export * from './Dialog';
+export * from './DialogCloseContext';
 export * from './DialogActions';
 export * from './Drawer';
 export * from './EmptyState';

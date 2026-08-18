@@ -511,6 +511,12 @@
   border-bottom: 1px solid var(--j-color-border);
 }
 
+@media (max-width: 767px) {
+  .calendar-mobile-modal__dialog > header {
+    border-bottom: 0;
+  }
+}
+
 .calendar-mobile-modal__dialog > header strong {
   color: var(--j-color-text);
   font-size: 20px;

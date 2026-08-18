@@ -490,17 +490,16 @@
 }
 
 .admin-filter-sheet__footer-actions .admin-filter-sheet__reset {
-  border-color: var(--line-strong);
-  background: var(--surface);
+  border-color: transparent;
+  background: var(--j-color-surface-subtle);
   color: var(--j-color-text-secondary);
 }
 
 .admin-filter-sheet__footer-actions .admin-filter-sheet__reset:hover,
 .admin-filter-sheet__footer-actions .admin-filter-sheet__reset:focus-visible {
-  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
   background: var(--j-color-surface-hover);
   outline: 0;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+  box-shadow: none;
 }
 
 /* Every mobile filter sheet uses one predictable full-width column. Feature
@@ -979,6 +978,7 @@
 
   .admin-filter-sheet header {
     padding-top: 18px;
+    border-bottom: 0;
   }
   .ui-drawer {
     top: auto;
@@ -1022,6 +1022,7 @@
   .ui-drawer__header {
     min-height: 60px;
     padding: 12px 16px;
+    border-bottom: 0;
   }
 
   .ui-dialog__body,

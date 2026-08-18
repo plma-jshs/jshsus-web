@@ -6,13 +6,63 @@
   width: 100%;
 }
 
-.point-overview-panel .admin-data-table tbody td:last-child,
-.point-overview-panel .admin-data-table tbody td:last-child > strong {
+.point-overview-mobile-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.point-overview-mobile-card__identity {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.point-overview-mobile-card__identity strong {
+  overflow: hidden;
+  color: var(--j-color-text);
+  font-size: 14px;
+  font-weight: var(--j-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.point-overview-mobile-card__identity a {
+  width: fit-content;
+  color: var(--primary-dark);
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.point-overview-mobile-card__scores {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(36px, auto));
+  gap: 10px;
+  margin: 0;
+  text-align: right;
+}
+
+.point-overview-mobile-card__scores > div {
+  display: grid;
+  gap: 2px;
+}
+
+.point-overview-mobile-card__scores dt {
+  color: var(--j-color-text-muted);
+  font-size: 10px;
+}
+
+.point-overview-mobile-card__scores dd {
+  margin: 0;
+  color: var(--j-color-text);
+  font-size: 13px;
   font-weight: var(--j-weight-semibold);
 }
 
-.point-overview-mobile-table-wrap {
-  display: none;
+.point-overview-panel .admin-data-table tbody td:last-child,
+.point-overview-panel .admin-data-table tbody td:last-child > strong {
+  font-weight: var(--j-weight-semibold);
 }
 
 .point-filter {
@@ -508,61 +558,15 @@
     display: none;
   }
 
-  .point-overview-mobile-table-wrap {
-    display: block;
-    margin-inline: -1px;
-    overflow: hidden;
-    border-block: 1px solid var(--line);
+  .point-overview-mobile-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
   }
 
-  .point-overview-mobile-table {
+  .point-overview-mobile-card__scores {
     width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-    font-size: 12px;
-  }
-
-  .point-overview-mobile-table th,
-  .point-overview-mobile-table td {
-    min-width: 0;
-    padding: 10px 5px;
-    border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
-    text-align: center;
-  }
-
-  .point-overview-mobile-table th {
-    background: #fafcfb;
-    color: var(--j-color-text-secondary);
-    font-size: 11px;
-    font-weight: var(--j-weight-semibold);
-  }
-
-  .point-overview-mobile-table th:first-child,
-  .point-overview-mobile-table td:first-child {
-    width: 42%;
-    padding-left: 14px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     text-align: left;
-  }
-
-  .point-overview-mobile-table td:first-child strong,
-  .point-overview-mobile-table td:first-child a {
-    display: block;
-  }
-
-  .point-overview-mobile-table td:first-child strong {
-    color: var(--j-color-text);
-    font-size: 13px;
-  }
-
-  .point-overview-mobile-table td:first-child a {
-    margin-top: 2px;
-    color: var(--primary-dark);
-    font-size: 11px;
-    text-decoration: none;
-  }
-
-  .point-overview-panel .admin-data-table > .table-wrap {
-    display: none;
   }
 
   .point-award-fields,
