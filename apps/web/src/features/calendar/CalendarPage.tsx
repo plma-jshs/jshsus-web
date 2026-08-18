@@ -1,11 +1,11 @@
 import type { AcademicEvent } from '@jshsus/types';
-import { useSheetDrag } from '@jshsus/ui';
+import { clearSheetSnapStates, DialogShell } from '@jshsus/ui';
 import type { CSSProperties, KeyboardEvent, MouseEvent, TouchEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQueries } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, Info, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
 import { createKoreanDateFormatter, toKoreanDateKey } from '../../shared/lib/date';
@@ -487,12 +487,10 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
 
   const closeMobileAgenda = useCallback(() => {
     if (!mobileAgendaMountedRef.current || mobileAgendaClosingRef.current) return;
+    clearSheetSnapStates();
     mobileAgendaClosingRef.current = true;
     setMobileAgendaClosing(true);
   }, [setMobileAgendaClosing]);
-  const { rootRef: mobileAgendaSheetRef, handleProps: mobileAgendaHandleProps } =
-    useSheetDrag<HTMLDivElement>(closeMobileAgenda);
-
   useEffect(() => {
     if (!mobileAgendaClosing) return undefined;
     const timer = window.setTimeout(() => {
@@ -907,27 +905,27 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                 role="presentation"
                 onClick={closeMobileAgenda}
               >
-                <section
-                  className="calendar-mobile-modal__dialog"
-                  ref={mobileAgendaSheetRef}
+                <div
+                  className="calendar-mobile-modal__dialog-host"
                   role="dialog"
                   aria-modal="true"
                   aria-labelledby="calendar-mobile-modal-title"
                   onClick={(event) => event.stopPropagation()}
                 >
-                  <span
-                    className="ui-dialog__handle"
-                    aria-hidden="true"
-                    {...mobileAgendaHandleProps}
-                  />
-                  <header>
-                    <strong id="calendar-mobile-modal-title">{selectedDateLabel}</strong>
-                    <button type="button" aria-label="일정 닫기" onClick={closeMobileAgenda}>
-                      <X size={18} aria-hidden="true" />
-                    </button>
-                  </header>
-                  <CalendarAgendaContent events={selectedEvents} isLoading={false} />
-                </section>
+                  <DialogShell
+                    className="calendar-mobile-modal__dialog"
+                    headerClassName="calendar-mobile-modal__header"
+                    bodyClassName="calendar-mobile-modal__body"
+                    footerClassName="calendar-mobile-modal__footer"
+                    closeClassName="calendar-mobile-modal__close"
+                    title={selectedDateLabel}
+                    titleId="calendar-mobile-modal-title"
+                    closeLabel="일정 닫기"
+                    onClose={closeMobileAgenda}
+                  >
+                    <CalendarAgendaContent events={selectedEvents} isLoading={false} />
+                  </DialogShell>
+                </div>
               </div>,
               document.body,
             )

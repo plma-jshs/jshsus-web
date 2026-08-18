@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { clearSheetSnapStates } from '@jshsus/ui';
 
 const MOBILE_SHEET_DURATION_MS = 180;
 
@@ -16,6 +17,10 @@ export function useBottomSheetClose(onClose: () => void) {
   const requestClose = useCallback(
     (afterClose?: () => void) => {
       if (timerRef.current !== null) return;
+      // Backdrop clicks and close buttons can happen immediately after a
+      // short drag snapped the sheet back. Remove the settled drag marker so
+      // it cannot suppress the shared exit animation.
+      clearSheetSnapStates();
       const mobile = window.matchMedia('(max-width: 767px)').matches;
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

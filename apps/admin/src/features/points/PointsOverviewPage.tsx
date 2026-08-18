@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminListPanel,
@@ -226,12 +227,13 @@ export function PointsOverviewPage() {
         getRowId={(row) => String(row.id)}
         renderMobileRow={(student) => (
           <article className="point-overview-mobile-card">
-            <div className="point-overview-mobile-card__identity">
-              <strong>{student.name}</strong>
+            <header className="point-overview-mobile-card__identity">
               <a href={`/points/records?search=${encodeURIComponent(String(student.studentNo))}`}>
                 {student.studentNo}
               </a>
-            </div>
+              <strong>{student.name}</strong>
+              <ChevronRight size={16} aria-hidden="true" />
+            </header>
             <dl className="point-overview-mobile-card__scores">
               <div>
                 <dt>상점</dt>

@@ -12,6 +12,37 @@ import {
 const DEFAULT_DISMISS_DISTANCE = 104;
 const SHEET_EXIT_DURATION_MS = 180;
 
+/**
+ * Clear a sheet's snap-back marker before an external close starts.
+ *
+ * A snap-back intentionally keeps `is-snapping` on the surface so native
+ * dialog open animations are not replayed.  If the backdrop is then clicked
+ * while that marker is still present, the marker's `animation: none` rule can
+ * win over the exit animation.  Callers that close a sheet from outside the
+ * drag handle use this small shared cleanup helper first.
+ */
+export function clearSheetSnapStates(scope?: ParentNode) {
+  if (typeof document === 'undefined') return;
+  const candidates = scope
+    ? [
+        ...(scope instanceof HTMLElement && scope.classList.contains('is-snapping')
+          ? [scope]
+          : []),
+        ...Array.from(scope.querySelectorAll<HTMLElement>('.is-snapping')),
+      ]
+    : Array.from(document.querySelectorAll<HTMLElement>('.is-snapping'));
+
+  candidates.forEach((target) => {
+    target.classList.remove('is-snapping');
+    // A snap-back normally clears this after the transition.  Clear it here
+    // as well when no active drag is in progress so an immediate backdrop
+    // close cannot inherit a stale transform offset.
+    if (!target.classList.contains('is-dragging')) {
+      target.style.removeProperty('--ui-sheet-drag-offset');
+    }
+  });
+}
+
 export type SheetDragHandleProps = {
   onPointerDown: PointerEventHandler<HTMLElement>;
   onPointerMove: PointerEventHandler<HTMLElement>;

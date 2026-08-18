@@ -20,7 +20,7 @@ export type { DialogShellProps } from './DialogShell';
 export { FilterSheet } from './FilterSheet';
 export type { FilterSheetProps } from './FilterSheet';
 export { useAnimatedDialog } from './useAnimatedDialog';
-export { useSheetDrag } from './useSheetDrag';
+export { clearSheetSnapStates, useSheetDrag } from './useSheetDrag';
 export type { SheetDragHandleProps } from './useSheetDrag';
 export { ButtonPrimitive } from './ButtonPrimitive';
 export type {
