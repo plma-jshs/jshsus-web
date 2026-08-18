@@ -225,8 +225,9 @@ select.ui-control:not([multiple]) {
 }
 
 /* Touch interactions should not leave a keyboard-style focus ring behind.
-   Keep :focus-visible intact for keyboard users, while giving controls a
-   small pressed-surface response during a real touch. */
+   Keep :focus-visible intact for keyboard users. Buttons and links retain
+   their own pressed-surface styles; form fields do not change their fill
+   just because they were tapped. */
 @media (max-width: 767px) and (hover: none) {
   .admin-main :where(button, a):focus:not(:focus-visible),
   .admin-filter-sheet :where(button, a):focus:not(:focus-visible),
@@ -234,21 +235,6 @@ select.ui-control:not([multiple]) {
   .ui-drawer :where(button, a):focus:not(:focus-visible) {
     outline: 0;
     box-shadow: none;
-  }
-
-  .admin-main
-    :where(
-      input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
-      select,
-      textarea
-    ):active,
-  .admin-filter-sheet
-    :where(
-      input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
-      select,
-      textarea
-    ):active {
-    background-color: var(--j-color-surface-hover);
   }
 }
 

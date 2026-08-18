@@ -149,14 +149,6 @@ input[type='radio'] {
     outline: 0;
     box-shadow: none;
   }
-
-  :where(
-    input:not([type='checkbox']):not([type='radio']):not([type='file']),
-    select,
-    textarea
-  ):active {
-    background-color: var(--j-color-surface-hover);
-  }
 }
 
 .sr-only {
