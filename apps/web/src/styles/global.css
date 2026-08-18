@@ -43,6 +43,16 @@
 }
 
 @media (max-width: 767px) {
+  :where(.ui-dialog, .ui-drawer) {
+    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  :where(.ui-dialog, .ui-drawer).is-dragging {
+    animation: none !important;
+    transform: translateY(var(--ui-sheet-drag-offset, 0px));
+    transition: none;
+  }
+
   :where(
     .page-toolbar__filters-content,
     .data-table-toolbar__filters,
@@ -66,7 +76,8 @@
     transition: none;
   }
 
-  :where(.ui-filter-sheet__handle, .ui-dialog__handle) {
+  .ui-filter-sheet__handle,
+  .ui-dialog__handle {
     position: absolute;
     z-index: 2;
     top: 7px;
@@ -81,7 +92,8 @@
     touch-action: none;
   }
 
-  :where(.ui-filter-sheet__handle, .ui-dialog__handle):active {
+  .ui-filter-sheet__handle:active,
+  .ui-dialog__handle:active {
     cursor: grabbing;
   }
 

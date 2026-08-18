@@ -278,7 +278,8 @@
 }
 
 @media (max-width: 767px) {
-  :where(.ui-dialog__handle, .ui-filter-sheet__handle) {
+  .ui-dialog__handle,
+  .ui-filter-sheet__handle {
     position: absolute;
     z-index: 2;
     top: 7px;
@@ -293,11 +294,13 @@
     touch-action: none;
   }
 
-  :where(.ui-dialog__handle, .ui-filter-sheet__handle):active {
+  .ui-dialog__handle:active,
+  .ui-filter-sheet__handle:active {
     cursor: grabbing;
   }
 
-  :where(.ui-dialog__header, .ui-drawer__header) {
+  .ui-dialog__header,
+  .ui-drawer__header {
     padding-top: 22px;
   }
 }

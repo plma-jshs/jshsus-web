@@ -34,7 +34,11 @@ export function useSheetDrag<T extends HTMLElement = HTMLDivElement>(
     const root = rootRef.current;
     if (!root) return [];
     const dialog = root.closest('dialog');
-    return dialog ? [root, dialog] : [root];
+    // A native dialog already owns the sheet surface and its backdrop. Moving
+    // both the dialog and its inner layout would apply the drag offset twice
+    // to the content, making it outrun the white surface. Prefer the dialog
+    // surface when one exists; standalone custom sheets move their root.
+    return dialog ? [dialog] : [root];
   }, []);
 
   const resetDrag = useCallback(() => {
