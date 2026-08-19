@@ -47,7 +47,7 @@ describe('DataTableToolbar', () => {
       />,
     );
 
-    fireEvent.change(screen.getByPlaceholderText('검색어를 입력하세요'), {
+    fireEvent.change(screen.getByPlaceholderText('검색어 검색'), {
       target: { value: '실시간 검색' },
     });
     expect(onSearch).not.toHaveBeenCalled();
@@ -73,12 +73,12 @@ describe('DataTableToolbar', () => {
       onSearch: vi.fn(),
     };
     const view = render(<DataTableToolbar {...props} query="" />);
-    const input = screen.getByPlaceholderText('검색어를 입력하세요');
+    const input = screen.getByPlaceholderText('검색어 검색');
     input.focus();
 
     view.rerender(<DataTableToolbar {...props} query="검색 결과" />);
 
-    expect(screen.getByPlaceholderText('검색어를 입력하세요')).toBe(input);
+    expect(screen.getByPlaceholderText('검색어 검색')).toBe(input);
     expect(input).toHaveFocus();
     await waitFor(() => expect(input).toHaveValue('검색 결과'));
   });
