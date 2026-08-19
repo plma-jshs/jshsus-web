@@ -466,8 +466,8 @@
 
 .data-table-toolbar__query:hover {
   border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong));
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong));
+  box-shadow: none;
+  background: var(--j-color-surface);
 }
 
 .data-table-toolbar__query > svg {
@@ -491,8 +491,9 @@
 }
 
 .data-table-toolbar__query:focus-within {
-  border-color: var(--j-color-brand);
-  box-shadow: inset 0 0 0 1px var(--j-color-brand);
+  border-color: var(--j-color-focus);
+  box-shadow: var(--j-shadow-focus);
+  background: var(--j-color-surface);
 }
 
 .data-table-toolbar__clear {
@@ -1370,5 +1371,101 @@
 @media (prefers-reduced-motion: reduce) {
   .data-table-pagination__load-more .is-spinning {
     animation: none;
+  }
+}
+
+/* Mobile list rows are press targets, not hover cards. Touch browsers can
+   retain :hover after a tap, so reset every hover/focus surface and keep only
+   a very short, neutral pressed tint. */
+@media (max-width: 767px) and (hover: none) {
+  :is(
+    .data-table tbody tr,
+    .workflow-table tbody tr,
+    .status-records tbody tr,
+    .petition-table tbody tr,
+    .notice-preview-list li,
+    .community-preview-list li,
+    .petition-preview-list li,
+    .notification-item,
+    .lost-card
+  ):hover,
+  :is(
+    .data-table tbody tr,
+    .workflow-table tbody tr,
+    .status-records tbody tr,
+    .petition-table tbody tr,
+    .notice-preview-list li,
+    .community-preview-list li,
+    .petition-preview-list li,
+    .notification-item,
+    .lost-card
+  ):focus,
+  :is(
+    .data-table tbody tr,
+    .workflow-table tbody tr,
+    .status-records tbody tr,
+    .petition-table tbody tr,
+    .notice-preview-list li,
+    .community-preview-list li,
+    .petition-preview-list li,
+    .notification-item,
+    .lost-card
+  ):focus-within {
+    outline: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border-color: inherit !important;
+  }
+
+  :is(
+    .data-table tbody tr,
+    .workflow-table tbody tr,
+    .status-records tbody tr,
+    .petition-table tbody tr,
+    .notice-preview-list li,
+    .community-preview-list li,
+    .petition-preview-list li,
+    .notification-item,
+    .lost-card
+  ):active {
+    background: var(--j-ref-slate-100) !important;
+    box-shadow: none !important;
+  }
+
+  .lost-card:active h2 {
+    text-decoration: none;
+  }
+
+  /* The table's title link can itself keep :hover/:active on touch devices;
+     override that more-specific descendant rule as well. */
+  .data-table tbody tr:has(.data-table__title-link:hover),
+  .data-table tbody tr:has(.data-table__title-link:focus-visible),
+  .data-table tbody tr:has(.data-table__title-link:active),
+  .data-table tbody tr.data-table__clickable-row:hover,
+  .data-table tbody tr.data-table__clickable-row:focus-visible {
+    background: transparent !important;
+  }
+
+  .data-table tbody tr:has(.data-table__title-link:active),
+  .data-table tbody tr.data-table__clickable-row:active {
+    background: var(--j-ref-slate-100) !important;
+  }
+
+  .data-table tbody tr:hover td,
+  .data-table tbody tr:focus-within td,
+  .workflow-table tbody tr:hover td,
+  .workflow-table tbody tr:focus-within td,
+  .status-records tbody tr:hover td,
+  .status-records tbody tr:focus-within td,
+  .petition-table tbody tr:hover td,
+  .petition-table tbody tr:focus-within td {
+    background: transparent !important;
+  }
+
+  .data-table tbody tr:active td,
+  .workflow-table tbody tr:active td,
+  .status-records tbody tr:active td,
+  .petition-table tbody tr:active td {
+    background: var(--j-ref-slate-100) !important;
   }
 }

@@ -675,6 +675,44 @@
   transform: none;
 }
 
+@media (max-width: 767px) and (hover: none) {
+  /* A tapped day must not keep the desktop hover tint. The active surface is
+     intentionally applied to the pressed day only and disappears on release. */
+  .mini-calendar__day:hover,
+  .mini-calendar__day:focus,
+  .mini-calendar__day:focus-visible {
+    outline: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .mini-calendar__day:hover .mini-calendar__date-number,
+  .mini-calendar__day:focus .mini-calendar__date-number,
+  .mini-calendar__day:focus-visible .mini-calendar__date-number {
+    background: transparent;
+  }
+
+  .mini-calendar__day.is-today:hover .mini-calendar__date-number,
+  .mini-calendar__day.is-today:focus .mini-calendar__date-number,
+  .mini-calendar__day.is-today:focus-visible .mini-calendar__date-number {
+    background: var(--j-color-brand);
+  }
+
+  .mini-calendar__day:active .mini-calendar__date-number {
+    background: var(--j-ref-slate-100);
+  }
+
+  .mini-calendar__day.is-today:active .mini-calendar__date-number {
+    background: var(--j-color-brand);
+  }
+
+  .mini-calendar__day:hover .calendar-day-popover,
+  .mini-calendar__day:focus-visible .calendar-day-popover {
+    visibility: hidden;
+    opacity: 0;
+  }
+}
+
 .upcoming-events {
   padding-top: 9px;
   margin-top: auto;

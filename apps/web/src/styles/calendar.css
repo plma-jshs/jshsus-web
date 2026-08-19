@@ -938,6 +938,42 @@
   }
 }
 
+/* Touch screens do not have a stable hover target. Keep date cells and event
+   bars visually quiet until the exact element is pressed, and never leave a
+   focus/hover tint behind after the tap. */
+@media (max-width: 767px) and (hover: none) {
+  .full-calendar__week-days > button:hover,
+  .full-calendar__week-days > button:focus,
+  .full-calendar__week-days > button:focus-visible {
+    outline: 0;
+    box-shadow: none;
+    background: #fff;
+  }
+
+  .full-calendar__week-days > button.is-selected {
+    box-shadow: inset 0 0 0 0.75px #4b5563;
+    background: #fff;
+  }
+
+  .full-calendar__week-days > button:active {
+    background: var(--j-ref-slate-100);
+  }
+
+  .full-calendar__event-bar:not(.is-inline):hover,
+  .full-calendar__event-bar.is-holiday:hover,
+  .full-calendar__event-bar.is-inline:hover,
+  .full-calendar__event-bar:focus,
+  .full-calendar__event-bar:focus-visible {
+    outline: 0;
+    box-shadow: none;
+    background: var(--event-bg);
+  }
+
+  .full-calendar__event-bar:active {
+    background: var(--j-ref-slate-100);
+  }
+}
+
 @media (max-width: 439px) {
   .calendar-month-control .calendar-today-button {
     padding-inline: 9px;

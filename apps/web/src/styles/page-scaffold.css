@@ -279,13 +279,14 @@
 
 .page-search-field:hover {
   border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong));
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong));
+  box-shadow: none;
+  background: var(--j-color-surface);
 }
 
 .page-search-field:focus-within {
-  border-color: var(--j-color-brand);
-  box-shadow: inset 0 0 0 1px var(--j-color-brand);
+  border-color: var(--j-color-focus);
+  box-shadow: var(--j-shadow-focus);
+  background: var(--j-color-surface);
 }
 
 .page-search-field input {

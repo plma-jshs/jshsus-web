@@ -13,6 +13,54 @@
 @import './flat-pages.css';
 @import './dark-mode.css';
 
+/* Mobile touch policy: controls keep their resting border, but tapping them
+   must not leave a green hover/focus ring or a changed input surface. */
+@media (max-width: 767px) and (hover: none) {
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='file']),
+    select,
+    textarea
+  ):hover,
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='file']),
+    select,
+    textarea
+  ):focus,
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='file']),
+    select,
+    textarea
+  ):focus-visible {
+    border-color: var(--j-color-border-strong) !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+
+  :where(
+    .page-search-field,
+    .data-table-toolbar__query,
+    .detail-comment-form,
+    .activity-date-control
+  ):hover,
+  :where(
+    .page-search-field,
+    .data-table-toolbar__query,
+    .detail-comment-form,
+    .activity-date-control
+  ):focus-within {
+    border-color: var(--j-color-border-strong) !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+
+  :where(button, a, summary):hover,
+  :where(button, a, summary):focus,
+  :where(button, a, summary):focus-visible {
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
 @keyframes mobile-bottom-sheet-enter {
   from {
     opacity: 0;
@@ -212,5 +260,26 @@
     .calendar-mobile-modal__dialog
   ).is-snapping {
     transition: none;
+  }
+}
+
+/* Search fields keep their normal surface on hover. On touch devices a
+   browser may retain :hover after a tap, so restore the resting chrome and
+   remove the focus ring as soon as the pointer is no longer active. */
+@media (max-width: 767px) and (hover: none) {
+  :where(.page-search-field, .data-table-toolbar__query):hover,
+  :where(.page-search-field, .data-table-toolbar__query):focus-within {
+    border-color: var(--j-color-border-strong) !important;
+    box-shadow: none !important;
+    background: var(--j-color-surface) !important;
+  }
+
+  :where(.page-search-field, .data-table-toolbar__query) > input:hover,
+  :where(.page-search-field, .data-table-toolbar__query) > input:focus,
+  :where(.page-search-field, .data-table-toolbar__query) > input:focus-visible {
+    border: 0 !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+    background: transparent !important;
   }
 }

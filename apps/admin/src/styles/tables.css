@@ -1230,3 +1230,22 @@
     animation: none;
   }
 }
+
+@media (max-width: 767px) and (hover: none) {
+  .admin-data-table tbody tr:hover td,
+  .admin-data-table tbody tr:focus-within td,
+  .admin-data-table tbody tr:hover,
+  .admin-data-table tbody tr:focus-within,
+  .admin-mobile-data-card:hover,
+  .admin-mobile-data-card:focus-within {
+    outline: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  .admin-data-table tbody tr:active,
+  .admin-data-table tbody tr:active td,
+  .admin-mobile-data-card:active {
+    background: var(--j-ref-slate-100) !important;
+  }
+}
