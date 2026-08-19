@@ -1,0 +1,179 @@
+/* Shared one-pixel control chrome. Compound search fields own the border on
+ * their wrapper so a native input cannot create a second focus surface. */
+:where(
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
+      [type='range']
+    ):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
+  select,
+  textarea,
+  .page-search-field,
+  .data-table-toolbar__query,
+  .admin-search-field,
+  .admin-select__trigger,
+  .data-table-toolbar-select__trigger,
+  .ui-page-size-select .admin-select__trigger,
+  .ui-page-size-select .admin-select__native
+) {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: var(--j-color-border-strong) !important;
+  border-radius: var(--j-radius-control) !important;
+  outline: 0;
+  box-shadow: none;
+  transition:
+    border-color var(--j-motion-fast),
+    box-shadow var(--j-motion-fast);
+}
+
+:where(
+  .page-search-field > input,
+  .data-table-toolbar__query > input,
+  .admin-search-field > input
+) {
+  min-width: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :where(
+      input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
+          [type='range']
+        ):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
+      select,
+      textarea,
+      .page-search-field,
+      .data-table-toolbar__query,
+      .admin-search-field,
+      .admin-select__trigger,
+      .data-table-toolbar-select__trigger,
+      .ui-page-size-select .admin-select__trigger,
+      .ui-page-size-select .admin-select__native
+    ):hover:not(:disabled) {
+    border-color: color-mix(
+      in srgb,
+      var(--j-color-brand) 42%,
+      var(--j-color-border-strong)
+    ) !important;
+    box-shadow: inset 0 0 0 1px
+      color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong)) !important;
+  }
+
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
+        [type='range']
+      ):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
+    select,
+    textarea,
+    .page-search-field:focus-within,
+    .data-table-toolbar__query:focus-within,
+    .admin-search-field:focus-within,
+    .admin-select__trigger:focus-visible,
+    .data-table-toolbar-select__trigger:focus-visible,
+    .ui-page-size-select .admin-select__trigger:focus-visible,
+    .ui-page-size-select .admin-select__native:focus-visible
+  ):focus,
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
+        [type='range']
+      ):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
+    select,
+    textarea,
+    .page-search-field:focus-within,
+    .data-table-toolbar__query:focus-within,
+    .admin-search-field:focus-within,
+    .admin-select__trigger:focus-visible,
+    .data-table-toolbar-select__trigger:focus-visible,
+    .ui-page-size-select .admin-select__trigger:focus-visible,
+    .ui-page-size-select .admin-select__native:focus-visible
+  ):focus-visible {
+    border-color: var(--j-color-brand) !important;
+    box-shadow: inset 0 0 0 1px var(--j-color-brand) !important;
+  }
+}
+
+:where(.page-search-field__clear, .data-table-toolbar__clear, .admin-search-clear) {
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+:where(button, a, summary):focus:not(:focus-visible) {
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 767px) and (hover: none) {
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
+        [type='range']
+      ):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
+    select,
+    textarea,
+    .page-search-field,
+    .data-table-toolbar__query,
+    .admin-search-field,
+    .admin-select__trigger,
+    .data-table-toolbar-select__trigger,
+    .ui-page-size-select .admin-select__trigger,
+    .ui-page-size-select .admin-select__native
+  ):hover,
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
+        [type='range']
+      ):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
+    select,
+    textarea,
+    .page-search-field,
+    .data-table-toolbar__query,
+    .admin-search-field,
+    .admin-select__trigger,
+    .data-table-toolbar-select__trigger,
+    .ui-page-size-select .admin-select__trigger,
+    .ui-page-size-select .admin-select__native
+  ):focus,
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
+        [type='range']
+      ):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
+    select,
+    textarea,
+    .page-search-field,
+    .data-table-toolbar__query,
+    .admin-search-field,
+    .admin-select__trigger,
+    .data-table-toolbar-select__trigger,
+    .ui-page-size-select .admin-select__trigger,
+    .ui-page-size-select .admin-select__native
+  ):focus-visible {
+    border-color: var(--j-color-border-strong) !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+  }
+
+  :where(button, a, summary):focus,
+  :where(button, a, summary):focus-visible {
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+
+  :where(
+    button:not(:disabled):not(.ui-button--primary):not(.primary-button):not(.ui-button--danger):not(
+        .danger-button
+      ),
+    a:not(.detail-primary-button):not(.ui-button--primary),
+    summary
+  ):active {
+    border-color: transparent !important;
+    background-color: var(--j-ref-slate-200) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(input, select, textarea, button, a) {
+    transition-duration: 0.01ms !important;
+  }
+}

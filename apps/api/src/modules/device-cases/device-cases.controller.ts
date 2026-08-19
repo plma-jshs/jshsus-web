@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Delete,
   Req,
   Res,
   UseGuards,
@@ -56,6 +57,21 @@ export class DeviceCasesController {
   @Get()
   list() {
     return this.deviceCasesService.list();
+  }
+
+  @Get('schedules')
+  schedules() {
+    return this.deviceCasesService.schedules();
+  }
+
+  @Post('schedules')
+  createSchedule(@Body() body: unknown) {
+    return this.deviceCasesService.createSchedule(body);
+  }
+
+  @Delete('schedules/:scheduleId')
+  deleteSchedule(@Param('scheduleId') scheduleId: string) {
+    return this.deviceCasesService.deleteSchedule(Number(scheduleId));
   }
 
   @Get(':id/commands')

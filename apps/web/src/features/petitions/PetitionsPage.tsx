@@ -12,7 +12,6 @@ import {
   SearchField,
 } from '../../components/page/PageScaffold';
 import { listBreadcrumbs } from '../../components/page/pageHierarchy';
-import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { getPetitions } from './api';
 import {
   getPetitionProgress,
@@ -21,14 +20,10 @@ import {
   type PetitionFilter,
   type PetitionSearchField,
   petitionStatusLabels,
+  formatPetitionDate,
+  petitionDeadlineLabel,
 } from './presentation';
 import '../../styles/petitions.css';
-
-const dateFormatter = createKoreanDateFormatter({
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
 
 export function PetitionsPage() {
   const navigate = useNavigate({ from: '/petitions' });
@@ -158,12 +153,6 @@ export function PetitionsPage() {
           }
         />
 
-        <div className="workflow-table-summary petition-table-summary" aria-live="polite">
-          {query.trim() || filter !== 'all'
-            ? `검색 결과 ${filtered.length}건`
-            : `총 ${petitions.length}건`}
-        </div>
-
         {petitionsQuery.isLoading ? (
           <PageState kind="loading" variant="table" title="청원·제안을 불러오는 중입니다." />
         ) : null}
@@ -231,13 +220,13 @@ export function PetitionsPage() {
                         <ContentBadges createdAt={petition.startsAt} />
                       </span>
                     </Link>
-                    <p className="petition-card__excerpt">{petition.content}</p>
                     <div className="petition-card__meta">
                       <time dateTime={petition.startsAt}>
-                        등록 {dateFormatter.format(new Date(petition.startsAt))}
+                        {formatPetitionDate(petition.startsAt)}
                       </time>
+                      <span aria-hidden="true">·</span>
                       <time dateTime={petition.endsAt}>
-                        마감 {dateFormatter.format(new Date(petition.endsAt))}
+                        {petitionDeadlineLabel(petition.endsAt)}
                       </time>
                     </div>
                   </div>

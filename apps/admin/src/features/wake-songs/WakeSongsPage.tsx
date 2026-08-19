@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Check, ExternalLink, X } from 'lucide-react';
+import { Check, Download, ExternalLink, Pencil, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   DialogActions,
@@ -9,8 +9,8 @@ import {
   AdminSearchField,
   RowActionButton,
   RowActions,
+  TableSelectionCheckbox,
   SegmentedTabs,
-  TableSummary,
   TableToolbar,
   useToast,
 } from '../../components/ui';
@@ -18,9 +18,18 @@ import { YouTubeSegmentPlayer } from '../../components/youtube/YouTubeSegmentPla
 import { wakeSongAdminApi } from './api';
 import { formatAdminDate } from '../../shared/lib/date';
 import type { WakeSongRequest, WakeSongRequestStatus } from './types';
+import { getAdminWakeSongWeek } from './week';
 import './wake-songs.css';
 
 type WakeSongReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+type WakeSongEditState = {
+  url: string;
+  startSeconds: string;
+  endSeconds: string;
+  playbackRate: string;
+  requestNote: string;
+};
 
 const statusLabels: Record<WakeSongRequestStatus, string> = {
   PENDING: '대기',
@@ -35,7 +44,6 @@ const statusOptions: Array<{ value: WakeSongReviewStatus | 'ALL'; label: string 
   { value: 'ALL', label: '전체' },
   { value: 'PENDING', label: '대기' },
   { value: 'APPROVED', label: '승인' },
-  { value: 'REJECTED', label: '반려' },
 ];
 
 function statusTone(status: WakeSongRequestStatus) {
@@ -51,6 +59,33 @@ function formatDuration(totalSeconds: number) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
+function downloadWakeSongMetadata(request: WakeSongRequest) {
+  // Requests only persist a YouTube segment; no audio binary is stored on the
+  // server. Download a portable edit manifest instead of pretending that a
+  // remote stream is an MP3 file.
+  const payload = [
+    `제목: ${request.videoTitle}`,
+    `URL: ${request.canonicalUrl}`,
+    `구간: ${formatDuration(request.startSeconds)}-${formatDuration(request.endSeconds)}`,
+    `재생 속도: ${request.playbackRate}배`,
+  ].join('\n');
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(new Blob([payload], { type: 'text/plain;charset=utf-8' }));
+  link.download = `${request.videoTitle.replace(/[\\/:*?"<>|]/g, '_')}.txt`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function editStateFromRequest(request: WakeSongRequest): WakeSongEditState {
+  return {
+    url: request.canonicalUrl,
+    startSeconds: String(request.startSeconds),
+    endSeconds: String(request.endSeconds),
+    playbackRate: String(request.playbackRate),
+    requestNote: request.requestNote,
+  };
+}
+
 export function WakeSongsPage() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -61,8 +96,15 @@ export function WakeSongsPage() {
   const [pageSize, setPageSize] = useState(20);
   const [sorting, setSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editState, setEditState] = useState<WakeSongEditState | null>(null);
+  const [editError, setEditError] = useState('');
   const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const [playerVolume, setPlayerVolume] = useState(100);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const selectedWeek = getAdminWakeSongWeek(new Date(), weekOffset);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -73,7 +115,16 @@ export function WakeSongsPage() {
   }, [query]);
 
   const requestsQuery = useQuery({
-    queryKey: ['admin', 'wake-songs', status, appliedQuery, page, pageSize, sorting],
+    queryKey: [
+      'admin',
+      'wake-songs',
+      status,
+      appliedQuery,
+      page,
+      pageSize,
+      sorting,
+      selectedWeek.startDate,
+    ],
     queryFn: () =>
       wakeSongAdminApi.list({
         status: status === 'ALL' ? undefined : status,
@@ -84,6 +135,7 @@ export function WakeSongsPage() {
           (sorting[0]?.id as 'status' | 'requester' | 'videoTitle' | 'createdAt' | undefined) ??
           'createdAt',
         sortOrder: sorting[0] ? (sorting[0].desc ? 'desc' : 'asc') : 'desc',
+        weekStart: selectedWeek.startDate,
       }),
   });
 
@@ -109,8 +161,76 @@ export function WakeSongsPage() {
     },
     onError: () => showToast({ title: '기상곡 신청을 반려하지 못했습니다.', tone: 'danger' }),
   });
+  const editMutation = useMutation({
+    mutationFn: ({ id, input }: { id: number; input: WakeSongEditState }) =>
+      wakeSongAdminApi.update(id, {
+        url: input.url,
+        startSeconds: Number(input.startSeconds),
+        endSeconds: Number(input.endSeconds),
+        playbackRate: Number(input.playbackRate),
+        requestNote: input.requestNote,
+      }),
+    onSuccess: async () => {
+      setEditingId(null);
+      setEditState(null);
+      setEditError('');
+      await refresh();
+      showToast({ title: '기상곡 신청을 수정했습니다.', tone: 'success' });
+    },
+    onError: (error) => {
+      setEditError(error instanceof Error ? error.message : '수정하지 못했습니다.');
+    },
+  });
+  const beginEdit = (request: WakeSongRequest) => {
+    setSelectedId(request.id);
+    setEditingId(request.id);
+    setEditState(editStateFromRequest(request));
+    setEditError('');
+  };
+  const downloadSelectedRequests = () => {
+    requestsQuery.data?.items
+      .filter((request) => selectedIds.has(request.id))
+      .forEach(downloadWakeSongMetadata);
+  };
 
   const columns: ColumnDef<WakeSongRequest>[] = [
+    {
+      id: 'selection',
+      header: () => (
+        <TableSelectionCheckbox
+          checked={
+            Boolean(pageData?.items.length) &&
+            pageData!.items.every((item) => selectedIds.has(item.id))
+          }
+          label="기상곡 신청 전체 선택"
+          onChange={(checked) =>
+            setSelectedIds((current) => {
+              const next = new Set(current);
+              pageData?.items.forEach((item) =>
+                checked ? next.add(item.id) : next.delete(item.id),
+              );
+              return next;
+            })
+          }
+        />
+      ),
+      enableSorting: false,
+      cell: ({ row }) => (
+        <TableSelectionCheckbox
+          checked={selectedIds.has(row.original.id)}
+          label={`${row.original.requesterName} 신청 선택`}
+          onChange={(checked) =>
+            setSelectedIds((current) => {
+              const next = new Set(current);
+              if (checked) next.add(row.original.id);
+              else next.delete(row.original.id);
+              return next;
+            })
+          }
+        />
+      ),
+      meta: { align: 'center', widthPreset: 'selection', hideOnMobile: true },
+    },
     {
       id: 'createdAt',
       accessorKey: 'createdAt',
@@ -125,7 +245,18 @@ export function WakeSongsPage() {
     {
       id: 'requester',
       accessorKey: 'requesterName',
-      header: '신청자',
+      header: () =>
+        selectedIds.size ? (
+          <button
+            className="wake-song-selected-download"
+            type="button"
+            onClick={downloadSelectedRequests}
+          >
+            <Download size={14} aria-hidden="true" /> 선택 다운로드 ({selectedIds.size})
+          </button>
+        ) : (
+          '신청자'
+        ),
       cell: ({ row }) => (
         <div className="wake-song-admin-cell">
           <strong>{row.original.requesterName}</strong>
@@ -133,13 +264,6 @@ export function WakeSongsPage() {
         </div>
       ),
       meta: { kind: 'person', width: 150, mobileRole: 'subtitle' },
-    },
-    {
-      id: 'candidateWeek',
-      header: '대상 주차',
-      cell: ({ row }) => row.original.candidateWeekLabel ?? '',
-      enableSorting: false,
-      meta: { align: 'center', width: 190 },
     },
     {
       id: 'videoTitle',
@@ -191,7 +315,28 @@ export function WakeSongsPage() {
       enableSorting: false,
       cell: ({ row }) => {
         const request = row.original;
-        if (request.status !== 'PENDING') return '';
+        if (request.status !== 'PENDING') {
+          return (
+            <RowActions mobileTitle={`${request.requesterName} 기상곡`}>
+              <RowActionButton
+                icon={<Download size={14} aria-hidden="true" />}
+                label="기상곡 편집 정보 다운로드"
+                mobileLabel="편집 정보"
+                variant="secondary"
+                onClick={() => downloadWakeSongMetadata(request)}
+              />
+              {request.status !== 'PLAYED' && request.status !== 'CANCELED' ? (
+                <RowActionButton
+                  icon={<Pencil size={14} aria-hidden="true" />}
+                  label="기상곡 수정"
+                  mobileLabel="수정"
+                  variant="secondary"
+                  onClick={() => beginEdit(request)}
+                />
+              ) : null}
+            </RowActions>
+          );
+        }
         return (
           <RowActions mobileTitle={`${request.requesterName} 기상곡`}>
             <RowActionButton
@@ -210,6 +355,13 @@ export function WakeSongsPage() {
                 setRejectionReason('');
               }}
             />
+            <RowActionButton
+              icon={<Pencil size={14} aria-hidden="true" />}
+              label="기상곡 수정"
+              mobileLabel="수정"
+              variant="secondary"
+              onClick={() => beginEdit(request)}
+            />
           </RowActions>
         );
       },
@@ -219,7 +371,6 @@ export function WakeSongsPage() {
 
   const pageData = requestsQuery.data;
   const selectedRequest = pageData?.items.find((request) => request.id === selectedId);
-
   return (
     <div className="admin-stack wake-song-admin">
       <section className="admin-panel wake-song-admin-list">
@@ -240,7 +391,29 @@ export function WakeSongsPage() {
           }}
           className="wake-song-admin-toolbar"
           summary={
-            <TableSummary count={pageData?.total} suffix="건" loading={requestsQuery.isPending} />
+            <div className="wake-song-week-navigator" aria-label="대상 주차">
+              <button
+                type="button"
+                aria-label="이전 주차"
+                onClick={() => {
+                  setWeekOffset((current) => current - 1);
+                  setPage(1);
+                }}
+              >
+                ‹
+              </button>
+              <strong>{selectedWeek.label}</strong>
+              <button
+                type="button"
+                aria-label="다음 주차"
+                onClick={() => {
+                  setWeekOffset((current) => current + 1);
+                  setPage(1);
+                }}
+              >
+                ›
+              </button>
+            </div>
           }
           mobileSheetTitle="기상곡 필터"
           mobileSearch={
@@ -303,12 +476,111 @@ export function WakeSongsPage() {
       {selectedRequest ? (
         <Drawer
           open
-          onClose={() => setSelectedId(null)}
+          onClose={() => {
+            setSelectedId(null);
+            setEditingId(null);
+            setEditState(null);
+            setEditError('');
+          }}
           title={selectedRequest.videoTitle}
           description={`신청 #${selectedRequest.id}`}
           className="wake-song-admin-drawer"
         >
           <div className="wake-song-admin-detail">
+            {editingId === selectedRequest.id && editState ? (
+              <form
+                className="wake-song-admin-edit-form"
+                onSubmit={(event: FormEvent<HTMLFormElement>) => {
+                  event.preventDefault();
+                  setEditError('');
+                  editMutation.mutate({ id: selectedRequest.id, input: editState });
+                }}
+              >
+                <label>
+                  <span>YouTube 주소</span>
+                  <input
+                    type="url"
+                    value={editState.url}
+                    onChange={(event) =>
+                      setEditState((current) =>
+                        current ? { ...current, url: event.target.value } : current,
+                      )
+                    }
+                    required
+                  />
+                </label>
+                <div className="wake-song-admin-edit-grid">
+                  <label>
+                    <span>시작(초)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={editState.startSeconds}
+                      onChange={(event) =>
+                        setEditState((current) =>
+                          current ? { ...current, startSeconds: event.target.value } : current,
+                        )
+                      }
+                      required
+                    />
+                  </label>
+                  <label>
+                    <span>종료(초)</span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={editState.endSeconds}
+                      onChange={(event) =>
+                        setEditState((current) =>
+                          current ? { ...current, endSeconds: event.target.value } : current,
+                        )
+                      }
+                      required
+                    />
+                  </label>
+                </div>
+                <label>
+                  <span>재생 속도</span>
+                  <select
+                    value={editState.playbackRate}
+                    onChange={(event) =>
+                      setEditState((current) =>
+                        current ? { ...current, playbackRate: event.target.value } : current,
+                      )
+                    }
+                  >
+                    {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
+                      <option key={rate} value={rate}>
+                        {rate}배
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>메모</span>
+                  <textarea
+                    value={editState.requestNote}
+                    maxLength={500}
+                    onChange={(event) =>
+                      setEditState((current) =>
+                        current ? { ...current, requestNote: event.target.value } : current,
+                      )
+                    }
+                  />
+                </label>
+                {editError ? <p className="form-error">{editError}</p> : null}
+                <DialogActions
+                  pending={editMutation.isPending}
+                  confirmLabel="저장"
+                  pendingLabel="저장 중"
+                  onClose={() => {
+                    setEditingId(null);
+                    setEditState(null);
+                    setEditError('');
+                  }}
+                />
+              </form>
+            ) : null}
             <YouTubeSegmentPlayer
               className="wake-song-admin-player"
               videoId={selectedRequest.youtubeVideoId}
@@ -316,7 +588,20 @@ export function WakeSongsPage() {
               endSeconds={selectedRequest.endSeconds}
               playbackRate={selectedRequest.playbackRate}
               title={`${selectedRequest.videoTitle} 미리보기`}
+              controls={0}
+              volume={playerVolume}
             />
+            <label className="wake-song-admin-volume">
+              <span>볼륨</span>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={playerVolume}
+                onChange={(event) => setPlayerVolume(Number(event.target.value))}
+              />
+              <output>{playerVolume}%</output>
+            </label>
             <div className="wake-song-admin-detail-copy">
               <dl>
                 <div>

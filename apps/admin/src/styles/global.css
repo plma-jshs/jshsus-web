@@ -7,6 +7,7 @@
 @import './tables.css';
 @import './overlays.css';
 @import './responsive.css';
+@import '@jshsus/ui/control-policy.css';
 
 /* Mobile touch policy: no sticky hover/focus chrome. Controls retain their
    resting border and only show a brief neutral pressed surface. */

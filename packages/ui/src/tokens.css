@@ -182,7 +182,7 @@
   :where(input, select, textarea):focus-visible {
     border-color: var(--j-color-focus);
     outline: 0;
-    box-shadow: var(--j-shadow-focus);
+    box-shadow: var(--j-shadow-focus-inset);
   }
 
   :where([tabindex='-1']):focus {

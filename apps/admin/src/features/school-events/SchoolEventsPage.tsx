@@ -1,4 +1,4 @@
-import type { ChangeEvent, FormEvent, MouseEvent, TouchEvent } from 'react';
+import type { ChangeEvent, FormEvent, TouchEvent } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react';
+import { CalendarGrid, type CalendarGridEvent, type CalendarGridPanel } from '@jshsus/ui';
 import {
   AdminSelect,
   ConfirmDialog,
@@ -28,11 +29,10 @@ import {
   type SchoolEventInput,
 } from '../../shared/api/adminApi';
 import { formatAdminDate } from '../../shared/lib/date';
+import '@jshsus/ui/calendar-grid.css';
 import './school-events.css';
 
 const KOREA_TIME_ZONE = 'Asia/Seoul';
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-
 type EventForm = {
   title: string;
   description: string;
@@ -131,12 +131,6 @@ function calendarDays(month: string) {
   const weekCount = Math.max(5, Math.ceil((weekday + lastDay) / 7));
   const start = shiftDate(first, -weekday);
   return Array.from({ length: weekCount * 7 }, (_, index) => shiftDate(start, index));
-}
-
-function calendarWeeks(days: string[]) {
-  return Array.from({ length: days.length / 7 }, (_, index) =>
-    days.slice(index * 7, index * 7 + 7),
-  );
 }
 
 function monthLabel(month: string) {
@@ -240,11 +234,6 @@ function eventTone(event: AdminSchoolCalendarEvent) {
   return category === 'observance' ? 'schedule' : 'bar';
 }
 
-function isInlineCalendarEvent(event: AdminSchoolCalendarEvent) {
-  const range = eventRange(event);
-  return range.startsAt === range.endsAt && event.category === 'observance';
-}
-
 function eventRange(event: AdminSchoolCalendarEvent) {
   return {
     startsAt: koreanDate(event.startsAt),
@@ -252,68 +241,17 @@ function eventRange(event: AdminSchoolCalendarEvent) {
   };
 }
 
-function weekEventSegments(
-  week: string[],
-  events: AdminSchoolCalendarEvent[],
-  gridStartDate: string,
-) {
-  const weekStart = week[0]!;
-  const weekEnd = week[6]!;
-  const lanes: Array<Array<{ end: number; start: number }>> = [];
-  return [...events]
-    .sort((left, right) => {
-      const leftRange = eventRange(left);
-      const rightRange = eventRange(right);
-      return (
-        leftRange.startsAt.localeCompare(rightRange.startsAt) ||
-        rightRange.endsAt.localeCompare(leftRange.endsAt) ||
-        left.title.localeCompare(right.title, 'ko-KR')
-      );
-    })
-    .flatMap((event) => {
-      const range = eventRange(event);
-      if (range.startsAt > weekEnd || range.endsAt < weekStart) return [];
-
-      const segmentStart = range.startsAt < weekStart ? weekStart : range.startsAt;
-      const segmentEnd = range.endsAt > weekEnd ? weekEnd : range.endsAt;
-      const start = week.indexOf(segmentStart);
-      const end = week.indexOf(segmentEnd);
-      if (start < 0 || end < 0) return [];
-
-      const isLaneFree = (lane: number) =>
-        (lanes[lane] ?? []).every((occupied) => end < occupied.start || start > occupied.end);
-      let lane = 0;
-      while (!isLaneFree(lane)) lane += 1;
-      lanes[lane] = [...(lanes[lane] ?? []), { end, start }];
-      const firstVisibleStart = range.startsAt < gridStartDate ? gridStartDate : range.startsAt;
-
-      return [
-        {
-          continuesAfter: range.endsAt > segmentEnd,
-          continuesBefore: range.startsAt < segmentStart,
-          endColumn: end + 1,
-          event,
-          isMultiDay: range.startsAt !== range.endsAt,
-          isInline: isInlineCalendarEvent(event),
-          lane,
-          showLabel: segmentStart === firstVisibleStart,
-          startColumn: start + 1,
-        },
-      ];
-    });
-}
-
-function clickedSegmentDate(
-  event: MouseEvent<HTMLButtonElement>,
-  week: string[],
-  startColumn: number,
-  endColumn: number,
-) {
-  const rect = event.currentTarget.getBoundingClientRect();
-  const length = endColumn - startColumn + 1;
-  const ratio = rect.width ? (event.clientX - rect.left) / rect.width : 0;
-  const offset = Math.min(length - 1, Math.max(0, Math.floor(ratio * length)));
-  return week[startColumn - 1 + offset] ?? week[startColumn - 1]!;
+function toCalendarGridEvent(event: AdminSchoolCalendarEvent): CalendarGridEvent {
+  const range = eventRange(event);
+  return {
+    id: event.id,
+    title: event.title,
+    startsAt: range.startsAt,
+    endsAt: range.endsAt,
+    category: normalizeCategory(event.category, event.isHoliday),
+    isHoliday: event.isHoliday,
+    isPrivate: !event.isPublic,
+  };
 }
 
 function eventCategoryLabel(event: AdminSchoolCalendarEvent) {
@@ -386,10 +324,6 @@ function CalendarCategorySelect({
   );
 }
 
-function weekdayOf(date: string) {
-  return new Date(`${date}T00:00:00Z`).getUTCDay();
-}
-
 function isMobileCalendar() {
   return window.matchMedia('(max-width: 767px)').matches;
 }
@@ -415,7 +349,6 @@ export function SchoolEventsPage() {
   const [slideDirection, setSlideDirection] = useState<'previous' | 'next' | null>(null);
 
   const days = useMemo(() => calendarDays(month), [month]);
-  const weeks = useMemo(() => calendarWeeks(days), [days]);
   const range = { from: days[0]!, to: days[days.length - 1]! };
   const calendarQuery = useQuery({
     queryKey: ['admin-school-calendar', range.from, range.to],
@@ -438,6 +371,11 @@ export function SchoolEventsPage() {
   );
   const selectedEvent = visibleEvents.find((event) => event.id === selectedEventId) ?? null;
   const selectedDateEvents = visibleEvents.filter((event) => occursOn(event, selectedDate));
+  const calendarGridPanel: CalendarGridPanel = {
+    month,
+    events: visibleEvents.map(toCalendarGridEvent),
+    isLoading: calendarQuery.isLoading,
+  };
 
   const saveMutation = useMutation({
     mutationFn: ({ id, input }: { id: number | null; input: SchoolEventInput }) =>
@@ -565,8 +503,8 @@ export function SchoolEventsPage() {
 
   return (
     <div className="school-calendar-page">
-      <section className="admin-panel school-calendar-panel">
-        <div className="school-calendar-toolbar">
+      <section className="admin-panel calendar-workspace school-calendar-panel">
+        <div className="calendar-toolbar school-calendar-toolbar">
           <div className="school-calendar-navigation">
             <button
               className="quiet-button icon-button"
@@ -673,11 +611,13 @@ export function SchoolEventsPage() {
           </div>
         ) : null}
 
-        <div className="school-calendar-workspace">
+        <div className="calendar-layout school-calendar-workspace">
           <div className="school-calendar-main">
             <div
               key={month}
-              className={`school-calendar-grid${slideDirection ? ` is-${slideDirection}` : ''}`}
+              className={`school-calendar-grid-transition${
+                slideDirection ? ` is-${slideDirection}` : ''
+              }`}
               aria-label={`${monthLabel(month)} 달력`}
               onAnimationEnd={(event) => {
                 if (event.target === event.currentTarget) setSlideDirection(null);
@@ -685,126 +625,46 @@ export function SchoolEventsPage() {
               onTouchStart={handleCalendarTouchStart}
               onTouchEnd={handleCalendarTouchEnd}
             >
-              {WEEKDAYS.map((weekday, index) => (
-                <div className={`school-calendar-weekday weekday-${index}`} key={weekday}>
-                  {weekday}
-                </div>
-              ))}
-              <div className="school-calendar-month">
-                {weeks.map((week) => (
-                  <div className="school-calendar-week" key={week[0]}>
-                    <div className="school-calendar-week-days">
-                      {week.map((date) => {
-                        const dateEvents = visibleEvents.filter((event) => occursOn(event, date));
-                        const inMonth = date.startsWith(month);
-                        // A selected day always belongs to the visible month;
-                        // adjacent-month cells must remain visually dimmed even
-                        // when their weekend/holiday styles are present.
-                        const isSelected = inMonth && date === selectedDate;
-                        const isToday = date === today;
-                        const weekday = weekdayOf(date);
-                        const isHoliday = dateEvents.some((event) => event.isHoliday);
-                        const hiddenEventCount = Math.max(0, dateEvents.length - 3);
-                        return (
-                          <article
-                            className={`school-calendar-day${inMonth ? '' : ' outside'}${isSelected ? ' selected' : ''}${isHoliday ? ' is-holiday' : ''}${weekday === 0 ? ' is-sunday' : ''}${weekday === 6 ? ' is-saturday' : ''}`}
-                            key={date}
-                          >
-                            <button
-                              className="school-calendar-day-trigger"
-                              type="button"
-                              onClick={() => {
-                                setSelectedDate(date);
-                                setSelectedEventId(null);
-                                if (isMobileCalendar()) setMobileDayOpen(dateEvents.length > 0);
-                              }}
-                              aria-label={`${date} 선택`}
-                            >
-                              <span className={`school-calendar-date${isToday ? ' today' : ''}`}>
-                                {Number(date.slice(-2))}
-                              </span>
-                            </button>
-                            {hiddenEventCount ? (
-                              <span className="school-calendar-more">+{hiddenEventCount}</span>
-                            ) : null}
-                          </article>
-                        );
-                      })}
-                    </div>
-                    <div className="school-calendar-events">
-                      {calendarQuery.isLoading
-                        ? [
-                            { column: '1 / 4', row: 1 },
-                            { column: '5 / 8', row: 2 },
-                          ].map((placeholder) => (
-                            <span
-                              className="school-calendar-event-skeleton"
-                              key={`${week[0]}-${placeholder.row}`}
-                              style={{
-                                gridColumn: placeholder.column,
-                                gridRow: placeholder.row,
-                              }}
-                            />
-                          ))
-                        : weekEventSegments(week, visibleEvents, days[0]!)
-                            .filter((segment) => segment.lane < 3)
-                            .map((segment) => (
-                              <button
-                                className={`school-calendar-event ${eventTone(segment.event)}${
-                                  segment.event.isPublic ? '' : ' private'
-                                }${segment.isMultiDay ? ' is-multi-day' : ''}${
-                                  segment.isInline ? ' is-inline' : ''
-                                }${
-                                  segment.showLabel ? '' : ' is-continuation'
-                                }${segment.continuesBefore ? ' starts-before' : ''}${
-                                  segment.continuesAfter ? ' ends-after' : ''
-                                }${segment.endColumn === 7 ? ' ends-week' : ''}`}
-                                type="button"
-                                key={`${segment.event.id}-${week[0]}`}
-                                style={{
-                                  gridColumn: `${segment.startColumn} / ${segment.endColumn + 1}`,
-                                  gridRow: segment.lane + 1,
-                                }}
-                                onClick={(event) => {
-                                  const clickedDate = clickedSegmentDate(
-                                    event,
-                                    week,
-                                    segment.startColumn,
-                                    segment.endColumn,
-                                  );
-                                  setSelectedDate(clickedDate);
-                                  if (isMobileCalendar()) {
-                                    setSelectedEventId(null);
-                                    setMobileDayOpen(true);
-                                  } else {
-                                    setSelectedEventId(segment.event.id);
-                                  }
-                                }}
-                                onMouseEnter={(event) =>
-                                  setPopover({
-                                    title: segment.event.title,
-                                    period: formatPeriod(segment.event),
-                                    tone: eventTone(segment.event),
-                                    x: event.clientX,
-                                    y: event.clientY,
-                                  })
-                                }
-                                onMouseMove={(event) =>
-                                  setPopover((current) =>
-                                    current
-                                      ? { ...current, x: event.clientX, y: event.clientY }
-                                      : current,
-                                  )
-                                }
-                                onMouseLeave={() => setPopover(null)}
-                              >
-                                {segment.showLabel ? <span>{segment.event.title}</span> : null}
-                              </button>
-                            ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <CalendarGrid
+                panels={[calendarGridPanel]}
+                selectedDate={selectedDate}
+                todayDate={today}
+                maxVisibleEventBars={3}
+                formatDateLabel={formatCalendarDate}
+                onDateSelect={(dateKey, eventCount) => {
+                  setSelectedDate(dateKey);
+                  setSelectedEventId(null);
+                  if (isMobileCalendar()) setMobileDayOpen(eventCount > 0);
+                }}
+                onEventSelect={({ event, dateKey }) => {
+                  setSelectedDate(dateKey);
+                  if (isMobileCalendar()) {
+                    setSelectedEventId(null);
+                    setMobileDayOpen(true);
+                  } else {
+                    setSelectedEventId(String(event.id));
+                  }
+                }}
+                onEventPointerEnter={({ event, clientX, clientY }) => {
+                  const originalEvent = visibleEvents.find(
+                    (candidate) => String(candidate.id) === String(event.id),
+                  );
+                  if (!originalEvent) return;
+                  setPopover({
+                    title: originalEvent.title,
+                    period: formatPeriod(originalEvent),
+                    tone: eventTone(originalEvent),
+                    x: clientX,
+                    y: clientY,
+                  });
+                }}
+                onEventPointerMove={({ clientX, clientY }) =>
+                  setPopover((current) =>
+                    current ? { ...current, x: clientX, y: clientY } : current,
+                  )
+                }
+                onEventPointerLeave={() => setPopover(null)}
+              />
             </div>
             {calendarQuery.isError ? (
               <div className="calendar-status error" role="alert">
@@ -819,7 +679,7 @@ export function SchoolEventsPage() {
               </div>
             ) : null}
           </div>
-          <aside className="school-calendar-side" aria-label="선택한 날짜 일정">
+          <aside className="calendar-agenda school-calendar-side" aria-label="선택한 날짜 일정">
             <section className="selected-day-panel">
               <div className="panel-title">
                 <div>

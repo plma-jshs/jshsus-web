@@ -93,6 +93,7 @@ export type PetitionSummary = DashboardPetition & {
 
 export type PetitionDetail = PetitionSummary & {
   canEdit: boolean;
+  participated?: boolean;
 };
 
 export type ThanksChallengeMessage = {
@@ -675,6 +676,13 @@ export type DeviceCaseCommandResult = {
   totalCases: number;
   updatedCount: number;
   excludedDisconnectedCount: number;
+};
+
+export type DeviceCaseSchedule = {
+  id: number;
+  deviceCaseId: number;
+  scheduledAt: string;
+  isOpen: boolean;
 };
 
 export type DormRoom = {

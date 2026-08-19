@@ -14,9 +14,10 @@ async function csrfToken() {
   return csrfTokenCache;
 }
 
-async function request<T>(path: string, body?: unknown): Promise<T> {
+async function request<T>(path: string, body?: unknown, method?: 'POST' | 'PUT'): Promise<T> {
+  const requestMethod = method ?? (body === undefined ? 'GET' : 'POST');
   const response = await fetch(path, {
-    method: body === undefined ? 'GET' : 'POST',
+    method: requestMethod,
     credentials: 'include',
     headers:
       body === undefined
@@ -38,6 +39,7 @@ export const wakeSongAdminApi = {
     query?: string;
     page: number;
     pageSize?: number;
+    weekStart?: string;
     sortBy?: 'status' | 'requester' | 'videoTitle' | 'createdAt';
     sortOrder?: 'asc' | 'desc';
   }) => {
@@ -49,6 +51,7 @@ export const wakeSongAdminApi = {
     if (input.query) search.set('query', input.query);
     if (input.sortBy) search.set('sortBy', input.sortBy);
     if (input.sortOrder) search.set('sortOrder', input.sortOrder);
+    if (input.weekStart) search.set('weekStart', input.weekStart);
     return request<WakeSongPage>(`/api/admin/wake-songs?${search.toString()}`);
   },
   approve: (id: number) =>
@@ -60,6 +63,21 @@ export const wakeSongAdminApi = {
     request<{ ok: true; id: number; status: 'REJECTED' }>(`/api/admin/wake-songs/${id}/reject`, {
       reason,
     }),
+  update: (
+    id: number,
+    input: {
+      url: string;
+      startSeconds: number;
+      endSeconds: number;
+      playbackRate: number;
+      requestNote: string;
+    },
+  ) =>
+    request<{ ok: true; id: number; status: WakeSongRequestStatus }>(
+      `/api/admin/wake-songs/${id}`,
+      input,
+      'PUT',
+    ),
   schedule: (id: number, scheduledAt: string) =>
     request<{ ok: true; id: number; status: 'SCHEDULED' }>(`/api/admin/wake-songs/${id}/schedule`, {
       scheduledAt,

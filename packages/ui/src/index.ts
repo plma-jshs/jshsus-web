@@ -32,5 +32,12 @@ export type {
 } from './ButtonPrimitive';
 export { SegmentedControl } from './SegmentedControl';
 export type { SegmentedControlOption } from './SegmentedControl';
+export { CalendarGrid } from './CalendarGrid';
+export type {
+  CalendarGridEvent,
+  CalendarGridEventPointer,
+  CalendarGridPanel,
+  CalendarGridProps,
+} from './CalendarGrid';
 export { ToastProvider, useToast } from './Toast';
 export type { ToastInput, ToastTone } from './Toast';

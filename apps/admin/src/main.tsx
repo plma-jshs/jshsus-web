@@ -6,6 +6,7 @@ import { router } from './app/router';
 import { ToastProvider } from './components/ui/Toast';
 import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
 import './styles/global.css';
+import '@jshsus/ui/control-policy.css';
 
 // A release replaces hashed Vite chunks atomically. A tab that was left open
 // across that replacement can otherwise request a chunk that no longer exists

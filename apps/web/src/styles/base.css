@@ -13,6 +13,7 @@
 html {
   width: 100%;
   max-width: 100%;
+  scrollbar-gutter: stable;
   scroll-behavior: smooth;
 }
 

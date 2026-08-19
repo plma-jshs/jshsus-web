@@ -274,6 +274,8 @@
   top: auto;
   left: auto;
   z-index: var(--j-layer-popover);
+  width: 174px;
+  max-width: calc(100vw - 24px);
 }
 
 .rich-text-toolbar-select--size .rich-text-toolbar-select__menu {

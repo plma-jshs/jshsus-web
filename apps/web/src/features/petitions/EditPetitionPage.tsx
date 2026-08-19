@@ -81,17 +81,9 @@ function PetitionEditForm({ petition }: { petition: PetitionDetail }) {
 
   return (
     <form className="petition-form" onSubmit={submit} noValidate>
-      <section className="petition-form-section" aria-labelledby="petition-basic-title">
-        <div className="petition-form-section__heading">
-          <span>1</span>
-          <div>
-            <h2 id="petition-basic-title">제안 정보</h2>
-          </div>
-        </div>
+      <section className="petition-form-section">
         <div className="petition-form-field">
-          <label className="sr-only" htmlFor="petition-title">
-            제안 제목
-          </label>
+          <label htmlFor="petition-title">제목</label>
           <input
             id="petition-title"
             value={title}
@@ -115,13 +107,8 @@ function PetitionEditForm({ petition }: { petition: PetitionDetail }) {
         </div>
       </section>
 
-      <section className="petition-form-section" aria-labelledby="petition-content-title">
-        <div className="petition-form-section__heading">
-          <span>2</span>
-          <div>
-            <h2 id="petition-content-title">제안 내용</h2>
-          </div>
-        </div>
+      <section className="petition-form-section">
+        <div className="petition-form-field__label-only">내용</div>
         <div className={`petition-rich-editor${attempted && errors.content ? ' is-invalid' : ''}`}>
           <RichTextEditor
             id="petition-content"

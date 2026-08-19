@@ -1,12 +1,18 @@
-import { useCallback, useMemo, useState } from 'react';
-import type { DeviceCase, DeviceCaseCommand, DeviceCaseControlCommand } from '@jshsus/types';
+import { useCallback, useMemo, useState, type FormEvent } from 'react';
+import type {
+  DeviceCase,
+  DeviceCaseCommand,
+  DeviceCaseControlCommand,
+  DeviceCaseSchedule,
+} from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { History, Lock, LockOpen } from 'lucide-react';
+import { CalendarClock, History, Lock, LockOpen, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   Button,
   Dialog,
+  AdminSelect,
   MobileSelectionActionBar,
   RowActionButton,
   RowActions,
@@ -48,6 +54,7 @@ function deviceCaseLabel(id: number) {
 }
 
 export function DeviceCasesPage() {
+  const [activeTab, setActiveTab] = useState<'cases' | 'schedules'>('cases');
   const [selectedCaseIds, setSelectedCaseIds] = useState<Set<number>>(() => new Set());
   const [logCaseId, setLogCaseId] = useState<number | null>(null);
   const [casePageSize, setCasePageSize] = useState(50);
@@ -64,6 +71,28 @@ export function DeviceCasesPage() {
     queryKey: ['device-case-commands', logCaseId],
     queryFn: () => api.deviceCaseCommands(logCaseId!),
     enabled: Boolean(logCaseId),
+  });
+  const schedulesQuery = useQuery({
+    queryKey: ['device-case-schedules'],
+    queryFn: api.deviceCaseSchedules,
+  });
+  const [scheduleDraft, setScheduleDraft] = useState({
+    deviceCaseId: 1,
+    scheduledAt: '',
+    isOpen: false,
+  });
+  const scheduleMutation = useMutation({
+    mutationFn: api.createDeviceCaseSchedule,
+    onSuccess: async () => {
+      setScheduleDraft((current) => ({ ...current, scheduledAt: '' }));
+      await queryClient.invalidateQueries({ queryKey: ['device-case-schedules'] });
+    },
+  });
+  const deleteScheduleMutation = useMutation({
+    mutationFn: api.deleteDeviceCaseSchedule,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['device-case-schedules'] });
+    },
   });
   const caseIdSet = useMemo(() => new Set(cases.map((deviceCase) => deviceCase.id)), [cases]);
   const selectedCaseIdsInList = useMemo(
@@ -286,66 +315,189 @@ export function DeviceCasesPage() {
           <p className="form-error">{describeAdminApiError(casesQuery.error, '휴대폰 보관함')}</p>
         ) : null}
         {commandError ? <p className="form-error">{commandError}</p> : null}
-        <TableToolbar
-          summary={
-            <>
-              <TableSummary count={cases.length} suffix="대" loading={casesQuery.isPending} />
-              {hasSelectedCases ? ` · 선택 ${selectedCount.toLocaleString('ko-KR')}대` : ''}
-            </>
-          }
-          className={`device-cases-toolbar${hasSelectedCases ? ' has-selection' : ''}`}
-          mobileSheet={false}
-        ></TableToolbar>
-        <MobileSelectionActionBar selectedCount={selectedCount}>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => runBulkCommand('open')}
-            disabled={isCommandPending}
+        <nav className="device-cases-tabs" aria-label="휴대폰 보관함 관리 메뉴">
+          <button
+            className={activeTab === 'cases' ? 'is-active' : undefined}
+            type="button"
+            onClick={() => setActiveTab('cases')}
           >
-            잠금 해제
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => runBulkCommand('close')}
-            disabled={isCommandPending}
+            보관함 관리
+          </button>
+          <button
+            className={activeTab === 'schedules' ? 'is-active' : undefined}
+            type="button"
+            onClick={() => setActiveTab('schedules')}
           >
-            잠금
-          </Button>
-        </MobileSelectionActionBar>
-        <DataTable
-          columns={caseColumns}
-          data={cases}
-          loading={casesQuery.isPending}
-          emptyText="등록된 휴대폰 보관함이 없습니다."
-          pageSize={casePageSize}
-          onPageSizeChange={setCasePageSize}
-          alwaysShowPagination
-          mobileLoadMore
-          caption="휴대폰 보관함 상태 목록"
-          renderMobileRow={(deviceCase) => (
-            <article className="device-mobile-card">
-              <header>
-                <TableSelectionCheckbox
-                  label={`${deviceCaseLabel(deviceCase.id)} 선택`}
-                  checked={selectedCaseIdsInList.has(deviceCase.id)}
-                  disabled={isCommandPending}
-                  onChange={(checked) => toggleCaseSelection(deviceCase.id, checked)}
-                />
-                <strong>{deviceCaseLabel(deviceCase.id)}</strong>
-                <span
-                  className={`device-status ${
-                    !deviceCase.isConnected || !deviceCase.isOpen ? 'danger' : 'success'
-                  }`}
+            <CalendarClock size={15} aria-hidden="true" /> cron 스케줄 관리
+          </button>
+        </nav>
+        {activeTab === 'schedules' ? (
+          <section className="device-schedule-panel" aria-labelledby="device-schedule-title">
+            <header>
+              <div>
+                <h2 id="device-schedule-title">자동 잠금 일정</h2>
+                <p>예약 시각이 되면 해당 보관함의 문 상태를 자동으로 변경합니다.</p>
+              </div>
+            </header>
+            <form
+              className="device-schedule-form"
+              onSubmit={(event: FormEvent) => {
+                event.preventDefault();
+                if (!scheduleDraft.scheduledAt) return;
+                scheduleMutation.mutate(scheduleDraft);
+              }}
+            >
+              <label>
+                <span>보관함</span>
+                <AdminSelect
+                  aria-label="예약 보관함"
+                  value={String(scheduleDraft.deviceCaseId)}
+                  onChange={(event) =>
+                    setScheduleDraft((current) => ({
+                      ...current,
+                      deviceCaseId: Number(event.target.value),
+                    }))
+                  }
                 >
-                  {!deviceCase.isConnected ? '연결 해제' : deviceCase.isOpen ? '열림' : '잠금'}
-                </span>
-                {renderCaseActions(deviceCase)}
-              </header>
-            </article>
-          )}
-        />
+                  {cases.map((deviceCase) => (
+                    <option key={deviceCase.id} value={deviceCase.id}>
+                      {deviceCaseLabel(deviceCase.id)}
+                    </option>
+                  ))}
+                </AdminSelect>
+              </label>
+              <label>
+                <span>동작</span>
+                <AdminSelect
+                  aria-label="예약 동작"
+                  value={scheduleDraft.isOpen ? 'open' : 'close'}
+                  onChange={(event) =>
+                    setScheduleDraft((current) => ({
+                      ...current,
+                      isOpen: event.target.value === 'open',
+                    }))
+                  }
+                >
+                  <option value="close">잠금</option>
+                  <option value="open">잠금 해제</option>
+                </AdminSelect>
+              </label>
+              <label>
+                <span>실행 시각</span>
+                <input
+                  type="datetime-local"
+                  value={scheduleDraft.scheduledAt}
+                  onChange={(event) =>
+                    setScheduleDraft((current) => ({
+                      ...current,
+                      scheduledAt: event.target.value,
+                    }))
+                  }
+                  required
+                />
+              </label>
+              <Button type="submit" variant="primary" disabled={scheduleMutation.isPending}>
+                일정 추가
+              </Button>
+            </form>
+            {schedulesQuery.isError ? (
+              <p className="form-error">스케줄을 불러오지 못했습니다.</p>
+            ) : schedulesQuery.isPending ? (
+              <div className="device-schedule-empty" aria-busy="true">
+                <span className="admin-loading-spinner" aria-label="로딩 중" />
+              </div>
+            ) : schedulesQuery.data?.length ? (
+              <ul className="device-schedule-list">
+                {schedulesQuery.data.map((schedule: DeviceCaseSchedule) => (
+                  <li key={schedule.id}>
+                    <div>
+                      <strong>{deviceCaseLabel(schedule.deviceCaseId)}</strong>
+                      <span>{schedule.isOpen ? '잠금 해제' : '잠금'}</span>
+                      <time dateTime={schedule.scheduledAt}>
+                        {formatDateTime(schedule.scheduledAt)}
+                      </time>
+                    </div>
+                    <button
+                      type="button"
+                      className="icon-button quiet-button"
+                      aria-label="예약 삭제"
+                      onClick={() => deleteScheduleMutation.mutate(schedule.id)}
+                      disabled={deleteScheduleMutation.isPending}
+                    >
+                      <Trash2 size={16} aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="device-schedule-empty">등록된 자동 잠금 일정이 없습니다.</p>
+            )}
+          </section>
+        ) : null}
+        {activeTab === 'cases' ? (
+          <>
+            <TableToolbar
+              summary={
+                <>
+                  <TableSummary count={cases.length} suffix="대" loading={casesQuery.isPending} />
+                  {hasSelectedCases ? ` · 선택 ${selectedCount.toLocaleString('ko-KR')}대` : ''}
+                </>
+              }
+              className={`device-cases-toolbar${hasSelectedCases ? ' has-selection' : ''}`}
+              mobileSheet={false}
+            ></TableToolbar>
+            <MobileSelectionActionBar selectedCount={selectedCount}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => runBulkCommand('open')}
+                disabled={isCommandPending}
+              >
+                잠금 해제
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => runBulkCommand('close')}
+                disabled={isCommandPending}
+              >
+                잠금
+              </Button>
+            </MobileSelectionActionBar>
+            <DataTable
+              columns={caseColumns}
+              data={cases}
+              loading={casesQuery.isPending}
+              emptyText="등록된 휴대폰 보관함이 없습니다."
+              pageSize={casePageSize}
+              onPageSizeChange={setCasePageSize}
+              alwaysShowPagination
+              mobileLoadMore
+              caption="휴대폰 보관함 상태 목록"
+              renderMobileRow={(deviceCase) => (
+                <article className="device-mobile-card">
+                  <header>
+                    <TableSelectionCheckbox
+                      label={`${deviceCaseLabel(deviceCase.id)} 선택`}
+                      checked={selectedCaseIdsInList.has(deviceCase.id)}
+                      disabled={isCommandPending}
+                      onChange={(checked) => toggleCaseSelection(deviceCase.id, checked)}
+                    />
+                    <strong>{deviceCaseLabel(deviceCase.id)}</strong>
+                    <span
+                      className={`device-status ${
+                        !deviceCase.isConnected || !deviceCase.isOpen ? 'danger' : 'success'
+                      }`}
+                    >
+                      {!deviceCase.isConnected ? '연결 해제' : deviceCase.isOpen ? '열림' : '잠금'}
+                    </span>
+                    {renderCaseActions(deviceCase)}
+                  </header>
+                </article>
+              )}
+            />
+          </>
+        ) : null}
       </section>
 
       <Dialog

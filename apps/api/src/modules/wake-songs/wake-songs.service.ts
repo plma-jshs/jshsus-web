@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as schema from '@jshsus/db';
-import { and, asc, desc, eq, inArray, like, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, like, lt, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import type { AuthSession } from '../auth/auth.service';
 import { auditValues, DatabaseService, type AppDatabase } from '../database/database.service';
@@ -44,9 +44,25 @@ const adminListQuerySchema = z.object({
   query: z.string().trim().max(100).optional().default(''),
   page: z.coerce.number().int().min(1).optional().default(1),
   pageSize: z.coerce.number().int().min(1).max(100).optional().default(20),
+  weekStart: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   sortBy: z.enum(['status', 'requester', 'videoTitle', 'createdAt']).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
+
+const KOREA_OFFSET_MS = 9 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function candidateWeekCreatedAtRange(weekStart: string) {
+  const [year, month, day] = weekStart.split('-').map(Number);
+  const end = new Date(Date.UTC(year, month - 1, day) - KOREA_OFFSET_MS);
+  if (Number.isNaN(end.getTime()) || end.toISOString().slice(0, 10) !== weekStart) {
+    throw new BadRequestException('Invalid candidate week.');
+  }
+  return { from: new Date(end.getTime() - 7 * DAY_MS), to: end };
+}
 
 type WakeSongRow = {
   id: number;
@@ -311,6 +327,63 @@ export class WakeSongsService {
     );
   }
 
+  async adminUpdate(id: number, body: unknown, actorId?: number | null) {
+    this.assertId(id);
+    const reviewerId = this.persistedActorId(actorId);
+    const input = this.parseRequestInput(body);
+    const metadata = await this.youtube.inspect(input.url);
+    const segment = this.validateSegment(input, metadata.durationSeconds);
+
+    return this.database.query('wake-songs.admin-update', async (db) =>
+      db.transaction(async (tx) => {
+        const [request] = await tx
+          .select({ status: schema.wakeSongRequests.status })
+          .from(schema.wakeSongRequests)
+          .where(eq(schema.wakeSongRequests.id, id))
+          .limit(1)
+          .for('update');
+
+        if (!request) throw new NotFoundException('기상곡 신청을 찾을 수 없습니다.');
+        if (request.status === 'PLAYED' || request.status === 'CANCELED') {
+          throw new ConflictException('이미 처리된 기상곡은 수정할 수 없습니다.');
+        }
+
+        await tx
+          .update(schema.wakeSongRequests)
+          .set({
+            youtubeVideoId: metadata.videoId,
+            canonicalUrl: metadata.canonicalUrl,
+            videoTitle: metadata.title.slice(0, 255),
+            channelTitle: metadata.channelTitle?.slice(0, 255),
+            videoDurationSeconds: metadata.durationSeconds,
+            startSeconds: input.startSeconds,
+            endSeconds: input.endSeconds,
+            playbackRateHundredths: segment.playbackRateHundredths,
+            effectiveDurationSeconds: segment.effectiveDurationSeconds,
+            requestNote: input.requestNote,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.wakeSongRequests.id, id));
+        await tx.insert(schema.wakeSongRequestEvents).values({
+          wakeSongRequestId: id,
+          actorId: reviewerId,
+          type: 'UPDATED',
+          note: '관리자 수정',
+        });
+        await tx.insert(schema.auditLogs).values(
+          auditValues({
+            actorId: reviewerId,
+            action: 'wake_song.request.admin_update',
+            targetType: 'wake_song_requests',
+            targetId: id,
+          }),
+        );
+
+        return { ok: true, id, status: request.status };
+      }),
+    );
+  }
+
   async cancel(id: number, session?: AuthSession) {
     this.assertId(id);
     const requesterId = this.persistedUserId(session);
@@ -349,7 +422,7 @@ export class WakeSongsService {
   async adminList(rawQuery: unknown): Promise<WakeSongPage> {
     const parsed = adminListQuerySchema.safeParse(rawQuery ?? {});
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
-    const { status, query, page, pageSize, sortBy, sortOrder } = parsed.data;
+    const { status, query, page, pageSize, sortBy, sortOrder, weekStart } = parsed.data;
 
     return this.database.query('wake-songs.admin-list', async (db) => {
       const conditions = [];
@@ -370,6 +443,13 @@ export class WakeSongsService {
             like(schema.wakeSongRequests.requestNote, pattern),
             like(schema.users.name, pattern),
           )!,
+        );
+      }
+      if (weekStart) {
+        const { from, to } = candidateWeekCreatedAtRange(weekStart);
+        conditions.push(
+          gte(schema.wakeSongRequests.createdAt, from),
+          lt(schema.wakeSongRequests.createdAt, to),
         );
       }
       const where = conditions.length ? and(...conditions) : undefined;

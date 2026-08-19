@@ -97,6 +97,10 @@
     width: 100%;
   }
 
+  .wake-song-admin-edit-grid {
+    grid-template-columns: 1fr;
+  }
+
   .wake-song-admin-list > .admin-data-table {
     padding-inline: 0;
   }
@@ -120,6 +124,50 @@
 .wake-song-admin-title small {
   color: var(--muted);
   font-size: 11px;
+}
+
+.wake-song-admin-edit-form {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-soft, #f7faf9);
+}
+
+.wake-song-admin-edit-form > label,
+.wake-song-admin-edit-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.wake-song-admin-edit-form label > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wake-song-admin-edit-form input,
+.wake-song-admin-edit-form select,
+.wake-song-admin-edit-form textarea {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.wake-song-admin-edit-form textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.wake-song-admin-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .wake-song-admin-title > button {
@@ -264,6 +312,77 @@
 .wake-song-admin-detail-copy > a:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.wake-song-admin-volume {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.wake-song-admin-volume input[type='range'] {
+  min-height: 0;
+  accent-color: var(--primary);
+}
+
+.wake-song-admin-volume output {
+  min-width: 36px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.wake-song-selected-download {
+  display: inline-flex;
+  padding: 0;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  color: var(--primary-dark);
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.wake-song-selected-download:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.wake-song-week-navigator {
+  display: inline-flex;
+  min-height: 34px;
+  padding: 0 4px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--primary-dark);
+  font-size: 12px;
+}
+
+.wake-song-week-navigator strong {
+  min-width: 170px;
+  text-align: center;
+}
+
+.wake-song-week-navigator button {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--muted);
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
 }
 
 .wake-song-admin-action-panel {

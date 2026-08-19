@@ -6,6 +6,7 @@ import { router } from './app/router';
 import { ToastProvider } from './components/feedback/Toast';
 import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
 import './styles/global.css';
+import '@jshsus/ui/control-policy.css';
 
 // Recover tabs that span an atomic release and still reference a removed
 // hashed Vite chunk. The short session guard prevents an infinite reload loop.

@@ -159,6 +159,28 @@ export class PetitionsService {
         .orderBy(desc(schema.petitionAnswers.answeredAt))
         .limit(1);
 
+      let participated = false;
+      if (actorId && actorId > 0) {
+        // Keep the detail query compatible with lightweight read-only database
+        // adapters used by exports/tests while still using the real participant
+        // table whenever the adapter exposes a Drizzle select builder.
+        const participantSelect = db.select({
+          petitionId: schema.petitionParticipants.petitionId,
+        });
+        if (participantSelect) {
+          const participantRows = await participantSelect
+            .from(schema.petitionParticipants)
+            .where(
+              and(
+                eq(schema.petitionParticipants.petitionId, id),
+                eq(schema.petitionParticipants.userId, actorId),
+              ),
+            )
+            .limit(1);
+          participated = Boolean(participantRows[0]);
+        }
+      }
+
       const summary = toPetitionSummary(petition, answer);
       return {
         ...summary,
@@ -169,6 +191,7 @@ export class PetitionsService {
           petition.status === 'open' &&
           petition.participantCount === 0,
         ),
+        participated,
       };
     });
   }

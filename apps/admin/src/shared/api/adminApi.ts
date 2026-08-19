@@ -30,6 +30,7 @@ import type {
   DeviceCaseCommand,
   DeviceCaseCommandResult,
   DeviceCaseControlCommand,
+  DeviceCaseSchedule,
   DormAssignment,
   DormDrawPreview,
   DormReport,
@@ -466,6 +467,18 @@ export const api = {
       method: 'POST',
       body: input,
     }),
+  deviceCaseSchedules: () => request<DeviceCaseSchedule[]>('/api/admin/device-cases/schedules'),
+  createDeviceCaseSchedule: (input: {
+    deviceCaseId: number;
+    scheduledAt: string;
+    isOpen: boolean;
+  }) =>
+    request<DeviceCaseSchedule>('/api/admin/device-cases/schedules', {
+      method: 'POST',
+      body: input,
+    }),
+  deleteDeviceCaseSchedule: (id: number) =>
+    request<{ ok: true }>(`/api/admin/device-cases/schedules/${id}`, { method: 'DELETE' }),
   dormRooms: (query: {
     year: number;
     semester: number;

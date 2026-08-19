@@ -8,19 +8,17 @@ import { ContentMoreMenu } from '../../components/page/ContentMoreMenu';
 import { PageScaffold, PageState } from '../../components/page/PageScaffold';
 import { detailBreadcrumbs } from '../../components/page/pageHierarchy';
 import { ApiError } from '../../shared/api/http';
-import { createKoreanDateFormatter } from '../../shared/lib/date';
 import { authActionRequiresLogin } from '../auth/action-access';
 import { getSession } from '../auth/api';
 import { parsePositiveRouteId } from '../../shared/lib/route';
 import { deletePetition, getPetition, participatePetition } from './api';
-import { getPetitionProgress, petitionStatusLabels } from './presentation';
+import {
+  formatPetitionDate,
+  getPetitionProgress,
+  petitionDeadlineLabel,
+  petitionStatusLabels,
+} from './presentation';
 import '../../styles/petitions.css';
-
-const dateFormatter = createKoreanDateFormatter({
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-});
 
 function PetitionDetailError({ status, onRetry }: { status?: number; onRetry: () => void }) {
   if (status === 404) {
@@ -162,8 +160,9 @@ export function PetitionDetailPage() {
             {petitionStatusLabels[petition.status]}
           </span>
           <span>{petition.authorName ?? '익명 제안'}</span>
-          <span>{dateFormatter.format(new Date(petition.startsAt))} 등록</span>
-          <span>{dateFormatter.format(new Date(petition.endsAt))} 마감</span>
+          <span>{formatPetitionDate(petition.startsAt)} 등록</span>
+          <span>{formatPetitionDate(petition.endsAt)} 마감</span>
+          <span className="petition-deadline-badge">{petitionDeadlineLabel(petition.endsAt)}</span>
         </>
       }
     >
@@ -207,7 +206,6 @@ export function PetitionDetailPage() {
           </div>
           {petition.status === 'open' ? (
             <div className="petition-participation-action">
-              <p>이 제안에 공감한다면 참여해 주세요.</p>
               {sessionQuery.isLoading ? (
                 <button className="detail-primary-button" type="button" disabled>
                   로그인 상태 확인 중
@@ -225,10 +223,18 @@ export function PetitionDetailPage() {
                   className="detail-primary-button"
                   type="button"
                   onClick={() => participateMutation.mutate()}
-                  disabled={participateMutation.isPending}
+                  disabled={participateMutation.isPending || petition.participated}
                 >
-                  <Users size={16} aria-hidden="true" />
-                  {participateMutation.isPending ? '참여 처리 중' : '청원 참여하기'}
+                  {petition.participated ? (
+                    <CheckCircle2 size={16} aria-hidden="true" />
+                  ) : (
+                    <Users size={16} aria-hidden="true" />
+                  )}
+                  {participateMutation.isPending
+                    ? '참여 처리 중'
+                    : petition.participated
+                      ? '참여 완료'
+                      : '청원 참여하기'}
                 </button>
               )}
             </div>
@@ -262,7 +268,7 @@ export function PetitionDetailPage() {
           <p>{petition.answer.content}</p>
           <footer>
             {petition.answer.authorName ?? '학교 담당자'} ·{' '}
-            {dateFormatter.format(new Date(petition.answer.answeredAt))}
+            {formatPetitionDate(petition.answer.answeredAt)}
           </footer>
         </section>
       ) : null}

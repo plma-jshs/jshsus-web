@@ -12,6 +12,7 @@
 @import './auth.css';
 @import './flat-pages.css';
 @import './dark-mode.css';
+@import '@jshsus/ui/control-policy.css';
 
 /* Mobile touch policy: controls keep their resting border, but tapping them
    must not leave a green hover/focus ring or a changed input surface. */

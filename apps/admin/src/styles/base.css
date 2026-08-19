@@ -37,6 +37,7 @@ html {
   font-family: var(--j-font-sans);
   color: var(--j-color-text);
   background: var(--j-color-page-admin);
+  scrollbar-gutter: stable;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }

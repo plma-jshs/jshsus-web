@@ -221,14 +221,14 @@
 .full-calendar__week-days > button.is-selected {
   position: relative;
   z-index: 1;
-  box-shadow: inset 0 0 0 1.5px rgb(13 148 136 / 40%);
+  box-shadow: inset 0 0 0 1px rgb(13 148 136 / 40%);
   background: #f4fbf9;
 }
 
 .full-calendar__week-days > button:focus-visible {
   z-index: 1;
   outline: 0;
-  box-shadow: inset 0 0 0 1.5px rgb(13 148 136 / 48%);
+  box-shadow: inset 0 0 0 1px rgb(13 148 136 / 48%);
 }
 
 .full-calendar__date {

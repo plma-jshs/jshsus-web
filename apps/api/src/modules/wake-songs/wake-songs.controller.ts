@@ -55,6 +55,17 @@ export class WakeSongsController {
     return this.wakeSongs.adminList(query);
   }
 
+  @Put('admin/wake-songs/:id')
+  @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
+  @RequirePermissions('wake_songs.review')
+  adminUpdate(
+    @Param('id') id: string,
+    @Body() body: unknown,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.wakeSongs.adminUpdate(Number(id), body, request.authSession?.userId);
+  }
+
   @Post('admin/wake-songs/:id/approve')
   @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
   @RequirePermissions('wake_songs.review')

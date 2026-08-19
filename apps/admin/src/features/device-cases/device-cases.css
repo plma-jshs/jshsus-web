@@ -2,6 +2,144 @@
   margin-top: 12px;
 }
 
+.device-cases-tabs {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  margin: 8px 0 18px;
+  padding: 4px;
+  gap: 4px;
+  border-radius: var(--j-radius-md);
+  background: var(--j-color-surface-subtle);
+}
+
+.device-cases-tabs button {
+  display: inline-flex;
+  min-height: 34px;
+  padding: 0 14px;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  border-radius: var(--j-radius-sm);
+  color: var(--j-color-text-muted);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.device-cases-tabs button.is-active {
+  color: var(--j-color-brand-strong);
+  background: var(--j-color-surface);
+  box-shadow: var(--j-shadow-card);
+}
+
+.device-schedule-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.device-schedule-panel > header h2,
+.device-schedule-panel > header p {
+  margin: 0;
+}
+
+.device-schedule-panel > header h2 {
+  font-size: 17px;
+}
+
+.device-schedule-panel > header p {
+  margin-top: 4px;
+  color: var(--j-color-text-muted);
+  font-size: 13px;
+}
+
+.device-schedule-form {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(130px, 0.8fr) minmax(220px, 1.1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.device-schedule-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--j-color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.device-schedule-form .admin-select,
+.device-schedule-form input {
+  width: 100%;
+}
+
+.device-schedule-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  gap: 8px;
+  list-style: none;
+}
+
+.device-schedule-list li {
+  display: flex;
+  min-height: 54px;
+  padding: 9px 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--j-color-border);
+  border-radius: var(--j-radius-md);
+  background: var(--j-color-surface);
+}
+
+.device-schedule-list li > div {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+}
+
+.device-schedule-list li span,
+.device-schedule-list li time {
+  color: var(--j-color-text-muted);
+  font-size: 12px;
+}
+
+.device-schedule-empty {
+  min-height: 100px;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  color: var(--j-color-text-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 767px) {
+  .device-cases-tabs {
+    width: 100%;
+  }
+
+  .device-cases-tabs button {
+    flex: 1 1 0;
+    justify-content: center;
+    padding-inline: 8px;
+  }
+
+  .device-schedule-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .device-schedule-form label:nth-child(3),
+  .device-schedule-form > button {
+    grid-column: 1 / -1;
+  }
+
+  .device-schedule-form > button {
+    width: 100%;
+  }
+}
+
 .device-control-actions {
   display: inline-flex;
   align-items: center;

@@ -21,6 +21,7 @@ type YouTubePlayer = {
   getCurrentTime: () => number;
   getIframe?: () => HTMLIFrameElement;
   getPlayerState: () => number;
+  setVolume?: (volume: number) => void;
   pauseVideo: () => void;
   playVideo: () => void;
   seekTo: (seconds: number, allowSeekAhead: boolean) => void;
@@ -34,11 +35,13 @@ type YouTubePlayerOptions = {
   host: string;
   videoId: string;
   playerVars: {
+    autohide: 1;
     cc_load_policy: 0;
     controls: 0 | 1;
     enablejsapi: 1;
     end: number;
     iv_load_policy: 3;
+    modestbranding: 1;
     origin: string;
     playsinline: 1;
     rel: 0;
@@ -134,6 +137,9 @@ export type YouTubeSegmentPlayerProps = {
   playbackRate: number;
   title: string;
   className?: string;
+  /** Native YouTube controls are opt-in for read-only admin previews. */
+  controls?: 0 | 1;
+  volume?: number;
 };
 
 function normalizedSegment(startSeconds: number, endSeconds: number) {
@@ -154,12 +160,14 @@ export function YouTubeSegmentPlayer({
   playbackRate,
   title,
   className,
+  controls = 1,
+  volume = 100,
 }: YouTubeSegmentPlayerProps) {
   const targetRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YouTubePlayer | null>(null);
   const readyRef = useRef(false);
   const monitorRef = useRef<number | null>(null);
-  const latestRef = useRef({ videoId, startSeconds, endSeconds, playbackRate, title });
+  const latestRef = useRef({ videoId, startSeconds, endSeconds, playbackRate, title, volume });
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
 
   const stopMonitoring = () => {
@@ -200,8 +208,8 @@ export function YouTubeSegmentPlayer({
   };
 
   useEffect(() => {
-    latestRef.current = { videoId, startSeconds, endSeconds, playbackRate, title };
-  }, [videoId, startSeconds, endSeconds, playbackRate, title]);
+    latestRef.current = { videoId, startSeconds, endSeconds, playbackRate, title, volume };
+  }, [videoId, startSeconds, endSeconds, playbackRate, title, volume]);
 
   useEffect(() => {
     let disposed = false;
@@ -216,11 +224,13 @@ export function YouTubeSegmentPlayer({
           host: 'https://www.youtube.com',
           videoId: initialVideoId,
           playerVars: {
+            autohide: 1,
             cc_load_policy: 0,
-            controls: 1,
+            controls,
             enablejsapi: 1,
             end: initialSegment.end,
             iv_load_policy: 3,
+            modestbranding: 1,
             origin: window.location.origin,
             playsinline: 1,
             rel: 0,
@@ -247,6 +257,7 @@ export function YouTubeSegmentPlayer({
               } else {
                 applyRate(event.target, latestRef.current.playbackRate);
               }
+              event.target.setVolume?.(Math.min(100, Math.max(0, latestRef.current.volume)));
               setStatus('ready');
             },
             onStateChange: (event) => {
@@ -304,6 +315,11 @@ export function YouTubeSegmentPlayer({
     const player = playerRef.current;
     if (readyRef.current && player) applyRate(player, playbackRate);
   }, [playbackRate]);
+
+  useEffect(() => {
+    const player = playerRef.current;
+    if (readyRef.current) player?.setVolume?.(Math.min(100, Math.max(0, volume)));
+  }, [volume]);
 
   useEffect(() => {
     const iframe = playerRef.current?.getIframe?.();

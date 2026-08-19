@@ -11,6 +11,28 @@ export const petitionStatusLabels: Record<PetitionSummary['status'], string> = {
   hidden: '숨김',
 };
 
+export function formatPetitionDate(value: string | Date, now = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+  const sameYear = date.getFullYear() === now.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return sameYear ? `${month}.${day}` : `${date.getFullYear()}.${month}.${day}`;
+}
+
+export function petitionDaysRemaining(value: string | Date, now = new Date()) {
+  const end = value instanceof Date ? value : new Date(value);
+  const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return Math.ceil((endDay - today) / 86_400_000);
+}
+
+export function petitionDeadlineLabel(value: string | Date, now = new Date()) {
+  const remaining = petitionDaysRemaining(value, now);
+  if (remaining > 0) return `D-${remaining}`;
+  if (remaining === 0) return 'D-DAY';
+  return `D+${Math.abs(remaining)}`;
+}
+
 export function getPetitionProgress(
   petition: Pick<PetitionSummary, 'participantCount' | 'threshold'>,
 ) {

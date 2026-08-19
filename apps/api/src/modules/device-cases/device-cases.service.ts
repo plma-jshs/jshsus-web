@@ -1,15 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import * as schema from '@jshsus/db';
 import type {
   DeviceCase,
   DeviceCaseCommand,
   DeviceCaseCommandResult,
   DeviceCaseControlCommand,
+  DeviceCaseSchedule,
 } from '@jshsus/types';
-import { desc, eq, inArray, sql } from 'drizzle-orm';
+import { asc, desc, eq, inArray, lte, sql } from 'drizzle-orm';
+import { z } from 'zod';
 import { auditValues, DatabaseService } from '../database/database.service';
 
 const DEFAULT_DEVICE_CASE_IDS = Array.from({ length: 24 }, (_, index) => index + 1);
+const scheduleInputSchema = z.object({
+  deviceCaseId: z.coerce.number().int().min(1).max(24),
+  scheduledAt: z.coerce.date(),
+  isOpen: z.coerce.boolean(),
+});
 
 const commandTargetState: Record<DeviceCaseControlCommand, boolean> = {
   open: true,
@@ -90,6 +97,93 @@ export class DeviceCasesService {
         createdAt: row.createdAt.toISOString(),
       }));
     });
+  }
+
+  async schedules(): Promise<DeviceCaseSchedule[]> {
+    await this.ensureDefaultCases();
+    return this.database.query('device-cases.schedules', async (db) => {
+      const rows = await db
+        .select({
+          id: schema.deviceCaseSchedules.id,
+          deviceCaseId: schema.deviceCaseSchedules.deviceCaseId,
+          scheduledAt: schema.deviceCaseSchedules.scheduledAt,
+          isOpen: schema.deviceCaseSchedules.isOpen,
+        })
+        .from(schema.deviceCaseSchedules)
+        .orderBy(asc(schema.deviceCaseSchedules.scheduledAt), asc(schema.deviceCaseSchedules.id));
+      return rows.map((row) => ({
+        ...row,
+        deviceCaseId: row.deviceCaseId ?? 0,
+        scheduledAt: row.scheduledAt.toISOString(),
+      }));
+    });
+  }
+
+  async createSchedule(rawInput: unknown): Promise<DeviceCaseSchedule> {
+    const parsed = scheduleInputSchema.safeParse(rawInput);
+    if (!parsed.success) throw new BadRequestException('Invalid device case schedule.');
+    await this.ensureDefaultCases();
+    const [deviceCase] = await this.database.db
+      .select({ id: schema.deviceCases.id })
+      .from(schema.deviceCases)
+      .where(eq(schema.deviceCases.id, parsed.data.deviceCaseId))
+      .limit(1);
+    if (!deviceCase) throw new NotFoundException('Device case not found.');
+    const [result] = await this.database.db
+      .insert(schema.deviceCaseSchedules)
+      .values({
+        deviceCaseId: parsed.data.deviceCaseId,
+        scheduledAt: parsed.data.scheduledAt,
+        isOpen: parsed.data.isOpen,
+        updatedAt: new Date(),
+      })
+      .$returningId();
+    return {
+      id: result.id,
+      deviceCaseId: parsed.data.deviceCaseId,
+      scheduledAt: parsed.data.scheduledAt.toISOString(),
+      isOpen: parsed.data.isOpen,
+    };
+  }
+
+  async deleteSchedule(id: number) {
+    await this.database.db
+      .delete(schema.deviceCaseSchedules)
+      .where(eq(schema.deviceCaseSchedules.id, id));
+    return { ok: true as const };
+  }
+
+  /** Execute one-shot schedules. The next API instance can safely retry after a crash. */
+  async runDueSchedules() {
+    const now = new Date();
+    const rows = await this.database.db
+      .select({
+        id: schema.deviceCaseSchedules.id,
+        deviceCaseId: schema.deviceCaseSchedules.deviceCaseId,
+        isOpen: schema.deviceCaseSchedules.isOpen,
+      })
+      .from(schema.deviceCaseSchedules)
+      .where(lte(schema.deviceCaseSchedules.scheduledAt, now))
+      .orderBy(asc(schema.deviceCaseSchedules.id))
+      .limit(50);
+    if (!rows.length) return { executed: 0 };
+    const [systemActor] = await this.database.db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(eq(schema.users.status, 'active'))
+      .orderBy(asc(schema.users.id))
+      .limit(1);
+    if (!systemActor) return { executed: 0 };
+    let executed = 0;
+    for (const row of rows) {
+      if (!row.deviceCaseId) continue;
+      await this.commandOne(row.deviceCaseId, systemActor.id, row.isOpen ? 'open' : 'close');
+      await this.database.db
+        .delete(schema.deviceCaseSchedules)
+        .where(eq(schema.deviceCaseSchedules.id, row.id));
+      executed += 1;
+    }
+    return { executed };
   }
 
   async commandOne(
