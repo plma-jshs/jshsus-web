@@ -97,7 +97,11 @@
     textarea,
     .ui-control
   ):hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong)) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--j-color-brand) 42%,
+    var(--j-color-border-strong)
+  ) !important;
   background-color: var(--j-color-surface) !important;
   box-shadow: inset 0 0 0 1px
     color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong)) !important;
@@ -143,12 +147,20 @@
 }
 
 :is(.admin-search-field, .admin-select__trigger):hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong)) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--j-color-brand) 42%,
+    var(--j-color-border-strong)
+  ) !important;
   box-shadow: inset 0 0 0 1px
     color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong)) !important;
 }
 
-:is(.admin-search-field:focus-within, .admin-select__trigger:focus-visible, .admin-select.is-open .admin-select__trigger) {
+:is(
+  .admin-search-field:focus-within,
+  .admin-select__trigger:focus-visible,
+  .admin-select.is-open .admin-select__trigger
+) {
   border-color: var(--j-color-brand) !important;
   box-shadow: var(--j-shadow-focus-inset) !important;
 }
@@ -179,7 +191,11 @@
 
 /* The mobile native select and pagination input are the same controls, just
    rendered through a different adapter. Keep their chrome in the contract. */
-:is(.admin-select--native-mobile .admin-select__native, .ui-page-size-select .admin-select__native, .ui-page-size-select .admin-select__trigger) {
+:is(
+  .admin-select--native-mobile .admin-select__native,
+  .ui-page-size-select .admin-select__native,
+  .ui-page-size-select .admin-select__trigger
+) {
   border-width: 1px !important;
   border-style: solid !important;
   border-color: var(--j-color-border-strong) !important;
@@ -187,14 +203,30 @@
   box-shadow: none !important;
 }
 
-:is(.admin-select--native-mobile .admin-select__native, .ui-page-size-select .admin-select__native, .ui-page-size-select .admin-select__trigger):hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong)) !important;
+:is(
+    .admin-select--native-mobile .admin-select__native,
+    .ui-page-size-select .admin-select__native,
+    .ui-page-size-select .admin-select__trigger
+  ):hover:not(:disabled) {
+  border-color: color-mix(
+    in srgb,
+    var(--j-color-brand) 42%,
+    var(--j-color-border-strong)
+  ) !important;
   box-shadow: inset 0 0 0 1px
     color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong)) !important;
 }
 
-:is(.admin-select--native-mobile .admin-select__native, .ui-page-size-select .admin-select__native, .ui-page-size-select .admin-select__trigger):focus,
-:is(.admin-select--native-mobile .admin-select__native, .ui-page-size-select .admin-select__native, .ui-page-size-select .admin-select__trigger):focus-visible {
+:is(
+  .admin-select--native-mobile .admin-select__native,
+  .ui-page-size-select .admin-select__native,
+  .ui-page-size-select .admin-select__trigger
+):focus,
+:is(
+  .admin-select--native-mobile .admin-select__native,
+  .ui-page-size-select .admin-select__native,
+  .ui-page-size-select .admin-select__trigger
+):focus-visible {
   border-color: var(--j-color-brand) !important;
   box-shadow: var(--j-shadow-focus-inset) !important;
 }
@@ -251,7 +283,13 @@
 
   /* Touch browsers may keep :hover after a tap. Neutral controls return to
      their resting surface; only :active below supplies pressed feedback. */
-  :where(.admin-mobile-menu, .admin-mobile-close, .ui-dialog__close, .ui-drawer__close, .admin-filter-sheet header button):hover:not(:disabled) {
+  :where(
+      .admin-mobile-menu,
+      .admin-mobile-close,
+      .ui-dialog__close,
+      .ui-drawer__close,
+      .admin-filter-sheet header button
+    ):hover:not(:disabled) {
     border-color: transparent !important;
     background-color: transparent !important;
   }
@@ -261,7 +299,13 @@
     background-color: var(--j-color-surface) !important;
   }
 
-  :where(.ui-button--secondary, .quiet-button, .table-action, .ui-button--ghost, .admin-row-action-button):hover:not(:disabled) {
+  :where(
+      .ui-button--secondary,
+      .quiet-button,
+      .table-action,
+      .ui-button--ghost,
+      .admin-row-action-button
+    ):hover:not(:disabled) {
     border-color: var(--j-color-border-strong) !important;
     background-color: var(--j-color-surface) !important;
   }
@@ -320,7 +364,9 @@
   }
 
   :where(
-    button:not(:disabled):not(.admin-filter-sheet__apply):not([class*='primary']):not([class*='danger']):not([class*='destructive']),
+    button:not(:disabled):not(.admin-filter-sheet__apply):not([class*='primary']):not(
+        [class*='danger']
+      ):not([class*='destructive']),
     a:not([class*='primary']):not([class*='danger']):not([class*='destructive']),
     summary
   ):active {

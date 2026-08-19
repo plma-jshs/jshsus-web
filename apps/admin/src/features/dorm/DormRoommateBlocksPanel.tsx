@@ -178,7 +178,7 @@ export function DormRoommateBlocksPanel({
             list="dorm-blocked-students"
             value={blockedInput}
             onChange={(event) => setBlockedInput(event.target.value)}
-                    placeholder="학번, 이름 검색"
+            placeholder="학번, 이름 검색"
             onClear={() => setBlockedInput('')}
           />
         </label>
