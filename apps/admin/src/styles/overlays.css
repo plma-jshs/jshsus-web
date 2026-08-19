@@ -493,6 +493,10 @@
   border-color: transparent;
   background: var(--j-color-surface-subtle);
   color: var(--j-color-text-secondary);
+  white-space: nowrap;
+  word-break: keep-all;
+  padding-inline: 8px;
+  gap: 4px;
 }
 
 .admin-filter-sheet__footer-actions .admin-filter-sheet__reset:hover,
@@ -534,6 +538,7 @@
     box-sizing: border-box;
     flex-direction: column;
     align-items: stretch;
+    padding: 10px 20px 18px;
     gap: 16px;
   }
 
@@ -1053,7 +1058,7 @@
   .ui-dialog__header,
   .ui-drawer__header {
     min-height: 64px;
-    padding: 22px 16px 16px;
+    padding: 28px 20px 12px;
     border-bottom: 0;
   }
 
@@ -1066,7 +1071,7 @@
 
   .ui-dialog__body,
   .ui-drawer__body {
-    padding: 16px;
+    padding: 10px 20px 16px;
   }
 
   /* Footer surfaces already reserve the safe area in their own padding. A
@@ -1096,7 +1101,7 @@
     width: 100%;
     display: flex;
     align-items: stretch;
-    gap: 8px;
+    gap: 4px;
   }
 
   .ui-dialog__footer > .ui-dialog-actions > .ui-button,

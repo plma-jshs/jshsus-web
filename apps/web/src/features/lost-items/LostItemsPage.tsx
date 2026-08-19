@@ -70,7 +70,7 @@ export function LostItemsPage() {
                 value={query}
                 onChange={setQuery}
                 label="분실물 검색"
-                placeholder="물건 이름 또는 장소 검색"
+                placeholder="물건, 장소 검색"
               />
               <PageFloatingAction to="/lost-items/new">작성</PageFloatingAction>
             </div>

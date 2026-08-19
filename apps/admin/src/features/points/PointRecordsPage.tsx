@@ -286,7 +286,7 @@ export function PointRecordsPage() {
               iconSize={17}
               aria-label="상벌점 기록 검색"
               value={search}
-              placeholder="학번, 이름, 사유 또는 처리자"
+              placeholder="학번, 이름, 사유, 처리자 검색"
               onChange={(event) => {
                 setSearch(event.target.value);
                 resetPage();

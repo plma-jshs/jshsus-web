@@ -85,7 +85,7 @@ export function DataTableToolbar<TField extends string = DataTableSearchField>({
   action,
   groupActionWithPageSize = false,
   showSearchField = true,
-  searchPlaceholder = '검색어를 입력하세요',
+  searchPlaceholder = '검색어 검색',
   onSearch,
   searchFieldOptions,
 }: DataTableToolbarProps<TField>) {

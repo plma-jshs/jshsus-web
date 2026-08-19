@@ -19,6 +19,12 @@
   width: min(100%, 240px);
 }
 
+/* Empty lists should communicate absence without leaving a full-page void. */
+.lost-items-view > .page-state--section {
+  min-height: 176px;
+  padding-block: 34px;
+}
+
 .lost-items-search-controls {
   display: flex;
   min-width: 0;
@@ -755,6 +761,11 @@
 
   .lost-items-view {
     padding: var(--j-space-4);
+  }
+
+  .lost-items-view > .page-state--section {
+    min-height: 144px;
+    padding-block: 26px;
   }
 
   .lost-items-view .page-toolbar {

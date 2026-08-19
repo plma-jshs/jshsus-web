@@ -80,18 +80,23 @@
 
 .jbs-card__body {
   display: grid;
+  min-height: 148px;
   padding: var(--j-space-4);
+  align-content: start;
+  grid-template-rows: minmax(2.8em, auto) minmax(2.9em, auto) auto;
   gap: var(--j-space-2);
 }
 
 .jbs-card__title {
+  display: -webkit-box;
   color: var(--j-color-text);
   font-size: var(--j-text-md);
   font-weight: var(--j-weight-semibold);
   line-height: var(--j-leading-snug);
   overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .jbs-card__title:hover {

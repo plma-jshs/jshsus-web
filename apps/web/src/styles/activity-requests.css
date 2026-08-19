@@ -111,6 +111,17 @@
   gap: 4px;
 }
 
+.activity-date-presets {
+  display: none;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .activity-date-presets {
+    display: none !important;
+  }
+}
+
 .activity-table-section .data-table-toolbar__query {
   width: min(30vw, 320px);
   min-width: 260px;
@@ -1283,6 +1294,15 @@
     justify-content: stretch;
   }
 
+  .activity-table-section .activity-date-presets {
+    display: block;
+    width: 100%;
+  }
+
+  .activity-table-section .activity-date-presets .filter-chips {
+    width: 100%;
+  }
+
   .activity-table-section .filter-chips button {
     min-width: 0;
     flex: 1 1 0;
@@ -1546,6 +1566,136 @@
 
   .activity-table-section .data-table-toolbar__query {
     width: 100%;
+    min-width: 0;
+  }
+}
+
+/* At tablet widths the activity list remains a compact table rather than a
+   mobile definition list. This keeps the 768–1023px layout scannable while
+   allowing the viewport to scroll horizontally when needed. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .activity-table-section .data-table-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .activity-table-section .data-table-toolbar__summary {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .activity-table-section .data-table-toolbar__controls {
+    display: grid;
+    width: 100%;
+    grid-column: 1;
+    grid-row: 2;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .activity-table-section .data-table-toolbar__filters {
+    display: contents;
+  }
+
+  .activity-table-section .data-table-toolbar__filters-heading,
+  .activity-table-section .data-table-toolbar__filters > .ui-filter-sheet__handle,
+  .activity-table-section .data-table-toolbar__filter-trigger {
+    display: none;
+  }
+
+  .activity-table-section .data-table-toolbar__query {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .activity-table-section .data-table-toolbar__extra {
+    width: auto;
+    min-width: 0;
+    grid-column: 1;
+    grid-row: 2;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .activity-table-section .data-table-toolbar__primary-actions {
+    display: contents;
+  }
+
+  .activity-table-section .data-table-toolbar__action {
+    width: auto;
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .activity-table-viewport {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .activity-table,
+  .activity-table tbody {
+    display: table;
+    width: 100%;
+    min-width: 760px;
+    table-layout: fixed;
+  }
+
+  .activity-table colgroup {
+    display: table-column-group;
+  }
+
+  .activity-table thead {
+    display: table-header-group;
+  }
+
+  .activity-table tbody {
+    display: table-row-group;
+  }
+
+  .activity-table tbody tr {
+    display: table-row;
+    padding: 0;
+  }
+
+  .activity-table td {
+    display: table-cell;
+    height: 56px;
+    min-height: 0;
+    padding: 10px 12px;
+    vertical-align: middle;
+    border: 0;
+    text-align: left;
+  }
+
+  .activity-table td::before {
+    display: none;
+    content: none;
+  }
+
+  .activity-table__period {
+    display: table-cell;
+    grid-template-columns: none;
+    font-size: inherit;
+  }
+
+  .activity-table__period::before {
+    display: none;
+  }
+
+  .activity-table__participants {
+    display: table-cell;
+  }
+
+  .activity-table__participants > span {
     min-width: 0;
   }
 }

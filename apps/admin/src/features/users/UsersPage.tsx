@@ -1108,7 +1108,7 @@ export function UsersPage() {
               value={filters.q ?? ''}
               aria-label="학생·교직원 검색"
               onChange={(event) => updateFilters({ q: event.currentTarget.value })}
-              placeholder="학번·교사번호, 이름 또는 역할 검색"
+              placeholder="학번, 교사번호, 이름, 역할 검색"
               onClear={() => updateFilters({ q: '' })}
             />
           }

@@ -29,6 +29,25 @@ const activityDayFormatter = createKoreanDateFormatter({
   day: '2-digit',
 });
 
+type ActivityDatePreset = 'today' | '7d' | 'month' | 'all';
+
+const activityDatePresetOptions: Array<{ value: ActivityDatePreset | ''; label: string }> = [
+  { value: 'today', label: '오늘' },
+  { value: '7d', label: '7일' },
+  { value: 'month', label: '1개월' },
+  { value: 'all', label: '전체' },
+];
+
+function activityDatePresetRange(preset: ActivityDatePreset) {
+  if (preset === 'all') return { from: '', to: '' };
+  const today = koreaDateInput();
+  const [year, month, day] = today.split('-').map(Number);
+  const start = new Date(Date.UTC(year, month - 1, day));
+  if (preset === '7d') start.setUTCDate(start.getUTCDate() - 6);
+  if (preset === 'month') start.setUTCMonth(start.getUTCMonth() - 1);
+  return { from: koreaDateInput(start), to: today };
+}
+
 function ActivityPrintMenu({ disabled, onOpen }: { disabled?: boolean; onOpen: () => void }) {
   return (
     <button
@@ -112,6 +131,14 @@ export function ActivityRequestsPage() {
   );
   const totalPages = Math.ceil(filtered.length / pageSize);
   const safePage = Math.min(page, Math.max(totalPages, 1));
+  const selectedDatePreset = useMemo<ActivityDatePreset | ''>(() => {
+    const match = activityDatePresetOptions.find((option) => {
+      if (!option.value) return false;
+      const range = activityDatePresetRange(option.value);
+      return range.from === startDate && range.to === endDate;
+    });
+    return match?.value ?? '';
+  }, [endDate, startDate]);
   useEffect(() => {
     if (!requestsQuery.isSuccess) return;
     const rawSize = new URLSearchParams(window.location.search).get('size');
@@ -209,6 +236,20 @@ export function ActivityRequestsPage() {
                   updateTableSearch({ page: 1 });
                 }}
               />
+              <div className="activity-date-presets" aria-label="빠른 기간 선택">
+                <FilterChips
+                  value={selectedDatePreset}
+                  options={activityDatePresetOptions}
+                  label="빠른 기간 선택"
+                  onChange={(preset) => {
+                    if (!preset) return;
+                    const range = activityDatePresetRange(preset);
+                    setStartDate(range.from);
+                    setEndDate(range.to);
+                    updateTableSearch({ page: 1 });
+                  }}
+                />
+              </div>
               <div className="activity-date-range" aria-label="활동 기간">
                 <label
                   className={`activity-date-control${startDate ? ' has-value' : ''}`}

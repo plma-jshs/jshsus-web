@@ -202,7 +202,7 @@ export function DormRoomPointsPanel({ rooms }: { rooms: DormRoom[] }) {
             list="dorm-point-rooms"
             value={roomInput}
             onChange={(event) => setRoomInput(event.target.value)}
-            placeholder="생활관 또는 호실 검색"
+            placeholder="생활관, 호실 검색"
             onClear={() => setRoomInput('')}
           />
         </label>

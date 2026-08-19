@@ -549,6 +549,93 @@
   box-shadow: none;
 }
 
+/* Compact tablet toolbars keep the search field on its own full-width row.
+   Filter controls and actions retain their intrinsic widths on the second
+   row instead of squeezing into the available search width. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .data-table-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .data-table-toolbar__summary {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .data-table-toolbar__controls {
+    display: grid;
+    width: 100%;
+    grid-column: 1;
+    grid-row: 2;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .data-table-toolbar__filters {
+    display: contents;
+  }
+
+  .data-table-toolbar__filters-heading,
+  .data-table-toolbar__filters > .ui-filter-sheet__handle,
+  .data-table-toolbar__filter-trigger {
+    display: none;
+  }
+
+  .data-table-toolbar__query {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .data-table-toolbar__extra {
+    width: auto;
+    min-width: 0;
+    grid-column: 1;
+    grid-row: 2;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .data-table-toolbar__primary-actions {
+    display: contents;
+  }
+
+  .data-table-toolbar__action {
+    width: auto;
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .data-table-toolbar--search-only .data-table-toolbar__query {
+    grid-column: 1 / -1;
+  }
+
+  /* Tablet tables retain their row structure but drop low-priority metadata
+     so the important title/content columns have room to breathe. */
+  .data-table .data-table__number-column,
+  .data-table .data-table__number,
+  .data-table .data-table__author-column,
+  .data-table .data-table__author,
+  .data-table .data-table__views-column,
+  .data-table .data-table__views {
+    display: none;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding-inline: 12px;
+  }
+}
+
 .data-table-viewport {
   min-width: 0;
   margin-top: var(--j-space-3);

@@ -134,6 +134,20 @@ function RouteNotFound() {
   );
 }
 
+function RoutePending() {
+  return (
+    <main className="route-pending" aria-busy="true" aria-label="페이지를 불러오는 중">
+      <span className="sr-only">페이지를 불러오는 중입니다.</span>
+      <div className="route-pending__skeleton" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
+    </main>
+  );
+}
+
 function RouteError({ reset }: ErrorComponentProps) {
   return (
     <div className="route-fallback">
@@ -569,6 +583,9 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
+  defaultPendingComponent: RoutePending,
+  defaultPendingMs: 0,
+  defaultPendingMinMs: 160,
 });
 
 declare module '@tanstack/react-router' {

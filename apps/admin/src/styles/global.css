@@ -10,7 +10,7 @@
 
 /* Mobile touch policy: no sticky hover/focus chrome. Controls retain their
    resting border and only show a brief neutral pressed surface. */
-@media (max-width: 767px) and (hover: none) {
+@media (max-width: 767px) {
   .admin-main
     :where(
       input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
@@ -33,10 +33,7 @@
   .ui-control:focus,
   .ui-control:focus-visible,
   .admin-search-field:hover,
-  .admin-search-field:focus-within,
-  .admin-select__trigger:hover,
-  .admin-select__trigger:focus,
-  .admin-select__trigger:focus-visible {
+  .admin-search-field:focus-within {
     border-color: var(--line-strong) !important;
     outline: 0 !important;
     box-shadow: none !important;
@@ -64,5 +61,269 @@
     box-shadow: none !important;
     outline: 0 !important;
     background: transparent !important;
+  }
+}
+/*
+ * Admin control interaction contract
+ * -----------------------------------
+ * All form controls, custom select triggers and controls rendered inside a
+ * dialog/sheet use one physical border. Hover and focus only change the
+ * border colour and the same one-pixel inset ring; no component is allowed to
+ * add a blurred/outer focus halo. Keeping this contract here (after the
+ * shared style imports) prevents feature pages from drifting apart again.
+ */
+:is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+    select,
+    textarea,
+    .ui-control
+  ) {
+  border: 1px solid var(--j-color-border-strong) !important;
+  border-radius: var(--j-radius-control) !important;
+  outline: 0 !important;
+  background-color: var(--j-color-surface) !important;
+  box-shadow: none !important;
+  transition:
+    border-color var(--j-motion-fast),
+    background-color var(--j-motion-fast),
+    box-shadow var(--j-motion-fast);
+}
+
+:is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+    select,
+    textarea,
+    .ui-control
+  ):hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong)) !important;
+  background-color: var(--j-color-surface) !important;
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong)) !important;
+}
+
+:is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+    select,
+    textarea,
+    .ui-control
+  ):focus,
+:is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+    select,
+    textarea,
+    .ui-control
+  ):focus-visible {
+  border-color: var(--j-color-brand) !important;
+  background-color: var(--j-color-surface) !important;
+  box-shadow: var(--j-shadow-focus-inset) !important;
+}
+
+:is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+  :where(input[type='checkbox'], input[type='radio']):focus-visible {
+  outline: 0 !important;
+  border-color: var(--j-color-brand) !important;
+  box-shadow: var(--j-shadow-focus-inset) !important;
+}
+
+/* Wrapper-owned controls (the native input inside a search field remains
+   borderless by design). */
+:is(.admin-search-field, .admin-select__trigger) {
+  border: 1px solid var(--j-color-border-strong) !important;
+  border-radius: var(--j-radius-control) !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  transition:
+    border-color var(--j-motion-fast),
+    background-color var(--j-motion-fast),
+    box-shadow var(--j-motion-fast);
+}
+
+:is(.admin-search-field, .admin-select__trigger):hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong)) !important;
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong)) !important;
+}
+
+:is(.admin-search-field:focus-within, .admin-select__trigger:focus-visible, .admin-select.is-open .admin-select__trigger) {
+  border-color: var(--j-color-brand) !important;
+  box-shadow: var(--j-shadow-focus-inset) !important;
+}
+
+.admin-search-field > input,
+.admin-search-field > input:hover,
+.admin-search-field > input:focus,
+.admin-search-field > input:focus-visible {
+  min-height: calc(var(--control-height) - 2px) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.admin-search-clear:focus,
+.admin-search-clear:focus-visible,
+.ui-dialog__close:focus,
+.ui-dialog__close:focus-visible,
+.ui-drawer__close:focus,
+.ui-drawer__close:focus-visible,
+.admin-filter-sheet header button:focus,
+.admin-filter-sheet header button:focus-visible {
+  outline: 0 !important;
+  box-shadow: var(--j-shadow-focus-inset) !important;
+}
+
+/* The mobile native select and pagination input are the same controls, just
+   rendered through a different adapter. Keep their chrome in the contract. */
+:is(.admin-select--native-mobile .admin-select__native, .ui-page-size-select .admin-select__native, .ui-page-size-select .admin-select__trigger) {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: var(--j-color-border-strong) !important;
+  border-radius: var(--j-radius-control) !important;
+  box-shadow: none !important;
+}
+
+:is(.admin-select--native-mobile .admin-select__native, .ui-page-size-select .admin-select__native, .ui-page-size-select .admin-select__trigger):hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong)) !important;
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong)) !important;
+}
+
+:is(.admin-select--native-mobile .admin-select__native, .ui-page-size-select .admin-select__native, .ui-page-size-select .admin-select__trigger):focus,
+:is(.admin-select--native-mobile .admin-select__native, .ui-page-size-select .admin-select__native, .ui-page-size-select .admin-select__trigger):focus-visible {
+  border-color: var(--j-color-brand) !important;
+  box-shadow: var(--j-shadow-focus-inset) !important;
+}
+
+/* Touch screens must not retain a hover/focus state after a tap. Inputs keep
+   their resting surface; only actionable buttons/links receive a brief slate
+   pressed surface. Primary/danger actions retain their semantic active colour
+   from buttons.css. */
+@media (max-width: 767px) {
+  :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+    :where(
+      input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+      select,
+      textarea,
+      .ui-control,
+      .admin-search-field,
+      .admin-select--native-mobile .admin-select__native,
+      .ui-page-size-select .admin-select__native,
+      .ui-page-size-select .admin-select__trigger
+    ):hover,
+  :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+    :where(
+      input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+      select,
+      textarea,
+      .ui-control,
+      .admin-search-field,
+      .admin-select--native-mobile .admin-select__native,
+      .ui-page-size-select .admin-select__native,
+      .ui-page-size-select .admin-select__trigger
+    ):focus,
+  :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+    :where(
+      input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+      select,
+      textarea,
+      .ui-control,
+      .admin-search-field,
+      .admin-select--native-mobile .admin-select__native,
+      .ui-page-size-select .admin-select__native,
+      .ui-page-size-select .admin-select__trigger
+    ):focus-visible {
+    border-color: var(--j-color-border-strong) !important;
+    outline: 0 !important;
+    background-color: var(--j-color-surface) !important;
+    box-shadow: none !important;
+  }
+
+  :where(button, a, summary):focus,
+  :where(button, a, summary):focus-visible {
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Touch browsers may keep :hover after a tap. Neutral controls return to
+     their resting surface; only :active below supplies pressed feedback. */
+  :where(.admin-mobile-menu, .admin-mobile-close, .ui-dialog__close, .ui-drawer__close, .admin-filter-sheet header button):hover:not(:disabled) {
+    border-color: transparent !important;
+    background-color: transparent !important;
+  }
+
+  :where(.admin-mobile-filter-button, .admin-mobile-sort-direction):hover:not(:disabled) {
+    border-color: var(--j-color-border-strong) !important;
+    background-color: var(--j-color-surface) !important;
+  }
+
+  :where(.ui-button--secondary, .quiet-button, .table-action, .ui-button--ghost, .admin-row-action-button):hover:not(:disabled) {
+    border-color: var(--j-color-border-strong) !important;
+    background-color: var(--j-color-surface) !important;
+  }
+
+  :where(.ui-button--primary, .primary-button):hover:not(:disabled) {
+    border-color: var(--action-primary) !important;
+    background-color: var(--action-primary) !important;
+  }
+
+  :where(.ui-button--danger, .danger-button):hover:not(:disabled) {
+    border-color: var(--danger) !important;
+    background-color: var(--danger) !important;
+  }
+
+  :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+    .admin-select__trigger:hover:not(:disabled),
+  :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+    .admin-select__trigger:focus,
+  :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+    .admin-select__trigger:focus-visible {
+    border-color: var(--j-color-border-strong) !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+
+  :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+    .operation-status-select
+    .admin-select__trigger:hover:not(:disabled),
+  :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+    .operation-status-select
+    .admin-select__trigger:focus,
+  :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+    .operation-status-select
+    .admin-select__trigger:focus-visible {
+    border-color: transparent !important;
+  }
+
+  :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+    .admin-select:not(.operation-status-select)
+    .admin-select__trigger:hover:not(:disabled),
+  :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+    .admin-select:not(.operation-status-select)
+    .admin-select__trigger:focus,
+  :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+    .admin-select:not(.operation-status-select)
+    .admin-select__trigger:focus-visible {
+    background-color: var(--j-color-surface) !important;
+  }
+
+  :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+    :where(input[type='checkbox'], input[type='radio']):focus,
+  :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
+    :where(input[type='checkbox'], input[type='radio']):focus-visible {
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+
+  :where(
+    button:not(:disabled):not(.admin-filter-sheet__apply):not([class*='primary']):not([class*='danger']):not([class*='destructive']),
+    a:not([class*='primary']):not([class*='danger']):not([class*='destructive']),
+    summary
+  ):active {
+    background-color: var(--j-ref-slate-200) !important;
   }
 }

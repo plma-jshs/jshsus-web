@@ -205,7 +205,7 @@ export function PointReasonsPage() {
                 className="point-filter point-filter--search"
                 aria-label="사유 검색"
                 value={search}
-                placeholder="사유 또는 사유코드"
+                placeholder="사유, 사유코드 검색"
                 onChange={(event) => {
                   setSearch(event.target.value);
                   resetPage();

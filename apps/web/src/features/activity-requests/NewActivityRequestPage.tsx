@@ -231,7 +231,7 @@ export function NewActivityRequestPage() {
                 type="search"
                 value={studentSearch}
                 onChange={(event) => setStudentSearch(event.target.value)}
-                placeholder="학번 또는 이름을 입력하세요"
+                placeholder="학번, 이름 검색"
                 autoComplete="off"
               />
             </div>

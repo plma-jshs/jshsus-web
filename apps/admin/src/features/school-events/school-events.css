@@ -1359,6 +1359,84 @@
   }
 }
 
+/* Month context always wins over weekday colour.  Dates carried in from the
+   previous/next month are intentionally quiet so the active month remains the
+   visual anchor, even when those cells fall on Sunday, Saturday, or a holiday. */
+.school-calendar-day.outside,
+.school-calendar-day.outside.selected {
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+.school-calendar-day.outside :is(.school-calendar-date, .school-calendar-more),
+.school-calendar-day.outside.is-sunday .school-calendar-date,
+.school-calendar-day.outside.is-saturday .school-calendar-date,
+.school-calendar-day.outside.is-holiday .school-calendar-date {
+  color: #cbd5e1 !important;
+}
+
+.school-calendar-day.outside .school-calendar-date.today {
+  color: #cbd5e1 !important;
+  background: transparent !important;
+  font-weight: 500;
+}
+
+.school-calendar-day.outside .school-calendar-event {
+  opacity: 0.42;
+}
+
+.school-calendar-day.is-holiday:not(.outside) {
+  background: #fff1f2;
+}
+
+.school-calendar-day.is-holiday:not(.outside) .school-calendar-date:not(.today) {
+  color: #be123c;
+}
+
+.school-calendar-event.holiday {
+  color: #be123c;
+  background: #fff1f2;
+}
+
+@media (max-width: 767px) {
+  .school-event-editor-dialog .ui-dialog__header {
+    min-height: 64px;
+    padding: 28px 20px 12px;
+  }
+
+  .school-event-editor-dialog .ui-dialog__body {
+    padding: 10px 20px 16px;
+  }
+
+  /* These route-specific classes use the same Dialog/useAnimatedDialog pair
+     as every other admin sheet. Keeping an explicit selector here prevents a
+     feature rule from accidentally masking the shared enter/exit keyframes. */
+  .school-calendar-mobile-day-dialog[open],
+  .school-event-editor-dialog[open] {
+    will-change: transform, opacity;
+    animation: admin-bottom-sheet-enter 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .school-calendar-mobile-day-dialog.is-closing,
+  .school-event-editor-dialog.is-closing {
+    animation: admin-bottom-sheet-exit 180ms cubic-bezier(0.4, 0, 1, 1) both !important;
+  }
+
+  .school-calendar-mobile-day-dialog.is-closing::backdrop,
+  .school-event-editor-dialog.is-closing::backdrop {
+    animation: admin-bottom-sheet-backdrop-exit 180ms ease both;
+  }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+  .school-calendar-mobile-day-dialog[open],
+  .school-event-editor-dialog[open],
+  .school-calendar-mobile-day-dialog.is-closing,
+  .school-event-editor-dialog.is-closing {
+    animation: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .school-calendar-grid.is-next,
   .school-calendar-grid.is-previous {

@@ -137,7 +137,7 @@ export function PointsOverviewPage() {
               className="point-filter point-filter--search"
               aria-label="학생 검색"
               value={search}
-              placeholder="학번 또는 이름"
+              placeholder="학번, 이름 검색"
               onChange={(event) => {
                 setSearch(event.target.value);
                 resetPage();

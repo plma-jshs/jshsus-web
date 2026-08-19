@@ -70,8 +70,8 @@
 }
 
 .admin-search-field:focus-within {
-  border-color: var(--j-color-focus) !important;
-  box-shadow: var(--j-shadow-focus) !important;
+  border-color: var(--j-color-brand) !important;
+  box-shadow: var(--j-shadow-focus-inset) !important;
   background: var(--surface) !important;
 }
 

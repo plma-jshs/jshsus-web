@@ -1,5 +1,5 @@
 import { MoreVertical } from 'lucide-react';
-import { useSheetDrag } from '@jshsus/ui';
+import { SheetFrame } from '@jshsus/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button, type ButtonProps } from './Button';
 import { useAnimatedDialog } from './useAnimatedDialog';
@@ -17,7 +17,6 @@ export function RowActions({
 }) {
   const [open, setOpen] = useState(false);
   const { ref: dialogRef, requestClose } = useAnimatedDialog(open, () => setOpen(false));
-  const { rootRef: sheetRootRef, handleProps } = useSheetDrag<HTMLDivElement>(requestClose);
 
   useEffect(() => {
     if (!open) return;
@@ -50,11 +49,16 @@ export function RowActions({
           if (event.target === event.currentTarget) requestClose();
         }}
       >
-        <div className="admin-row-action-sheet__layout" ref={sheetRootRef}>
-          <span className="admin-row-action-sheet__handle" aria-hidden="true" {...handleProps} />
-          <header>
-            <h2>{mobileTitle}</h2>
-          </header>
+        <SheetFrame
+          className="admin-row-action-sheet__layout"
+          handleClassName="admin-row-action-sheet__handle"
+          onClose={requestClose}
+          header={
+            <header>
+              <h2>{mobileTitle}</h2>
+            </header>
+          }
+        >
           <div
             className="admin-row-action-sheet__actions"
             onClick={(event) => {
@@ -63,7 +67,7 @@ export function RowActions({
           >
             {mobileChildren ?? children}
           </div>
-        </div>
+        </SheetFrame>
       </dialog>
     </div>
   );
@@ -74,6 +78,41 @@ type RowActionButtonProps = Omit<ButtonProps, 'children' | 'size'> & {
   label: string;
   mobileLabel?: string;
 };
+
+// The row already identifies the target in the sheet title. Keep the mobile
+// action list scannable by showing only the final action verb while retaining
+// the complete label for assistive technology and the desktop tooltip.
+const MOBILE_ACTION_SUFFIXES = [
+  '잠금 해제',
+  '고정 해제',
+  '배정 취소',
+  '기록 보기',
+  '상세 보기',
+  '잠금',
+  '고정',
+  '이동',
+  '배정',
+  '제외',
+  '수정',
+  '삭제',
+  '관리',
+  '승인',
+  '반려',
+  '숨김',
+  '공개',
+  '처리',
+  '발급',
+  '추가',
+  '더보기',
+] as const;
+
+function mobileActionLabel(label: string) {
+  const normalized = label.trim();
+  const suffix = MOBILE_ACTION_SUFFIXES.find(
+    (candidate) => normalized === candidate || normalized.endsWith(` ${candidate}`),
+  );
+  return suffix ?? normalized;
+}
 
 export function RowActionButton({
   icon,
@@ -93,7 +132,9 @@ export function RowActionButton({
       title={label}
     >
       {icon}
-      <span className="admin-row-action-button__label">{mobileLabel ?? label}</span>
+      <span className="admin-row-action-button__label">
+        {mobileLabel ?? mobileActionLabel(label)}
+      </span>
     </Button>
   );
 }

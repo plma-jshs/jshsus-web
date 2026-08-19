@@ -543,6 +543,15 @@
   background: var(--j-color-surface-subtle);
 }
 
+/* Quick date presets belong to the mobile filter sheet only.  Keep this
+   explicit desktop rule after the generic segmented-tab display so the
+   component cannot leak into the inline desktop toolbar. */
+@media (min-width: 768px) {
+  .ui-date-range__presets {
+    display: none !important;
+  }
+}
+
 .ui-segmented-tabs button {
   min-width: 92px;
   min-height: 36px;

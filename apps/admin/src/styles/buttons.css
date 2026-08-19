@@ -273,8 +273,8 @@
 
   .admin-row-action-sheet__layout > header {
     display: flex;
-    min-height: 58px;
-    padding: 10px 16px;
+    min-height: 64px;
+    padding: 26px 20px 10px;
     align-items: center;
     justify-content: flex-start;
     border-bottom: 0;
@@ -337,8 +337,8 @@
 
   .admin-row-action-sheet__actions {
     display: grid;
-    padding: 10px 16px max(16px, env(safe-area-inset-bottom));
-    gap: 8px;
+    padding: 4px 20px max(16px, env(safe-area-inset-bottom));
+    gap: 4px;
   }
 
   .admin-row-action-sheet__actions .admin-row-action-button.ui-button {

@@ -697,7 +697,10 @@ export function SchoolEventsPage() {
                       {week.map((date) => {
                         const dateEvents = visibleEvents.filter((event) => occursOn(event, date));
                         const inMonth = date.startsWith(month);
-                        const isSelected = date === selectedDate;
+                        // A selected day always belongs to the visible month;
+                        // adjacent-month cells must remain visually dimmed even
+                        // when their weekend/holiday styles are present.
+                        const isSelected = inMonth && date === selectedDate;
                         const isToday = date === today;
                         const weekday = weekdayOf(date);
                         const isHoliday = dateEvents.some((event) => event.isHoliday);

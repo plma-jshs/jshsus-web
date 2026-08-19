@@ -504,6 +504,65 @@
   background: color-mix(in srgb, var(--j-color-info) 86%, black);
 }
 
+/* Public list toolbars follow the same compact breakpoint as the admin
+   portal: search gets a full row, while filters and actions keep their
+   intrinsic widths on a right-aligned second row. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .page-toolbar--split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: var(--j-space-2);
+  }
+
+  .page-toolbar--split .page-toolbar__filters-content {
+    display: contents;
+  }
+
+  .page-toolbar--split .page-toolbar__filters-heading,
+  .page-toolbar--split .page-toolbar__filters-content > .ui-filter-sheet__handle,
+  .page-toolbar--split .page-toolbar__filter-trigger {
+    display: none;
+  }
+
+  .page-toolbar--split .page-toolbar__search-content {
+    display: contents;
+  }
+
+  .page-toolbar--split :is(.lost-items-search-controls, .petition-search-controls) {
+    display: contents;
+  }
+
+  .page-toolbar--split .page-toolbar__search-content .page-search-field {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .page-toolbar--split .page-toolbar__filters-content > :not(.page-toolbar__filters-heading) {
+    min-width: 0;
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .page-toolbar--split :is(.page-floating-action, .petition-compose-inline) {
+    width: auto;
+    min-width: max-content;
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .page-toolbar--split:not(.page-toolbar--has-filters)
+    :is(.page-floating-action, .petition-compose-inline) {
+    grid-column: 2;
+  }
+}
+
 @media (max-width: 767px) {
   .detail-page {
     gap: var(--j-space-5);

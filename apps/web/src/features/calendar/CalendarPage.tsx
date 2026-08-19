@@ -918,6 +918,7 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
                     bodyClassName="calendar-mobile-modal__body"
                     footerClassName="calendar-mobile-modal__footer"
                     closeClassName="calendar-mobile-modal__close"
+                    showCloseButton={false}
                     title={selectedDateLabel}
                     titleId="calendar-mobile-modal-title"
                     closeLabel="일정 닫기"

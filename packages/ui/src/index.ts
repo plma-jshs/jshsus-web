@@ -17,6 +17,8 @@ export { SelectPrimitive } from './SelectPrimitive';
 export type { SelectPrimitiveOption, SelectPrimitiveProps } from './SelectPrimitive';
 export { DialogShell } from './DialogShell';
 export type { DialogShellProps } from './DialogShell';
+export { SheetFrame } from './SheetFrame';
+export type { SheetFrameProps } from './SheetFrame';
 export { FilterSheet } from './FilterSheet';
 export type { FilterSheetProps } from './FilterSheet';
 export { useAnimatedDialog } from './useAnimatedDialog';

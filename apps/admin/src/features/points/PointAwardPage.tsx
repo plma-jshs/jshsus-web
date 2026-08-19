@@ -625,7 +625,7 @@ export function PointAwardPage() {
                 iconSize={16}
                 aria-label="학생 검색"
                 value={search}
-                placeholder="학번 또는 이름"
+                placeholder="학번, 이름 검색"
                 autoComplete="off"
                 disabled={isEditingQueueItem}
                 onFocus={(event) => {

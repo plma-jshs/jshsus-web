@@ -339,7 +339,7 @@ function ToolbarButton({
     <button
       aria-label={label}
       aria-pressed={active}
-      className={active ? 'is-active' : undefined}
+      className={`rich-text-toolbar__control${active ? ' is-active' : ''}`}
       disabled={disabled}
       onClick={onClick}
       title={label}
@@ -458,7 +458,7 @@ function ToolbarDropdown({
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label={label}
-        className="rich-text-toolbar-select__trigger"
+        className="rich-text-toolbar__control rich-text-toolbar-select__trigger"
         onClick={() => {
           if (open) setMenuPosition(null);
           setOpen(!open);
@@ -573,6 +573,7 @@ function ToolbarPalette({
         type="button"
         aria-expanded={open}
         aria-label={label}
+        className="rich-text-toolbar__control"
         title={label}
         onClick={() => {
           const nextOpen = !open;
@@ -736,7 +737,7 @@ function ToolbarMore({
         ref={buttonRef}
         aria-expanded={open}
         aria-label="더보기"
-        className={active ? 'is-active' : undefined}
+        className={`rich-text-toolbar__control${active ? ' is-active' : ''}`}
         onClick={() => {
           if (open) setMenuPosition(null);
           setOpen(!open);

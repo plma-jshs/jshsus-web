@@ -1,4 +1,4 @@
-import { useSheetDrag } from './useSheetDrag';
+import { SheetFrame } from './SheetFrame';
 import { type ReactNode } from 'react';
 
 export type FilterSheetProps = {
@@ -34,23 +34,24 @@ export function FilterSheet({
   onClose,
 }: FilterSheetProps) {
   const Title = titleAs;
-  const { rootRef, handleProps } = useSheetDrag<HTMLDivElement>(onClose);
 
   return (
-    <div
+    <SheetFrame
       className={layoutClassName}
+      handleClassName="ui-filter-sheet__handle"
       id={id}
-      ref={rootRef}
       role={role}
       aria-modal={ariaModal || undefined}
       aria-label={ariaLabel}
+      onClose={onClose}
+      header={
+        <header className={headerClassName}>
+          <Title className={titleClassName}>{title}</Title>
+        </header>
+      }
+      footer={footer ? <footer className={footerClassName}>{footer}</footer> : undefined}
     >
-      <span className="ui-filter-sheet__handle" aria-hidden="true" {...handleProps} />
-      <header className={headerClassName}>
-        <Title className={titleClassName}>{title}</Title>
-      </header>
       {children}
-      {footer ? <footer className={footerClassName}>{footer}</footer> : null}
-    </div>
+    </SheetFrame>
   );
 }

@@ -408,7 +408,7 @@ export function ActivityReviewPage() {
               iconSize={15}
               value={studentSearch}
               onChange={(event) => setStudentSearch(event.target.value)}
-              placeholder="학번 또는 이름"
+              placeholder="학번, 이름 검색"
               aria-label="참여 학생 검색"
               onClear={() => setStudentSearch('')}
             />
