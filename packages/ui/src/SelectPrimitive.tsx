@@ -184,7 +184,7 @@ export function SelectPrimitive({
     };
   }, [open, portal, positionMenu]);
 
-  const choose = (nextValue: string) => {
+  const choose = (nextValue: string, restoreFocus = true) => {
     if (value === undefined) setUncontrolledValue(nextValue);
     const nativeSelect = selectRef.current;
     const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set;
@@ -193,7 +193,16 @@ export function SelectPrimitive({
       nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
     }
     setOpen(false);
-    triggerRef.current?.focus();
+    // A pointer selection should not leave the trigger in a sticky focus
+    // state after the menu disappears. Keyboard selection keeps focus on the
+    // trigger so the control remains navigable without a mouse.
+    if (restoreFocus) {
+      triggerRef.current?.focus();
+    } else {
+      // Pointer selection should leave no native button focus ring behind
+      // after the menu closes. Keyboard selection keeps focus for a11y.
+      triggerRef.current?.blur();
+    }
   };
 
   const moveActive = (direction: 1 | -1) => {
@@ -280,7 +289,7 @@ export function SelectPrimitive({
             key={`${option.value}:${index}`}
             role="option"
             type="button"
-            onClick={() => choose(option.value)}
+            onClick={() => choose(option.value, false)}
             onMouseEnter={() => setActiveIndex(index)}
           >
             {optionContent(option)}

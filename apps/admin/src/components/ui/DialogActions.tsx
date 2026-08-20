@@ -11,6 +11,8 @@ export type DialogActionsProps = {
   pendingLabel?: ReactNode;
   confirmVariant?: ButtonVariant;
   confirmType?: ButtonHTMLAttributes<HTMLButtonElement>['type'];
+  /** Associate a footer submit button with a form rendered in the dialog body. */
+  confirmForm?: string;
   confirmDisabled?: boolean;
   className?: string;
   showCancel?: boolean;
@@ -26,6 +28,7 @@ export function DialogActions({
   pendingLabel = '저장 중',
   confirmVariant = 'primary',
   confirmType = 'submit',
+  confirmForm,
   confirmDisabled = false,
   className,
   showCancel = true,
@@ -44,6 +47,7 @@ export function DialogActions({
       <Button
         variant={confirmVariant}
         type={confirmType}
+        form={confirmForm}
         disabled={pending || confirmDisabled}
         loading={pending}
         loadingLabel={pendingLabel}

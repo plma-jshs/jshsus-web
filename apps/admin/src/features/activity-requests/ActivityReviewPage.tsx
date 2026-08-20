@@ -111,6 +111,24 @@ export function ActivityReviewPage() {
     [createForm.activityDate, showDaytimeSlots],
   );
   const hasMoreActivitySlots = !showDaytimeSlots && !isWeekendActivityDate(createForm.activityDate);
+  const canSubmitCreate = useMemo(
+    () =>
+      Boolean(
+        createForm.representativeStudentNo &&
+        createForm.activityDate &&
+        createForm.activitySlotIds.length > 0 &&
+        createForm.location.trim() &&
+        createForm.purpose.trim() &&
+        activitySlotsDateTimes(createForm.activityDate, createForm.activitySlotIds),
+      ),
+    [
+      createForm.activityDate,
+      createForm.activitySlotIds,
+      createForm.location,
+      createForm.purpose,
+      createForm.representativeStudentNo,
+    ],
+  );
 
   const approveMutation = useMutation({
     mutationFn: api.approveActivityRequest,
@@ -386,7 +404,8 @@ export function ActivityReviewPage() {
             }}
             confirmLabel="작성"
             confirmType="submit"
-            confirmDisabled={createMutation.isPending}
+            confirmForm="activity-request-create-form"
+            confirmDisabled={createMutation.isPending || !canSubmitCreate}
           />
         }
         className="activity-create-drawer"
@@ -396,6 +415,7 @@ export function ActivityReviewPage() {
           className="activity-create-form"
           onSubmit={(event) => {
             event.preventDefault();
+            if (!canSubmitCreate || createMutation.isPending) return;
             createMutation.mutate(createForm);
           }}
         >

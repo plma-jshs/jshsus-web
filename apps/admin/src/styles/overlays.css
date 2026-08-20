@@ -1037,15 +1037,16 @@
     left: 0;
     box-sizing: border-box;
     width: 100dvw;
-    height: min(88dvh, 760px);
+    height: auto;
+    min-height: 0;
     max-width: none;
     max-height: 88dvh;
     border: 0;
     border-radius: 18px 18px 0 0;
   }
 
-  .ui-drawer[open],
-  .ui-dialog:not(.ui-confirm-dialog)[open] {
+  .ui-drawer[open]:not(.is-closing),
+  .ui-dialog:not(.ui-confirm-dialog)[open]:not(.is-closing) {
     animation: admin-bottom-sheet-enter 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
@@ -1054,18 +1055,13 @@
     inset: auto 0 0;
     box-sizing: border-box;
     width: 100dvw;
+    height: auto;
+    min-height: 0;
     max-width: none;
     max-height: 88dvh;
     margin: 0;
     border: 0;
     border-radius: 18px 18px 0 0;
-  }
-
-  /* A dialog that is used as a mobile sheet keeps a stable viewport budget
-     while async content (tables, history, or details) is loading. */
-  .ui-dialog.device-command-dialog {
-    height: min(82dvh, 680px);
-    min-height: min(360px, 82dvh);
   }
 
   .ui-dialog__header,
@@ -1093,7 +1089,14 @@
 
   .ui-dialog__body,
   .ui-drawer__body {
+    min-height: 0;
     padding: 4px 20px 16px;
+  }
+
+  .ui-dialog__layout,
+  .ui-drawer__layout {
+    height: auto;
+    min-height: 0;
   }
 
   /* Footer surfaces already reserve the safe area in their own padding. A

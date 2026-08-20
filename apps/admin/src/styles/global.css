@@ -23,18 +23,11 @@
       input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
       select,
       textarea
-    ):focus,
-  .admin-main
-    :where(
-      input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
-      select,
-      textarea
-    ):focus-visible,
+    ):focus:not(:focus-visible),
   .ui-control:hover,
-  .ui-control:focus,
-  .ui-control:focus-visible,
+  .ui-control:focus:not(:focus-visible),
   .admin-search-field:hover,
-  .admin-search-field:focus-within {
+  .admin-search-field:focus-within:not(:has(> input:focus, > textarea:focus)) {
     border-color: var(--line-strong) !important;
     outline: 0 !important;
     box-shadow: none !important;
@@ -49,7 +42,7 @@
   }
 
   .admin-search-field:hover,
-  .admin-search-field:focus-within {
+  .admin-search-field:focus-within:not(:has(> input:focus, > textarea:focus)) {
     border-color: var(--line-strong) !important;
     box-shadow: none !important;
     background: var(--surface) !important;
@@ -113,13 +106,6 @@
     select,
     textarea,
     .ui-control
-  ):focus,
-:is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
-  :where(
-    input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
-    select,
-    textarea,
-    .ui-control
   ):focus-visible {
   border-color: var(--j-color-brand) !important;
   background-color: var(--j-color-surface) !important;
@@ -156,12 +142,17 @@
 }
 
 :is(
-  .admin-search-field:focus-within,
+  .admin-search-field:has(> input:focus, > textarea:focus),
   .admin-select__trigger:focus-visible,
   .admin-select.is-open .admin-select__trigger
 ) {
   border-color: var(--j-color-brand) !important;
   box-shadow: var(--j-shadow-focus) !important;
+}
+
+.admin-search-field:focus-within:not(:has(> input:focus, > textarea:focus)) {
+  border-color: var(--j-color-border-strong) !important;
+  box-shadow: none !important;
 }
 
 .admin-search-field > input,
@@ -185,7 +176,16 @@
 .admin-filter-sheet header button:focus,
 .admin-filter-sheet header button:focus-visible {
   outline: 0 !important;
-  box-shadow: var(--j-shadow-focus) !important;
+  box-shadow: none !important;
+}
+
+:where(
+  .admin-search-clear,
+  .ui-dialog__close,
+  .ui-drawer__close,
+  .admin-filter-sheet header button
+):active {
+  opacity: 0.95;
 }
 
 /* The mobile native select and pagination input are the same controls, just
@@ -215,11 +215,6 @@
   box-shadow: none !important;
 }
 
-:is(
-  .admin-select--native-mobile .admin-select__native,
-  .ui-page-size-select .admin-select__native,
-  .ui-page-size-select .admin-select__trigger
-):focus,
 :is(
   .admin-select--native-mobile .admin-select__native,
   .ui-page-size-select .admin-select__native,
@@ -255,18 +250,9 @@
       .admin-select--native-mobile .admin-select__native,
       .ui-page-size-select .admin-select__native,
       .ui-page-size-select .admin-select__trigger
-    ):focus,
+    ):focus:not(:focus-visible),
   :is(.admin-main, .ui-dialog, .ui-drawer, .admin-filter-sheet, .admin-sidebar, .login-shell)
-    :where(
-      input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
-      select,
-      textarea,
-      .ui-control,
-      .admin-search-field,
-      .admin-select--native-mobile .admin-select__native,
-      .ui-page-size-select .admin-select__native,
-      .ui-page-size-select .admin-select__trigger
-    ):focus-visible {
+    :where(.admin-search-field):focus-within:not(:has(> input:focus, > textarea:focus)) {
     border-color: var(--j-color-border-strong) !important;
     outline: 0 !important;
     background-color: var(--j-color-surface) !important;

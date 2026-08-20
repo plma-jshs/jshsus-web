@@ -428,7 +428,7 @@ export function ActivityOverviewPage() {
             mobileReset={() => {
               setSearch('');
               setStartDate('');
-              setEndDate('');
+              setEndDate(koreaDateInput());
               setStatus('all');
               setSorting([{ id: 'startsAt', desc: true }]);
               resetPage();

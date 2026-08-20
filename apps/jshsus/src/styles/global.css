@@ -23,15 +23,10 @@
     textarea
   ):hover,
   :where(
-    input:not([type='checkbox']):not([type='radio']):not([type='file']),
-    select,
-    textarea
-  ):focus,
-  :where(
-    input:not([type='checkbox']):not([type='radio']):not([type='file']),
-    select,
-    textarea
-  ):focus-visible {
+      input:not([type='checkbox']):not([type='radio']):not([type='file']),
+      select,
+      textarea
+    ):focus:not(:focus-visible) {
     border-color: var(--j-color-border-strong) !important;
     outline: 0 !important;
     box-shadow: none !important;
@@ -44,11 +39,11 @@
     .activity-date-control
   ):hover,
   :where(
-    .page-search-field,
-    .data-table-toolbar__query,
-    .detail-comment-form,
-    .activity-date-control
-  ):focus-within {
+      .page-search-field,
+      .data-table-toolbar__query,
+      .detail-comment-form,
+      .activity-date-control
+    ):focus-within:not(:has(> input:focus, > textarea:focus)) {
     border-color: var(--j-color-border-strong) !important;
     outline: 0 !important;
     box-shadow: none !important;
@@ -269,7 +264,9 @@
    remove the focus ring as soon as the pointer is no longer active. */
 @media (max-width: 767px) and (hover: none) {
   :where(.page-search-field, .data-table-toolbar__query):hover,
-  :where(.page-search-field, .data-table-toolbar__query):focus-within {
+  :where(.page-search-field, .data-table-toolbar__query):focus-within:not(
+      :has(> input:focus, > textarea:focus)
+    ) {
     border-color: var(--j-color-border-strong) !important;
     box-shadow: none !important;
     background: var(--j-color-surface) !important;

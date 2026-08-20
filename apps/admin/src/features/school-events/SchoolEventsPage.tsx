@@ -813,6 +813,7 @@ export function SchoolEventsPage() {
             onClose={() => setEditorOpen(false)}
             confirmLabel="저장"
             confirmType="submit"
+            confirmForm="school-event-form"
             confirmDisabled={saveMutation.isPending}
           />
         }

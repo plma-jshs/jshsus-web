@@ -31,12 +31,9 @@
 }
 
 .admin-main
-  :where(
-    input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
-    select,
-    textarea
-  ):focus,
-.ui-control:focus {
+  :where(input:not([type='checkbox']):not([type='radio']):not([type='hidden']), textarea):focus,
+.admin-main :where(select):focus-visible,
+.ui-control:focus-visible {
   border-color: var(--j-color-brand);
   box-shadow: var(--j-shadow-focus);
 }
@@ -69,7 +66,7 @@
   background: var(--surface) !important;
 }
 
-.admin-search-field:focus-within {
+.admin-search-field:has(> input:focus, > textarea:focus) {
   border-color: var(--j-color-brand) !important;
   box-shadow: var(--j-shadow-focus) !important;
   background: var(--surface) !important;

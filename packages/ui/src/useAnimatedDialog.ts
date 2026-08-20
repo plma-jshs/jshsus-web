@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { clearSheetSnapStates } from './useSheetDrag';
 
 const MOBILE_SHEET_DURATION_MS = 180;
@@ -8,7 +8,11 @@ export function useAnimatedDialog(open: boolean, onClose: () => void) {
   const ref = useRef<HTMLDialogElement>(null);
   const timerRef = useRef<number | null>(null);
 
-  useEffect(() => {
+  // Apply the closing class in the layout phase. A passive effect leaves one
+  // paint where React has already rendered the closing state but the native
+  // dialog has not received its animation class yet, which looks like an
+  // abrupt unmount on short sheets.
+  useLayoutEffect(() => {
     const dialog = ref.current;
     if (!dialog) return undefined;
 

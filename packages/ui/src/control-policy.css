@@ -75,20 +75,41 @@
       input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
           [type='range']
         ):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
-      select,
       textarea
     ):not(.page-search-field input):not(.data-table-toolbar__query input):not(
       .admin-search-field input
+    ):not(.page-search-field textarea):not(.data-table-toolbar__query textarea):not(
+      .admin-search-field textarea
     ):focus,
-  :where(.page-search-field, .data-table-toolbar__query, .admin-search-field):focus-within,
+  :where(select):focus-visible,
+  :where(.page-search-field, .data-table-toolbar__query, .admin-search-field):has(
+    > input:focus,
+    > textarea:focus
+  ),
   :where(
     .admin-select__trigger,
     .data-table-toolbar-select__trigger,
     .ui-page-size-select .admin-select__trigger,
     .ui-page-size-select .admin-select__native
-  ):focus {
+  ):focus-visible {
     border-color: var(--j-color-brand) !important;
     box-shadow: var(--j-shadow-focus) !important;
+  }
+
+  /* Select triggers use :focus-visible so a pointer click/selection cannot
+     leave a ring behind. Text inputs intentionally keep their focus ring
+     while the field owns focus, even if the pointer moves away. */
+  :where(
+      select,
+      .admin-select__trigger,
+      .data-table-toolbar-select__trigger,
+      .ui-page-size-select .admin-select__native
+    ):focus:not(:focus-visible),
+  :where(.page-search-field, .data-table-toolbar__query, .admin-search-field):focus-within:not(
+      :has(> input:focus, > textarea:focus)
+    ) {
+    border-color: var(--j-color-border-strong) !important;
+    box-shadow: none !important;
   }
 
   /* The wrapper, not the text input, owns the focus surface. This reset is
@@ -131,36 +152,52 @@
     .ui-page-size-select .admin-select__native
   ):hover,
   :where(
-    input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
-        [type='range']
-      ):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
-    select,
-    textarea,
-    .page-search-field,
-    .data-table-toolbar__query,
-    .admin-search-field,
-    .admin-select__trigger,
-    .data-table-toolbar-select__trigger,
-    .ui-page-size-select .admin-select__trigger,
-    .ui-page-size-select .admin-select__native
-  ):focus,
+      input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
+          [type='range']
+        ):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
+      textarea
+    ):not(.page-search-field input):not(.data-table-toolbar__query input):not(
+      .admin-search-field input
+    ):not(.page-search-field textarea):not(.data-table-toolbar__query textarea):not(
+      .admin-search-field textarea
+    ):focus,
+  :where(select):focus-visible,
+  :where(.page-search-field, .data-table-toolbar__query, .admin-search-field):has(
+    > input:focus,
+    > textarea:focus
+  ),
   :where(
-    input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
-        [type='range']
-      ):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
-    select,
-    textarea,
-    .page-search-field,
-    .data-table-toolbar__query,
-    .admin-search-field,
     .admin-select__trigger,
     .data-table-toolbar-select__trigger,
     .ui-page-size-select .admin-select__trigger,
     .ui-page-size-select .admin-select__native
   ):focus-visible {
+    border-color: var(--j-color-brand) !important;
+    box-shadow: var(--j-shadow-focus) !important;
+    outline: 0 !important;
+  }
+
+  :where(
+      select,
+      .admin-select__trigger,
+      .data-table-toolbar-select__trigger,
+      .ui-page-size-select .admin-select__trigger,
+      .ui-page-size-select .admin-select__native
+    ):focus:not(:focus-visible),
+  :where(.page-search-field, .data-table-toolbar__query, .admin-search-field):focus-within:not(
+      :has(> input:focus, > textarea:focus)
+    ) {
     border-color: var(--j-color-border-strong) !important;
     box-shadow: none !important;
     outline: 0 !important;
+  }
+
+  :where(.page-search-field, .data-table-toolbar__query, .admin-search-field):has(
+    > input:focus,
+    > textarea:focus
+  ) {
+    border-color: var(--j-color-brand) !important;
+    box-shadow: var(--j-shadow-focus) !important;
   }
 
   :where(button, a, summary):focus,
