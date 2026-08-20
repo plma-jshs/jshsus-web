@@ -63,9 +63,11 @@
 
 ### 3.1 인벤토리
 
-목표 표준 경로는 `/home/ubuntu/Server/jshsus-v26`이다. 실제 운영 서버가 이 경로로
-이동했는지는 유지보수 창에서 확인해야 하며, 기존 문서에 기록된 경로는
-`/home/ubuntu/Server/jshsus-web-v26`,
+목표 표준 경로는 `/home/ubuntu/Server/jshsus-v26`이다. 2026-08-21 유지보수 창에
+실제 운영 checkout을 이 경로로 원자적으로 이동했고, 기존 경로
+`/home/ubuntu/Server/jshsus-web-v26`은 더 이상 활성 경로가 아니다. 기존 문서에
+기록된 관련 경로는
+`/home/ubuntu/Server/jshsus-web-v26`(이전 경로),
 `/home/ubuntu/Server/nginx-proxy-manager`, `/home/ubuntu/Server/iam`,
 `/home/ubuntu/Server/plma` 및 `/home/ubuntu/Server/backups`다. 실제 실행 전 다음
 명령으로 현재 상태를 다시 확정한다.
@@ -84,19 +86,29 @@ ss -lntup
 
 ### 3.1.1 배포 디렉터리 이름 전환
 
-프런트 앱과 GHCR 이미지의 이름을 `web`에서 `jshsus`로 전환하면서 운영 checkout도
+프런트 앱과 GHCR 이미지의 이름을 `web`에서 `jshsus`로 전환하면서 운영 checkout은
 `/home/ubuntu/Server/jshsus-v26`을 표준 경로로 사용한다. GitHub Actions는 경로를
 코드에 하드코딩하지 않고 production 환경의 `DEPLOY_PATH` secret에서 읽으므로, 서버
 이동은 다음 순서로 별도 점검한다.
 
-현재 상태: 저장소의 참조·Compose·workflow·문서만 전환되었고, 원격 서버 디렉터리
-이동과 `DEPLOY_PATH` secret 변경은 아직 실행하지 않았다.
+현재 상태: 원격 디렉터리 이동은 완료되었고, 기존 release 링크·백업·Compose
+프로젝트는 보존되어 있다. GitHub production 환경의 `DEPLOY_PATH` secret은
+`/home/ubuntu/Server/jshsus-v26`이어야 한다. 저장소 이름 변경 후
+`JshsusGitHubPrivacyOperationsRole`의 OIDC trust policy가 이전 저장소 주체를
+가리켜 자동 DB 백업 job이 실패했으므로, AWS 관리자 권한으로 다음 주체를 허용한
+뒤 자동 배포를 재실행해야 한다.
+
+```text
+repo:plma-jshs/platform:environment:database-backup
+repo:plma-jshs/platform:environment:privacy-operations
+```
 
 1. 유지보수 창에서 현재 `DEPLOY_PATH`의 `.env`, `.release-env`,
    `.release-manifests`, `.docker-auth-path`, 현재/이전 release 링크를 백업한다.
 2. Compose를 중지하기 전에 기존 디렉터리를
    `/home/ubuntu/Server/jshsus-v26`으로 원자적으로 이동하고 소유자·권한을 확인한다.
-3. GitHub production 환경의 `DEPLOY_PATH`를 새 경로로 변경한 뒤, SSH preflight와
+3. GitHub production 환경의 `DEPLOY_PATH`를 새 경로로 변경한 뒤, AWS OIDC trust
+   policy를 확인하고 SSH preflight와
    release smoke test를 실행한다.
 4. 첫 릴리스 동안에는 이전 compose manifest와 `jshsus-web` 이미지가 롤백용으로
    남아 있어야 한다. 새 `jshsus` 이미지가 정상 기동하고 관찰 기간이 끝난 뒤에만
