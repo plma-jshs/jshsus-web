@@ -27,8 +27,7 @@ import {
 import { env } from '../../shared/config/env';
 import { CognitoAuthError, CognitoAuthService, type CognitoSurface } from './cognito-auth.service';
 import { RedisService } from '../redis/redis.service';
-import { SendonPasswordResetService } from './sendon-password-reset.service';
-import { EmailVerificationService } from './email-verification.service';
+import { AuthDeliveryService } from '../messaging/auth-delivery.service';
 
 const ACTIVATION_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const ACTIVATION_CODE_LENGTH = 12;
@@ -149,8 +148,7 @@ export class AccountActivationService {
     private readonly database: DatabaseService,
     private readonly cognito: CognitoAuthService,
     private readonly redis: RedisService,
-    private readonly sendon: SendonPasswordResetService,
-    private readonly emailVerification: EmailVerificationService,
+    private readonly authDelivery: AuthDeliveryService,
   ) {}
 
   async issue(body: unknown, actorId?: number | null): Promise<AccountActivationIssueResult> {
@@ -482,7 +480,8 @@ export class AccountActivationService {
     );
 
     try {
-      await this.sendon.sendVerificationCode({
+      await this.authDelivery.sendVerificationCode({
+        channel: 'phone',
         code,
         phone,
         purpose: 'account-activation',
@@ -521,7 +520,8 @@ export class AccountActivationService {
     );
 
     try {
-      await this.emailVerification.sendVerificationCode({
+      await this.authDelivery.sendVerificationCode({
+        channel: 'email',
         code,
         email,
         purpose: 'account-activation',

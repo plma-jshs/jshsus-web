@@ -2,7 +2,7 @@ import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common'
 import { SendEmailCommand, SESv2Client } from '@aws-sdk/client-sesv2';
 import { env } from '../../shared/config/env';
 
-type VerificationPurpose = 'account-activation' | 'contact-change' | 'password-reset';
+export type VerificationPurpose = 'account-activation' | 'contact-change' | 'password-reset';
 
 const SCHOOL_LOGO_URL = 'https://auth.jshsus.kr/assets/school-emblem.svg';
 const EMAIL_FONT_STACK = "'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', Arial, sans-serif";
@@ -40,10 +40,10 @@ export class EmailVerificationService {
   private readonly logger = new Logger(EmailVerificationService.name);
   private readonly client = new SESv2Client({
     region: env.SES_REGION,
-    credentials: env.COGNITO_AWS_ACCESS_KEY_ID
+    credentials: env.SES_AWS_ACCESS_KEY_ID
       ? {
-          accessKeyId: env.COGNITO_AWS_ACCESS_KEY_ID,
-          secretAccessKey: env.COGNITO_AWS_SECRET_ACCESS_KEY,
+          accessKeyId: env.SES_AWS_ACCESS_KEY_ID,
+          secretAccessKey: env.SES_AWS_SECRET_ACCESS_KEY,
         }
       : undefined,
   });

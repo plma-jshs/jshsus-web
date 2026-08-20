@@ -8,19 +8,17 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { AccountActivationService } from './account-activation.service';
 import { CognitoAuthService } from './cognito-auth.service';
-import { SendonPasswordResetService } from './sendon-password-reset.service';
-import { EmailVerificationService } from './email-verification.service';
 import { SsoService } from './sso.service';
+import { MessagingModule } from '../messaging/messaging.module';
 
 @Global()
 @Module({
+  imports: [MessagingModule],
   controllers: [AuthController],
   providers: [
     AuthService,
     CognitoAuthService,
     AccountActivationService,
-    SendonPasswordResetService,
-    EmailVerificationService,
     SsoService,
     SessionGuard,
     OptionalSessionGuard,
@@ -32,8 +30,7 @@ import { SsoService } from './sso.service';
     AuthService,
     CognitoAuthService,
     AccountActivationService,
-    SendonPasswordResetService,
-    EmailVerificationService,
+    MessagingModule,
     SsoService,
     SessionGuard,
     OptionalSessionGuard,

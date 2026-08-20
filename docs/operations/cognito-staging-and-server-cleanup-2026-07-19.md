@@ -158,7 +158,7 @@ Nginx Proxy Manager 2.12.3에는 공식 관리 CLI가 없다. 관리자 자격 �
 
 현재 서비스에 바로 연결하지 않는다. 다음 순서로 진행한다.
 
-1. API에 `AUTH_MODE=local|hybrid|oidc` 기능 플래그를 추가하고 기본값을 `local`로 유지한다.
+1. API는 `AUTH_MODE=cognito` 단일 모드로 운영하고, 로컬 개발은 localhost 전용 `DEV_AUTH_BYPASS`로 제한한다.
 2. 서버 BFF가 `state`, `nonce`, PKCE S256과 confidential client token 교환을 처리한다.
 3. 브라우저에는 Cognito 토큰을 주지 않고 `HttpOnly`, `Secure`, host-only 세션 쿠키만 발급한다.
 4. 외부 계정 연결은 `(issuer, sub, user_id)`로 저장하고 역할과 권한은 기존 MySQL을 원본으로 유지한다.

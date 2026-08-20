@@ -104,6 +104,34 @@ export class RedisService implements OnModuleInit, OnApplicationShutdown {
     return this.client.getDel(key);
   }
 
+  /**
+   * Reads and deletes a value only when it is still the value observed by the
+   * caller. This is used for one-time handoffs where validation must happen
+   * before consumption without allowing two concurrent consumers to win.
+   */
+  async takeIfValue(key: string, expectedValue: string): Promise<string | null> {
+    if (!this.client) {
+      return null;
+    }
+
+    const result = await this.client.eval(
+      `
+        local current = redis.call('GET', KEYS[1])
+        if current == ARGV[1] then
+          redis.call('DEL', KEYS[1])
+          return current
+        end
+        return nil
+      `,
+      {
+        keys: [key],
+        arguments: [expectedValue],
+      },
+    );
+
+    return typeof result === 'string' ? result : null;
+  }
+
   async addToSet(key: string, value: string, ttlSeconds: number): Promise<void> {
     if (!this.client) return;
     await this.client.sAdd(key, value);

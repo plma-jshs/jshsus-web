@@ -4,20 +4,22 @@
 
 ## 인증 모드
 
-| `AUTH_MODE` | 동작                                                     | 용도                 |
-| ----------- | -------------------------------------------------------- | -------------------- |
-| `local`     | 기존 `auth_accounts` 비밀번호만 사용                     | 로컬 개발, 즉시 롤백 |
-| `hybrid`    | Cognito 연결 계정은 Cognito만, 미연결 계정은 로컬만 사용 | 단계적 이관          |
-| `cognito`   | Cognito 인증과 연결된 `sub`가 모두 필요                  | 이관 완료 후         |
+현재 API는 Cognito BFF 모드만 지원한다.
 
-`hybrid`에서 Cognito 인증에 실패한 연결 계정은 로컬 비밀번호로 재시도하지 않는다. 그렇지 않으면 비밀번호 재설정이나 계정 잠금을 기존 비밀번호로 우회할 수 있다.
+```dotenv
+AUTH_MODE=cognito
+```
+
+`local`과 `hybrid`는 문서상 롤백 모드로 남아 있지 않으며 런타임에서 거부된다. 로컬 개발에서는
+`DEV_AUTH_BYPASS=true`와 localhost 제한이 있는 개발 세션을 사용한다. 따라서 별도의 로컬
+비밀번호 저장소를 운영 인증 경로로 다시 활성화하지 않는다.
 
 ## 서버 환경 변수
 
 다음 값은 API 컨테이너에만 주입한다. `VITE_` 환경 변수, React 코드, Git 저장소에 client secret을 넣으면 안 된다.
 
 ```dotenv
-AUTH_MODE=hybrid
+AUTH_MODE=cognito
 COGNITO_REGION=ap-northeast-2
 COGNITO_USER_POOL_ID=...
 COGNITO_CLIENT_ID=...
@@ -39,6 +41,16 @@ Web/Admin app client를 별도로 나누는 경우에는 `COGNITO_WEB_CLIENT_ID`
 파일 업로드용 `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`와 분리하고 두 값은
 반드시 함께 설정한다.
 
+SES 발송은 Cognito 자격 증명을 재사용하지 않는다. 실행 환경에 SES 전용 IAM 역할이 없다면
+아래처럼 발송 전용 최소 권한 자격 증명을 별도로 주입한다.
+
+```dotenv
+SES_REGION=ap-northeast-2
+SES_FROM_EMAIL=noreply@jshsus.kr
+SES_AWS_ACCESS_KEY_ID=...
+SES_AWS_SECRET_ACCESS_KEY=...
+```
+
 공개 스테이징에서는 기존 서비스의 부모 도메인 쿠키와 충돌하지 않도록 별도 이름을 권장한다.
 
 ```dotenv
@@ -50,7 +62,7 @@ SESSION_COOKIE_SECURE=true
 
 `SESSION_COOKIE_HOST_ONLY=true`이면 API가 쿠키의 `Domain` 속성을 쓰지 않고 `SameSite=Lax`로 설정한다. 따라서 web과 admin은 각각 host-only 세션을 갖는다.
 
-release compose의 `SESSION_COOKIE_DOMAIN` 기본값은 기존 local 모드를 위해 `.jshsus.kr`로 유지되지만, host-only 모드에서는 이 값이 쿠키에 사용되지 않는다.
+release compose의 `SESSION_COOKIE_DOMAIN` 기본값은 호환성을 위해 유지되지만, host-only 모드에서는 이 값이 쿠키에 사용되지 않는다.
 
 운영 환경에서는 Cognito 모드를 켤 때 두 쿠키 이름이 `__Host-`로 시작하지 않으면 API가 시작되지 않는다. 이는 기존 `jshsus.kr`과 `points.jshsus.kr`의 부모 도메인 쿠키를 잘못 덮어쓰는 배포를 실패 처리하기 위한 안전장치다.
 
@@ -156,31 +168,25 @@ VALUES (:user_id, 'cognito', :cognito_sub, NOW(3), NOW(3));
 
 ## 스테이징 전환 순서
 
-1. 배포 환경은 계속 `AUTH_MODE=local`로 둔 채 코드를 배포한다.
-2. Cognito Web/Admin client에 `ALLOW_USER_PASSWORD_AUTH`를 활성화한다.
-3. 테스트 사용자 한 명을 Cognito에 만들고 MySQL에 `sub`를 연결한다.
-4. 공개 스테이징만 `AUTH_MODE=hybrid`로 변경해 API 컨테이너를 재시작한다.
-5. Web과 Admin에서 각각 다음을 확인한다.
-   - 기존 미연결 로컬 계정 로그인
-   - 연결 계정 Cognito 로그인
+1. Cognito Web/Admin client에 `ALLOW_USER_PASSWORD_AUTH`를 활성화한다.
+2. 테스트 사용자 한 명을 Cognito에 만들고 MySQL에 `sub`를 연결한다.
+3. `AUTH_MODE=cognito`와 host-only 쿠키 설정으로 API 컨테이너를 시작한다.
+4. Web과 Admin에서 각각 다음을 확인한다.
+   - Cognito 연결이 없는 계정의 로그인 거부
+   - 연결 계정의 Cognito 로그인
    - 임시 비밀번호의 최초 비밀번호 변경
    - 비밀번호 찾기, 이메일 코드 확인, 새 비밀번호 로그인
    - 잘못된 Cognito 비밀번호가 로컬 비밀번호로 우회되지 않음
    - 로그아웃 후 opaque session cookie 제거
-6. 감사 로그에서 `auth.login`과 사용자 ID를 확인한다.
-7. 최소 하루 관찰 후 다음 계정 묶음을 연결한다.
+5. 감사 로그에서 `auth.login`과 사용자 ID를 확인한다.
+6. 최소 하루 관찰 후 다음 계정 묶음을 연결한다.
 
 ## 즉시 롤백
 
-애플리케이션 또는 Cognito 장애 시 스테이징 환경의 값만 되돌린다.
-
-```dotenv
-AUTH_MODE=local
-```
-
-API 컨테이너를 재시작하면 기존 로컬 인증으로 즉시 돌아간다. Cognito 연결 행을 삭제할 필요는 없다. 이 변경은 기존 `jshsus.kr` 및 `points.jshsus.kr`의 DNS, nginx, PHP 코드나 데이터베이스를 수정하지 않는다.
-
-롤백할 때도 `IAM_COOKIE_NAME`, `CSRF_COOKIE_NAME`, `SESSION_COOKIE_HOST_ONLY=true`는 그대로 유지하고 `AUTH_MODE`만 `local`로 되돌린다.
+애플리케이션 또는 Cognito 장애 시에는 검증된 이전 API 이미지로 배포를 되돌린다. 운영 환경에서
+지원하지 않는 `AUTH_MODE=local`로 전환해 인증 경계를 우회하지 않는다. Cognito 연결 행이나
+host-only 쿠키 설정을 삭제하지 않으며, 이 변경은 기존 `jshsus.kr` 및 `points.jshsus.kr`의
+DNS, nginx, PHP 코드나 데이터베이스를 수정하지 않는다.
 
 ## 이메일 관련 제한
 

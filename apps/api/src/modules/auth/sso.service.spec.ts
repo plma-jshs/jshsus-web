@@ -18,6 +18,13 @@ class MemoryRedis {
     this.values.delete(key);
     return value;
   }
+
+  async takeIfValue(key: string, expectedValue: string) {
+    const value = this.values.get(key) ?? null;
+    if (value !== expectedValue) return null;
+    this.values.delete(key);
+    return value;
+  }
 }
 
 const centralSession: AuthSession = {
@@ -116,6 +123,15 @@ describe('SsoService', () => {
         'different-browser',
       ),
     ).rejects.toMatchObject({ status: 403 });
+
+    await expect(
+      first.service.exchange(
+        'http://localhost:5173',
+        callback.searchParams.get('code') ?? '',
+        callback.searchParams.get('state') ?? '',
+        started.browserBinding,
+      ),
+    ).resolves.toBeDefined();
   });
 
   it('rejects an administrator callback for a user without administrator access', async () => {
@@ -126,5 +142,42 @@ describe('SsoService', () => {
     await expect(service.continue(requestId, 'central-token')).rejects.toMatchObject({
       status: 403,
     });
+
+    await expect(service.describeRequest(requestId)).resolves.toEqual({
+      client: 'admin',
+      serviceName: '학생부 전산시스템',
+    });
+  });
+
+  it('keeps a request available when the central session has expired', async () => {
+    const { service, authService } = createFixture(null);
+    const started = await service.start('http://localhost:5173', '/boards/free');
+    const requestId = new URL(started.authorizationUrl).searchParams.get('sso') ?? '';
+
+    await expect(service.continue(requestId, 'expired-token')).rejects.toMatchObject({
+      status: 400,
+    });
+    await expect(service.describeRequest(requestId)).resolves.toEqual({
+      client: 'web',
+      serviceName: '과구리',
+    });
+
+    authService.getSessionFromToken.mockResolvedValueOnce(centralSession);
+    await expect(service.continue(requestId, 'central-token')).resolves.toBeDefined();
+  });
+
+  it('does not grant administrator SSO access to an unknown custom permission', async () => {
+    const customSession: AuthSession = {
+      ...centralSession,
+      permissions: ['some.unrelated.permission'],
+    };
+    const { service, authService } = createFixture(customSession);
+    const started = await service.start('http://localhost:5174', '/points');
+    const requestId = new URL(started.authorizationUrl).searchParams.get('sso') ?? '';
+
+    await expect(service.continue(requestId, 'central-token')).rejects.toMatchObject({
+      status: 403,
+    });
+    expect(authService.getSessionFromToken).toHaveBeenCalledWith('central-token');
   });
 });

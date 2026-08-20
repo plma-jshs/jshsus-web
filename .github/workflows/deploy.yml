@@ -529,6 +529,8 @@ jobs:
           SENDON_SMS_SENDER_NUMBER: ${{ secrets.SENDON_SMS_SENDER_NUMBER }}
           SES_FROM_EMAIL: ${{ secrets.SES_FROM_EMAIL }}
           SES_FROM_NAME: ${{ secrets.SES_FROM_NAME }}
+          SES_AWS_ACCESS_KEY_ID: ${{ secrets.SES_AWS_ACCESS_KEY_ID }}
+          SES_AWS_SECRET_ACCESS_KEY: ${{ secrets.SES_AWS_SECRET_ACCESS_KEY }}
         run: |
           set -euo pipefail
           umask 077
@@ -589,6 +591,8 @@ jobs:
 
           normalize_aws_credential COGNITO_AWS_ACCESS_KEY_ID
           normalize_aws_credential COGNITO_AWS_SECRET_ACCESS_KEY
+          normalize_aws_credential SES_AWS_ACCESS_KEY_ID
+          normalize_aws_credential SES_AWS_SECRET_ACCESS_KEY
           normalize_aws_credential AWS_ACCESS_KEY_ID
           normalize_aws_credential AWS_SECRET_ACCESS_KEY
           if [[ ! "$COGNITO_AWS_ACCESS_KEY_ID" =~ ^(AKIA|ASIA)[A-Z0-9]{16}$ ]]; then
@@ -606,6 +610,21 @@ jobs:
           if [[ ! "$AWS_SECRET_ACCESS_KEY" =~ ^[A-Za-z0-9/+=]{40}$ ]]; then
             printf '::error::AWS_SECRET_ACCESS_KEY is not a valid AWS secret access key.\n' >&2
             exit 1
+          fi
+
+          if [[ -n "$SES_FROM_EMAIL" ]]; then
+            if [[ -z "$SES_AWS_ACCESS_KEY_ID" || -z "$SES_AWS_SECRET_ACCESS_KEY" ]]; then
+              printf '::error::SES_AWS_ACCESS_KEY_ID and SES_AWS_SECRET_ACCESS_KEY are required when SES_FROM_EMAIL is configured.\n' >&2
+              exit 1
+            fi
+            if [[ ! "$SES_AWS_ACCESS_KEY_ID" =~ ^(AKIA|ASIA)[A-Z0-9]{16}$ ]]; then
+              printf '::error::SES_AWS_ACCESS_KEY_ID is not a valid AWS access key ID.\n' >&2
+              exit 1
+            fi
+            if [[ ! "$SES_AWS_SECRET_ACCESS_KEY" =~ ^[A-Za-z0-9/+=]{40}$ ]]; then
+              printf '::error::SES_AWS_SECRET_ACCESS_KEY is not a valid AWS secret access key.\n' >&2
+              exit 1
+            fi
           fi
 
           test -n "$PRODUCTION_ENV_FILE"
@@ -676,6 +695,8 @@ jobs:
           set_env_value SES_REGION ap-northeast-2
           set_optional_env_value SES_FROM_EMAIL
           set_optional_env_value SES_FROM_NAME
+          set_optional_env_value SES_AWS_ACCESS_KEY_ID
+          set_optional_env_value SES_AWS_SECRET_ACCESS_KEY
 
       - name: Authenticate the server to GHCR
         shell: bash

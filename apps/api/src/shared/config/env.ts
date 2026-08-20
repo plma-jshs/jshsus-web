@@ -52,10 +52,9 @@ export const envSchema = z
     CSRF_COOKIE_NAME: z.string().default('jshsus.csrf'),
     DEV_AUTH_BYPASS: booleanFromString.default(false),
     DEV_AUTH_STUDENT_NO: z.coerce.number().int().positive().default(9999),
-    AUTH_MODE: z
-      .enum(['local', 'hybrid', 'cognito'])
-      .default('cognito')
-      .transform(() => 'cognito' as const),
+    // Cognito is the only supported production authentication provider. Local
+    // development uses DEV_AUTH_BYPASS rather than a second password store.
+    AUTH_MODE: z.literal('cognito').default('cognito'),
     COGNITO_REGION: z.string().default('ap-northeast-2'),
     COGNITO_USER_POOL_ID: z.string().default(''),
     COGNITO_CLIENT_ID: z.string().default(''),
@@ -82,6 +81,8 @@ export const envSchema = z
     SES_REGION: z.string().trim().default('ap-northeast-2'),
     SES_FROM_EMAIL: z.string().trim().default(''),
     SES_FROM_NAME: z.string().trim().default('전남과학고등학교'),
+    SES_AWS_ACCESS_KEY_ID: z.string().trim().default(''),
+    SES_AWS_SECRET_ACCESS_KEY: z.string().trim().default(''),
     LEGACY_SYSTEM_ADMIN_STUIDS: z
       .string()
       .default('')
@@ -409,6 +410,14 @@ export const envSchema = z
         path: ['COGNITO_AWS_ACCESS_KEY_ID'],
         message:
           'COGNITO_AWS_ACCESS_KEY_ID and COGNITO_AWS_SECRET_ACCESS_KEY must be configured together.',
+      });
+    }
+
+    if (Boolean(value.SES_AWS_ACCESS_KEY_ID) !== Boolean(value.SES_AWS_SECRET_ACCESS_KEY)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['SES_AWS_ACCESS_KEY_ID'],
+        message: 'SES_AWS_ACCESS_KEY_ID and SES_AWS_SECRET_ACCESS_KEY must be configured together.',
       });
     }
   });

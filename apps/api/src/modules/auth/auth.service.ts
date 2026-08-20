@@ -18,8 +18,7 @@ import { DatabaseService } from '../database/database.service';
 import { RedisService } from '../redis/redis.service';
 import { env } from '../../shared/config/env';
 import { CognitoAuthError, CognitoAuthService, type CognitoSurface } from './cognito-auth.service';
-import { EmailVerificationService } from './email-verification.service';
-import { SendonPasswordResetService } from './sendon-password-reset.service';
+import { AuthDeliveryService } from '../messaging/auth-delivery.service';
 
 const legacySessionSchema = z.object({
   iamId: z.number(),
@@ -142,8 +141,7 @@ export class AuthService {
     private readonly redis: RedisService,
     private readonly database: DatabaseService,
     private readonly cognito: CognitoAuthService,
-    private readonly sendonPasswordReset?: SendonPasswordResetService,
-    private readonly emailVerification?: EmailVerificationService,
+    private readonly authDelivery: AuthDeliveryService,
   ) {}
 
   extractToken(request: Request): string | null {
@@ -509,8 +507,8 @@ export class AuthService {
       !target ||
       target.status !== 'active' ||
       !target.cognitoSubject ||
-      (delivery === 'phone' && (!target.phone || !this.sendonPasswordReset)) ||
-      (delivery === 'email' && (!target.email || !this.emailVerification))
+      (delivery === 'phone' && !target.phone) ||
+      (delivery === 'email' && !target.email)
     ) {
       if (target && target.status === 'active' && delivery === 'email') {
         this.logger.warn(
@@ -537,7 +535,7 @@ export class AuthService {
       await this.redis.setJson(flowKey, flow, env.PASSWORD_RESET_CODE_TTL_SECONDS);
 
       try {
-        await this.sendonPasswordReset!.sendPasswordResetCode({ phone: target.phone!, code });
+        await this.authDelivery.sendPasswordResetCode({ phone: target.phone!, code });
       } catch (error) {
         await this.redis.delete(flowKey);
         throw error;
@@ -555,7 +553,8 @@ export class AuthService {
       await this.redis.setJson(flowKey, flow, env.PASSWORD_RESET_CODE_TTL_SECONDS);
 
       try {
-        await this.emailVerification!.sendVerificationCode({
+        await this.authDelivery.sendVerificationCode({
+          channel: 'email',
           email: target.email!,
           code,
           purpose: 'password-reset',

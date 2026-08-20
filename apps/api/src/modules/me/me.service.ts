@@ -13,8 +13,7 @@ import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { AuthService, type AuthSession } from '../auth/auth.service';
 import { CognitoAuthError, CognitoAuthService } from '../auth/cognito-auth.service';
-import { SendonPasswordResetService } from '../auth/sendon-password-reset.service';
-import { EmailVerificationService } from '../auth/email-verification.service';
+import { AuthDeliveryService } from '../messaging/auth-delivery.service';
 import { DatabaseService } from '../database/database.service';
 import { meritPointBalanceSql, penaltyPointBalanceSql } from '../points/point-balance.query';
 import { RedisService } from '../redis/redis.service';
@@ -120,8 +119,7 @@ export class MeService {
     private readonly auth: AuthService,
     private readonly cognito: CognitoAuthService,
     private readonly redis: RedisService,
-    private readonly sendon: SendonPasswordResetService,
-    private readonly emailVerification: EmailVerificationService,
+    private readonly authDelivery: AuthDeliveryService,
   ) {}
 
   async status(session?: AuthSession): Promise<StudentSelfStatus> {
@@ -486,7 +484,7 @@ export class MeService {
     if (!previousEmail) return;
 
     try {
-      await this.emailVerification.sendContactChangedNotice({
+      await this.authDelivery.sendContactChangedNotice({
         email: previousEmail,
         field,
       });
@@ -528,9 +526,15 @@ export class MeService {
 
     try {
       if (field === 'phone') {
-        await this.sendon.sendVerificationCode({ code, phone: value, purpose: 'contact-change' });
+        await this.authDelivery.sendVerificationCode({
+          channel: 'phone',
+          code,
+          phone: value,
+          purpose: 'contact-change',
+        });
       } else {
-        await this.emailVerification.sendVerificationCode({
+        await this.authDelivery.sendVerificationCode({
+          channel: 'email',
           code,
           email: value,
           purpose: 'contact-change',

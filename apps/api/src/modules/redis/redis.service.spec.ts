@@ -39,3 +39,22 @@ describe('RedisService view-count claims', () => {
     ).resolves.toBe(false);
   });
 });
+
+describe('RedisService one-time conditional consumption', () => {
+  it('deletes only when the observed value is still current', async () => {
+    const evalScript = vi.fn().mockResolvedValue('payload');
+    const service = new RedisService();
+    Object.assign(service as unknown as { client: unknown }, { client: { eval: evalScript } });
+
+    await expect(service.takeIfValue('sso:code:hash', 'payload')).resolves.toBe('payload');
+    expect(evalScript).toHaveBeenCalledWith(expect.stringContaining("redis.call('GET', KEYS[1])"), {
+      keys: ['sso:code:hash'],
+      arguments: ['payload'],
+    });
+  });
+
+  it('fails closed when Redis is disconnected', async () => {
+    const service = new RedisService();
+    await expect(service.takeIfValue('sso:code:hash', 'payload')).resolves.toBeNull();
+  });
+});

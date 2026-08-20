@@ -10,13 +10,7 @@ function createService(
   },
   database: unknown = {},
 ) {
-  return new AccountActivationService(
-    database as never,
-    {} as never,
-    redis as never,
-    {} as never,
-    {} as never,
-  );
+  return new AccountActivationService(database as never, {} as never, redis as never, {} as never);
 }
 
 describe('AccountActivationService verification flow', () => {

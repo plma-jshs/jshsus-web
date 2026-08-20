@@ -46,6 +46,7 @@ describe('Cognito authentication routing', () => {
       { incrementWithTtl: vi.fn().mockResolvedValue(1) } as never,
       {} as never,
       cognito as never,
+      {} as never,
     );
 
     await expect(
@@ -77,7 +78,12 @@ describe('Cognito authentication routing', () => {
         })),
       },
     };
-    const service = new AuthService({} as never, database as never, { authenticate } as never);
+    const service = new AuthService(
+      {} as never,
+      database as never,
+      { authenticate } as never,
+      {} as never,
+    );
 
     await expect(
       service.verifyCurrentPassword(
@@ -110,6 +116,7 @@ describe('Cognito authentication routing', () => {
           username: '9999',
         }),
       } as never,
+      {} as never,
     );
 
     await expect(
@@ -145,6 +152,7 @@ describe('Cognito authentication routing', () => {
             new CognitoAuthError('AUTH_INVALID_CREDENTIALS', 'invalid credentials'),
           ),
       } as never,
+      {} as never,
     );
 
     await expect(
@@ -159,12 +167,12 @@ describe('Cognito authentication routing', () => {
   });
 
   it('hides unknown password recovery accounts without sending a code', async () => {
-    const sendon = { sendPasswordResetCode: vi.fn() };
+    const delivery = { sendPasswordResetCode: vi.fn(), sendVerificationCode: vi.fn() };
     const service = new AuthService(
       { incrementWithTtl: vi.fn().mockResolvedValue(1) } as never,
       { writeAudit: vi.fn() } as never,
       {} as never,
-      sendon as never,
+      delivery as never,
     );
     vi.spyOn(
       service as unknown as { findPasswordResetTarget: () => Promise<unknown> },
@@ -172,7 +180,7 @@ describe('Cognito authentication routing', () => {
     ).mockResolvedValue(null);
 
     await expect(service.requestPasswordReset('9999', 'web')).resolves.toEqual({ ok: true });
-    expect(sendon.sendPasswordResetCode).not.toHaveBeenCalled();
+    expect(delivery.sendPasswordResetCode).not.toHaveBeenCalled();
   });
 
   it('stores a reset challenge and sends the code through Sendon for linked accounts', async () => {
@@ -181,12 +189,15 @@ describe('Cognito authentication routing', () => {
       setJson: vi.fn().mockResolvedValue(undefined),
       delete: vi.fn().mockResolvedValue(undefined),
     };
-    const sendon = { sendPasswordResetCode: vi.fn().mockResolvedValue(undefined) };
+    const delivery = {
+      sendPasswordResetCode: vi.fn().mockResolvedValue(undefined),
+      sendVerificationCode: vi.fn(),
+    };
     const service = new AuthService(
       redis as never,
       { writeAudit: vi.fn().mockResolvedValue(undefined) } as never,
       {} as never,
-      sendon as never,
+      delivery as never,
     );
     vi.spyOn(
       service as unknown as { findPasswordResetTarget: () => Promise<unknown> },
@@ -201,7 +212,7 @@ describe('Cognito authentication routing', () => {
 
     await expect(service.requestPasswordReset('9999', 'web')).resolves.toEqual({ ok: true });
     expect(redis.setJson).toHaveBeenCalledOnce();
-    expect(sendon.sendPasswordResetCode).toHaveBeenCalledWith({
+    expect(delivery.sendPasswordResetCode).toHaveBeenCalledWith({
       phone: '01012345678',
       code: expect.stringMatching(/^\d{6}$/),
     });
@@ -214,14 +225,15 @@ describe('Cognito authentication routing', () => {
     };
     const database = { writeAudit: vi.fn().mockResolvedValue(undefined) };
     const cognito = { forgotPassword: vi.fn() };
-    const sendon = { sendPasswordResetCode: vi.fn() };
-    const emailVerification = { sendVerificationCode: vi.fn().mockResolvedValue(undefined) };
+    const delivery = {
+      sendPasswordResetCode: vi.fn(),
+      sendVerificationCode: vi.fn().mockResolvedValue(undefined),
+    };
     const service = new AuthService(
       redis as never,
       database as never,
       cognito as never,
-      sendon as never,
-      emailVerification as never,
+      delivery as never,
     );
     vi.spyOn(
       service as unknown as { findPasswordResetTarget: () => Promise<unknown> },
@@ -239,13 +251,14 @@ describe('Cognito authentication routing', () => {
       ok: true,
     });
 
-    expect(emailVerification.sendVerificationCode).toHaveBeenCalledWith({
+    expect(delivery.sendVerificationCode).toHaveBeenCalledWith({
+      channel: 'email',
       email: 'student@example.com',
       code: expect.stringMatching(/^\d{6}$/),
       purpose: 'password-reset',
     });
     expect(cognito.forgotPassword).not.toHaveBeenCalled();
-    expect(sendon.sendPasswordResetCode).not.toHaveBeenCalled();
+    expect(delivery.sendPasswordResetCode).not.toHaveBeenCalled();
     expect(redis.setJson).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
@@ -273,7 +286,12 @@ describe('Cognito authentication routing', () => {
       setJson: vi.fn().mockResolvedValue(undefined),
       delete: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new AuthService(redis as never, { writeAudit: vi.fn() } as never, {} as never);
+    const service = new AuthService(
+      redis as never,
+      { writeAudit: vi.fn() } as never,
+      {} as never,
+      {} as never,
+    );
 
     await expect(
       service.verifyPasswordResetCode({
@@ -295,7 +313,12 @@ describe('Cognito authentication routing', () => {
       setJson: vi.fn().mockResolvedValue(undefined),
       delete: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new AuthService(redis as never, { writeAudit: vi.fn() } as never, {} as never);
+    const service = new AuthService(
+      redis as never,
+      { writeAudit: vi.fn() } as never,
+      {} as never,
+      {} as never,
+    );
     const internal = service as unknown as {
       hashPasswordResetCode: (username: string, code: string) => string;
     };
@@ -338,6 +361,7 @@ describe('Cognito authentication routing', () => {
       redis as never,
       { writeAudit: vi.fn().mockResolvedValue(undefined) } as never,
       cognito as never,
+      {} as never,
     );
     const internal = service as unknown as {
       hashPasswordResetCode: (username: string, code: string) => string;
@@ -397,6 +421,7 @@ describe('Cognito authentication routing', () => {
       redis as never,
       { writeAudit: vi.fn().mockResolvedValue(undefined) } as never,
       cognito as never,
+      {} as never,
     );
 
     const internal = service as unknown as {
@@ -441,6 +466,7 @@ describe('Cognito authentication routing', () => {
       } as never,
       {} as never,
       cognito as never,
+      {} as never,
     );
 
     await expect(
@@ -473,6 +499,7 @@ describe('Cognito authentication routing', () => {
       } as never,
       {} as never,
       cognito as never,
+      {} as never,
     );
     const internal = service as unknown as {
       createCognitoSession: (...args: unknown[]) => Promise<unknown>;
@@ -518,6 +545,7 @@ describe('Cognito authentication routing', () => {
             ),
           ),
       } as never,
+      {} as never,
     );
 
     await expect(
@@ -530,7 +558,7 @@ describe('Cognito authentication routing', () => {
   });
 
   it('blocks a Cognito-only session when one user has multiple Cognito links', async () => {
-    const service = new AuthService({} as never, {} as never, {} as never);
+    const service = new AuthService({} as never, {} as never, {} as never, {} as never);
     const internal = service as unknown as {
       findCognitoAccountBySubject: (subject: string) => Promise<unknown>;
       findCognitoLinkForUser: (userId: number) => Promise<{ subject: string } | null>;

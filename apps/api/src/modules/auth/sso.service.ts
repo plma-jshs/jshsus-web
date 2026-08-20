@@ -7,6 +7,25 @@ import { AuthService, type AuthSession } from './auth.service';
 
 export type SsoClient = 'web' | 'admin';
 
+const ADMIN_ACCESS_PERMISSIONS = new Set([
+  'content.manage',
+  'notices.manage',
+  'school_events.manage',
+  'community.manage',
+  'lost_items.manage',
+  'petitions.answer',
+  'activity.review',
+  'points.issue',
+  'points.manage',
+  'dorm.manage',
+  'devices.manage',
+  'wake_songs.review',
+  'jbs.publish',
+  'users.manage',
+  'iam.manage',
+  'audit.read',
+]);
+
 const requestSchema = z.object({
   client: z.enum(['web', 'admin']),
   callbackOrigin: z.string().url(),
@@ -94,7 +113,7 @@ export class SsoService {
   }
 
   async describeRequest(requestId: string) {
-    const request = await this.readRequest(requestId, false);
+    const request = await this.readRequest(requestId);
     return {
       client: request.client,
       serviceName: request.client === 'admin' ? '학생부 전산시스템' : '과구리',
@@ -102,7 +121,8 @@ export class SsoService {
   }
 
   async continue(requestId: string, centralSessionToken: string) {
-    const request = await this.readRequest(requestId, true);
+    const storedRequest = await this.readRequestWithRaw(requestId);
+    const request = storedRequest.value;
     const centralSession = await this.authService.getSessionFromToken(centralSessionToken);
     if (!centralSession || centralSession.userId <= 0) {
       throw new BadRequestException({
@@ -127,6 +147,18 @@ export class SsoService {
       browserBindingHash: request.browserBindingHash,
       centralSessionToken,
     };
+
+    const consumedRequest = await this.redis.takeIfValue(
+      this.requestKey(requestId),
+      storedRequest.raw,
+    );
+    if (!consumedRequest) {
+      throw new BadRequestException({
+        code: 'SSO_REQUEST_EXPIRED',
+        message: '로그인 요청이 만료되었거나 이미 처리되었습니다. 다시 시작해 주세요.',
+      });
+    }
+
     await this.redis.setJson(this.codeKey(code), codePayload, env.SSO_CODE_TTL_SECONDS);
 
     const redirectUrl = new URL('/api/auth/sso/callback', request.callbackOrigin);
@@ -137,7 +169,8 @@ export class SsoService {
 
   async exchange(origin: string, code: string, state: string, browserBinding: string) {
     const normalizedOrigin = this.requireOrigin(origin);
-    const raw = await this.redis.take(this.codeKey(code));
+    const codeKey = this.codeKey(code);
+    const raw = await this.redis.get(codeKey);
     if (!raw) {
       throw new BadRequestException({
         code: 'SSO_CODE_EXPIRED',
@@ -169,6 +202,14 @@ export class SsoService {
       throw new ForbiddenException({
         code: 'SSO_ADMIN_ACCESS_DENIED',
         message: '학생부 전산망에 접근할 권한이 없습니다.',
+      });
+    }
+
+    const consumedCode = await this.redis.takeIfValue(codeKey, raw);
+    if (!consumedCode) {
+      throw new BadRequestException({
+        code: 'SSO_CODE_EXPIRED',
+        message: '로그인 확인 코드가 만료되었거나 이미 사용되었습니다.',
       });
     }
 
@@ -210,7 +251,8 @@ export class SsoService {
     return (
       session.roles.some((role) =>
         ['system_admin', 'student_affairs_head', 'teacher'].includes(String(role)),
-      ) || session.permissions.length > 0
+      ) ||
+      session.permissions.some((permission) => ADMIN_ACCESS_PERMISSIONS.has(String(permission)))
     );
   }
 
@@ -248,9 +290,9 @@ export class SsoService {
     }
   }
 
-  private async readRequest(requestId: string, consume: boolean): Promise<SsoRequest> {
+  private async readRequest(requestId: string): Promise<SsoRequest> {
     const key = this.requestKey(requestId);
-    const raw = consume ? await this.redis.take(key) : await this.redis.get(key);
+    const raw = await this.redis.get(key);
     if (!raw) {
       throw new BadRequestException({
         code: 'SSO_REQUEST_EXPIRED',
@@ -258,6 +300,17 @@ export class SsoService {
       });
     }
     return this.parseStored(requestSchema, raw);
+  }
+
+  private async readRequestWithRaw(requestId: string): Promise<{ value: SsoRequest; raw: string }> {
+    const raw = await this.redis.get(this.requestKey(requestId));
+    if (!raw) {
+      throw new BadRequestException({
+        code: 'SSO_REQUEST_EXPIRED',
+        message: '로그인 요청이 만료되었습니다. 이용할 서비스에서 다시 시작해 주세요.',
+      });
+    }
+    return { value: this.parseStored(requestSchema, raw), raw };
   }
 
   private parseStored<T>(schema: z.ZodType<T>, raw: string): T {

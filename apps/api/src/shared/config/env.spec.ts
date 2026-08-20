@@ -39,3 +39,26 @@ describe('file storage quota environment validation', () => {
     }
   });
 });
+
+describe('authentication environment validation', () => {
+  it('keeps Cognito as the single supported authentication mode', () => {
+    const parsed = envSchema.safeParse({ NODE_ENV: 'test', AUTH_MODE: 'cognito' });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.AUTH_MODE).toBe('cognito');
+  });
+
+  it('rejects the removed local and hybrid authentication modes', () => {
+    expect(envSchema.safeParse({ NODE_ENV: 'test', AUTH_MODE: 'local' }).success).toBe(false);
+    expect(envSchema.safeParse({ NODE_ENV: 'test', AUTH_MODE: 'hybrid' }).success).toBe(false);
+  });
+
+  it('requires SES static credentials to be configured as a pair', () => {
+    const parsed = envSchema.safeParse({
+      NODE_ENV: 'test',
+      SES_AWS_ACCESS_KEY_ID: 'access-key',
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success)
+      expect(parsed.error.flatten().fieldErrors.SES_AWS_ACCESS_KEY_ID).toBeDefined();
+  });
+});
