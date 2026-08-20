@@ -5,7 +5,7 @@
 ## Workspace boundaries
 
 ```text
-apps/web        학생용 React SPA
+apps/jshsus     학생용 React SPA (과구리)
 apps/admin      관리자용 React SPA
 apps/api        NestJS HTTP API와 도메인 정책
 packages/db     Drizzle schema, migration, legacy import
@@ -13,6 +13,22 @@ packages/types  API 응답과 화면 모델의 공유 TypeScript 타입
 packages/ui     두 React 앱이 공유하는 디자인 token과 작은 primitive
 docs            설계 결정과 운영 문서
 ```
+
+### Naming and deployment identifiers
+
+- 공개 학생 포털(과구리)의 소스 디렉터리와 workspace package는 각각 `apps/jshsus`,
+  `@jshsus/jshsus`로 사용한다.
+- 관리자 포털은 `apps/admin`, 공통 백엔드는 `apps/api`로 유지한다. 관리자 포털의
+  공식 제품명이 바뀌더라도 API·권한 경계까지 함께 바꾸는 별도 마이그레이션 없이는
+  이 폴더를 임의로 이동하지 않는다.
+- 로컬·릴리스 Compose의 서비스 키 `web`과 `jshsus-v26-web` 네트워크 별칭은 Nginx
+  Proxy Manager와 운영 스크립트의 호환 계약이므로 유지한다. 프런트 이미지 이름만
+  `ghcr.io/<namespace>/jshsus`로 바뀐다.
+- API 인증의 `surface: 'web'` 및 OIDC callback 경로는 외부 클라이언트 계약이라서
+  소스 디렉터리 rename과 함께 바꾸지 않는다.
+- 따라서 현재 추가로 이동할 폴더는 없다. 향후 실험실·3D 프린터 같은 서비스가
+  추가되면 `apps/<product>`와 도메인 모듈을 새로 만들고, 공통 API·패키지는 그대로
+  공유한다.
 
 - 프런트엔드는 DB 패키지를 직접 참조하지 않고 HTTP API만 사용한다.
 - API는 도메인별 controller/service/module로 나누며 DB 접근은 `DatabaseService`를 통한다.
@@ -22,11 +38,11 @@ docs            설계 결정과 운영 문서
 ## Web application boundaries
 
 ```text
-apps/web/src/app          router와 앱 조립
-apps/web/src/components  전역 layout과 공통 페이지 primitive
-apps/web/src/features    기능별 page, component, API 계약
-apps/web/src/shared      HTTP, 파일, 날짜 등 기능 비종속 유틸리티
-apps/web/src/styles      base, shell, home, detail-pages, responsive 진입점
+apps/jshsus/src/app          router와 앱 조립
+apps/jshsus/src/components  전역 layout과 공통 페이지 primitive
+apps/jshsus/src/features    기능별 page, component, API 계약
+apps/jshsus/src/shared      HTTP, 파일, 날짜 등 기능 비종속 유틸리티
+apps/jshsus/src/styles      base, shell, home, detail-pages, responsive 진입점
 ```
 
 - 기능 코드는 다른 기능 폴더의 내부 파일을 직접 참조하지 않는다. 공용화가 필요하면 `shared` 또는 전역 component 경계를 사용한다.

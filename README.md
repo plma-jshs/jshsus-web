@@ -55,7 +55,7 @@ NODE_ENV=development ALLOW_LOCAL_SEED=true pnpm db:create-local-test-user
 
 ```txt
 apps/api      NestJS API
-apps/web      React + Vite + TanStack student portal
+apps/jshsus   React + Vite + TanStack student portal (과구리)
 apps/admin    React + Vite + TanStack admin portal
 packages/db   Drizzle MySQL schema
 packages/types shared API types

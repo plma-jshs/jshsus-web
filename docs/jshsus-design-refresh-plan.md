@@ -2,7 +2,7 @@
 
 - 확정일: 2026-07-13
 - 상태: 구현 기준(Approved)
-- 적용 대상: `apps/web`
+- 적용 대상: `apps/jshsus`
 
 ## 1. 제품 방향
 
@@ -188,7 +188,7 @@ toolbar와 본문을 구분하며, 장식 카드 여러 개로 쪼개지 않는�
 ## 9. 스타일 소유권
 
 - token: `packages/ui/src/tokens.css`
-- base/shell/home: `apps/web/src/styles/base.css`, `shell.css`, `home.css`
+- base/shell/home: `apps/jshsus/src/styles/base.css`, `shell.css`, `home.css`
 - shared page/table/editor/document: `page-scaffold.css`, `data-tables.css`, `editor.css`, `content-pages.css`
 - domain: `petitions.css`, `activity-requests.css`, `lost-items.css`, `calendar.css`, `my-status.css`, `auth.css`
 - responsive shell/home: `responsive.css`; domain responsive rule은 해당 domain 파일에 둔다.

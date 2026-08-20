@@ -5,11 +5,11 @@
 
 ## 구조
 
-- route: `apps/web/src/app/router.tsx`
-- 공통 page primitive: `apps/web/src/components/page`
-- 공통 rich text: `apps/web/src/components/editor`
-- 기능 UI/API: `apps/web/src/features/<domain>`
-- 공통 스타일: `apps/web/src/styles/page-scaffold.css`, `data-tables.css`, `editor.css`, `content-pages.css`
+- route: `apps/jshsus/src/app/router.tsx`
+- 공통 page primitive: `apps/jshsus/src/components/page`
+- 공통 rich text: `apps/jshsus/src/components/editor`
+- 기능 UI/API: `apps/jshsus/src/features/<domain>`
+- 공통 스타일: `apps/jshsus/src/styles/page-scaffold.css`, `data-tables.css`, `editor.css`, `content-pages.css`
 - 기능 스타일: 각 domain CSS
 
 ## 화면 범위

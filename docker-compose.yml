@@ -97,7 +97,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
+      dockerfile: apps/jshsus/Dockerfile
     ports:
       - '${WEB_PORT:-5173}:80'
     depends_on:

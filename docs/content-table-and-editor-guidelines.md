@@ -53,10 +53,10 @@ JPEG, PNG, WebP만 본문 이미지로 허용하며 확장자나 클라이언트
 
 ## 구현 위치
 
-- 공통 목록 제어: `apps/web/src/components/page/DataTableControls.tsx`
-- 리치 텍스트: `apps/web/src/components/editor/RichTextEditor.tsx`
-- 공통 표 CSS: `apps/web/src/styles/data-tables.css`
-- 공통 편집기 CSS: `apps/web/src/styles/editor.css`
+- 공통 목록 제어: `apps/jshsus/src/components/page/DataTableControls.tsx`
+- 리치 텍스트: `apps/jshsus/src/components/editor/RichTextEditor.tsx`
+- 공통 표 CSS: `apps/jshsus/src/styles/data-tables.css`
+- 공통 편집기 CSS: `apps/jshsus/src/styles/editor.css`
 - 서버 본문 검증: `apps/api/src/modules/boards/post-content.ts`
 - 파일 접근·저장: `apps/api/src/modules/files`
 - DB migration: `packages/db/migrations/0004_flimsy_justice.sql`

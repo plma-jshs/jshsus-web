@@ -72,7 +72,7 @@
 
 ### 2.6 `points.jshsus.kr` 관리자 사이트에서 확인한 요소
 
-`points.jshsus.kr`는 공개 랜딩에서는 로그인 화면만 보이며, 통합 로그인 `service=plma` 경유 후 관리자 메뉴가 로드된다. 로그인 후 화면은 AdminLTE 기반 관리자 UI이며, jQuery DataTables, Select2, daterangepicker, Bootstrap Dual Listbox, SweetAlert2, pdfmake, xlsx, SurveyJS, Pace 등을 사용한다. 신규 리뉴얼에서는 이 관리자 사이트를 학생 포털 `apps/web`에 섞지 않고 `apps/admin` 또는 `apps/points-admin`으로 분리한다.
+`points.jshsus.kr`는 공개 랜딩에서는 로그인 화면만 보이며, 통합 로그인 `service=plma` 경유 후 관리자 메뉴가 로드된다. 로그인 후 화면은 AdminLTE 기반 관리자 UI이며, jQuery DataTables, Select2, daterangepicker, Bootstrap Dual Listbox, SweetAlert2, pdfmake, xlsx, SurveyJS, Pace 등을 사용한다. 신규 리뉴얼에서는 이 관리자 사이트를 학생 포털 `apps/jshsus`에 섞지 않고 `apps/admin` 또는 `apps/points-admin`으로 분리한다.
 
 확인된 관리자 메뉴:
 
@@ -576,7 +576,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
+      dockerfile: apps/jshsus/Dockerfile
     env_file:
       - .env
     depends_on:
@@ -674,7 +674,7 @@ volumes:
 
 ## 14. 바로 시작할 작업 목록
 
-- [x] 모노레포 scaffold 생성: `apps/web`, `apps/admin`, `apps/api`, `packages/db`, `packages/types`, `packages/ui`
+- [x] 모노레포 scaffold 생성: `apps/jshsus`, `apps/admin`, `apps/api`, `packages/db`, `packages/types`, `packages/ui`
 - [x] `packages/db` Drizzle schema와 migration 초안 작성
 - [x] `.env.example` 생성 및 legacy secret/AWS/S3/Redis/MySQL 환경변수 반영
 - [x] Docker Compose로 MySQL/Redis/API/Web/Admin 실행 구조 구성

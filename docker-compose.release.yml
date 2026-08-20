@@ -213,7 +213,9 @@ services:
 
   web:
     <<: *service-defaults
-    image: ghcr.io/${GHCR_NAMESPACE:-plma-jshs}/jshsus-web:${IMAGE_TAG:?IMAGE_TAG is required}
+    # Keep the Compose service name and proxy alias `web` for zero-downtime compatibility.
+    # The public frontend image itself is now published as `jshsus`.
+    image: ghcr.io/${GHCR_NAMESPACE:-plma-jshs}/jshsus:${IMAGE_TAG:?IMAGE_TAG is required}
     networks:
       app:
       proxy:

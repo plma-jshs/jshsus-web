@@ -12,7 +12,7 @@
 - 휴대폰 보관함 원격 API의 별도 Guard 설정은 제거하고 기존 원격 엔드포인트 동작을
   복원했다.
 - 일반 사용자 파일 누적 quota 기본값을 100MB에서 1GB(1024MB)로 올렸다.
-- GA4는 `apps/web`에서만 사용한다. 측정 ID가 설정된 경우 과구리 웹의 라우트 이동을
+- GA4는 `apps/jshsus`에서만 사용한다. 측정 ID가 설정된 경우 과구리 웹의 라우트 이동을
   수집하고, 관리자 앱에는 GA 스크립트·페이지뷰·빌드 측정 ID를 전달하지 않는다.
 - 비밀번호 찾기는 DB에 저장된 이메일·전화번호를 대상으로 하는 기존 정책으로
   복원했다. Cognito의 `email_verified`/`phone_number_verified`만을 강제하는
@@ -63,7 +63,7 @@
 
 ### 3.1 인벤토리
 
-현재 문서에 기록된 주요 경로는 `/home/ubuntu/Server/jshsus-web-v26`,
+현재 문서에 기록된 주요 경로는 `/home/ubuntu/Server/jshsus-v26`,
 `/home/ubuntu/Server/nginx-proxy-manager`, `/home/ubuntu/Server/iam`,
 `/home/ubuntu/Server/plma` 및 `/home/ubuntu/Server/backups`다. 실제 실행 전 다음
 명령으로 현재 상태를 다시 확정한다.
@@ -79,6 +79,28 @@ ss -lntup
 
 `v26`이라는 이름만 보고 삭제하지 않는다. Compose project label, 컨테이너 mount,
 포트와 NPM upstream을 실제로 대조한다.
+
+### 3.1.1 배포 디렉터리 이름 전환
+
+프런트 앱과 GHCR 이미지의 이름을 `web`에서 `jshsus`로 전환하면서 운영 checkout도
+`/home/ubuntu/Server/jshsus-v26`을 표준 경로로 사용한다. GitHub Actions는 경로를
+코드에 하드코딩하지 않고 production 환경의 `DEPLOY_PATH` secret에서 읽으므로, 서버
+이동은 다음 순서로 별도 점검한다.
+
+1. 유지보수 창에서 현재 `DEPLOY_PATH`의 `.env`, `.release-env`,
+   `.release-manifests`, `.docker-auth-path`, 현재/이전 release 링크를 백업한다.
+2. Compose를 중지하기 전에 기존 디렉터리를
+   `/home/ubuntu/Server/jshsus-v26`으로 원자적으로 이동하고 소유자·권한을 확인한다.
+3. GitHub production 환경의 `DEPLOY_PATH`를 새 경로로 변경한 뒤, SSH preflight와
+   release smoke test를 실행한다.
+4. 첫 릴리스 동안에는 이전 compose manifest와 `jshsus-web` 이미지가 롤백용으로
+   남아 있어야 한다. 새 `jshsus` 이미지가 정상 기동하고 관찰 기간이 끝난 뒤에만
+   구 디렉터리와 구 이미지 태그를 정리한다.
+
+이 저장소의 Compose 서비스 키와 Nginx Proxy Manager 별칭은 기존 `web`을 유지한다.
+이는 프록시·health check·롤백 계약을 깨지 않으면서 이미지와 앱 폴더만 바꾸기 위한
+호환 계층이다. API 인증 surface 값 `web`과 OIDC callback 경로도 외부 계약이므로
+이번 이름 변경에서 함께 바꾸지 않는다.
 
 ### 3.2 통합 순서
 
@@ -133,13 +155,13 @@ Git history에서 추적할 수 있으며, 운영 백업은 별도 보존한다.
 ## 6. `deploy.sh` 정리 (확인 완료)
 
 현재 `deploy.sh`에는 전역 `docker image prune`가 없고, `cleanup_old_images`가
-v26의 `ghcr.io/<namespace>/jshsus-{api,web,admin,migrate}` 이미지에만 적용된다.
+v26의 `ghcr.io/<namespace>/{jshsus-api,jshsus,jshsus-admin,jshsus-migrate}` 이미지에만 적용된다.
 현재·직전 release digest를 보존하고 오래된 v26 digest만 정리하는 정책을 유지한다.
 
 정리 범위는 다음과 같다.
 
 - 현재·이전 release digest는 보존한다.
-- `ghcr.io/<namespace>/jshsus-{api,web,admin,migrate}`의 오래된 digest만
+- `ghcr.io/<namespace>/{jshsus-api,jshsus,jshsus-admin,jshsus-migrate}`의 오래된 digest만
   명시적으로 삭제한다.
 - 삭제 대상은 태그·Compose label·현재/이전 링크를 모두 확인한다.
 - 디스크 부족 시 자동 전역 prune을 하지 말고 경고 후 운영자가 승인한다.

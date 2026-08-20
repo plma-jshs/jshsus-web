@@ -217,15 +217,15 @@ rollback_active_release() {
 cleanup_old_images() {
   local keep_current="$1"
   local keep_previous="${2:-}"
-  local service ref tag
+  local image ref tag
 
-  for service in api web admin migrate; do
+  for image in jshsus-api jshsus jshsus-admin jshsus-migrate; do
     while IFS= read -r ref; do
       tag="${ref##*:}"
       if [[ "$tag" =~ ^[0-9a-f]{40}$ && "$tag" != "$keep_current" && "$tag" != "$keep_previous" ]]; then
         docker image rm "$ref" >/dev/null 2>&1 || true
       fi
-    done < <(docker image ls --format '{{.Repository}}:{{.Tag}}' "ghcr.io/$GHCR_NAMESPACE/jshsus-$service")
+    done < <(docker image ls --format '{{.Repository}}:{{.Tag}}' "ghcr.io/$GHCR_NAMESPACE/$image")
   done
 }
 

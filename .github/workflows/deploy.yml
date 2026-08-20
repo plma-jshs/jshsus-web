@@ -249,12 +249,16 @@ jobs:
       matrix:
         include:
           - image: api
+            image_name: jshsus-api
             dockerfile: apps/api/Dockerfile
-          - image: web
-            dockerfile: apps/web/Dockerfile
+          - image: jshsus
+            image_name: jshsus
+            dockerfile: apps/jshsus/Dockerfile
           - image: admin
+            image_name: jshsus-admin
             dockerfile: apps/admin/Dockerfile
           - image: migrate
+            image_name: jshsus-migrate
             dockerfile: packages/db/Dockerfile
     steps:
       - name: Checkout
@@ -287,7 +291,7 @@ jobs:
         id: image
         shell: bash
         run: |
-          image="ghcr.io/${{ github.repository_owner }}/jshsus-${{ matrix.image }}:${{ github.sha }}"
+          image="ghcr.io/${{ github.repository_owner }}/${{ matrix.image_name }}:${{ github.sha }}"
           if docker buildx imagetools inspect "$image" >/dev/null 2>&1; then
             echo 'exists=true' >> "$GITHUB_OUTPUT"
           else
@@ -299,9 +303,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          image="ghcr.io/${{ github.repository_owner }}/jshsus-${{ matrix.image }}"
+          image="ghcr.io/${{ github.repository_owner }}/${{ matrix.image_name }}"
           build_args=()
-          if [[ "${{ matrix.image }}" == "web" ]]; then
+          if [[ "${{ matrix.image }}" == "jshsus" ]]; then
             build_args+=(--build-arg "VITE_GA_MEASUREMENT_ID=${{ secrets.VITE_GA_MEASUREMENT_ID || vars.VITE_GA_MEASUREMENT_ID }}")
           fi
           docker buildx build . \
@@ -312,7 +316,7 @@ jobs:
             --tag "$image:${{ github.sha }}" \
             --label "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
             --label "org.opencontainers.image.revision=${{ github.sha }}" \
-            --label "org.opencontainers.image.title=jshsus-${{ matrix.image }}" \
+            --label "org.opencontainers.image.title=${{ matrix.image_name }}" \
             --cache-from "type=registry,ref=$image:buildcache" \
             --cache-to "type=registry,ref=$image:buildcache,mode=max" \
             --provenance=mode=max \
@@ -354,13 +358,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          images=(api web admin migrate)
+          images=(jshsus-api jshsus jshsus-admin jshsus-migrate)
           for name in "${images[@]}"; do
             docker buildx imagetools inspect \
-              "ghcr.io/${{ github.repository_owner }}/jshsus-$name:${{ github.sha }}" >/dev/null
+              "ghcr.io/${{ github.repository_owner }}/$name:${{ github.sha }}" >/dev/null
           done
           for name in "${images[@]}"; do
-            image="ghcr.io/${{ github.repository_owner }}/jshsus-$name"
+            image="ghcr.io/${{ github.repository_owner }}/$name"
             if docker buildx imagetools inspect "$image:stable" >/dev/null 2>&1; then
               docker buildx imagetools create --tag "$image:previous" "$image:stable"
             fi
@@ -962,13 +966,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          images=(api web admin migrate)
+          images=(jshsus-api jshsus jshsus-admin jshsus-migrate)
           for name in "${images[@]}"; do
             docker buildx imagetools inspect \
-              "ghcr.io/${{ github.repository_owner }}/jshsus-$name:${{ github.sha }}" >/dev/null
+              "ghcr.io/${{ github.repository_owner }}/$name:${{ github.sha }}" >/dev/null
           done
           for name in "${images[@]}"; do
-            image="ghcr.io/${{ github.repository_owner }}/jshsus-$name"
+            image="ghcr.io/${{ github.repository_owner }}/$name"
             docker buildx imagetools create --tag "$image:stable" "$image:${{ github.sha }}"
           done
 
@@ -1000,8 +1004,7 @@ jobs:
             owner_path="/users/$OWNER"
           fi
 
-          for name in api web admin migrate; do
-            package="jshsus-$name"
+          for package in jshsus-api jshsus jshsus-admin jshsus-migrate; do
             versions_file="$(mktemp)"
             if ! gh api --paginate "$owner_path/packages/container/$package/versions?per_page=100" \
               --jq '.[] | @base64' > "$versions_file"; then

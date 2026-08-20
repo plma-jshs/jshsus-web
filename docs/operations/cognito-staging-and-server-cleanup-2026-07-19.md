@@ -75,7 +75,7 @@
 ├── backups
 ├── iam
 ├── iam-server
-├── jshsus-web-v26
+├── jshsus-v26
 ├── nginx-proxy-manager
 └── plma
 ```
@@ -130,7 +130,7 @@ Nginx Proxy Manager 2.12.3에는 공식 관리 CLI가 없다. 관리자 자격 �
 
 앱 클라이언트:
 
-- Web: `jshsus-web-staging` / `73h68fhtcvcedshsq8qml3iccr`
+- Web: `jshsus-staging` / `73h68fhtcvcedshsq8qml3iccr`
 - Admin: `jshsus-admin-staging` / `61thg46lu8a6jpve0bd9e26bhg`
 
 두 클라이언트 모두 다음 원칙을 적용했다.
