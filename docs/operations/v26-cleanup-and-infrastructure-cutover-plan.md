@@ -99,8 +99,8 @@ ss -lntup
 뒤 자동 배포를 재실행해야 한다.
 
 ```text
-repo:plma-jshs/platform:environment:database-backup
-repo:plma-jshs/platform:environment:privacy-operations
+repo:plma-jshs@213739279/platform@1297269966:environment:database-backup
+repo:plma-jshs@213739279/platform@1297269966:environment:privacy-operations
 ```
 
 1. 유지보수 창에서 현재 `DEPLOY_PATH`의 `.env`, `.release-env`,
