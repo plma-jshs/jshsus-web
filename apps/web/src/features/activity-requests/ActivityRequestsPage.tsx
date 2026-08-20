@@ -211,7 +211,7 @@ export function ActivityRequestsPage() {
             </div>
           }
           groupActionWithPageSize
-          searchPlaceholder="내용, 인원, 장소, 지도교사 검색"
+          searchPlaceholder="내용, 참여 학생, 장소, 지도교사 검색"
           onPageSizeChange={(nextPageSize) => {
             updateTableSearch({ page: 1, size: nextPageSize });
           }}
@@ -339,7 +339,7 @@ export function ActivityRequestsPage() {
                   <th scope="col">교시</th>
                   <th scope="col">장소</th>
                   <th scope="col">내용</th>
-                  <th scope="col">인원</th>
+                  <th scope="col">참여 학생</th>
                   <th scope="col">지도교사</th>
                   <th scope="col">상태</th>
                 </tr>
@@ -375,7 +375,7 @@ export function ActivityRequestsPage() {
                       <td className="activity-table__purpose" data-label="내용">
                         <span>{request.purpose}</span>
                       </td>
-                      <td className="activity-table__participants" data-label="인원">
+                      <td className="activity-table__participants" data-label="참여 학생">
                         <ActivityParticipants
                           participants={request.participants}
                           fallback={request}
@@ -441,7 +441,7 @@ export function ActivityRequestsPage() {
                     <div className="activity-request-card__detail activity-request-card__detail--participants">
                       <Users size={15} aria-hidden="true" />
                       <span>
-                        참여자:{' '}
+                        참여 학생:{' '}
                         <ActivityParticipants
                           participants={request.participants}
                           fallback={request}

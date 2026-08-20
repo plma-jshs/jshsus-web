@@ -83,7 +83,7 @@
   min-height: 148px;
   padding: var(--j-space-4);
   align-content: start;
-  grid-template-rows: minmax(2.8em, auto) minmax(2.9em, auto) auto;
+  grid-template-rows: 1.45em minmax(2.9em, auto) auto;
   gap: var(--j-space-2);
 }
 
@@ -95,7 +95,7 @@
   line-height: var(--j-leading-snug);
   overflow: hidden;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   text-overflow: ellipsis;
 }
 

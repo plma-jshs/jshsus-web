@@ -38,6 +38,13 @@
   gap: 18px;
 }
 
+.device-schedule-panel > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .device-schedule-panel > header h2,
 .device-schedule-panel > header p {
   margin: 0;
@@ -73,15 +80,21 @@
   width: 100%;
 }
 
-.device-schedule-list {
+.device-schedule-form__actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.device-schedule-table {
   display: grid;
   margin: 0;
   padding: 0;
   gap: 8px;
-  list-style: none;
 }
 
-.device-schedule-list li {
+.device-schedule-table__row {
   display: flex;
   min-height: 54px;
   padding: 9px 12px;
@@ -93,15 +106,33 @@
   background: var(--j-color-surface);
 }
 
-.device-schedule-list li > div {
+.device-schedule-table__row.is-header {
+  min-height: 34px;
+  padding-block: 0;
+  border: 0;
+  background: transparent;
+  color: var(--j-color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.device-schedule-table__row > :where(strong, span, time, button) {
+  flex: 1 1 0;
+}
+
+.device-schedule-table__row > button {
+  flex: 0 0 34px;
+}
+
+.device-schedule-table__row > div {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: 5px 12px;
 }
 
-.device-schedule-list li span,
-.device-schedule-list li time {
+.device-schedule-table__row span,
+.device-schedule-table__row time {
   color: var(--j-color-text-muted);
   font-size: 12px;
 }
@@ -131,12 +162,54 @@
   }
 
   .device-schedule-form label:nth-child(3),
-  .device-schedule-form > button {
+  .device-schedule-form > button,
+  .device-schedule-form__actions {
     grid-column: 1 / -1;
   }
 
   .device-schedule-form > button {
     width: 100%;
+  }
+
+  .device-schedule-panel > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .device-schedule-panel > header > button {
+    width: 100%;
+  }
+
+  .device-schedule-form__actions {
+    justify-content: stretch;
+  }
+
+  .device-schedule-form__actions > * {
+    flex: 1 1 0;
+  }
+
+  .device-schedule-table__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 10px;
+  }
+
+  .device-schedule-table__row.is-header {
+    display: none;
+  }
+
+  .device-schedule-table__row > :where(strong, span, time) {
+    grid-column: 1;
+  }
+
+  .device-schedule-table__row > time {
+    grid-row: 2;
+  }
+
+  .device-schedule-table__row > button {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
   }
 }
 

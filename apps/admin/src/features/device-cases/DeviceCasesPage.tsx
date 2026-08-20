@@ -7,7 +7,7 @@ import type {
 } from '@jshsus/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { CalendarClock, History, Lock, LockOpen, Trash2 } from 'lucide-react';
+import { CalendarClock, History, Lock, LockOpen, Plus, Trash2 } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   Button,
@@ -81,10 +81,12 @@ export function DeviceCasesPage() {
     scheduledAt: '',
     isOpen: false,
   });
+  const [scheduleFormOpen, setScheduleFormOpen] = useState(false);
   const scheduleMutation = useMutation({
     mutationFn: api.createDeviceCaseSchedule,
     onSuccess: async () => {
       setScheduleDraft((current) => ({ ...current, scheduledAt: '' }));
+      setScheduleFormOpen(false);
       await queryClient.invalidateQueries({ queryKey: ['device-case-schedules'] });
     },
   });
@@ -338,68 +340,87 @@ export function DeviceCasesPage() {
                 <h2 id="device-schedule-title">자동 잠금 일정</h2>
                 <p>예약 시각이 되면 해당 보관함의 문 상태를 자동으로 변경합니다.</p>
               </div>
-            </header>
-            <form
-              className="device-schedule-form"
-              onSubmit={(event: FormEvent) => {
-                event.preventDefault();
-                if (!scheduleDraft.scheduledAt) return;
-                scheduleMutation.mutate(scheduleDraft);
-              }}
-            >
-              <label>
-                <span>보관함</span>
-                <AdminSelect
-                  aria-label="예약 보관함"
-                  value={String(scheduleDraft.deviceCaseId)}
-                  onChange={(event) =>
-                    setScheduleDraft((current) => ({
-                      ...current,
-                      deviceCaseId: Number(event.target.value),
-                    }))
-                  }
-                >
-                  {cases.map((deviceCase) => (
-                    <option key={deviceCase.id} value={deviceCase.id}>
-                      {deviceCaseLabel(deviceCase.id)}
-                    </option>
-                  ))}
-                </AdminSelect>
-              </label>
-              <label>
-                <span>동작</span>
-                <AdminSelect
-                  aria-label="예약 동작"
-                  value={scheduleDraft.isOpen ? 'open' : 'close'}
-                  onChange={(event) =>
-                    setScheduleDraft((current) => ({
-                      ...current,
-                      isOpen: event.target.value === 'open',
-                    }))
-                  }
-                >
-                  <option value="close">잠금</option>
-                  <option value="open">잠금 해제</option>
-                </AdminSelect>
-              </label>
-              <label>
-                <span>실행 시각</span>
-                <input
-                  type="datetime-local"
-                  value={scheduleDraft.scheduledAt}
-                  onChange={(event) =>
-                    setScheduleDraft((current) => ({
-                      ...current,
-                      scheduledAt: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </label>
-              <Button type="submit" variant="primary" disabled={scheduleMutation.isPending}>
-                일정 추가
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => setScheduleFormOpen((current) => !current)}
+              >
+                <Plus size={15} aria-hidden="true" /> 작업 추가
               </Button>
-            </form>
+            </header>
+            {scheduleFormOpen ? (
+              <form
+                className="device-schedule-form"
+                onSubmit={(event: FormEvent) => {
+                  event.preventDefault();
+                  if (!scheduleDraft.scheduledAt) return;
+                  scheduleMutation.mutate(scheduleDraft);
+                }}
+              >
+                <label>
+                  <span>보관함</span>
+                  <AdminSelect
+                    aria-label="예약 보관함"
+                    value={String(scheduleDraft.deviceCaseId)}
+                    onChange={(event) =>
+                      setScheduleDraft((current) => ({
+                        ...current,
+                        deviceCaseId: Number(event.target.value),
+                      }))
+                    }
+                  >
+                    {cases.map((deviceCase) => (
+                      <option key={deviceCase.id} value={deviceCase.id}>
+                        {deviceCaseLabel(deviceCase.id)}
+                      </option>
+                    ))}
+                  </AdminSelect>
+                </label>
+                <label>
+                  <span>동작</span>
+                  <AdminSelect
+                    aria-label="예약 동작"
+                    value={scheduleDraft.isOpen ? 'open' : 'close'}
+                    onChange={(event) =>
+                      setScheduleDraft((current) => ({
+                        ...current,
+                        isOpen: event.target.value === 'open',
+                      }))
+                    }
+                  >
+                    <option value="close">잠금</option>
+                    <option value="open">잠금 해제</option>
+                  </AdminSelect>
+                </label>
+                <label>
+                  <span>실행 시각</span>
+                  <input
+                    type="datetime-local"
+                    value={scheduleDraft.scheduledAt}
+                    onChange={(event) =>
+                      setScheduleDraft((current) => ({
+                        ...current,
+                        scheduledAt: event.target.value,
+                      }))
+                    }
+                    required
+                  />
+                </label>
+                <div className="device-schedule-form__actions">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setScheduleFormOpen(false)}
+                  >
+                    취소
+                  </Button>
+                  <Button type="submit" variant="primary" disabled={scheduleMutation.isPending}>
+                    일정 추가
+                  </Button>
+                </div>
+              </form>
+            ) : null}
             {schedulesQuery.isError ? (
               <p className="form-error">스케줄을 불러오지 못했습니다.</p>
             ) : schedulesQuery.isPending ? (
@@ -407,16 +428,26 @@ export function DeviceCasesPage() {
                 <span className="admin-loading-spinner" aria-label="로딩 중" />
               </div>
             ) : schedulesQuery.data?.length ? (
-              <ul className="device-schedule-list">
+              <div
+                className="device-schedule-table"
+                role="table"
+                aria-label="등록된 자동 잠금 일정"
+              >
+                <div className="device-schedule-table__row is-header" role="row">
+                  <span role="columnheader">보관함</span>
+                  <span role="columnheader">동작</span>
+                  <span role="columnheader">실행 시각</span>
+                  <span role="columnheader" className="sr-only">
+                    작업
+                  </span>
+                </div>
                 {schedulesQuery.data.map((schedule: DeviceCaseSchedule) => (
-                  <li key={schedule.id}>
-                    <div>
-                      <strong>{deviceCaseLabel(schedule.deviceCaseId)}</strong>
-                      <span>{schedule.isOpen ? '잠금 해제' : '잠금'}</span>
-                      <time dateTime={schedule.scheduledAt}>
-                        {formatDateTime(schedule.scheduledAt)}
-                      </time>
-                    </div>
+                  <div className="device-schedule-table__row" role="row" key={schedule.id}>
+                    <strong role="cell">{deviceCaseLabel(schedule.deviceCaseId)}</strong>
+                    <span role="cell">{schedule.isOpen ? '잠금 해제' : '잠금'}</span>
+                    <time role="cell" dateTime={schedule.scheduledAt}>
+                      {formatDateTime(schedule.scheduledAt)}
+                    </time>
                     <button
                       type="button"
                       className="icon-button quiet-button"
@@ -426,9 +457,9 @@ export function DeviceCasesPage() {
                     >
                       <Trash2 size={16} aria-hidden="true" />
                     </button>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             ) : (
               <p className="device-schedule-empty">등록된 자동 잠금 일정이 없습니다.</p>
             )}

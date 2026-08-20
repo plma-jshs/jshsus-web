@@ -27,12 +27,20 @@
     box-shadow var(--j-motion-fast);
 }
 
-:where(
-  .page-search-field > input,
-  .data-table-toolbar__query > input,
-  .admin-search-field > input
-) {
+:where(.page-search-field input, .data-table-toolbar__query input, .admin-search-field input) {
   min-width: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Search fields are compound controls: only the wrapper owns the chrome.
+   Keep this descendant rule intentionally broad so a page-specific wrapper
+   cannot accidentally paint a second native input border. */
+:where(.page-search-field, .data-table-toolbar__query, .admin-search-field)
+  :where(input, textarea) {
   border: 0 !important;
   border-radius: 0 !important;
   outline: 0 !important;
@@ -64,35 +72,35 @@
   }
 
   :where(
-    input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
-        [type='range']
-      ):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
-    select,
-    textarea,
-    .page-search-field:focus-within,
-    .data-table-toolbar__query:focus-within,
-    .admin-search-field:focus-within,
-    .admin-select__trigger:focus-visible,
-    .data-table-toolbar-select__trigger:focus-visible,
-    .ui-page-size-select .admin-select__trigger:focus-visible,
-    .ui-page-size-select .admin-select__native:focus-visible
-  ):focus,
+      input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
+          [type='range']
+        ):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
+      select,
+      textarea
+    ):not(.page-search-field input):not(.data-table-toolbar__query input):not(
+      .admin-search-field input
+    ):focus,
+  :where(.page-search-field, .data-table-toolbar__query, .admin-search-field):focus-within,
   :where(
-    input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
-        [type='range']
-      ):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
-    select,
-    textarea,
-    .page-search-field:focus-within,
-    .data-table-toolbar__query:focus-within,
-    .admin-search-field:focus-within,
-    .admin-select__trigger:focus-visible,
-    .data-table-toolbar-select__trigger:focus-visible,
-    .ui-page-size-select .admin-select__trigger:focus-visible,
-    .ui-page-size-select .admin-select__native:focus-visible
-  ):focus-visible {
+    .admin-select__trigger,
+    .data-table-toolbar-select__trigger,
+    .ui-page-size-select .admin-select__trigger,
+    .ui-page-size-select .admin-select__native
+  ):focus {
     border-color: var(--j-color-brand) !important;
     box-shadow: var(--j-shadow-focus) !important;
+  }
+
+  /* The wrapper, not the text input, owns the focus surface. This reset is
+     intentionally after the focus rule so browser focus heuristics cannot
+     paint a second ring inside a compound search control. */
+  :where(.page-search-field, .data-table-toolbar__query, .admin-search-field)
+    :where(input, textarea):focus {
+    border: 0 !important;
+    border-radius: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
   }
 }
 

@@ -307,10 +307,19 @@
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  margin-top: 16px;
-  padding: 14px;
+  margin-top: 0;
+  padding: 16px;
   border-radius: var(--j-radius-md);
   background: var(--j-color-surface-subtle);
+}
+
+.petition-participation-action__progress {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.petition-participation-action__cta {
+  flex: 0 0 auto;
 }
 
 .petition-participation-action p,
@@ -668,6 +677,11 @@
     align-items: stretch;
     grid-template-columns: 1fr;
     flex-direction: column;
+  }
+
+  .petition-participation-action__cta,
+  .petition-participation-action__cta .detail-primary-button {
+    width: 100%;
   }
 
   .petition-participation-action .detail-primary-button,

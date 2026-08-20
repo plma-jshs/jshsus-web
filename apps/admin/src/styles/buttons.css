@@ -457,6 +457,24 @@
   padding: 0;
 }
 
+/* Table work columns use quiet icon actions rather than saturated square
+   buttons. The mobile action sheet keeps its labelled rows below. */
+.admin-row-actions__desktop .admin-row-action-button.ui-button {
+  border-color: transparent;
+  background: transparent;
+  color: var(--j-color-text-muted);
+}
+
+.admin-row-actions__desktop .admin-row-action-button.ui-button:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--j-color-surface-hover);
+  color: var(--j-color-text);
+}
+
+.admin-row-actions__desktop .admin-row-action-button.ui-button--danger {
+  color: var(--j-color-text-muted);
+}
+
 .admin-row-action-button svg {
   width: 15px;
   height: 15px;

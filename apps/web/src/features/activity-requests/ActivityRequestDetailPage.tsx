@@ -186,7 +186,7 @@ export function ActivityRequestDetailPage() {
               <dd>{request.location}</dd>
             </div>
             <div>
-              <dt>인원</dt>
+              <dt>참여 학생</dt>
               <dd>{formatActivityParticipants(request.participants, request)}</dd>
             </div>
             <div>

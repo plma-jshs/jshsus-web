@@ -160,8 +160,7 @@ export function PetitionDetailPage() {
             {petitionStatusLabels[petition.status]}
           </span>
           <span>{petition.authorName ?? '익명 제안'}</span>
-          <span>{formatPetitionDate(petition.startsAt)} 등록</span>
-          <span>{formatPetitionDate(petition.endsAt)} 마감</span>
+          <time dateTime={petition.startsAt}>{formatPetitionDate(petition.startsAt)}</time>
           <span className="petition-deadline-badge">{petitionDeadlineLabel(petition.endsAt)}</span>
         </>
       }
@@ -184,59 +183,63 @@ export function PetitionDetailPage() {
           </div>
         ) : null}
         <section className="petition-detail-progress" aria-labelledby="petition-progress-title">
-          <div className="petition-detail-progress__summary">
-            <div>
-              <span id="petition-progress-title">참여 현황</span>
-              <strong>
-                {petition.participantCount.toLocaleString('ko-KR')}
-                <small> / {petition.threshold.toLocaleString('ko-KR')}명</small>
-              </strong>
-            </div>
-            <b>{progress}%</b>
-          </div>
-          <div
-            className="petition-detail-progress__track"
-            role="progressbar"
-            aria-label="청원 참여 달성률"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={progress}
-          >
-            <span style={{ width: `${progress}%` }} />
-          </div>
           {petition.status === 'open' ? (
             <div className="petition-participation-action">
-              {sessionQuery.isLoading ? (
-                <button className="detail-primary-button" type="button" disabled>
-                  로그인 상태 확인 중
-                </button>
-              ) : participationNeedsLogin ? (
-                <Link
-                  className="detail-primary-button"
-                  to="/login"
-                  search={{ returnTo: `/petitions/${petitionId}` }}
+              <div className="petition-participation-action__progress">
+                <div className="petition-detail-progress__summary">
+                  <div>
+                    <span id="petition-progress-title">참여 현황</span>
+                    <strong>
+                      {petition.participantCount.toLocaleString('ko-KR')}
+                      <small> / {petition.threshold.toLocaleString('ko-KR')}명</small>
+                    </strong>
+                  </div>
+                  <b>{progress}%</b>
+                </div>
+                <div
+                  className="petition-detail-progress__track"
+                  role="progressbar"
+                  aria-label="청원 참여 달성률"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={progress}
                 >
-                  <Users size={16} aria-hidden="true" /> 참여하기
-                </Link>
-              ) : (
-                <button
-                  className="detail-primary-button"
-                  type="button"
-                  onClick={() => participateMutation.mutate()}
-                  disabled={participateMutation.isPending || petition.participated}
-                >
-                  {petition.participated ? (
-                    <CheckCircle2 size={16} aria-hidden="true" />
-                  ) : (
-                    <Users size={16} aria-hidden="true" />
-                  )}
-                  {participateMutation.isPending
-                    ? '참여 처리 중'
-                    : petition.participated
-                      ? '참여 완료'
-                      : '청원 참여하기'}
-                </button>
-              )}
+                  <span style={{ width: `${progress}%` }} />
+                </div>
+              </div>
+              <div className="petition-participation-action__cta">
+                {sessionQuery.isLoading ? (
+                  <button className="detail-primary-button" type="button" disabled>
+                    로그인 상태 확인 중
+                  </button>
+                ) : participationNeedsLogin ? (
+                  <Link
+                    className="detail-primary-button"
+                    to="/login"
+                    search={{ returnTo: `/petitions/${petitionId}` }}
+                  >
+                    <Users size={16} aria-hidden="true" /> 참여하기
+                  </Link>
+                ) : (
+                  <button
+                    className="detail-primary-button"
+                    type="button"
+                    onClick={() => participateMutation.mutate()}
+                    disabled={participateMutation.isPending || petition.participated}
+                  >
+                    {petition.participated ? (
+                      <CheckCircle2 size={16} aria-hidden="true" />
+                    ) : (
+                      <Users size={16} aria-hidden="true" />
+                    )}
+                    {participateMutation.isPending
+                      ? '참여 처리 중'
+                      : petition.participated
+                        ? '참여 완료'
+                        : '청원 참여하기'}
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             <p className="petition-participation-closed">참여가 종료된 청원입니다.</p>

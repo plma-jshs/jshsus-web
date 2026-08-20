@@ -281,7 +281,7 @@ function createColumns(
     {
       id: 'participants',
       accessorFn: formatParticipants,
-      header: '인원',
+      header: '참여 학생',
       enableSorting: false,
       cell: ({ row }) => (
         <ActivityParticipants
@@ -451,7 +451,7 @@ export function ActivityOverviewPage() {
                   setSearch(event.target.value);
                   resetPage();
                 }}
-                placeholder="내용, 인원, 장소, 지도교사 검색"
+                placeholder="내용, 참여 학생, 장소, 지도교사 검색"
                 onClear={() => {
                   setSearch('');
                   resetPage();

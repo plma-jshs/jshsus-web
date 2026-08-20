@@ -9,7 +9,7 @@ import type {
 } from '@jshsus/types';
 import { useMutation } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { MoveRight, X } from 'lucide-react';
+import { ArrowLeftRight, Download, MoveRight, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   AdminSelect,
@@ -182,13 +182,14 @@ export function DormAssignmentPanel({
   const [drawGrade, setDrawGrade] = useState(1);
   const [preview, setPreview] = useState<DormDrawPreview | null>(null);
   const [placements, setPlacements] = useState<DormDrawPlacement[]>([]);
-  const [selectedAssignments, setSelectedAssignments] = useState<number[]>([]);
   const [previewPageSize, setPreviewPageSize] = useState(20);
   const [pageSize, setPageSize] = useState(20);
   const [assignmentSorting, setAssignmentSorting] = useState<SortingState>([
     { id: 'roomName', desc: false },
   ]);
   const [movingAssignment, setMovingAssignment] = useState<DormAssignment | null>(null);
+  const [swapSource, setSwapSource] = useState<DormAssignment | null>(null);
+  const [swapTargetId, setSwapTargetId] = useState('');
   const [cancelTarget, setCancelTarget] = useState<DormAssignment | null>(null);
   const [moveRoomId, setMoveRoomId] = useState('');
   const [moveBed, setMoveBed] = useState('1');
@@ -250,12 +251,13 @@ export function DormAssignmentPanel({
   const swapMutation = useMutation({
     mutationFn: () =>
       api.swapDormAssignments({
-        leftAssignmentId: selectedAssignments[0]!,
-        rightAssignmentId: selectedAssignments[1]!,
+        leftAssignmentId: swapSource!.id,
+        rightAssignmentId: Number(swapTargetId),
       }),
     onSuccess: async () => {
       showToast({ title: '두 학생의 방을 교환했습니다.', tone: 'success' });
-      setSelectedAssignments([]);
+      setSwapSource(null);
+      setSwapTargetId('');
       await refresh();
     },
     onError: (error) =>
@@ -493,26 +495,6 @@ export function DormAssignmentPanel({
   const assignmentColumns = useMemo<ColumnDef<DormAssignment>[]>(
     () => [
       {
-        id: 'select',
-        header: '선택',
-        cell: ({ row }) => (
-          <input
-            type="checkbox"
-            aria-label={`${row.original.studentName} 교환 선택`}
-            checked={selectedAssignments.includes(row.original.id)}
-            onChange={(event) =>
-              setSelectedAssignments((current) =>
-                event.target.checked
-                  ? [...current, row.original.id].slice(-2)
-                  : current.filter((id) => id !== row.original.id),
-              )
-            }
-          />
-        ),
-        enableSorting: false,
-        meta: { width: 62, align: 'center' },
-      },
-      {
         accessorKey: 'dormName',
         header: '생활관',
         enableSorting: false,
@@ -549,6 +531,15 @@ export function DormAssignmentPanel({
         cell: ({ row }) => (
           <RowActions className="dorm-row-actions" mobileTitle={`${row.original.studentName} 배정`}>
             <RowActionButton
+              icon={<ArrowLeftRight aria-hidden="true" />}
+              label={`${row.original.studentName} 교환`}
+              mobileLabel="교환"
+              onClick={() => {
+                setSwapSource(row.original);
+                setSwapTargetId('');
+              }}
+            />
+            <RowActionButton
               icon={<MoveRight aria-hidden="true" />}
               label={`${row.original.studentName} 이동`}
               mobileLabel="이동"
@@ -572,7 +563,7 @@ export function DormAssignmentPanel({
         meta: { width: 92, align: 'center' },
       },
     ],
-    [selectedAssignments],
+    [],
   );
 
   const moveRooms = useMemo(() => {
@@ -639,7 +630,7 @@ export function DormAssignmentPanel({
               loading={previewMutation.isPending}
               onClick={() => previewMutation.mutate()}
             >
-              추첨 미리보기
+              🎲 랜덤 배정
             </Button>
           </div>
           {preview ? (
@@ -653,7 +644,7 @@ export function DormAssignmentPanel({
                   disabled={preview.targetUserIds.length === 0 || draftViolations.length > 0}
                   onClick={() => applyMutation.mutate()}
                 >
-                  적용
+                  확정
                 </Button>
               </TableToolbar>
               {draftViolations.length ? (
@@ -736,11 +727,33 @@ export function DormAssignmentPanel({
           mobileSheet={false}
         >
           <Button
-            disabled={selectedAssignments.length !== 2}
-            loading={swapMutation.isPending}
-            onClick={() => swapMutation.mutate()}
+            variant="secondary"
+            onClick={() => {
+              const rows = [
+                ['학번', '이름', '생활관', '호실', '침대'],
+                ...assignments.map((assignment) => [
+                  assignment.studentNo,
+                  assignment.studentName,
+                  assignment.dormName,
+                  assignment.roomName,
+                  `${assignment.bedPosition}번`,
+                ]),
+              ];
+              const csv = rows
+                .map((row) =>
+                  row.map((cell) => `"${String(cell ?? '').replaceAll('"', '""')}"`).join(','),
+                )
+                .join('\n');
+              const link = document.createElement('a');
+              link.href = URL.createObjectURL(
+                new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' }),
+              );
+              link.download = `기숙사-배정-${year}-${semester}.csv`;
+              link.click();
+              URL.revokeObjectURL(link.href);
+            }}
           >
-            선택한 2명 교환
+            <Download size={15} aria-hidden="true" /> 학생 안내용 CSV
           </Button>
         </TableToolbar>
         <DataTable
@@ -771,6 +784,15 @@ export function DormAssignmentPanel({
                   mobileTitle={`${assignment.studentName} 배정`}
                 >
                   <RowActionButton
+                    icon={<ArrowLeftRight aria-hidden="true" />}
+                    label={`${assignment.studentName} 교환`}
+                    mobileLabel="교환"
+                    onClick={() => {
+                      setSwapSource(assignment);
+                      setSwapTargetId('');
+                    }}
+                  />
+                  <RowActionButton
                     icon={<MoveRight aria-hidden="true" />}
                     label={`${assignment.studentName} 이동`}
                     mobileLabel="이동"
@@ -794,6 +816,42 @@ export function DormAssignmentPanel({
           )}
         />
       </section>
+
+      <Dialog
+        open={Boolean(swapSource)}
+        onClose={() => setSwapSource(null)}
+        title="배정 교환"
+        description={swapSource ? `${swapSource.studentNo} ${swapSource.studentName}` : undefined}
+        footer={
+          <DialogActions
+            onClose={() => setSwapSource(null)}
+            onConfirm={() => swapMutation.mutate()}
+            confirmLabel="교환"
+            confirmDisabled={!swapTargetId || swapMutation.isPending}
+            pending={swapMutation.isPending}
+            pendingLabel="교환 중"
+            confirmType="button"
+          />
+        }
+      >
+        <label className="dorm-dialog-form__field">
+          <span>교환할 학생</span>
+          <AdminSelect
+            aria-label="교환할 학생"
+            value={swapTargetId}
+            onChange={(event) => setSwapTargetId(event.target.value)}
+          >
+            <option value="">학생을 선택하세요</option>
+            {assignments
+              .filter((assignment) => assignment.id !== swapSource?.id)
+              .map((assignment) => (
+                <option key={assignment.id} value={assignment.id}>
+                  {assignment.studentNo} {assignment.studentName} · {assignment.roomName}
+                </option>
+              ))}
+          </AdminSelect>
+        </label>
+      </Dialog>
 
       <Dialog
         open={Boolean(movingAssignment)}

@@ -57,8 +57,12 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 function candidateWeekCreatedAtRange(weekStart: string) {
   const [year, month, day] = weekStart.split('-').map(Number);
-  const end = new Date(Date.UTC(year, month - 1, day) - KOREA_OFFSET_MS);
-  if (Number.isNaN(end.getTime()) || end.toISOString().slice(0, 10) !== weekStart) {
+  // `weekStart` is a Korean-local calendar date. Validate the unshifted UTC
+  // calendar value first; validating the KST-shifted instant would make every
+  // midnight date look like the previous UTC day and reject valid requests.
+  const calendarMidnight = new Date(Date.UTC(year, month - 1, day));
+  const end = new Date(calendarMidnight.getTime() - KOREA_OFFSET_MS);
+  if (Number.isNaN(end.getTime()) || calendarMidnight.toISOString().slice(0, 10) !== weekStart) {
     throw new BadRequestException('Invalid candidate week.');
   }
   return { from: new Date(end.getTime() - 7 * DAY_MS), to: end };

@@ -144,7 +144,7 @@
 
 .calendar-grid__week-days > button.is-selected {
   z-index: 1;
-  outline: 1px solid color-mix(in srgb, var(--j-color-brand) 44%, transparent);
+  outline: 1px solid #111827;
   outline-offset: -1px;
   background: var(--calendar-cell-bg-selected);
 }
@@ -197,9 +197,9 @@
 }
 
 .calendar-grid__week-days > button.is-selected .calendar-grid__date {
-  color: #075f65;
-  background: #d7f1f1;
-  font-weight: 700;
+  color: #111827;
+  background: transparent;
+  font-weight: 600;
 }
 
 .calendar-grid__week-days > button.is-today .calendar-grid__date {
@@ -210,6 +210,12 @@
   color: #fff;
   background: #087c82;
   font-weight: 700;
+}
+
+.calendar-grid__week-days > button.is-selected.is-today .calendar-grid__date {
+  color: #111827;
+  background: transparent;
+  font-weight: 600;
 }
 
 .calendar-grid__bars {
@@ -384,7 +390,7 @@
   }
 
   .calendar-grid__week-days > button.is-selected {
-    outline: 1px solid color-mix(in srgb, var(--j-color-brand) 34%, transparent);
+    outline: 1px solid #111827;
     outline-offset: -1px;
     background: var(--calendar-cell-bg-selected);
   }
@@ -473,7 +479,7 @@
   .calendar-grid__week-days > button.is-selected:hover,
   .calendar-grid__week-days > button.is-selected:focus,
   .calendar-grid__week-days > button.is-selected:focus-visible {
-    outline: 1px solid color-mix(in srgb, var(--j-color-brand) 34%, transparent);
+    outline: 1px solid #111827;
     outline-offset: -1px;
     background: var(--calendar-cell-bg-selected);
   }

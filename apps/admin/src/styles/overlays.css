@@ -102,6 +102,27 @@
 .ui-drawer__body {
   padding: 20px;
   overflow: auto;
+  scrollbar-width: none;
+}
+
+.ui-dialog__body::-webkit-scrollbar,
+.ui-drawer__body::-webkit-scrollbar,
+.admin-filter-sheet__controls::-webkit-scrollbar,
+.admin-row-action-sheet__actions::-webkit-scrollbar,
+.admin-select__menu::-webkit-scrollbar,
+.activity-student-results::-webkit-scrollbar,
+.point-search-results::-webkit-scrollbar,
+.content-comment-feed::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.admin-row-action-sheet__actions,
+.admin-select__menu,
+.activity-student-results,
+.point-search-results,
+.content-comment-feed {
+  scrollbar-width: none;
 }
 
 .ui-dialog__footer,
@@ -336,6 +357,7 @@
   overflow-y: auto;
   align-items: stretch;
   gap: 14px;
+  scrollbar-width: none;
 }
 
 .admin-filter-sheet__controls > * {

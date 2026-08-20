@@ -205,7 +205,7 @@ export function ActivityReviewPage() {
     {
       id: 'participantCount',
       accessorFn: (request) => request.participants.length,
-      header: '인원',
+      header: '참여 학생',
       enableSorting: false,
       cell: ({ row }) => (
         <ActivityParticipants
