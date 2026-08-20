@@ -7,7 +7,7 @@ Parameters:
     Default: plma-jshs
   GitHubRepository:
     Type: String
-    Default: jshsus-web
+    Default: platform
   BackupBucketName:
     Type: String
     Default: jshsus-v26-db-backups-050314037822

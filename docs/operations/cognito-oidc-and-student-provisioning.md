@@ -155,7 +155,7 @@ GitHub environment 배포 정책과 workflow의 `GITHUB_REF` 검사로 이중 �
       "Condition": {
         "StringEquals": {
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub": "repo:plma-jshs/jshsus-web:environment:cognito-provisioning"
+          "token.actions.githubusercontent.com:sub": "repo:plma-jshs/platform:environment:cognito-provisioning"
         }
       }
     }

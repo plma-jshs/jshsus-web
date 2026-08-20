@@ -11,7 +11,7 @@
 
 AWS 장기 Access Key는 workflow에서 사용하지 않는다. GitHub가 발급한 단기 OIDC
 토큰으로 role을 Assume하며 trust policy는
-`plma-jshs/jshsus-web`의 `database-backup` 및 `privacy-operations`
+`plma-jshs/platform`의 `database-backup` 및 `privacy-operations`
 environment subject만 허용한다.
 
 ## AWS 선행 조건

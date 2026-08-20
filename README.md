@@ -1,6 +1,6 @@
-# JSHSUS Renewal
+# Platform
 
-NestJS, React, MySQL, Drizzle ORM, TanStack, Docker 기반 과구리 리뉴얼 프로젝트입니다.
+전남과학고 학교 서비스 플랫폼입니다. NestJS, React, MySQL, Drizzle ORM, TanStack, Docker를 사용합니다.
 
 Node.js 24와 pnpm 10을 기준으로 합니다. `.nvmrc` 또는 `.node-version`을 사용해 런타임을 맞춰주세요.
 
