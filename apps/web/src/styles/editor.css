@@ -335,7 +335,7 @@
 .rich-text-toolbar-palette.is-open > button {
   color: var(--j-color-brand-strong);
   background: var(--j-color-surface-selected);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 34%, transparent);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .rich-text-toolbar-palette > button {
@@ -550,9 +550,8 @@
   background: var(--j-color-surface-selected);
 }
 
-/* All toolbar triggers share the same one-layer, inset interaction ring. The
-   semantic popover menus stay local to the editor, while their controls use
-   this single visual contract. */
+/* Toolbar triggers use the same single-border interaction contract as inputs.
+   Focus is a soft halo, never a second solid/inset border. */
 .rich-text-toolbar__control {
   box-sizing: border-box;
   transition:
@@ -563,18 +562,18 @@
 
 .rich-text-toolbar__control:hover:not(:disabled) {
   background: var(--j-color-surface-hover);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, transparent);
+  box-shadow: none;
 }
 
 .rich-text-toolbar__control:focus-visible {
   outline: 0;
-  box-shadow: inset 0 0 0 1px var(--j-color-focus);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .rich-text-toolbar-select.is-open .rich-text-toolbar__control,
 .rich-text-toolbar-palette.is-open > .rich-text-toolbar__control,
 .rich-text-toolbar-more.is-active > .rich-text-toolbar__control {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, transparent);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .rich-text-editor input::placeholder,

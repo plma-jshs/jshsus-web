@@ -447,8 +447,8 @@
 .admin-filter-sheet__controls
   :where(select, .admin-select--native-mobile .admin-select__native):hover {
   border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong)) !important;
-  background-color: color-mix(in srgb, var(--j-color-surface-hover) 72%, white) !important;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+  background-color: var(--j-color-surface) !important;
+  box-shadow: none;
 }
 
 .admin-filter-sheet__controls
@@ -457,7 +457,7 @@
   :where(select, .admin-select--native-mobile .admin-select__native):focus {
   border-color: var(--j-color-brand) !important;
   outline: 0 !important;
-  box-shadow: inset 0 0 0 1px var(--j-color-brand) !important;
+  box-shadow: var(--j-shadow-focus) !important;
 }
 
 .admin-filter-sheet footer {
@@ -711,7 +711,7 @@
 .admin-filter-sheet__footer-actions .admin-filter-sheet__apply:focus-visible {
   background: var(--j-color-brand-hover);
   outline: 0;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 34%, var(--j-color-brand-hover));
+  box-shadow: var(--j-shadow-focus);
 }
 
 .ui-empty-state {

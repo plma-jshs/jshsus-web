@@ -377,7 +377,7 @@
   .admin-row-action-sheet__actions .admin-row-action-button.ui-button:focus-visible {
     outline: 0;
     background: var(--j-color-surface-subtle);
-    box-shadow: inset 0 0 0 1px var(--j-color-brand);
+    box-shadow: var(--j-shadow-focus);
   }
 
   .admin-row-action-sheet__actions .admin-row-action-button__label {

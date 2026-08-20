@@ -1,5 +1,7 @@
 /* Shared one-pixel control chrome. Compound search fields own the border on
- * their wrapper so a native input cannot create a second focus surface. */
+ * their wrapper so a native input cannot create a second focus surface. The
+ * interaction treatment changes one border colour at a time; focus gets a
+ * translucent halo instead of a second solid/inset border. */
 :where(
   input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(
       [type='range']
@@ -58,8 +60,7 @@
       var(--j-color-brand) 42%,
       var(--j-color-border-strong)
     ) !important;
-    box-shadow: inset 0 0 0 1px
-      color-mix(in srgb, var(--j-color-brand) 42%, var(--j-color-border-strong)) !important;
+    box-shadow: none !important;
   }
 
   :where(
@@ -91,7 +92,7 @@
     .ui-page-size-select .admin-select__native:focus-visible
   ):focus-visible {
     border-color: var(--j-color-brand) !important;
-    box-shadow: inset 0 0 0 1px var(--j-color-brand) !important;
+    box-shadow: var(--j-shadow-focus) !important;
   }
 }
 

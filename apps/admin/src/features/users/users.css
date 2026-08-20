@@ -196,7 +196,7 @@
 .identity-field:not(.admin-search-field) input:focus,
 .identity-field:not(.admin-search-field) .admin-select__trigger:focus-visible {
   border-color: var(--j-color-brand);
-  box-shadow: inset 0 0 0 1px var(--j-color-brand);
+  box-shadow: var(--j-shadow-focus);
 }
 .identity-field:not(.admin-search-field) input[readonly] {
   background: #f5f8f7;

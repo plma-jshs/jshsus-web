@@ -258,7 +258,7 @@
 
 :root[data-theme='dark'] .full-calendar__week-days > button.is-selected {
   background: var(--j-color-surface-selected);
-  box-shadow: inset 0 0 0 1.5px var(--j-color-brand);
+  box-shadow: 0 0 0 1px var(--j-color-brand);
 }
 
 :root[data-theme='dark'] .full-calendar__weekdays span,

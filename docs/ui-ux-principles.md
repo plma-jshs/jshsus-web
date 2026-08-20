@@ -24,7 +24,7 @@
 
 - 모든 검색창은 왼쪽 돋보기 아이콘, 오른쪽 값 지우기 X 버튼, 동일한 높이·radius·border를 사용한다. 내부 input에 별도의 배경/outline을 주어 이중 포커스가 생기지 않게 한다.
 - 검색 placeholder는 `기준1, 기준2 검색` 문법으로 통일한다. 예를 들어 `학번, 이름, 사유, 처리자 검색`처럼 기준만 나열하고, 일반 입력 폼의 안내 문구(제목·내용 입력 등)는 검색 문법으로 바꾸지 않는다.
-- hover와 focus-visible은 같은 두께의 안쪽(inset) 테두리를 사용하고 색만 다르게 한다. focus는 브랜드 그린 단색, hover는 더 연한 그린이다. 버튼이 아닌 입력·드롭다운에만 적용한다.
+- hover와 focus-visible은 같은 1px 외곽 테두리를 공유한다. hover는 연한 그린으로 테두리 색만 바꾸고, focus-visible은 브랜드 그린 테두리와 아주 옅은 반투명 halo만 사용한다. 안쪽(inset) 링, 2px 단색선, 이중 테두리는 금지하며 버튼이 아닌 입력·드롭다운에만 적용한다.
 - 네이티브 select가 노출되지 않도록 `SelectPrimitive`/관리자 select를 사용한다. 학년·반은 `1학년`, `1반`처럼 실제 사용 언어로 표시하고, 상태의 기본 문구는 `전체`로 통일한다.
 - 탭은 선택되지 않은 텍스트를 낮은 대비로, hover를 약간 굵게, 선택 이동은 짧은 transition으로 표현한다. 모바일 필터 시트의 탭은 한 행 전체를 사용한다.
 
@@ -60,12 +60,12 @@
 - 키보드 focus-visible, Escape 닫기, 올바른 aria-label/role을 유지한다. `prefers-reduced-motion`에서는 시트·탭·달 전환을 즉시 처리한다.
 - 이미지에는 지연 로딩과 실패 대체 처리를 적용한다. 장식 이미지는 빈 alt, 정보 이미지는 의미 있는 alt를 둔다.
 - React SPA 라우트 진입 시 GA4 `page_view`를 수동 기록한다(`page_title`, `page_location`, `page_path`). 한 페이지에 Google 태그를 중복 삽입하지 않는다.
-- 리치 텍스트 툴바는 편집기 폭을 넘지 않는다. 고정된 도구 그룹은 한 줄로 유지하고 폭이 부족하면 툴바 자체가 가로 스크롤하며, 드롭다운/팔레트는 포털 메뉴로 열어 잘리지 않게 한다. 툴바의 모든 트리거는 동일한 1px inset hover/focus 링을 사용하고, 모바일 터치에서는 sticky 링 없이 순간적인 중립 pressed 배경만 허용한다.
-- 모든 앱의 입력·선택·검색·페이지 입력은 공통 `control-policy.css`의 1px 테두리와 동일한 radius를 사용한다. 이중 wrapper/input 테두리, 2px 단색 테두리, 흐린 외곽 그림자, 브라우저 기본 파란 active 배경은 금지한다. 데스크톱은 hover(연한 그린)와 `:focus-visible`(브랜드 그린)만 허용하고, 모바일은 입력·선택의 hover/focus 변화를 제거한다. 버튼은 키보드 `focus-visible`만 남기며 터치 순간의 중립 회색 active 표면만 허용한다.
+- 리치 텍스트 툴바는 편집기 폭을 넘지 않는다. 고정된 도구 그룹은 한 줄로 유지하고 폭이 부족하면 툴바 자체가 가로 스크롤하며, 드롭다운/팔레트는 포털 메뉴로 열어 잘리지 않게 한다. 툴바의 모든 트리거도 입력과 같은 단일 1px 테두리·부드러운 focus halo 정책을 따르고, 모바일 터치에서는 sticky 링 없이 순간적인 중립 pressed 배경만 허용한다.
+- 모든 앱의 입력·선택·검색·페이지 입력은 공통 `control-policy.css`의 1px 테두리와 동일한 radius를 사용한다. 이중 wrapper/input 테두리, 2px 단색 테두리, inset 링, 진한 외곽 그림자, 브라우저 기본 파란 active 배경은 금지한다. 데스크톱은 hover(연한 그린으로 테두리 색만 변경)와 `:focus-visible`(브랜드 그린 1px 테두리 + 옅은 halo)만 허용하고, 모바일은 입력·선택의 hover/focus 변화를 제거한다. 버튼은 키보드 `focus-visible`만 남기며 터치 순간의 중립 회색 active 표면만 허용한다.
 - `html`에는 `scrollbar-gutter: stable`을 적용해 세로 스크롤이 생길 때 본문이 좌우로 움찔하지 않도록 한다. 페이지별로 별도 scrollbar 보정 여백을 추가하지 않는다.
 - 모바일 리스트 행에는 hover 스타일을 만들지 않는다. 탭·필터·버튼의 터치 피드백은 손가락을 누르는 동안만 보이고, 손가락을 뗀 뒤 상태가 남지 않아야 한다.
 - Google 태그는 빌드 시 `<head>`에 한 번만 삽입한다. SPA 라우트 진입 시 공개 페이지에서만 수동 `page_view`를 기록하며, `page_title`, `page_location`, `page_path`를 함께 보낸다.
-- hover/focus를 전역에서 무조건 삭제하지 않는다. 마우스 hover는 입력·선택 primitive에서만 색상 변화로 제공하고, 키보드 사용자는 `:focus-visible` 1px inset 링으로 항상 위치를 확인할 수 있어야 한다. 모바일 터치에는 focus ring을 남기지 않고 `:active`의 짧은 중립 표면만 허용한다.
+- hover/focus를 전역에서 무조건 삭제하지 않는다. 마우스 hover는 입력·선택 primitive에서만 1px 테두리 색상 변화로 제공하고, 키보드 사용자는 `:focus-visible` 1px 테두리와 옅은 halo로 항상 위치를 확인할 수 있어야 한다. 모바일 터치에는 focus ring을 남기지 않고 `:active`의 짧은 중립 표면만 허용한다.
 - 바텀시트/모달은 공통 shell이 드래그 핸들, safe-area, 제목·첫 항목 간격, footer 버튼 높이, drag snap-back/close 애니메이션을 소유한다. 시트를 닫는 순간 내부 콘텐츠와 흰색 surface가 같은 transform을 사용해야 하며, 닫힘 이벤트에서 즉시 unmount하지 않는다.
 
 ## 8. 기능별 추가 규칙
@@ -80,7 +80,7 @@
 ## 9. 검증 체크리스트
 
 1. 800/1023/1024/1440px에서 툴바·테이블·페이지네이션이 같은 규칙으로 배치되는가?
-2. 검색창·select의 hover/focus가 한 겹의 동일 두께 inset border인가?
+2. 검색창·select의 hover/focus가 한 겹의 동일 두께 1px border이며, focus에만 옅은 halo가 있는가?
 3. 모바일 시트에서 핸들을 잡아 살짝 놓기, 충분히 놓기, backdrop/Escape/X 닫기를 각각 시험했는가?
 4. 로딩·빈 목록·오류 목록이 중앙 스피너/텍스트 규칙을 따르는가?
 5. 모바일 더보기가 URL을 바꾸거나 페이지를 새로고침하지 않고 행만 추가하는가?

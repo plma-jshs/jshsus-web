@@ -26,7 +26,7 @@
   ):hover,
 .ui-control:hover {
   border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+  box-shadow: none;
   background-color: var(--surface);
 }
 
@@ -38,7 +38,7 @@
   ):focus,
 .ui-control:focus {
   border-color: var(--j-color-brand);
-  box-shadow: inset 0 0 0 1px var(--j-color-brand);
+  box-shadow: var(--j-shadow-focus);
 }
 
 /* Canonical search field chrome. Page-specific classes may still provide
@@ -71,7 +71,7 @@
 
 .admin-search-field:focus-within {
   border-color: var(--j-color-brand) !important;
-  box-shadow: var(--j-shadow-focus-inset) !important;
+  box-shadow: var(--j-shadow-focus) !important;
   background: var(--surface) !important;
 }
 
@@ -119,8 +119,8 @@
 }
 
 .admin-search-clear:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--j-color-brand) 38%, transparent);
-  outline-offset: 1px;
+  outline: 0;
+  box-shadow: var(--j-shadow-focus);
 }
 
 :where(input[type='search'])::-webkit-search-cancel-button {
@@ -325,15 +325,15 @@ select.ui-control:not([multiple]) {
 
 .admin-select__trigger:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
-  background: color-mix(in srgb, var(--j-color-surface-hover) 72%, white);
+  box-shadow: none;
+  background: var(--j-color-surface);
 }
 
 .admin-select__trigger:focus-visible,
 .admin-select.is-open .admin-select__trigger {
   border-color: var(--j-color-brand);
   outline: 0 !important;
-  box-shadow: inset 0 0 0 1px var(--j-color-brand);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .admin-select.is-open .admin-select__trigger > svg {
@@ -401,7 +401,7 @@ select.ui-control:not([multiple]) {
 
 .admin-select__menu button:focus-visible {
   outline: 0;
-  box-shadow: inset 0 0 0 1px var(--j-color-brand);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .admin-select__menu button:disabled {
@@ -477,8 +477,8 @@ textarea.ui-control {
 }
 
 .admin-main :where(input[type='radio']):focus-visible {
-  outline: var(--j-focus-ring);
-  outline-offset: 2px;
+  outline: 0;
+  box-shadow: var(--j-shadow-focus);
 }
 
 .ui-field,
@@ -586,12 +586,12 @@ textarea.ui-control {
 .ui-page-size-select:focus-visible {
   border-color: var(--j-color-brand);
   outline: 0;
-  box-shadow: var(--j-shadow-focus-inset);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .ui-page-size-select:hover {
   border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
-  background-color: color-mix(in srgb, var(--j-color-surface-hover) 72%, white);
+  background-color: var(--surface);
 }
 
 .ui-page-size-select,
@@ -656,14 +656,14 @@ textarea.ui-control {
 
 .admin-select.ui-page-size-select .admin-select__trigger:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--j-color-brand) 42%, var(--line-strong));
+  box-shadow: none;
   background: var(--surface);
 }
 
 .admin-select.ui-page-size-select .admin-select__trigger:focus-visible,
 .admin-select.ui-page-size-select.is-open .admin-select__trigger {
   border-color: var(--j-color-brand);
-  box-shadow: inset 0 0 0 1px var(--j-color-brand);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .admin-select.ui-page-size-select .admin-select__option-content {

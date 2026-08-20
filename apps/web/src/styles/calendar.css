@@ -221,14 +221,14 @@
 .full-calendar__week-days > button.is-selected {
   position: relative;
   z-index: 1;
-  box-shadow: inset 0 0 0 1px rgb(13 148 136 / 40%);
+  box-shadow: 0 0 0 1px rgb(13 148 136 / 40%);
   background: #f4fbf9;
 }
 
 .full-calendar__week-days > button:focus-visible {
   z-index: 1;
   outline: 0;
-  box-shadow: inset 0 0 0 1px rgb(13 148 136 / 48%);
+  box-shadow: var(--j-shadow-focus);
 }
 
 .full-calendar__date {
@@ -803,7 +803,7 @@
   }
 
   .full-calendar__week-days > button.is-selected {
-    box-shadow: inset 0 0 0 0.75px #4b5563;
+    box-shadow: 0 0 0 0.75px #4b5563;
     background: #fff;
   }
 
@@ -951,7 +951,7 @@
   }
 
   .full-calendar__week-days > button.is-selected {
-    box-shadow: inset 0 0 0 0.75px #4b5563;
+    box-shadow: 0 0 0 0.75px #4b5563;
     background: #fff;
   }
 

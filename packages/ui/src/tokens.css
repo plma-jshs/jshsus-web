@@ -108,7 +108,9 @@
     --j-shadow-card-hover: 0 4px 12px rgb(0 0 0 / 8%);
     --j-shadow-overlay: 0 10px 30px -5px rgb(0 0 0 / 8%);
     --j-shadow-dropdown: 0 2px 8px rgb(0 0 0 / 4%);
-    --j-shadow-focus: 0 0 0 2px rgb(47 133 133 / 10%);
+    /* Focus is a soft halo around the single control border. It must not look
+       like a second solid border painted on top of the control. */
+    --j-shadow-focus: 0 0 0 3px rgb(47 133 133 / 12%);
     --j-focus-ring: 2px solid rgb(47 133 133 / 42%);
     --j-focus-offset: 2px;
 
@@ -118,7 +120,8 @@
     --j-control-public: 44px;
     --j-radius-control: 8px;
     --j-radius-menu: 10px;
-    --j-shadow-focus-inset: inset 0 0 0 1px var(--j-color-brand);
+    /* Compatibility alias for legacy feature styles. */
+    --j-shadow-focus-inset: var(--j-shadow-focus);
     --j-layer-header: 30;
     --j-layer-popover: 50;
     --j-layer-modal: 70;
@@ -182,7 +185,7 @@
   :where(input, select, textarea):focus-visible {
     border-color: var(--j-color-focus);
     outline: 0;
-    box-shadow: var(--j-shadow-focus-inset);
+    box-shadow: var(--j-shadow-focus);
   }
 
   :where([tabindex='-1']):focus {
