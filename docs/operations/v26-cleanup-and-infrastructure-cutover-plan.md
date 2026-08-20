@@ -63,7 +63,9 @@
 
 ### 3.1 인벤토리
 
-현재 문서에 기록된 주요 경로는 `/home/ubuntu/Server/jshsus-v26`,
+목표 표준 경로는 `/home/ubuntu/Server/jshsus-v26`이다. 실제 운영 서버가 이 경로로
+이동했는지는 유지보수 창에서 확인해야 하며, 기존 문서에 기록된 경로는
+`/home/ubuntu/Server/jshsus-web-v26`,
 `/home/ubuntu/Server/nginx-proxy-manager`, `/home/ubuntu/Server/iam`,
 `/home/ubuntu/Server/plma` 및 `/home/ubuntu/Server/backups`다. 실제 실행 전 다음
 명령으로 현재 상태를 다시 확정한다.
@@ -86,6 +88,9 @@ ss -lntup
 `/home/ubuntu/Server/jshsus-v26`을 표준 경로로 사용한다. GitHub Actions는 경로를
 코드에 하드코딩하지 않고 production 환경의 `DEPLOY_PATH` secret에서 읽으므로, 서버
 이동은 다음 순서로 별도 점검한다.
+
+현재 상태: 저장소의 참조·Compose·workflow·문서만 전환되었고, 원격 서버 디렉터리
+이동과 `DEPLOY_PATH` secret 변경은 아직 실행하지 않았다.
 
 1. 유지보수 창에서 현재 `DEPLOY_PATH`의 `.env`, `.release-env`,
    `.release-manifests`, `.docker-auth-path`, 현재/이전 release 링크를 백업한다.
