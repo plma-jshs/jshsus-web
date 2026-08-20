@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import * as schema from '@jshsus/db';
@@ -9,6 +10,7 @@ import { and, asc, desc, eq, gte, inArray, like, lt, or, sql } from 'drizzle-orm
 import { z } from 'zod';
 import type { AuthSession } from '../auth/auth.service';
 import { auditValues, DatabaseService, type AppDatabase } from '../database/database.service';
+import { FilesService } from '../files/files.service';
 import { YouTubeDataApiService } from '../youtube/youtube-data-api.service';
 import {
   MAX_PENDING_WAKE_SONG_REQUESTS,
@@ -22,6 +24,7 @@ import {
   WAKE_SONG_STATUSES,
 } from './wake-songs.types';
 import { getWakeSongCandidateWeek } from './wake-song-week';
+import { WakeSongAudioService } from './wake-song-audio.service';
 
 const requestInputSchema = z.object({
   url: z.string().trim().min(1).max(500),
@@ -168,10 +171,38 @@ function toSummary(row: WakeSongRow): WakeSongRequestSummary {
 
 @Injectable()
 export class WakeSongsService {
+  private readonly logger = new Logger(WakeSongsService.name);
+
   constructor(
     private readonly database: DatabaseService,
     private readonly youtube: YouTubeDataApiService,
+    private readonly files: FilesService,
+    private readonly audio: WakeSongAudioService,
   ) {}
+
+  private async attachAudio(items: WakeSongRequestSummary[]) {
+    if (items.length === 0) return items;
+    const byRequest = await this.files.listForTargets(
+      'wake_song',
+      items.map((item) => item.id),
+      true,
+    );
+    return items.map((item) => {
+      const file = byRequest.get(item.id)?.find((candidate) => candidate.mimeType === 'audio/mpeg');
+      return file
+        ? {
+            ...item,
+            audio: {
+              status: 'READY' as const,
+              fileId: file.id,
+              downloadUrl: file.url,
+              sizeBytes: file.sizeBytes,
+              generatedAt: file.uploadedAt,
+            },
+          }
+        : item;
+    });
+  }
 
   async preview(rawUrl: string) {
     if (!rawUrl || rawUrl.length > 500) {
@@ -191,7 +222,7 @@ export class WakeSongsService {
         .orderBy(desc(schema.wakeSongRequests.createdAt), desc(schema.wakeSongRequests.id))
         .limit(100);
 
-      const items = rows.map((row) => toSummary(row as WakeSongRow));
+      const items = await this.attachAudio(rows.map((row) => toSummary(row as WakeSongRow)));
       return {
         items,
         pendingCount: items.filter((item) => item.status === 'PENDING').length,
@@ -338,7 +369,7 @@ export class WakeSongsService {
     const metadata = await this.youtube.inspect(input.url);
     const segment = this.validateSegment(input, metadata.durationSeconds);
 
-    return this.database.query('wake-songs.admin-update', async (db) =>
+    const result = await this.database.query('wake-songs.admin-update', async (db) =>
       db.transaction(async (tx) => {
         const [request] = await tx
           .select({ status: schema.wakeSongRequests.status })
@@ -386,6 +417,8 @@ export class WakeSongsService {
         return { ok: true, id, status: request.status };
       }),
     );
+    await this.invalidateGeneratedAudio(id);
+    return result;
   }
 
   async cancel(id: number, session?: AuthSession) {
@@ -484,13 +517,53 @@ export class WakeSongsService {
         .offset((page - 1) * pageSize);
 
       return {
-        items: rows.map((row) => toSummary(row as WakeSongRow)),
+        items: await this.attachAudio(rows.map((row) => toSummary(row as WakeSongRow))),
         total,
         page,
         pageSize,
         totalPages: Math.ceil(total / pageSize),
       };
     });
+  }
+
+  async generateAudio(id: number, actorId?: number | null) {
+    this.assertId(id);
+    const reviewerId = this.persistedActorId(actorId);
+    const [row] = await this.database.db
+      .select(selectFields)
+      .from(schema.wakeSongRequests)
+      .innerJoin(schema.users, eq(schema.wakeSongRequests.requesterId, schema.users.id))
+      .where(eq(schema.wakeSongRequests.id, id))
+      .limit(1);
+    if (!row) throw new NotFoundException('기상곡 신청을 찾을 수 없습니다.');
+
+    const request = row as WakeSongRow;
+    const result = await this.audio.generate(
+      {
+        id: request.id,
+        requesterId: request.requesterId,
+        videoId: request.youtubeVideoId,
+        title: request.videoTitle,
+        startSeconds: request.startSeconds,
+        endSeconds: request.endSeconds,
+        playbackRate: request.playbackRateHundredths / 100,
+        status: request.status,
+      },
+      reviewerId,
+    );
+    return { ok: true as const, id, audio: result.asset };
+  }
+
+  private async invalidateGeneratedAudio(id: number) {
+    try {
+      await this.files.deleteForTarget('wake_song', id);
+    } catch (error) {
+      this.logger.warn(
+        `wake-song ${id} generated audio cleanup deferred: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
   }
 
   approve(id: number, actorId?: number | null) {

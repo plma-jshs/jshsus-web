@@ -153,6 +153,15 @@ export const envSchema = z
     NEIS_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(500).max(10_000).default(3_500),
     SCHOOL_DATA_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(500).max(10_000).default(3_500),
     SCHOOL_DATA_CACHE_TTL_SECONDS: z.coerce.number().int().min(60).max(86_400).default(3_600),
+    WAKE_SONG_YTDLP_BIN: z.string().trim().default('yt-dlp'),
+    WAKE_SONG_FFMPEG_BIN: z.string().trim().default('ffmpeg'),
+    WAKE_SONG_AUDIO_TIMEOUT_MS: z.coerce.number().int().min(10_000).max(300_000).default(120_000),
+    WAKE_SONG_AUDIO_MAX_BYTES: z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(200 * 1024 * 1024)
+      .default(50 * 1024 * 1024),
   })
   .transform((value) => {
     const cognitoClientId = value.COGNITO_CLIENT_ID.trim();

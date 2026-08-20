@@ -75,13 +75,14 @@ const uploadSchema = z.object({
 const PROFILE_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 
-type ManagedContentTarget = 'notice' | 'post' | 'lost_item' | 'dorm_report';
+type ManagedContentTarget = 'notice' | 'post' | 'lost_item' | 'dorm_report' | 'wake_song';
 
 const targetManagerPermission: Record<ManagedContentTarget, string> = {
   notice: 'notices.manage',
   post: 'community.manage',
   lost_item: 'lost_items.manage',
   dorm_report: 'dorm.manage',
+  wake_song: 'wake_songs.review',
 };
 
 function canManageTarget(
@@ -185,6 +186,93 @@ export class FilesService {
     : null;
 
   constructor(private readonly database: DatabaseService) {}
+
+  /**
+   * Persists a server-generated audio asset. This intentionally bypasses the
+   * multipart upload surface: only an approved, server-validated workflow may
+   * create a private wake-song file, and the parent target remains the source
+   * of truth for all subsequent access checks.
+   */
+  async storeGeneratedFile(input: {
+    actorId: number;
+    ownerId: number;
+    targetType: 'wake_song';
+    targetId: number;
+    originalName: string;
+    mimeType: 'audio/mpeg';
+    bytes: Buffer;
+  }): Promise<{ ok: true; file: UploadedFileSummary }> {
+    if (!this.s3) {
+      throw new ServiceUnavailableException('파일 저장소가 설정되지 않았습니다.');
+    }
+    if (input.bytes.length <= 0) {
+      throw new BadRequestException('생성된 오디오 파일이 비어 있습니다.');
+    }
+
+    const objectKey = `wake_song/${input.targetId}/${new Date().toISOString().slice(0, 10)}/${randomUUID()}.mp3`;
+    await this.store(objectKey, input.bytes, input.mimeType);
+
+    let result: { id: number };
+    try {
+      result = await this.database.db.transaction(async (transaction) => {
+        const [target] = await transaction
+          .select({
+            id: schema.wakeSongRequests.id,
+            requesterId: schema.wakeSongRequests.requesterId,
+            status: schema.wakeSongRequests.status,
+          })
+          .from(schema.wakeSongRequests)
+          .where(eq(schema.wakeSongRequests.id, input.targetId))
+          .limit(1)
+          .for('update');
+        if (!target || target.requesterId !== input.ownerId) {
+          throw new NotFoundException('기상곡 신청을 찾을 수 없습니다.');
+        }
+        if (!['APPROVED', 'SCHEDULED', 'PLAYED'].includes(target.status)) {
+          throw new ForbiddenException('승인된 기상곡만 오디오를 생성할 수 있습니다.');
+        }
+
+        const [inserted] = await transaction
+          .insert(schema.files)
+          .values({
+            ownerId: input.ownerId,
+            targetType: input.targetType,
+            targetId: input.targetId,
+            originalName: input.originalName.slice(0, 255),
+            objectKey,
+            mimeType: input.mimeType,
+            sizeBytes: input.bytes.length,
+            visibility: 'private',
+          })
+          .$returningId();
+        if (!inserted) throw new Error('Generated file metadata insert did not return an id.');
+
+        await transaction.insert(schema.auditLogs).values(
+          auditValues({
+            actorId: input.actorId,
+            action: 'wake_song.audio.generated',
+            targetType: 'wake_song_requests',
+            targetId: input.targetId,
+          }),
+        );
+        return inserted;
+      });
+    } catch (error) {
+      await this.queueUploadCompensation(
+        {
+          objectKey,
+          targetType: input.targetType,
+          targetId: input.targetId,
+          reason: 'upload_compensation',
+        },
+        error,
+      );
+      throw error;
+    }
+
+    const file = await this.getById(result.id);
+    return { ok: true, file };
+  }
 
   async upload(
     body: unknown,
@@ -865,6 +953,25 @@ export class FilesService {
       canManage ||
       session?.roles?.includes('teacher') ||
       session?.roles?.includes('student_affairs_head');
+
+    if (file.targetType === 'wake_song') {
+      const [target] = await this.database.db
+        .select({
+          requesterId: schema.wakeSongRequests.requesterId,
+          status: schema.wakeSongRequests.status,
+        })
+        .from(schema.wakeSongRequests)
+        .where(eq(schema.wakeSongRequests.id, file.targetId))
+        .limit(1);
+      if (
+        !target ||
+        !['APPROVED', 'SCHEDULED', 'PLAYED'].includes(target.status) ||
+        (!canManage && target.requesterId !== session?.userId)
+      ) {
+        throw new NotFoundException('File was not found.');
+      }
+      return;
+    }
 
     if (file.targetType === 'profile') {
       const [target] = await this.database.db

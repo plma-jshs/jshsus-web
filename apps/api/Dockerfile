@@ -1,6 +1,9 @@
 FROM node:24-alpine AS base
 WORKDIR /app
 RUN corepack enable && corepack install --global pnpm@10.30.0
+# Server-side wake-song conversion is intentionally pinned to the image tools
+# so local and release containers use the same ffmpeg/yt-dlp behavior.
+RUN apk add --no-cache ffmpeg yt-dlp
 
 FROM base AS deps
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml turbo.json tsconfig.base.json ./

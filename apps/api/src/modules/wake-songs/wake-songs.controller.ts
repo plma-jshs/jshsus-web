@@ -93,4 +93,11 @@ export class WakeSongsController {
   markPlayed(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
     return this.wakeSongs.markPlayed(Number(id), request.authSession?.userId);
   }
+
+  @Post('admin/wake-songs/:id/audio')
+  @UseGuards(SessionGuard, PermissionsGuard, CsrfGuard)
+  @RequirePermissions('wake_songs.review')
+  generateAudio(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
+    return this.wakeSongs.generateAudio(Number(id), request.authSession?.userId);
+  }
 }

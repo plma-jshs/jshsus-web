@@ -1,11 +1,11 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Check, Download, ExternalLink, Pencil, X } from 'lucide-react';
+import { ArrowDown, Check, ChevronDown, Download, ExternalLink, Pencil, X } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import {
   DialogActions,
-  Drawer,
+  Dialog,
   AdminSearchField,
   RowActionButton,
   RowActions,
@@ -59,31 +59,88 @@ function formatDuration(totalSeconds: number) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-function downloadWakeSongMetadata(request: WakeSongRequest) {
-  // Requests only persist a YouTube segment; no audio binary is stored on the
-  // server. Download a portable edit manifest instead of pretending that a
-  // remote stream is an MP3 file.
-  const payload = [
-    `제목: ${request.videoTitle}`,
-    `URL: ${request.canonicalUrl}`,
-    `구간: ${formatDuration(request.startSeconds)}-${formatDuration(request.endSeconds)}`,
-    `재생 속도: ${request.playbackRate}배`,
-  ].join('\n');
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(new Blob([payload], { type: 'text/plain;charset=utf-8' }));
-  link.download = `${request.videoTitle.replace(/[\\/:*?"<>|]/g, '_')}.txt`;
-  link.click();
-  URL.revokeObjectURL(link.href);
-}
-
 function editStateFromRequest(request: WakeSongRequest): WakeSongEditState {
   return {
     url: request.canonicalUrl,
-    startSeconds: String(request.startSeconds),
-    endSeconds: String(request.endSeconds),
+    startSeconds: formatDuration(request.startSeconds),
+    endSeconds: formatDuration(request.endSeconds),
     playbackRate: String(request.playbackRate),
     requestNote: request.requestNote,
   };
+}
+
+function parseEditorDuration(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (/^\d+$/.test(trimmed)) return Number(trimmed);
+  const match = /^(?:(\d+):)?([0-5]?\d):([0-5]\d)$/.exec(trimmed);
+  if (!match) return null;
+  const hours = Number(match[1] ?? 0);
+  const minutes = Number(match[2]);
+  const seconds = Number(match[3]);
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
+function formatEditorDuration(value: string) {
+  const seconds = parseEditorDuration(value);
+  return seconds === null ? value : formatDuration(seconds);
+}
+
+function PlaybackRateSelect({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const options = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+  return (
+    <div
+      className={`wake-song-admin-rate-select${open ? ' is-open' : ''}`}
+      onBlur={(event) => {
+        const nextTarget = event.relatedTarget;
+        if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
+          setOpen(false);
+        }
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') setOpen(false);
+      }}
+    >
+      <button
+        type="button"
+        className="wake-song-admin-rate-select__trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span>{value}배</span>
+        <ChevronDown size={15} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="wake-song-admin-rate-select__menu" role="listbox" aria-label="재생 속도">
+          {options.map((option) => (
+            <button
+              key={option}
+              type="button"
+              role="option"
+              aria-selected={option === value}
+              className={option === value ? 'is-selected' : undefined}
+              onClick={() => {
+                onChange(option);
+                setOpen(false);
+              }}
+            >
+              <span>{option}배</span>
+              {option === value ? <Check size={15} aria-hidden="true" /> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export function WakeSongsPage() {
@@ -165,12 +222,13 @@ export function WakeSongsPage() {
     mutationFn: ({ id, input }: { id: number; input: WakeSongEditState }) =>
       wakeSongAdminApi.update(id, {
         url: input.url,
-        startSeconds: Number(input.startSeconds),
-        endSeconds: Number(input.endSeconds),
+        startSeconds: parseEditorDuration(input.startSeconds) ?? Number.NaN,
+        endSeconds: parseEditorDuration(input.endSeconds) ?? Number.NaN,
         playbackRate: Number(input.playbackRate),
         requestNote: input.requestNote,
       }),
     onSuccess: async () => {
+      setSelectedId(null);
       setEditingId(null);
       setEditState(null);
       setEditError('');
@@ -181,17 +239,55 @@ export function WakeSongsPage() {
       setEditError(error instanceof Error ? error.message : '수정하지 못했습니다.');
     },
   });
+  const audioMutation = useMutation({
+    mutationFn: wakeSongAdminApi.generateAudio,
+    onSuccess: async () => {
+      await refresh();
+      showToast({ title: 'MP3를 준비했습니다.', tone: 'success' });
+    },
+    onError: (error) =>
+      showToast({
+        title: 'MP3를 준비하지 못했습니다.',
+        description: error instanceof Error ? error.message : undefined,
+        tone: 'danger',
+      }),
+  });
   const beginEdit = (request: WakeSongRequest) => {
     setSelectedId(request.id);
     setEditingId(request.id);
     setEditState(editStateFromRequest(request));
     setEditError('');
   };
-  const downloadSelectedRequests = () => {
-    requestsQuery.data?.items
-      .filter((request) => selectedIds.has(request.id))
-      .forEach(downloadWakeSongMetadata);
+  const triggerAudioDownload = (url: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '';
+    link.rel = 'noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   };
+  const downloadWakeSongAudio = async (request: WakeSongRequest) => {
+    const audio = request.audio ?? (await audioMutation.mutateAsync(request.id)).audio;
+    triggerAudioDownload(audio.downloadUrl);
+  };
+  const downloadSelectedRequests = async () => {
+    const selected =
+      requestsQuery.data?.items.filter(
+        (item) =>
+          selectedIds.has(item.id) && ['APPROVED', 'SCHEDULED', 'PLAYED'].includes(item.status),
+      ) ?? [];
+    for (const request of selected) {
+      try {
+        await downloadWakeSongAudio(request);
+      } catch {
+        // The individual mutation already explains the failure. Keep the rest
+        // of a multi-download operation usable when one item cannot be built.
+      }
+    }
+  };
+
+  const pageData = requestsQuery.data;
 
   const columns: ColumnDef<WakeSongRequest>[] = [
     {
@@ -199,16 +295,18 @@ export function WakeSongsPage() {
       header: () => (
         <TableSelectionCheckbox
           checked={
-            Boolean(pageData?.items.length) &&
-            pageData!.items.every((item) => selectedIds.has(item.id))
+            Boolean(pageData?.items.some((item) => item.status !== 'PENDING')) &&
+            pageData!.items
+              .filter((item) => item.status !== 'PENDING')
+              .every((item) => selectedIds.has(item.id))
           }
           label="기상곡 신청 전체 선택"
           onChange={(checked) =>
             setSelectedIds((current) => {
               const next = new Set(current);
-              pageData?.items.forEach((item) =>
-                checked ? next.add(item.id) : next.delete(item.id),
-              );
+              pageData?.items
+                .filter((item) => item.status !== 'PENDING')
+                .forEach((item) => (checked ? next.add(item.id) : next.delete(item.id)));
               return next;
             })
           }
@@ -218,6 +316,7 @@ export function WakeSongsPage() {
       cell: ({ row }) => (
         <TableSelectionCheckbox
           checked={selectedIds.has(row.original.id)}
+          disabled={row.original.status === 'PENDING'}
           label={`${row.original.requesterName} 신청 선택`}
           onChange={(checked) =>
             setSelectedIds((current) => {
@@ -234,7 +333,25 @@ export function WakeSongsPage() {
     {
       id: 'createdAt',
       accessorKey: 'createdAt',
-      header: '신청일',
+      // The selected-download action replaces the sortable header control.
+      // Disable the wrapper for that state so the action remains a single,
+      // valid button instead of becoming a nested button inside DataTable's
+      // sort trigger.
+      enableSorting: selectedIds.size === 0,
+      header: () =>
+        selectedIds.size ? (
+          <button
+            className="wake-song-selected-download"
+            type="button"
+            onClick={() => void downloadSelectedRequests()}
+          >
+            <Download size={14} aria-hidden="true" /> 선택 다운로드 ({selectedIds.size})
+          </button>
+        ) : (
+          <span className="wake-song-sort-header">
+            신청일 <ArrowDown size={13} aria-hidden="true" />
+          </span>
+        ),
       cell: ({ row }) =>
         formatAdminDate(row.original.createdAt, {
           month: '2-digit',
@@ -245,18 +362,7 @@ export function WakeSongsPage() {
     {
       id: 'requester',
       accessorKey: 'requesterName',
-      header: () =>
-        selectedIds.size ? (
-          <button
-            className="wake-song-selected-download"
-            type="button"
-            onClick={downloadSelectedRequests}
-          >
-            <Download size={14} aria-hidden="true" /> 선택 다운로드 ({selectedIds.size})
-          </button>
-        ) : (
-          '신청자'
-        ),
+      header: '신청자',
       cell: ({ row }) => (
         <div className="wake-song-admin-cell">
           <strong>{row.original.requesterName}</strong>
@@ -271,7 +377,7 @@ export function WakeSongsPage() {
       header: '영상',
       cell: ({ row }) => (
         <div className="wake-song-admin-title">
-          <button type="button" onClick={() => setSelectedId(row.original.id)}>
+          <button type="button" onClick={() => beginEdit(row.original)}>
             {row.original.videoTitle}
           </button>
           <small>{row.original.channelTitle ?? 'YouTube'}</small>
@@ -320,10 +426,10 @@ export function WakeSongsPage() {
             <RowActions mobileTitle={`${request.requesterName} 기상곡`}>
               <RowActionButton
                 icon={<Download size={14} aria-hidden="true" />}
-                label="기상곡 편집 정보 다운로드"
-                mobileLabel="편집 정보"
+                label="기상곡 MP3 다운로드"
+                mobileLabel="MP3 다운로드"
                 variant="secondary"
-                onClick={() => downloadWakeSongMetadata(request)}
+                onClick={() => void downloadWakeSongAudio(request)}
               />
               {request.status !== 'PLAYED' && request.status !== 'CANCELED' ? (
                 <RowActionButton
@@ -369,7 +475,6 @@ export function WakeSongsPage() {
     },
   ];
 
-  const pageData = requestsQuery.data;
   const selectedRequest = pageData?.items.find((request) => request.id === selectedId);
   return (
     <div className="admin-stack wake-song-admin">
@@ -474,7 +579,7 @@ export function WakeSongsPage() {
       </section>
 
       {selectedRequest ? (
-        <Drawer
+        <Dialog
           open
           onClose={() => {
             setSelectedId(null);
@@ -484,14 +589,54 @@ export function WakeSongsPage() {
           }}
           title={selectedRequest.videoTitle}
           description={`신청 #${selectedRequest.id}`}
-          className="wake-song-admin-drawer"
+          size="lg"
+          className="wake-song-admin-dialog"
         >
           <div className="wake-song-admin-detail">
+            <YouTubeSegmentPlayer
+              className="wake-song-admin-player"
+              videoId={selectedRequest.youtubeVideoId}
+              startSeconds={
+                editingId === selectedRequest.id && editState
+                  ? (parseEditorDuration(editState.startSeconds) ?? selectedRequest.startSeconds)
+                  : selectedRequest.startSeconds
+              }
+              endSeconds={
+                editingId === selectedRequest.id && editState
+                  ? (parseEditorDuration(editState.endSeconds) ?? selectedRequest.endSeconds)
+                  : selectedRequest.endSeconds
+              }
+              playbackRate={
+                editingId === selectedRequest.id && editState
+                  ? Number(editState.playbackRate) || selectedRequest.playbackRate
+                  : selectedRequest.playbackRate
+              }
+              title={`${selectedRequest.videoTitle} 미리보기`}
+              controls={0}
+              volume={playerVolume}
+            />
+            <label className="wake-song-admin-volume">
+              <span>볼륨</span>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={playerVolume}
+                onChange={(event) => setPlayerVolume(Number(event.target.value))}
+              />
+              <output>{playerVolume}%</output>
+            </label>
             {editingId === selectedRequest.id && editState ? (
               <form
                 className="wake-song-admin-edit-form"
                 onSubmit={(event: FormEvent<HTMLFormElement>) => {
                   event.preventDefault();
+                  const start = parseEditorDuration(editState.startSeconds);
+                  const end = parseEditorDuration(editState.endSeconds);
+                  if (start === null || end === null || end <= start) {
+                    setEditError('시작과 종료를 MM:SS 형식으로 올바르게 입력해 주세요.');
+                    return;
+                  }
                   setEditError('');
                   editMutation.mutate({ id: selectedRequest.id, input: editState });
                 }}
@@ -509,53 +654,141 @@ export function WakeSongsPage() {
                     required
                   />
                 </label>
-                <div className="wake-song-admin-edit-grid">
-                  <label>
-                    <span>시작(초)</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={editState.startSeconds}
-                      onChange={(event) =>
-                        setEditState((current) =>
-                          current ? { ...current, startSeconds: event.target.value } : current,
-                        )
-                      }
-                      required
-                    />
-                  </label>
-                  <label>
-                    <span>종료(초)</span>
-                    <input
-                      type="number"
-                      min="1"
-                      value={editState.endSeconds}
-                      onChange={(event) =>
-                        setEditState((current) =>
-                          current ? { ...current, endSeconds: event.target.value } : current,
-                        )
-                      }
-                      required
-                    />
-                  </label>
-                </div>
-                <label>
-                  <span>재생 속도</span>
-                  <select
-                    value={editState.playbackRate}
-                    onChange={(event) =>
-                      setEditState((current) =>
-                        current ? { ...current, playbackRate: event.target.value } : current,
-                      )
-                    }
-                  >
-                    {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
-                      <option key={rate} value={rate}>
-                        {rate}배
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                {(() => {
+                  const timelineMax = Math.max(1, selectedRequest.videoDurationSeconds ?? 180);
+                  const start = Math.min(
+                    parseEditorDuration(editState.startSeconds) ?? 0,
+                    Math.max(0, timelineMax - 1),
+                  );
+                  const end = Math.min(
+                    Math.max(parseEditorDuration(editState.endSeconds) ?? 1, start + 1),
+                    timelineMax,
+                  );
+                  return (
+                    <section className="wake-song-admin-segment-card" aria-label="재생 구간">
+                      <div
+                        className="wake-song-admin-timeline"
+                        style={
+                          {
+                            '--wake-start': `${(start / timelineMax) * 100}%`,
+                            '--wake-end': `${(end / timelineMax) * 100}%`,
+                          } as CSSProperties
+                        }
+                      >
+                        <div className="wake-song-admin-timeline__track" aria-hidden="true" />
+                        <input
+                          aria-label="시작 시각"
+                          className="wake-song-admin-timeline__range is-start"
+                          type="range"
+                          min="0"
+                          max={timelineMax}
+                          value={start}
+                          onChange={(event) =>
+                            setEditState((current) =>
+                              current
+                                ? {
+                                    ...current,
+                                    startSeconds: formatDuration(
+                                      Math.min(Number(event.target.value), end - 1),
+                                    ),
+                                  }
+                                : current,
+                            )
+                          }
+                        />
+                        <input
+                          aria-label="종료 시각"
+                          className="wake-song-admin-timeline__range is-end"
+                          type="range"
+                          min="1"
+                          max={timelineMax}
+                          value={end}
+                          onChange={(event) =>
+                            setEditState((current) =>
+                              current
+                                ? {
+                                    ...current,
+                                    endSeconds: formatDuration(
+                                      Math.max(Number(event.target.value), start + 1),
+                                    ),
+                                  }
+                                : current,
+                            )
+                          }
+                        />
+                        <div className="wake-song-admin-timeline__labels" aria-hidden="true">
+                          <span>00:00</span>
+                          <span>{formatDuration(timelineMax)}</span>
+                        </div>
+                      </div>
+                      <div className="wake-song-admin-edit-grid">
+                        <label>
+                          <span>시작</span>
+                          <input
+                            value={editState.startSeconds}
+                            inputMode="numeric"
+                            placeholder="00:00"
+                            onChange={(event) =>
+                              setEditState((current) =>
+                                current
+                                  ? { ...current, startSeconds: event.target.value }
+                                  : current,
+                              )
+                            }
+                            onBlur={() =>
+                              setEditState((current) =>
+                                current
+                                  ? {
+                                      ...current,
+                                      startSeconds: formatEditorDuration(current.startSeconds),
+                                    }
+                                  : current,
+                              )
+                            }
+                            required
+                          />
+                        </label>
+                        <label>
+                          <span>종료</span>
+                          <input
+                            value={editState.endSeconds}
+                            inputMode="numeric"
+                            placeholder="03:00"
+                            onChange={(event) =>
+                              setEditState((current) =>
+                                current ? { ...current, endSeconds: event.target.value } : current,
+                              )
+                            }
+                            onBlur={() =>
+                              setEditState((current) =>
+                                current
+                                  ? {
+                                      ...current,
+                                      endSeconds: formatEditorDuration(current.endSeconds),
+                                    }
+                                  : current,
+                              )
+                            }
+                            required
+                          />
+                        </label>
+                        <div className="wake-song-admin-rate-field">
+                          <span>재생 속도</span>
+                          <PlaybackRateSelect
+                            value={Number(editState.playbackRate) || 1}
+                            onChange={(playbackRate) =>
+                              setEditState((current) =>
+                                current
+                                  ? { ...current, playbackRate: String(playbackRate) }
+                                  : current,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                    </section>
+                  );
+                })()}
                 <label>
                   <span>메모</span>
                   <textarea
@@ -581,27 +814,6 @@ export function WakeSongsPage() {
                 />
               </form>
             ) : null}
-            <YouTubeSegmentPlayer
-              className="wake-song-admin-player"
-              videoId={selectedRequest.youtubeVideoId}
-              startSeconds={selectedRequest.startSeconds}
-              endSeconds={selectedRequest.endSeconds}
-              playbackRate={selectedRequest.playbackRate}
-              title={`${selectedRequest.videoTitle} 미리보기`}
-              controls={0}
-              volume={playerVolume}
-            />
-            <label className="wake-song-admin-volume">
-              <span>볼륨</span>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={playerVolume}
-                onChange={(event) => setPlayerVolume(Number(event.target.value))}
-              />
-              <output>{playerVolume}%</output>
-            </label>
             <div className="wake-song-admin-detail-copy">
               <dl>
                 <div>
@@ -637,7 +849,7 @@ export function WakeSongsPage() {
               </a>
             </div>
           </div>
-        </Drawer>
+        </Dialog>
       ) : null}
 
       {rejectingId ? (

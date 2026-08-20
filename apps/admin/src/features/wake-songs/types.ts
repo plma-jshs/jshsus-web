@@ -9,6 +9,14 @@ export const wakeSongStatuses = [
 
 export type WakeSongRequestStatus = (typeof wakeSongStatuses)[number];
 
+export type WakeSongAudioAsset = {
+  status: 'READY';
+  fileId: number;
+  downloadUrl: string;
+  sizeBytes: number;
+  generatedAt: string;
+};
+
 export type WakeSongRequest = {
   id: number;
   requesterId: number;
@@ -38,6 +46,7 @@ export type WakeSongRequest = {
   candidateWeekEnd?: string;
   candidateWeekLabel?: string;
   createdAt: string;
+  audio?: WakeSongAudioAsset;
 };
 
 export type WakeSongPage = {

@@ -349,7 +349,12 @@ export function DeviceCasesPage() {
                 <Plus size={15} aria-hidden="true" /> 작업 추가
               </Button>
             </header>
-            {scheduleFormOpen ? (
+            <Dialog
+              open={scheduleFormOpen}
+              onClose={() => setScheduleFormOpen(false)}
+              title="자동 잠금 일정 추가"
+              size="sm"
+            >
               <form
                 className="device-schedule-form"
                 onSubmit={(event: FormEvent) => {
@@ -420,7 +425,7 @@ export function DeviceCasesPage() {
                   </Button>
                 </div>
               </form>
-            ) : null}
+            </Dialog>
             {schedulesQuery.isError ? (
               <p className="form-error">스케줄을 불러오지 못했습니다.</p>
             ) : schedulesQuery.isPending ? (

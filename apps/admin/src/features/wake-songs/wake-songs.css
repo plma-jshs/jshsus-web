@@ -97,10 +97,6 @@
     width: 100%;
   }
 
-  .wake-song-admin-edit-grid {
-    grid-template-columns: 1fr;
-  }
-
   .wake-song-admin-list > .admin-data-table {
     padding-inline: 0;
   }
@@ -129,7 +125,7 @@
 .wake-song-admin-edit-form {
   display: grid;
   gap: 12px;
-  margin-bottom: 18px;
+  margin: 0;
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -149,7 +145,6 @@
 }
 
 .wake-song-admin-edit-form input,
-.wake-song-admin-edit-form select,
 .wake-song-admin-edit-form textarea {
   width: 100%;
   min-height: 38px;
@@ -166,8 +161,205 @@
 
 .wake-song-admin-edit-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+}
+
+.wake-song-admin-segment-card {
+  display: grid;
+  gap: 10px;
+}
+
+.wake-song-admin-timeline {
+  position: relative;
+  min-height: 48px;
+  display: grid;
+  padding-top: 10px;
+  align-items: start;
+}
+
+.wake-song-admin-timeline__track {
+  position: absolute;
+  top: 11px;
+  right: 8px;
+  left: 8px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.wake-song-admin-timeline__track::after {
+  position: absolute;
+  inset-block: 0;
+  left: var(--wake-start);
+  right: calc(100% - var(--wake-end));
+  border-radius: inherit;
+  background: var(--primary);
+  content: '';
+}
+
+.wake-song-admin-edit-form .wake-song-admin-timeline__range {
+  position: absolute;
+  top: 5px;
+  right: 0;
+  left: 0;
+  width: 100%;
+  height: 18px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  appearance: none;
+  background: transparent;
+  box-shadow: none;
+  outline: 0;
+  pointer-events: none;
+}
+
+.wake-song-admin-edit-form .wake-song-admin-timeline__range.is-start {
+  z-index: 2;
+}
+
+.wake-song-admin-edit-form .wake-song-admin-timeline__range.is-end {
+  z-index: 3;
+}
+
+.wake-song-admin-edit-form .wake-song-admin-timeline__range::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  margin-top: -5px;
+  appearance: none;
+  border: 2px solid #172120;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 7px rgb(15 23 42 / 20%);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.wake-song-admin-edit-form .wake-song-admin-timeline__range::-webkit-slider-runnable-track {
+  height: 6px;
+  background: transparent;
+}
+
+.wake-song-admin-edit-form .wake-song-admin-timeline__range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #172120;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 7px rgb(15 23 42 / 20%);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.wake-song-admin-edit-form .wake-song-admin-timeline__range::-moz-range-track {
+  height: 6px;
+  background: transparent;
+}
+
+.wake-song-admin-timeline__labels {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.wake-song-admin-rate-field {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.wake-song-admin-rate-field > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wake-song-admin-rate-select {
+  position: relative;
+  min-width: 0;
+}
+
+.wake-song-admin-rate-select__trigger {
+  display: flex;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px 0 11px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  color: #172120;
+  background: var(--surface);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.wake-song-admin-rate-select__trigger:hover {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--line-strong));
+}
+
+.wake-song-admin-rate-select__trigger:focus-visible,
+.wake-song-admin-rate-select.is-open .wake-song-admin-rate-select__trigger {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(11 130 135 / 12%);
+  outline: 0;
+}
+
+.wake-song-admin-rate-select__menu {
+  position: absolute;
+  z-index: 20;
+  right: 0;
+  bottom: calc(100% + 6px);
+  left: 0;
+  display: grid;
+  padding: 5px;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  box-shadow: 0 12px 28px rgb(15 23 42 / 14%);
+}
+
+.wake-song-admin-rate-select__menu button {
+  display: flex;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 9px;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-radius: 6px;
+  color: #52615f;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+
+.wake-song-admin-rate-select__menu button:hover,
+.wake-song-admin-rate-select__menu button:focus-visible {
+  color: #172120;
+  background: var(--surface-soft, #f1f4f3);
+  outline: 0;
+}
+
+.wake-song-admin-rate-select__menu button.is-selected {
+  color: var(--primary-dark);
+  background: var(--surface-selected, #eef8f6);
 }
 
 .wake-song-admin-title > button {
@@ -243,8 +435,9 @@
 .wake-song-admin-detail {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 10px;
 }
 
@@ -316,7 +509,8 @@
 
 .wake-song-admin-volume {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto auto auto;
+  justify-content: start;
   align-items: center;
   gap: 10px;
   margin-top: 12px;
@@ -324,8 +518,19 @@
   font-size: 12px;
 }
 
+.wake-song-sort-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
 .wake-song-admin-volume input[type='range'] {
+  width: 8px;
+  height: 88px;
   min-height: 0;
+  writing-mode: vertical-lr;
+  direction: rtl;
   accent-color: var(--primary);
 }
 
@@ -466,5 +671,21 @@
   .wake-song-admin-action-panel form {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+@media (max-width: 767px) {
+  .wake-song-admin-edit-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .wake-song-admin-edit-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wake-song-admin-rate-field {
+    grid-column: 1 / -1;
   }
 }

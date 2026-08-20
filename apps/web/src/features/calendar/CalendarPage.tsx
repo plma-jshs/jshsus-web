@@ -498,7 +498,8 @@ function CalendarPageContent({ initialSelectedDate }: CalendarPageContentProps) 
     const deltaX = touch.clientX - start.x;
     const deltaY = touch.clientY - start.y;
     if (Math.abs(deltaX) <= Math.abs(deltaY)) return;
-    event.preventDefault();
+    // `touch-action: pan-y` on the calendar reserves the horizontal gesture
+    // without calling preventDefault from React's passive touch listener.
     const width = fullCalendarRef.current?.clientWidth ?? window.innerWidth;
     const offset = Math.max(-width, Math.min(width, deltaX));
     setCalendarDragOffset(offset);

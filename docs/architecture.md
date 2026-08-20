@@ -64,7 +64,7 @@ Browser -> Nginx (/api proxy) -> Nest controller -> guards -> domain service -> 
 
 ## Domain policy decisions
 
-- 기상곡은 YouTube URL, 시작·종료 시각, 재생 속도만 저장하며 파일을 내려받거나 변환하지 않는다.
+- 기상곡 신청의 원본은 YouTube URL, 시작·종료 시각, 재생 속도다. 승인된 신청에 한해 API 컨테이너의 제한된 `yt-dlp`/`ffmpeg` 작업이 실제 MP3를 만들고, `files`의 비공개 `wake_song` 객체로 저장한다. 다운로드 요청은 부모 신청 상태·신청자·관리자 권한을 다시 확인하며, 원본 구간이 바뀌면 이전 생성 파일을 정리한다.
   배속을 반영한 실제 재생 시간은 최대 180초이고 학생별 `PENDING` 신청은 최대 3건이다.
   학생관리부장이 승인·반려하고, 승인된 곡은 담당자가 나중에 별도로 편성한다.
 - 상벌점 퇴사 기준은 순합계 `-20`점 이하이다. 퇴사 처리는 과거 원장을 삭제하지 않고 `ETC`

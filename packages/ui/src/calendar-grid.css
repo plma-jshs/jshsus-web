@@ -38,12 +38,13 @@
 }
 
 .calendar-grid {
-  --calendar-cell-bg: #f3f6f8;
-  --calendar-cell-bg-outside: #edf2f5;
-  --calendar-cell-bg-hover: #e9f0f3;
-  --calendar-cell-bg-selected: #eef5f5;
+  /* Keep public and admin calendars on one quiet cool-gray surface. */
+  --calendar-cell-bg: #f5f5f5;
+  --calendar-cell-bg-outside: #f1f3f5;
+  --calendar-cell-bg-hover: #eef1f3;
+  --calendar-cell-bg-selected: #f5f5f5;
   --calendar-cell-bg-active: #e2e8f0;
-  --calendar-cell-border: #dfe6ea;
+  --calendar-cell-border: #e1e6ea;
   width: 100%;
   min-width: 0;
   overflow: hidden;
@@ -96,6 +97,7 @@
 
 .calendar-grid__month-panel {
   min-width: 0;
+  align-self: start;
 }
 
 .calendar-grid__week {
@@ -144,16 +146,13 @@
 
 .calendar-grid__week-days > button.is-selected {
   z-index: 1;
-  outline: 1px solid #111827;
-  outline-offset: -1px;
+  box-shadow: inset 0 0 0 1px #111827;
   background: var(--calendar-cell-bg-selected);
 }
 
 .calendar-grid__week-days > button:focus-visible {
   z-index: 1;
-  outline: 1px solid var(--j-color-brand);
-  outline-offset: -1px;
-  box-shadow: none;
+  box-shadow: inset 0 0 0 1px var(--j-color-brand);
   background: var(--calendar-cell-bg-hover);
 }
 
@@ -213,9 +212,9 @@
 }
 
 .calendar-grid__week-days > button.is-selected.is-today .calendar-grid__date {
-  color: #111827;
-  background: transparent;
-  font-weight: 600;
+  color: #fff;
+  background: #087c82;
+  font-weight: 700;
 }
 
 .calendar-grid__bars {
@@ -366,6 +365,8 @@
 
   .calendar-grid__month-panel {
     display: grid;
+    align-self: start;
+    grid-auto-rows: max-content;
     gap: 3px;
   }
 
@@ -390,8 +391,7 @@
   }
 
   .calendar-grid__week-days > button.is-selected {
-    outline: 1px solid #111827;
-    outline-offset: -1px;
+    box-shadow: inset 0 0 0 1px #111827;
     background: var(--calendar-cell-bg-selected);
   }
 
@@ -479,8 +479,7 @@
   .calendar-grid__week-days > button.is-selected:hover,
   .calendar-grid__week-days > button.is-selected:focus,
   .calendar-grid__week-days > button.is-selected:focus-visible {
-    outline: 1px solid #111827;
-    outline-offset: -1px;
+    box-shadow: inset 0 0 0 1px #111827;
     background: var(--calendar-cell-bg-selected);
   }
 

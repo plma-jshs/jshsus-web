@@ -84,4 +84,16 @@ export const wakeSongAdminApi = {
     }),
   markPlayed: (id: number) =>
     request<{ ok: true; id: number; status: 'PLAYED' }>(`/api/admin/wake-songs/${id}/played`, {}),
+  generateAudio: (id: number) =>
+    request<{
+      ok: true;
+      id: number;
+      audio: {
+        status: 'READY';
+        fileId: number;
+        downloadUrl: string;
+        sizeBytes: number;
+        generatedAt: string;
+      };
+    }>(`/api/admin/wake-songs/${id}/audio`, {}),
 };
