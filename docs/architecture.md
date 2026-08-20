@@ -17,7 +17,7 @@ docs            설계 결정과 운영 문서
 ### Naming and deployment identifiers
 
 - 공개 학생 포털(과구리)의 소스 디렉터리와 workspace package는 각각 `apps/jshsus`,
-  `@jshsus/jshsus`로 사용한다.
+  `@platform/jshsus`로 사용한다.
 - 관리자 포털은 `apps/admin`, 공통 백엔드는 `apps/api`로 유지한다. 관리자 포털의
   공식 제품명이 바뀌더라도 API·권한 경계까지 함께 바꾸는 별도 마이그레이션 없이는
   이 폴더를 임의로 이동하지 않는다.

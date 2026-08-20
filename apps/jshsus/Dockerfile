@@ -15,7 +15,7 @@ ENV VITE_GA_MEASUREMENT_ID=$VITE_GA_MEASUREMENT_ID
 COPY . .
 RUN pnpm --filter @jshsus/types build
 RUN pnpm --filter @jshsus/ui build
-RUN pnpm --filter @jshsus/jshsus build
+RUN pnpm --filter @platform/jshsus build
 
 FROM nginx:1.27-alpine AS runner
 COPY apps/jshsus/nginx.conf /etc/nginx/conf.d/default.conf

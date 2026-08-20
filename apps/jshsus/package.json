@@ -1,5 +1,5 @@
 {
-  "name": "@jshsus/jshsus",
+  "name": "@platform/jshsus",
   "version": "0.1.0",
   "private": true,
   "type": "module",
